@@ -1,0 +1,10 @@
+/resource leak checker/build/CMakeFiles/install/strip.dir
+/resource leak checker/build/CMakeFiles/install/local.dir
+/resource leak checker/build/CMakeFiles/install.dir
+/resource leak checker/build/CMakeFiles/list_install_components.dir
+/resource leak checker/build/CMakeFiles/edit_cache.dir
+/resource leak checker/build/CMakeFiles/MustCallPass.dir
+/resource leak checker/build/CMakeFiles/intrinsics_gen.dir
+/resource leak checker/build/CMakeFiles/install-MustCallPass.dir
+/resource leak checker/build/CMakeFiles/install-MustCallPass-stripped.dir
+/resource leak checker/build/CMakeFiles/rebuild_cache.dir
