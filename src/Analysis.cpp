@@ -1,12 +1,14 @@
 #include "RunAnalysis.h"
 #include "Utils.h"
 #include "PointerAnalysis.h"
+#include "loadFunctions.h"
 
 #include <map> 
 #include <tuple>
+#include <vector> 
 #include <list>
 
-#define DEBUG false
+#define DEBUG true
 #if DEBUG
 #define logout(x) errs() << x << "\n";
 #define logDomain(x) x->print(errs()); 
@@ -17,10 +19,20 @@
 #define logOutMemory(x) 
 #endif 
 
-typedef std::map<std::string, std::list<std::tuple<std::string, unsigned int> > > MCE; 
+
+
+typedef std::map<std::string, dataflow::MustCallEstimate> MustCallEst; 
 typedef std::map<std::string, std::string> AliasMap;
 
+// TODO: handle branching (how do we handling branching?)
+
 namespace dataflow {
+
+std::vector<std::string> SafeFunctions = { "strcpy", "printf" }; 
+std::vector<std::string> UnsafeFunctions = { "realloc" }; 
+std::vector<std::string> AllocationFunctions = { "malloc" }; 
+std::vector<std::string> DeallocationFunctions = { "free" }; 
+
 
 /**
  * @brief Get the Predecessors of a given instruction in the control-flow graph.
@@ -74,7 +86,8 @@ std::vector<Instruction *> getSuccessors(Instruction *Inst) {
   return Ret;
 }
 
-void transfer(Instruction* I, MCE& mustCallEstimates, AliasMap& aliasedVars, SetVector<Instruction *>& workSet) {
+
+void transfer(Instruction* I, MustCallEst& mustCallEstimates, AliasMap& aliasedVars, SetVector<Instruction *>& workSet) {
   std::string blockName = I->getParent()->getName().str();
 
    if (auto Alloca = dyn_cast<AllocaInst>(I)) {
@@ -114,7 +127,16 @@ void transfer(Instruction* I, MCE& mustCallEstimates, AliasMap& aliasedVars, Set
             logout("(instore) function name = " << functionName)
 
             // (assuming) these functions take no args, 0 used as dummy val 
-            mustCallEstimates[varName].push_back(std::make_tuple(functionName, 0) );
+            std::string fnName = Call->getCalledFunction()->getName().str(); 
+            mustCallEstimates[varName].allocationFunction = fnName;
+            mustCallEstimates[varName].mustCallIsSatisfied = false; 
+
+            for (int i = 0; i < AllocationFunctions.size(); i++) {
+              if (AllocationFunctions.at(i) == fnName) {
+                mustCallEstimates[varName].deallocationFunction = DeallocationFunctions.at(i);
+              }
+            }
+
 
           }
 
@@ -142,7 +164,31 @@ void transfer(Instruction* I, MCE& mustCallEstimates, AliasMap& aliasedVars, Set
           }
 
           logout("arg = " << argName << "|") 
-          mustCallEstimates[argName].push_back(std::make_tuple(functionName, i) );
+
+          std::string fnName = Call->getCalledFunction()->getName().str();
+
+          for (int i = 0; i < SafeFunctions.size(); i++) {
+            if (fnName == SafeFunctions.at(i)) return; 
+          }
+
+          for (int i = 0; i < UnsafeFunctions.size(); i++) {
+            if (fnName == SafeFunctions.at(i)) {
+              mustCallEstimates[argName].mustCallIsSatisfied = false; 
+            }
+          }
+
+          for (int i = 0; i < AllocationFunctions.size(); i++) {
+            if (fnName == AllocationFunctions.at(i)) {
+              mustCallEstimates[argName].allocationFunction = fnName;
+              mustCallEstimates[argName].mustCallIsSatisfied = false; 
+            }
+            else if (fnName == DeallocationFunctions.at(i)) {
+              mustCallEstimates[argName].mustCallIsSatisfied = true;  
+            }
+          }
+
+
+
       }
     }
     else if (auto Branch = dyn_cast<BranchInst>(I)) {
@@ -163,7 +209,7 @@ void MustCallAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
     logout("inst = " << *I << " " << I->getParent()->getName());
   }
 
-  MCE MustCallEstimates; 
+  MustCallEst MustCallEstimates; 
   AliasMap AliasedVars; 
 
   for (auto I : WorkSet) {
@@ -173,14 +219,7 @@ void MustCallAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
   logout("\n\n#### end of execution #####\n\n")
 
   for (auto Pair : MustCallEstimates) {
-    std::string m = "{";
-
-    for (auto el : Pair.second) {
-      m += "(" + std::get<0>(el) + ", " + std::to_string(std::get<1>(el)) + "th arg),\n";
-    }
-
-    errs() << Pair.first << " = " << m << "}\n\n";
-
+    errs() << Pair.first << " = " << Pair.second.allocationFunction << " " << Pair.second.deallocationFunction << " " << Pair.second.mustCallIsSatisfied << " \n";
   }
 
 }

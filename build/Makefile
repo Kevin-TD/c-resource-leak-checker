@@ -316,6 +316,33 @@ src/Utils.cpp.s:
 	$(MAKE) -f CMakeFiles/MustCallPass.dir/build.make CMakeFiles/MustCallPass.dir/src/Utils.cpp.s
 .PHONY : src/Utils.cpp.s
 
+src/loadFunctions.o: src/loadFunctions.cpp.o
+
+.PHONY : src/loadFunctions.o
+
+# target to build an object file
+src/loadFunctions.cpp.o:
+	$(MAKE) -f CMakeFiles/MustCallPass.dir/build.make CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o
+.PHONY : src/loadFunctions.cpp.o
+
+src/loadFunctions.i: src/loadFunctions.cpp.i
+
+.PHONY : src/loadFunctions.i
+
+# target to preprocess a source file
+src/loadFunctions.cpp.i:
+	$(MAKE) -f CMakeFiles/MustCallPass.dir/build.make CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.i
+.PHONY : src/loadFunctions.cpp.i
+
+src/loadFunctions.s: src/loadFunctions.cpp.s
+
+.PHONY : src/loadFunctions.s
+
+# target to generate assembly for a file
+src/loadFunctions.cpp.s:
+	$(MAKE) -f CMakeFiles/MustCallPass.dir/build.make CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.s
+.PHONY : src/loadFunctions.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -344,6 +371,9 @@ help:
 	@echo "... src/Utils.o"
 	@echo "... src/Utils.i"
 	@echo "... src/Utils.s"
+	@echo "... src/loadFunctions.o"
+	@echo "... src/loadFunctions.i"
+	@echo "... src/loadFunctions.s"
 .PHONY : help
 
 

@@ -29,9 +29,7 @@ entry:
   %5 = load i8*, i8** %str, align 8, !dbg !28
   %6 = load i8*, i8** %str, align 8, !dbg !29
   %call5 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([28 x i8], [28 x i8]* @.str.1, i32 0, i32 0), i8* %5, i8* %6), !dbg !30
-  %7 = load i8*, i8** %str, align 8, !dbg !31
-  call void @free(i8* %7) #4, !dbg !32
-  ret i32 0, !dbg !33
+  ret i32 0, !dbg !31
 }
 
 ; Function Attrs: nounwind readnone speculatable
@@ -48,9 +46,6 @@ declare dso_local i32 @printf(i8*, ...) #3
 declare dso_local i8* @realloc(i8*, i64) #2
 
 declare dso_local i8* @strcat(i8*, i8*) #3
-
-; Function Attrs: nounwind
-declare dso_local void @free(i8*) #2
 
 attributes #0 = { noinline nounwind uwtable "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone speculatable }
@@ -93,6 +88,4 @@ attributes #4 = { nounwind }
 !28 = !DILocation(line: 15, column: 43, scope: !10)
 !29 = !DILocation(line: 15, column: 48, scope: !10)
 !30 = !DILocation(line: 15, column: 4, scope: !10)
-!31 = !DILocation(line: 17, column: 9, scope: !10)
-!32 = !DILocation(line: 17, column: 4, scope: !10)
-!33 = !DILocation(line: 19, column: 4, scope: !10)
+!31 = !DILocation(line: 19, column: 4, scope: !10)

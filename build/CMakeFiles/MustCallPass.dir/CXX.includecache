@@ -44,6 +44,20 @@ PointerAnalysis.h
 RunAnalysis.h
 ../include/RunAnalysis.h
 
+../include/loadFunctions.h
+RunAnalysis.h
+../include/RunAnalysis.h
+Utils.h
+../include/Utils.h
+PointerAnalysis.h
+../include/PointerAnalysis.h
+list
+-
+string
+-
+fstream
+-
+
 /resource leak checker/src/Analysis.cpp
 RunAnalysis.h
 /resource leak checker/src/RunAnalysis.h
@@ -51,9 +65,13 @@ Utils.h
 /resource leak checker/src/Utils.h
 PointerAnalysis.h
 /resource leak checker/src/PointerAnalysis.h
+loadFunctions.h
+/resource leak checker/src/loadFunctions.h
 map
 -
 tuple
+-
+vector
 -
 list
 -
@@ -77,6 +95,20 @@ Utils.h
 /resource leak checker/src/Utils.h
 RunAnalysis.h
 /resource leak checker/src/RunAnalysis.h
+
+/resource leak checker/src/loadFunctions.cpp
+RunAnalysis.h
+/resource leak checker/src/RunAnalysis.h
+Utils.h
+/resource leak checker/src/Utils.h
+PointerAnalysis.h
+/resource leak checker/src/PointerAnalysis.h
+loadFunctions.h
+/resource leak checker/src/loadFunctions.h
+vector
+-
+string
+-
 
 /usr/lib/llvm-8/include/llvm-c/DataTypes.h
 cmath

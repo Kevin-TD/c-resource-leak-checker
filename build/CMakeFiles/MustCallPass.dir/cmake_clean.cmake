@@ -1,4 +1,5 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o"
   "CMakeFiles/MustCallPass.dir/src/Analysis.cpp.o"
   "CMakeFiles/MustCallPass.dir/src/RunAnalysis.cpp.o"
   "CMakeFiles/MustCallPass.dir/src/PointerAnalysis.cpp.o"

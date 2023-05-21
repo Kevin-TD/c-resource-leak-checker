@@ -13,6 +13,7 @@ link_directories(${LLVM_LIBRARY_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
 
 
 add_llvm_library(MustCallPass MODULE
+  src/loadFunctions.cpp
   src/Analysis.cpp
   src/RunAnalysis.cpp
   src/PointerAnalysis.cpp

@@ -57,9 +57,33 @@ include CMakeFiles/MustCallPass.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/MustCallPass.dir/flags.make
 
+CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o: CMakeFiles/MustCallPass.dir/flags.make
+CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o: ../src/loadFunctions.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir="/resource leak checker/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o"
+	/usr/bin/clang++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o -c "/resource leak checker/src/loadFunctions.cpp"
+
+CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.i"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/resource leak checker/src/loadFunctions.cpp" > CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.i
+
+CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.s"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/resource leak checker/src/loadFunctions.cpp" -o CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.s
+
+CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o.requires:
+
+.PHONY : CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o.requires
+
+CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o.provides: CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o.requires
+	$(MAKE) -f CMakeFiles/MustCallPass.dir/build.make CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o.provides.build
+.PHONY : CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o.provides
+
+CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o.provides.build: CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o
+
+
 CMakeFiles/MustCallPass.dir/src/Analysis.cpp.o: CMakeFiles/MustCallPass.dir/flags.make
 CMakeFiles/MustCallPass.dir/src/Analysis.cpp.o: ../src/Analysis.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir="/resource leak checker/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/MustCallPass.dir/src/Analysis.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir="/resource leak checker/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/MustCallPass.dir/src/Analysis.cpp.o"
 	/usr/bin/clang++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MustCallPass.dir/src/Analysis.cpp.o -c "/resource leak checker/src/Analysis.cpp"
 
 CMakeFiles/MustCallPass.dir/src/Analysis.cpp.i: cmake_force
@@ -83,7 +107,7 @@ CMakeFiles/MustCallPass.dir/src/Analysis.cpp.o.provides.build: CMakeFiles/MustCa
 
 CMakeFiles/MustCallPass.dir/src/RunAnalysis.cpp.o: CMakeFiles/MustCallPass.dir/flags.make
 CMakeFiles/MustCallPass.dir/src/RunAnalysis.cpp.o: ../src/RunAnalysis.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir="/resource leak checker/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/MustCallPass.dir/src/RunAnalysis.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir="/resource leak checker/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/MustCallPass.dir/src/RunAnalysis.cpp.o"
 	/usr/bin/clang++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MustCallPass.dir/src/RunAnalysis.cpp.o -c "/resource leak checker/src/RunAnalysis.cpp"
 
 CMakeFiles/MustCallPass.dir/src/RunAnalysis.cpp.i: cmake_force
@@ -107,7 +131,7 @@ CMakeFiles/MustCallPass.dir/src/RunAnalysis.cpp.o.provides.build: CMakeFiles/Mus
 
 CMakeFiles/MustCallPass.dir/src/PointerAnalysis.cpp.o: CMakeFiles/MustCallPass.dir/flags.make
 CMakeFiles/MustCallPass.dir/src/PointerAnalysis.cpp.o: ../src/PointerAnalysis.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir="/resource leak checker/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/MustCallPass.dir/src/PointerAnalysis.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir="/resource leak checker/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/MustCallPass.dir/src/PointerAnalysis.cpp.o"
 	/usr/bin/clang++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MustCallPass.dir/src/PointerAnalysis.cpp.o -c "/resource leak checker/src/PointerAnalysis.cpp"
 
 CMakeFiles/MustCallPass.dir/src/PointerAnalysis.cpp.i: cmake_force
@@ -131,7 +155,7 @@ CMakeFiles/MustCallPass.dir/src/PointerAnalysis.cpp.o.provides.build: CMakeFiles
 
 CMakeFiles/MustCallPass.dir/src/Utils.cpp.o: CMakeFiles/MustCallPass.dir/flags.make
 CMakeFiles/MustCallPass.dir/src/Utils.cpp.o: ../src/Utils.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir="/resource leak checker/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/MustCallPass.dir/src/Utils.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir="/resource leak checker/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/MustCallPass.dir/src/Utils.cpp.o"
 	/usr/bin/clang++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MustCallPass.dir/src/Utils.cpp.o -c "/resource leak checker/src/Utils.cpp"
 
 CMakeFiles/MustCallPass.dir/src/Utils.cpp.i: cmake_force
@@ -155,6 +179,7 @@ CMakeFiles/MustCallPass.dir/src/Utils.cpp.o.provides.build: CMakeFiles/MustCallP
 
 # Object files for target MustCallPass
 MustCallPass_OBJECTS = \
+"CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o" \
 "CMakeFiles/MustCallPass.dir/src/Analysis.cpp.o" \
 "CMakeFiles/MustCallPass.dir/src/RunAnalysis.cpp.o" \
 "CMakeFiles/MustCallPass.dir/src/PointerAnalysis.cpp.o" \
@@ -163,13 +188,14 @@ MustCallPass_OBJECTS = \
 # External object files for target MustCallPass
 MustCallPass_EXTERNAL_OBJECTS =
 
+MustCallPass.so: CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o
 MustCallPass.so: CMakeFiles/MustCallPass.dir/src/Analysis.cpp.o
 MustCallPass.so: CMakeFiles/MustCallPass.dir/src/RunAnalysis.cpp.o
 MustCallPass.so: CMakeFiles/MustCallPass.dir/src/PointerAnalysis.cpp.o
 MustCallPass.so: CMakeFiles/MustCallPass.dir/src/Utils.cpp.o
 MustCallPass.so: CMakeFiles/MustCallPass.dir/build.make
 MustCallPass.so: CMakeFiles/MustCallPass.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir="/resource leak checker/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX shared module MustCallPass.so"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir="/resource leak checker/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX shared module MustCallPass.so"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/MustCallPass.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -177,6 +203,7 @@ CMakeFiles/MustCallPass.dir/build: MustCallPass.so
 
 .PHONY : CMakeFiles/MustCallPass.dir/build
 
+CMakeFiles/MustCallPass.dir/requires: CMakeFiles/MustCallPass.dir/src/loadFunctions.cpp.o.requires
 CMakeFiles/MustCallPass.dir/requires: CMakeFiles/MustCallPass.dir/src/Analysis.cpp.o.requires
 CMakeFiles/MustCallPass.dir/requires: CMakeFiles/MustCallPass.dir/src/RunAnalysis.cpp.o.requires
 CMakeFiles/MustCallPass.dir/requires: CMakeFiles/MustCallPass.dir/src/PointerAnalysis.cpp.o.requires
