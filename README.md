@@ -10,7 +10,7 @@ This analysis runs with docker; here are the steps to run the analysis:
 5. Make (```mkdir build```) and set directory to build (```cd build```)
 6. Build Clang, LLVM, other important stuff with ```cmake ..```
 7. Build analysis with ```make```
-8. Generate LLVM IR with ```clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test2.c -o ../test/test2.ll```  (change test files ```./test/test2.c``` and ```./test/test2.ll`` accordingly)
+8. Generate LLVM IR with ```clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test2.c -o ../test/test2.ll```  (change test files ```./test/test2.c``` and ```./test/test2.ll``` accordingly)
 9. Load the results with ```opt -load MustCallPass.so -MustCallPass ../test/test2.ll ```
 
 Make further changes to repo in the include and src directories, and for future changes, just run ```make ; clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test2.c -o ../test/test2.ll ; opt -load MustCallPass.so -MustCallPass ../test/test2.ll ``` (with test files changes accordingly).
