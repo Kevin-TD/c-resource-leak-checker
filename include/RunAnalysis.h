@@ -43,7 +43,7 @@ protected:
   void doAnalysis(Function &F, PointerAnalysis *PA);
 
 
-  std::string getAnalysisName() { return "MustCallEstimates"; }
+  std::string getAnalysisName() { return "MustCallPass"; }
 };
 } // namespace dataflow
 

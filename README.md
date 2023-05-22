@@ -1,13 +1,16 @@
 # C-resource-leak-checker
 
-How to run the analysis 
-1. set dir to build 
-2. run any of following in terminal (first for test1, second for test2. identical commands, just different file names)
+This analysis runs with docker; here are the steps to run the analysis: 
 
-cmake .. ; make ; clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test1.c -o ../test/test1.ll ; opt -load MustCallPass.so -MustCallEstimates ../test/test1.ll 
+1. Clone the repo and set directory to the repo's 
+2. Pull the docker image: ```docker pull cis547/cis547-base:latest```
+3. Run docker in interactive mode: ```docker run -it -v $(pwd):/$(basename $(pwd)) -w /$(basename $(pwd))  cis547/cis547-base:latest```
+4. Run the following to get opt working: ```export LD_LIBRARY_PATH=/opt/mirtk/lib:${LD_LIBRARY_PATH}```
+- To be honest, I am not sure how this makes opt works but it just does. 
+5. Make (```mkdir build```) and set directory to build (```cd build```)
+6. Build Clang, LLVM, other important stuff with ```cmake ..```
+7. Build analysis with ```make```
+8. Generate LLVM IR with ```clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test2.c -o ../test/test2.ll```  (change test files ```./test/test2.c``` and ```./test/test2.ll`` accordingly)
+9. Load the results with ```opt -load MustCallPass.so -MustCallPass ../test/test2.ll ```
 
-make .. ; make ; clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test2.c -o ../test/test2.ll ; opt -load MustCallPass.so -MustCallEstimates ../test/test2.ll 
-
-To re-building everything, just add a "make clean" to the list of commands 
-
-make clean; cmake .. ; make ; clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test1.c -o ../test/test1.ll ; opt -load MustCallPass.so -MustCallEstimates ../test/test1.ll 
+Make further changes to repo in the include and src directories, and for future changes, just run ```make ; clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test2.c -o ../test/test2.ll ; opt -load MustCallPass.so -MustCallPass ../test/test2.ll ``` (with test files changes accordingly).

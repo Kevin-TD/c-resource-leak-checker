@@ -44,6 +44,6 @@ bool MustCallAnalysis::runOnFunction(Function &F) {
 }
 
 char MustCallAnalysis::ID = 1;
-static RegisterPass<MustCallAnalysis> X("MustCallEstimates", "Must-call-estimates Analysis",
+static RegisterPass<MustCallAnalysis> X("MustCallPass", "Must-call-estimates Analysis",
                                        false, false);
 } // namespace dataflow
