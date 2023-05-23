@@ -11,8 +11,8 @@
 
 // perhaps we'll report an error whenever critical functions are re-defined  
 
-void *malloc(size_t __size) {
-    printf("false malloc");
+char *strcpy(char *__restrict__ __dest, const char *__restrict__ __src) {
+    printf("a mimicry");
 }
 
 int main () {
@@ -30,6 +30,10 @@ int main () {
    printf("String = %s,  Address = %u\n", str, str);
 
    free(str);
+   
+   strcpy(str, "helloworld");
+
+   unknown_function(str);
    
    return(0);
 }

@@ -28,11 +28,9 @@ typedef std::map<std::string, std::string> AliasMap;
 
 namespace dataflow {
 
-std::vector<std::string> SafeFunctions;
-std::vector<std::string> UnsafeFunctions;
-std::vector<std::string> AllocationFunctions;
-std::vector<std::string> DeallocationFunctions;
-// TODO: change to hashmap for better speed (?)
+std::map<std::string, bool> SafeFunctions;
+std::map<std::string, bool> UnsafeFunctions;
+std::map<std::string, std::string> MemoryFunctions;
 
 void loadFunctions() { 
   // working directory is /build 
@@ -44,32 +42,37 @@ void loadFunctions() {
   std::string line; 
   if (safeFunctionsFile.is_open()) {
     while (std::getline(safeFunctionsFile, line)) {
-      SafeFunctions.push_back(line);
+      SafeFunctions[line] = true; 
     }
   }
 
   if (unsafeFunctionsFile.is_open()) {
     while (std::getline(unsafeFunctionsFile, line)) {
-      UnsafeFunctions.push_back(line);
+      UnsafeFunctions[line] = true; 
     }
   }
 
   if (memoryFunctionsFile.is_open()) {
     while (std::getline(memoryFunctionsFile, line)) {
-      std::string s; 
+      std::string allocationFunction;
+      std::string deallocationFunction;  
+      std::string s;          
 
       for (int i = 0; i < line.size(); i++) {
         if (line[i] == ' ') {
-          AllocationFunctions.push_back(s);
+          allocationFunction = s; 
           s = ""; 
           continue;
         }
         s += line[i];
       }
-      DeallocationFunctions.push_back(s);
+      deallocationFunction = s; 
+      
+      MemoryFunctions[allocationFunction] = deallocationFunction;
     }
 
   }
+
 
   safeFunctionsFile.close();
   unsafeFunctionsFile.close();
@@ -77,7 +80,6 @@ void loadFunctions() {
 
 
 }
-
 
 /**
  * @brief Get the Predecessors of a given instruction in the control-flow graph.
@@ -157,11 +159,6 @@ void transfer(Instruction* I, MustCallEst& mustCallEstimates, AliasMap& aliasedV
       for (auto Inst : workSet) {
         if (valueToStore == Inst) {
           if (auto Call = dyn_cast<CallInst>(Inst)) {
-            const DebugLoc &debugLoc = Inst->getDebugLoc();
-            std::string functionName = "{STORE} branch = " + blockName 
-            + " Line = " + std::to_string(debugLoc.getLine()) + " Col = " + std::to_string(debugLoc.getCol()) 
-            + " name = " + Call->getCalledFunction()->getName().str();
-
             std::string varName = variable(Store->getOperand(1)); 
 
              if (aliasedVars.count(varName) != 0) {
@@ -169,25 +166,20 @@ void transfer(Instruction* I, MustCallEst& mustCallEstimates, AliasMap& aliasedV
               varName = aliasedVars[varName];
             }
 
-            logout("(instore) function name = " << functionName)
-
-            // (assuming) these functions take no args, 0 used as dummy val 
+            
             std::string fnName = Call->getCalledFunction()->getName().str(); 
 
-            for (int i = 0; i < AllocationFunctions.size(); i++) {
-              if (fnName == AllocationFunctions.at(i)) {
-                mustCallEstimates[varName].allocationFunction = fnName;
-              }
+
+            if (
+              !UnsafeFunctions[fnName] && 
+              !UnsafeFunctions[MemoryFunctions[fnName]] && 
+              MemoryFunctions.count(fnName) != 0
+            ) {
+               mustCallEstimates[varName].allocationFunction = fnName;
+               mustCallEstimates[varName].deallocationFunction = MemoryFunctions[fnName];
             }
 
-
-            mustCallEstimates[varName].mustCallIsSatisfied = false; 
-
-            for (int i = 0; i < AllocationFunctions.size(); i++) {
-              if (AllocationFunctions.at(i) == fnName) {
-                mustCallEstimates[varName].deallocationFunction = DeallocationFunctions.at(i);
-              }
-            }
+            mustCallEstimates[varName].mustCallIsSatisfied = false;     
 
 
           }
@@ -197,16 +189,6 @@ void transfer(Instruction* I, MustCallEst& mustCallEstimates, AliasMap& aliasedV
     
     }
     else if (auto Call = dyn_cast<CallInst>(I)) {
-      const DebugLoc &debugLoc = I->getDebugLoc();
-      logout("debug loc = " << debugLoc.getLine() << " " << debugLoc.getCol())
-      
-
-      std::string functionName = "branch = " + blockName 
-        + " Line = " + std::to_string(debugLoc.getLine()) + " Col = " + std::to_string(debugLoc.getCol()) 
-        + " name = " + Call->getCalledFunction()->getName().str();
-
-      logout("function name = " << functionName)
-
       for (unsigned i = 0; i < Call->getNumArgOperands(); ++i) {
           Value *argument = Call->getArgOperand(i);
           std::string argName = variable(argument);
@@ -215,29 +197,50 @@ void transfer(Instruction* I, MustCallEst& mustCallEstimates, AliasMap& aliasedV
             argName = aliasedVars[argName];
           }
 
-          logout("arg = " << argName << "|") 
+          logout("arg = " << argName) 
+
+          // * i THINK this is what distinguishes "real" variables defined in the program from constants and other irrelevant llvm stuff 
+          if (argName[0] != '%') return; 
+
+          // * (i think this handles) cases where an entirely random and undefined (implicitly declared) function shows up 
+          if (Call->getCalledFunction() == NULL) {
+            const DebugLoc &debugLoc = I->getDebugLoc();
+            std::string location = "Line " + std::to_string(debugLoc.getLine()) + ", Col " + std::to_string(debugLoc.getCol());
+
+            errs() << "WARNING: unknown (unforseen occurence) & unsafe func on " << location << ". must call satisfied property for '" << argName << "' set to false.\n";
+            
+            mustCallEstimates[argName].mustCallIsSatisfied = false; 
+            return; 
+          }
 
           std::string fnName = Call->getCalledFunction()->getName().str();
 
-          for (int i = 0; i < SafeFunctions.size(); i++) {
-            if (fnName == SafeFunctions.at(i)) return; 
+          logout("fnName for call = " << fnName)
+
+          if (UnsafeFunctions[fnName]) {
+            logout("unsafe func")
+            mustCallEstimates[argName].mustCallIsSatisfied = false; 
+            return; 
           }
 
-          for (int i = 0; i < UnsafeFunctions.size(); i++) {
-            if (fnName == UnsafeFunctions.at(i)) {
-              mustCallEstimates[argName].mustCallIsSatisfied = false; 
-            }
+          if (SafeFunctions[fnName]) {
+            logout("safe func")
+            return; 
           }
 
-          for (int i = 0; i < AllocationFunctions.size(); i++) {
-            if (fnName == AllocationFunctions.at(i)) {
+
+          for (auto Pair : MemoryFunctions) {
+            logout("doing stuffs = " << Pair.first << " " << Pair.second << " " << fnName)
+            if (fnName == Pair.first) { // allocation function
               mustCallEstimates[argName].allocationFunction = fnName;
+              mustCallEstimates[argName].deallocationFunction = MemoryFunctions[fnName];
               mustCallEstimates[argName].mustCallIsSatisfied = false; 
             }
-            else if (fnName == DeallocationFunctions.at(i)) {
+            else if (fnName == Pair.second) { // deallocation function 
               mustCallEstimates[argName].mustCallIsSatisfied = true;  
             }
           }
+          
 
 
 
@@ -253,8 +256,48 @@ void MustCallAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
   SetVector<Instruction *> WorkSet;
   SetVector<Value *> PointerSet;
 
-  if (F.getName() != "main") return; 
+  
+  std::string fnName = F.getName().str(); 
+  bool functionIsKnown = false; 
+  logout("fnname = " << fnName)
+
   loadFunctions();
+
+  // check if code re-defines a safe function or memory function. if so, cast it as a unsafe function
+  if (SafeFunctions[fnName]) {
+    SafeFunctions[fnName] = false; 
+    UnsafeFunctions[fnName] = true; 
+    functionIsKnown = true; 
+    errs() << "WARNING: Re-definition of safe function '" << fnName << "' identified on  and will be labelled as unsafe.\n";
+  }
+
+  for (auto Pair : MemoryFunctions) {
+    if (fnName == Pair.first) {
+      UnsafeFunctions[fnName] = true; 
+      functionIsKnown = true; 
+      errs() << "**WARNING**: Re-definition of allocation function '" << fnName << "' identified and will be labelled as unsafe.\n";
+    }
+
+    if (fnName == Pair.second) {
+      UnsafeFunctions[fnName] = true; 
+      functionIsKnown = true; 
+      errs() << "**WARNING**: Re-definition of deallocation function '" << fnName << "' identified and will be labelled as unsafe.\n";
+    }
+  }
+
+  if (fnName == "main") {
+    functionIsKnown = true; 
+  }
+
+  if (!functionIsKnown) {
+    errs() << "WARNING: Unknown function '" << fnName << "' identified and will be labelled as unsafe.\n";
+    UnsafeFunctions[fnName] = true; 
+  }
+
+  
+
+  if (fnName != "main") return; 
+  
   
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     WorkSet.insert(&(*I));
@@ -273,6 +316,15 @@ void MustCallAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
 
   for (auto Pair : MustCallEstimates) {
     errs() << Pair.first << " = " << Pair.second.allocationFunction << " " << Pair.second.deallocationFunction << " " << Pair.second.mustCallIsSatisfied << " \n";
+  }
+
+   logout("\n\n#### filtered output #####\n\n")
+
+   for (auto Pair : MustCallEstimates) {
+    if (Pair.first.size() == 0 || Pair.second.allocationFunction.size() == 0 || Pair.second.deallocationFunction.size() == 0) continue; 
+
+    errs() << Pair.first << " = " << Pair.second.allocationFunction << " " << Pair.second.deallocationFunction << " " << Pair.second.mustCallIsSatisfied << " \n";
+    
   }
 
 }

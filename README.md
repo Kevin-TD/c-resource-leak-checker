@@ -14,3 +14,4 @@ This analysis runs with docker; here are the steps to run the analysis:
 9. Load the results with ```opt -load MustCallPass.so -MustCallPass ../test/test2.ll ```
 
 Make further changes to repo in the include and src directories, and for future changes, just run ```make ; clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test2.c -o ../test/test2.ll ; opt -load MustCallPass.so -MustCallPass ../test/test2.ll ``` (with test files changes accordingly).
+Alternatively, just run the run_test.sh file (```sh ../run_test.sh <test number>```); e.g, ```sh ../run_test.sh 1``` will run the analysis for test/test1.c

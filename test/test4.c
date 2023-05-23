@@ -11,8 +11,8 @@
 
 // perhaps we'll report an error whenever critical functions are re-defined  
 
-void *malloc(size_t __size) {
-    printf("false malloc");
+void unknown_function(char* s) {
+    printf("do nothing!");
 }
 
 int main () {
@@ -30,6 +30,8 @@ int main () {
    printf("String = %s,  Address = %u\n", str, str);
 
    free(str);
+
+   unknown_function(str);
    
    return(0);
 }

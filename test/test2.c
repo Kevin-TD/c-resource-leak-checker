@@ -15,7 +15,7 @@ int main () {
    strcat(str, "hello");
    printf("String = %s,  Address = %u\n", str, str);
 
-   // free(str);
+   free(str);
    
    return(0);
 }
