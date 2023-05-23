@@ -1,5 +1,5 @@
-#ifndef DIV_ZERO_ANALYSIS_H
-#define DIV_ZERO_ANALYSIS_H
+#ifndef RUN_ANALYSIS_H
+#define RUN_ANALYSIS_H
 
 #include "llvm/ADT/SetVector.h"
 #include "llvm/IR/CFG.h"
@@ -20,10 +20,10 @@ using namespace llvm;
 
 namespace dataflow {
 
-
 struct MustCallAnalysis : public FunctionPass {
   static char ID;
   MustCallAnalysis() : FunctionPass(ID) {}
+  
   /**
    * This function is called for each function F in the input C program
    * that the compiler encounters during a pass.
@@ -47,4 +47,4 @@ protected:
 };
 } // namespace dataflow
 
-#endif // DIV_ZERO_ANALYSIS_H
+#endif // RUN_ANALYSIS_H

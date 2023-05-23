@@ -28,10 +28,55 @@ typedef std::map<std::string, std::string> AliasMap;
 
 namespace dataflow {
 
-std::vector<std::string> SafeFunctions = { "strcpy", "printf" }; 
-std::vector<std::string> UnsafeFunctions = { "realloc" }; 
-std::vector<std::string> AllocationFunctions = { "malloc" }; 
-std::vector<std::string> DeallocationFunctions = { "free" }; 
+std::vector<std::string> SafeFunctions;
+std::vector<std::string> UnsafeFunctions;
+std::vector<std::string> AllocationFunctions;
+std::vector<std::string> DeallocationFunctions;
+// TODO: change to hashmap for better speed (?)
+
+void loadFunctions() { 
+  // working directory is /build 
+
+  std::ifstream safeFunctionsFile("../src/Functions/safe.txt");
+  std::ifstream unsafeFunctionsFile("../src/Functions/unsafe.txt");
+  std::ifstream memoryFunctionsFile("../src/Functions/memory.txt");
+
+  std::string line; 
+  if (safeFunctionsFile.is_open()) {
+    while (std::getline(safeFunctionsFile, line)) {
+      SafeFunctions.push_back(line);
+    }
+  }
+
+  if (unsafeFunctionsFile.is_open()) {
+    while (std::getline(unsafeFunctionsFile, line)) {
+      UnsafeFunctions.push_back(line);
+    }
+  }
+
+  if (memoryFunctionsFile.is_open()) {
+    while (std::getline(memoryFunctionsFile, line)) {
+      std::string s; 
+
+      for (int i = 0; i < line.size(); i++) {
+        if (line[i] == ' ') {
+          AllocationFunctions.push_back(s);
+          s = ""; 
+          continue;
+        }
+        s += line[i];
+      }
+      DeallocationFunctions.push_back(s);
+    }
+
+  }
+
+  safeFunctionsFile.close();
+  unsafeFunctionsFile.close();
+  memoryFunctionsFile.close();
+
+
+}
 
 
 /**
@@ -128,7 +173,14 @@ void transfer(Instruction* I, MustCallEst& mustCallEstimates, AliasMap& aliasedV
 
             // (assuming) these functions take no args, 0 used as dummy val 
             std::string fnName = Call->getCalledFunction()->getName().str(); 
-            mustCallEstimates[varName].allocationFunction = fnName;
+
+            for (int i = 0; i < AllocationFunctions.size(); i++) {
+              if (fnName == AllocationFunctions.at(i)) {
+                mustCallEstimates[varName].allocationFunction = fnName;
+              }
+            }
+
+
             mustCallEstimates[varName].mustCallIsSatisfied = false; 
 
             for (int i = 0; i < AllocationFunctions.size(); i++) {
@@ -172,7 +224,7 @@ void transfer(Instruction* I, MustCallEst& mustCallEstimates, AliasMap& aliasedV
           }
 
           for (int i = 0; i < UnsafeFunctions.size(); i++) {
-            if (fnName == SafeFunctions.at(i)) {
+            if (fnName == UnsafeFunctions.at(i)) {
               mustCallEstimates[argName].mustCallIsSatisfied = false; 
             }
           }
@@ -202,6 +254,7 @@ void MustCallAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
   SetVector<Value *> PointerSet;
 
   if (F.getName() != "main") return; 
+  loadFunctions();
   
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     WorkSet.insert(&(*I));

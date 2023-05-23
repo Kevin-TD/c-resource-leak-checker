@@ -20,7 +20,5 @@
 // want to have it so we load in the text files; due to current issues with linking and reading other dirs, it'll just be global vectors 
 
 namespace dataflow {
-    void loadFunctions() {
-
-    }
+    
 }
