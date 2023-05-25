@@ -24,7 +24,7 @@ int main () {
    printf("String = %s,  Address = %u\n", str, str);
 
     if (a == -15) { // impossible
-
+         free(str); // end
     }
     else if (a == -10) { // impossible
         char* str1; 
@@ -32,20 +32,16 @@ int main () {
 
         if (a == -9) { // very impossible 
             free(str1);
-        } else {
-            free(str1);
-            realloc(str, 15);
-        }
+        } 
+
+         free(str); // then
 
     }
     else {
-        free(str);
+        // free(str);
     }
-
-    // expectations: str does not have called methods satisfied, str1 has called methods satisfied 
-
    
-   
+    // expectations: %str must call satisfied, %str1 must call not satisfied
    
    return(0);
 }

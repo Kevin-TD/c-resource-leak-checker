@@ -29,6 +29,8 @@ typedef std::map<std::string, std::string> VarBranchMap;
 // TODO: handle branching (how do we handling branching?)
 // TODO: handle switch statements 
 // TODO: how final result is stored will need to change. i want to make it so that for every memory or unsafe function call, dataflow facts are added, INCLUDING information about branching. at the end of the code block, we then conclude if must calls are satisfied. 
+// TODO: do we handle cases where it might call a dealloction function twice? 
+// TODO: handle while loops 
 
 namespace dataflow {
 
@@ -138,18 +140,19 @@ std::vector<Instruction *> getSuccessors(Instruction *Inst) {
 }
 
 
-void transfer(Instruction* I, CME& calledMethodsEst, AliasMap& aliasedVars, SetVector<Instruction *>& workSet, rCME& rCalledMethodsEst) {
+void transfer(Instruction* I, CME& calledMethodsEst, AliasMap& aliasedVars, SetVector<Instruction *>& workSet, rCME& rCalledMethodsEst, VarBranchMap& varsBranchMap) {
   std::string branchName = I->getParent()->getName().str();
 
    if (auto Alloca = dyn_cast<AllocaInst>(I)) {
       logout("allocate inst, name = " << ("%" + Alloca->getName()))
       calledMethodsEst["%" + Alloca->getName().str()] = {};
       rCalledMethodsEst["%" + Alloca->getName().str()] = {};
+      varsBranchMap["%" + Alloca->getName().str()] = branchName;
       
     }
     else if (auto Load = dyn_cast<LoadInst>(I)) {
       logout("(load) name is " << variable(Load) << " for " << variable(Load->getPointerOperand()) )
-      aliasedVars[variable(Load)] = variable(Load->getPointerOperand());
+      aliasedVars[variable(Load)] = variable(Load->getPointerOperand()); 
     }
     else if (auto Store = dyn_cast<StoreInst>(I)) {
 
@@ -166,13 +169,6 @@ void transfer(Instruction* I, CME& calledMethodsEst, AliasMap& aliasedVars, SetV
         if (valueToStore == Inst) {
           if (auto Call = dyn_cast<CallInst>(Inst)) {
             std::string varName = variable(Store->getOperand(1)); 
-
-             if (aliasedVars.count(varName) != 0) {
-              logout("receiving aliased as " << aliasedVars[varName])
-              varName = aliasedVars[varName];
-            }
-
-            
             std::string fnName = Call->getCalledFunction()->getName().str(); 
 
 
@@ -186,6 +182,8 @@ void transfer(Instruction* I, CME& calledMethodsEst, AliasMap& aliasedVars, SetV
 
                rCalledMethodsEst[varName].allocationFunction = fnName;
                rCalledMethodsEst[varName].deallocationFunction = MemoryFunctions[fnName];
+
+               varsBranchMap[varName] = branchName; 
             }
 
             calledMethodsEst[varName].mustCallIsSatisfied = false;  
@@ -217,7 +215,7 @@ void transfer(Instruction* I, CME& calledMethodsEst, AliasMap& aliasedVars, SetV
             const DebugLoc &debugLoc = I->getDebugLoc();
             std::string location = "Line " + std::to_string(debugLoc.getLine()) + ", Col " + std::to_string(debugLoc.getCol());
 
-            errs() << "WARNING: unknown (unforseen occurence) & unsafe func on " << location << ". must call satisfied property for '" << argName << "' set to false.\n";
+            errs() << "CME-WARNING: unknown (unforseen occurence) & unsafe func on " << location << ". must call satisfied property for '" << argName << "' set to false.\n";
             
             calledMethodsEst[argName].mustCallIsSatisfied = false; 
             rCalledMethodsEst[argName].estimates[branchName] = false; 
@@ -232,6 +230,7 @@ void transfer(Instruction* I, CME& calledMethodsEst, AliasMap& aliasedVars, SetV
             logout("unsafe func")
             calledMethodsEst[argName].mustCallIsSatisfied = false; 
             rCalledMethodsEst[argName].estimates[branchName] = false; 
+            rCalledMethodsEst[argName].branchCallsUnsafeMap[branchName] = true; 
             return; 
           }
 
@@ -242,7 +241,7 @@ void transfer(Instruction* I, CME& calledMethodsEst, AliasMap& aliasedVars, SetV
 
 
           for (auto Pair : MemoryFunctions) {
-            logout("pairs& fn name = " << Pair.first << " " << Pair.second << " " << fnName)
+            logout("pairs and fn name = " << Pair.first << " " << Pair.second << " " << fnName)
             if (fnName == Pair.first) { // allocation function
               calledMethodsEst[argName].allocationFunction = fnName;
               calledMethodsEst[argName].deallocationFunction = MemoryFunctions[fnName];
@@ -251,6 +250,8 @@ void transfer(Instruction* I, CME& calledMethodsEst, AliasMap& aliasedVars, SetV
               rCalledMethodsEst[argName].allocationFunction = fnName;
               rCalledMethodsEst[argName].deallocationFunction = MemoryFunctions[fnName];
               rCalledMethodsEst[argName].estimates[branchName] = false; 
+
+              varsBranchMap[argName] = branchName; // * questionable utility 
             }
             else if (fnName == Pair.second) { // deallocation function 
               calledMethodsEst[argName].mustCallIsSatisfied = true;  
@@ -265,10 +266,34 @@ void transfer(Instruction* I, CME& calledMethodsEst, AliasMap& aliasedVars, SetV
       }
     }
     else if (auto Branch = dyn_cast<BranchInst>(I)) {
-      // Assumptions about LLVM IR: an if statement will start with a label "%if.then"
-
 
     }
+
+    // check to see if we didn't before handle a branch 
+    // rCME& rCalledMethodsEst
+    for (auto Pair : rCalledMethodsEst) {
+      std::string varName = Pair.first; 
+      std::string branchOfVar = varsBranchMap[varName]; 
+      rCalledMethodsEstimate rcme = Pair.second; 
+      std::vector<Instruction *> preds = getPredecessors(I);
+      bool moveForward = false; 
+
+      for (auto pred : preds) {
+        std::string predName = pred->getParent()->getName().str(); 
+        if (predName == branchOfVar) {
+          moveForward = true; 
+          break; 
+        }
+      }
+
+
+      if (rcme.estimates.count(branchName) == 0 && moveForward && rcme.allocationFunction.size() != 0 && rcme.deallocationFunction.size() != 0) {
+        logout("currently missing branch (may be defined later but for now will be set to false) " << varName << " " << branchName)
+        rCalledMethodsEst[varName].estimates[branchName] = false; 
+      }
+
+    }
+
 }
 
 
@@ -288,20 +313,20 @@ void MustCallAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
     SafeFunctions[fnName] = false; 
     UnsafeFunctions[fnName] = true; 
     functionIsKnown = true; 
-    errs() << "WARNING: Re-definition of safe function '" << fnName << "' identified on  and will be labelled as unsafe.\n";
+    errs() << "CME-WARNING: Re-definition of safe function '" << fnName << "' identified on  and will be labelled as unsafe.\n";
   }
 
   for (auto Pair : MemoryFunctions) {
     if (fnName == Pair.first) {
       UnsafeFunctions[fnName] = true; 
       functionIsKnown = true; 
-      errs() << "**WARNING**: Re-definition of allocation function '" << fnName << "' identified and will be labelled as unsafe.\n";
+      errs() << "**CME-WARNING**: Re-definition of allocation function '" << fnName << "' identified and will be labelled as unsafe.\n";
     }
 
     if (fnName == Pair.second) {
       UnsafeFunctions[fnName] = true; 
       functionIsKnown = true; 
-      errs() << "**WARNING**: Re-definition of deallocation function '" << fnName << "' identified and will be labelled as unsafe.\n";
+      errs() << "**CME-WARNING**: Re-definition of deallocation function '" << fnName << "' identified and will be labelled as unsafe.\n";
     }
   }
 
@@ -310,7 +335,7 @@ void MustCallAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
   }
 
   if (!functionIsKnown) {
-    errs() << "WARNING: Unknown function '" << fnName << "' identified and will be labelled as unsafe.\n";
+    errs() << "CME-WARNING: Unknown function '" << fnName << "' identified and will be labelled as unsafe.\n";
     UnsafeFunctions[fnName] = true; 
   }
 
@@ -323,16 +348,23 @@ void MustCallAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
     WorkSet.insert(&(*I));
     PointerSet.insert(&(*I));
     logout("inst = " << *I);
-    logout("block =" << I->getParent()->getName())
+    logout("block = " << I->getParent()->getName())
+    logout("preds = ")
+    std::vector<Instruction *> preds = getPredecessors(&(*I));
+    for (auto pred : preds) {
+      logout(pred->getParent()->getName())
+    }
+    logout("end of preds")
+
   }
 
   CME calledMethodsEstimate; 
   rCME myRCalledMethodsEstimate;
   AliasMap AliasedVars; 
-  VarBranchMap vbm; 
+  VarBranchMap vbm; // rename to reflect that it will be the name where allocation function was called (might include it for where unsafe function is called?)
 
   for (auto I : WorkSet) {
-    transfer(I, calledMethodsEstimate, AliasedVars, WorkSet, myRCalledMethodsEstimate);
+    transfer(I, calledMethodsEstimate, AliasedVars, WorkSet, myRCalledMethodsEstimate, vbm);
   }
 
   logout("\n\n#### end of execution #####\n\n")
@@ -341,17 +373,68 @@ void MustCallAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
     errs() << Pair.first << " = " << Pair.second.allocationFunction << " " << Pair.second.deallocationFunction << " " << Pair.second.mustCallIsSatisfied << " \n";
   }
 
-   logout("\n\n#### RCME #####\n\n")
-   for (auto Pair : myRCalledMethodsEstimate) {
-      errs() << Pair.first << " = " << Pair.second.allocationFunction << " " << Pair.second.deallocationFunction << ":\n";
-      for (auto Pair2 : Pair.second.estimates) {
-        errs() << Pair2.first << " " << Pair2.second << "\n";
-      }
-   }
+  logout("\n\n#### VARS BRANCH MAP #####\n\n")
+  for (auto Pair : vbm) {
+    errs() << Pair.first << " " << Pair.second << "\n";
+  }
 
-   // if statement collapse logic: 
+  // if statement collapse logic: 
    // if CME concludes that in the branch where the variable is defined, the must calls are satisfied, then the must call is definitely satisfied 
    // if not, then for all other branches, if the must call is satisfied, then the must call is definitely satisfied. 
+
+  for (auto Pair : myRCalledMethodsEstimate) {
+    std::string varName = Pair.first; 
+    std::string branchOfVarName = vbm[varName];
+    rCalledMethodsEstimate rcme = Pair.second; 
+    bool isFinalMustCallSatisfied = true; 
+    bool mustCallSatisfiedAtBranchEnd = false; 
+    bool branchCallsUnsafe = false;
+
+
+    for (auto Pair2 : rcme.estimates) {
+      std::string branchName = Pair2.first; 
+      bool mustCallSatisfied = Pair2.second; 
+
+      if (rcme.branchCallsUnsafeMap[branchName] && !mustCallSatisfied) {
+        branchCallsUnsafe = true; 
+      }
+
+      if ((branchName == branchOfVarName || branchName.substr(0, 6).compare("if.end") == 0) && mustCallSatisfied) {
+          mustCallSatisfiedAtBranchEnd = true; 
+      }
+
+      if (!mustCallSatisfied) {
+        isFinalMustCallSatisfied = false; 
+      }
+
+    }
+
+    if (mustCallSatisfiedAtBranchEnd) {
+      isFinalMustCallSatisfied = true; 
+    }
+
+    myRCalledMethodsEstimate[varName].finalMustCallIsSatisfied = isFinalMustCallSatisfied;
+
+  }
+
+   logout("\n\n#### RCME (filtered) #####\n\n")
+   for (auto Pair : myRCalledMethodsEstimate) {
+    if (Pair.first.size() == 0 || Pair.second.allocationFunction.size() == 0 || Pair.second.deallocationFunction.size() == 0) continue; 
+    
+      errs() << Pair.first << " = " << Pair.second.allocationFunction << " " << Pair.second.deallocationFunction << ":\n";
+      for (auto Pair2 : Pair.second.estimates) {
+        errs() << Pair2.first << " must call sat = " << Pair2.second << "\n";
+      }
+      for (auto Pair2 : Pair.second.branchCallsUnsafeMap) {
+        errs() << "* " << Pair2.first << " called unsafe = " << Pair2.second << "\n";
+      }
+      errs() << "Concludes: " << Pair.second.finalMustCallIsSatisfied << "\n\n";
+   }
+
+
+ 
+
+  
 
 
    logout("\n\n#### filtered output #####\n\n")
@@ -359,7 +442,7 @@ void MustCallAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
    for (auto Pair : calledMethodsEstimate) {
     if (Pair.first.size() == 0 || Pair.second.allocationFunction.size() == 0 || Pair.second.deallocationFunction.size() == 0) continue; 
 
-    errs() << Pair.first << " = " << Pair.second.allocationFunction << " " << Pair.second.deallocationFunction << " " << Pair.second.mustCallIsSatisfied << " \n";
+    errs() << Pair.first << " = " << Pair.second.allocationFunction << " " << Pair.second.deallocationFunction << " must call satisfied = " << Pair.second.mustCallIsSatisfied << " \n";
     
   }
 

@@ -30,6 +30,8 @@ int main () {
    printf("String = %s,  Address = %u\n", str, str);
 
    free(str);
+
+   // expectations: no results, as malloc would no longer be considered a memory allocating function. warning that malloc is re-defined would emit
    
    return(0);
 }

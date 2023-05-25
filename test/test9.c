@@ -23,6 +23,8 @@ int main () {
    strcat(str, "hello");
    printf("String = %s,  Address = %u\n", str, str);
 
+   free(str);
+
     if (a == -15) { // impossible
 
     }
@@ -41,11 +43,8 @@ int main () {
     else {
         free(str);
     }
-
-    // expectations: str does not have called methods satisfied, str1 has called methods satisfied 
-
    
-   
+    // expectations: %str must call not satisfied, %str1 must call satisfied
    
    return(0);
 }

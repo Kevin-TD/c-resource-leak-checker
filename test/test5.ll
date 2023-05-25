@@ -56,9 +56,7 @@ entry:
   call void @free(i8* %7) #4, !dbg !47
   %8 = load i8*, i8** %str, align 8, !dbg !48
   %call6 = call i8* @strcpy(i8* %8, i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str.1, i32 0, i32 0)) #4, !dbg !49
-  %9 = load i8*, i8** %str, align 8, !dbg !50
-  %call7 = call i32 (i8*, ...) bitcast (i32 (...)* @unknown_function to i32 (i8*, ...)*)(i8* %9), !dbg !51
-  ret i32 0, !dbg !52
+  ret i32 0, !dbg !50
 }
 
 ; Function Attrs: nounwind
@@ -72,8 +70,6 @@ declare dso_local i8* @strcat(i8*, i8*) #3
 
 ; Function Attrs: nounwind
 declare dso_local void @free(i8*) #3
-
-declare dso_local i32 @unknown_function(...) #2
 
 attributes #0 = { noinline nounwind uwtable "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone speculatable }
@@ -135,6 +131,4 @@ attributes #4 = { nounwind }
 !47 = !DILocation(line: 32, column: 4, scope: !23)
 !48 = !DILocation(line: 34, column: 11, scope: !23)
 !49 = !DILocation(line: 34, column: 4, scope: !23)
-!50 = !DILocation(line: 36, column: 21, scope: !23)
-!51 = !DILocation(line: 36, column: 4, scope: !23)
-!52 = !DILocation(line: 38, column: 4, scope: !23)
+!50 = !DILocation(line: 36, column: 4, scope: !23)

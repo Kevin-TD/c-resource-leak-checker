@@ -2,19 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-int otherFunc(char* str) {
-    int a = getchar(); 
-
-    if (a == -15) { // impossible
-
-    }
-    else if (a == -10) { // impossible
-        
-    }
-    else {
-        free(str);
-    }
-}
 
 int main () {
    char *str;
@@ -23,6 +10,8 @@ int main () {
    str = (char *) malloc(15);
    strcpy(str, "helloworld");
    printf("String = %s,  Address = %u\n", str, str);
+
+   free(str);
 
 
     // for called methods, if any single one of these branches does not satisfy a must call, then we conclude at the end that must call is not satisfied 
@@ -45,12 +34,10 @@ int main () {
         free(str);
     }
 
-   printf("String = %s,  Address = %u\n", str, str);
+    // expectations: must call not satisfied 
+    // reasoning: if in any branch (even if we know it is not possible to reach it) an unsafe method is called, the must call should no longer be satisfied 
 
 
-    
-    // call methods pass should say that str does not have its must call satisfied, since it is not the case that in all its branches, free(str) is called. the consistency pass should conclude that it does have it satisfied, as the first two branches are impossible cases 
-   
    
    return(0);
 }

@@ -32,6 +32,8 @@ int main () {
    free(str);
 
    unknown_function(str);
+
+   // expectations: %str says must call is not satisfied 
    
    return(0);
 }

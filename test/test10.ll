@@ -1,5 +1,5 @@
-; ModuleID = '../test/test8.c'
-source_filename = "../test/test8.c"
+; ModuleID = '../test/test10.c'
+source_filename = "../test/test10.c"
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
@@ -58,46 +58,41 @@ entry:
   br i1 %cmp, label %if.then, label %if.else, !dbg !49
 
 if.then:                                          ; preds = %entry
-  br label %if.end16, !dbg !50
+  %8 = load i8*, i8** %str, align 8, !dbg !50
+  call void @free(i8* %8) #4, !dbg !52
+  br label %if.end14, !dbg !53
 
 if.else:                                          ; preds = %entry
-  %8 = load i32, i32* %a, align 4, !dbg !52
-  %cmp7 = icmp eq i32 %8, -10, !dbg !54
-  br i1 %cmp7, label %if.then8, label %if.else14, !dbg !55
+  %9 = load i32, i32* %a, align 4, !dbg !54
+  %cmp7 = icmp eq i32 %9, -10, !dbg !56
+  br i1 %cmp7, label %if.then8, label %if.else12, !dbg !57
 
 if.then8:                                         ; preds = %if.else
-  call void @llvm.dbg.declare(metadata i8** %str1, metadata !56, metadata !DIExpression()), !dbg !58
-  %call9 = call noalias i8* @malloc(i64 15) #4, !dbg !59
-  store i8* %call9, i8** %str1, align 8, !dbg !60
-  %9 = load i32, i32* %a, align 4, !dbg !61
-  %cmp10 = icmp eq i32 %9, -9, !dbg !63
-  br i1 %cmp10, label %if.then11, label %if.else12, !dbg !64
+  call void @llvm.dbg.declare(metadata i8** %str1, metadata !58, metadata !DIExpression()), !dbg !60
+  %call9 = call noalias i8* @malloc(i64 15) #4, !dbg !61
+  store i8* %call9, i8** %str1, align 8, !dbg !62
+  %10 = load i32, i32* %a, align 4, !dbg !63
+  %cmp10 = icmp eq i32 %10, -9, !dbg !65
+  br i1 %cmp10, label %if.then11, label %if.end, !dbg !66
 
 if.then11:                                        ; preds = %if.then8
-  %10 = load i8*, i8** %str1, align 8, !dbg !65
-  call void @free(i8* %10) #4, !dbg !67
-  br label %if.end, !dbg !68
+  %11 = load i8*, i8** %str1, align 8, !dbg !67
+  call void @free(i8* %11) #4, !dbg !69
+  br label %if.end, !dbg !70
 
-if.else12:                                        ; preds = %if.then8
-  %11 = load i8*, i8** %str1, align 8, !dbg !69
-  call void @free(i8* %11) #4, !dbg !71
-  %12 = load i8*, i8** %str, align 8, !dbg !72
-  %call13 = call i8* @realloc(i8* %12, i64 15) #4, !dbg !73
-  br label %if.end
+if.end:                                           ; preds = %if.then11, %if.then8
+  %12 = load i8*, i8** %str, align 8, !dbg !71
+  call void @free(i8* %12) #4, !dbg !72
+  br label %if.end13, !dbg !73
 
-if.end:                                           ; preds = %if.else12, %if.then11
-  br label %if.end15, !dbg !74
+if.else12:                                        ; preds = %if.else
+  br label %if.end13
 
-if.else14:                                        ; preds = %if.else
-  %13 = load i8*, i8** %str, align 8, !dbg !75
-  call void @free(i8* %13) #4, !dbg !77
-  br label %if.end15
+if.end13:                                         ; preds = %if.else12, %if.end
+  br label %if.end14
 
-if.end15:                                         ; preds = %if.else14, %if.end
-  br label %if.end16
-
-if.end16:                                         ; preds = %if.end15, %if.then
-  ret i32 0, !dbg !78
+if.end14:                                         ; preds = %if.end13, %if.then
+  ret i32 0, !dbg !74
 }
 
 declare dso_local i32 @getchar() #3
@@ -127,7 +122,7 @@ attributes #4 = { nounwind }
 !llvm.ident = !{!9}
 
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang version 8.0.1- (branches/release_80)", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug, enums: !2, retainedTypes: !3, nameTableKind: None)
-!1 = !DIFile(filename: "../test/test8.c", directory: "/C-resource-leak-checker/build")
+!1 = !DIFile(filename: "../test/test10.c", directory: "/C-resource-leak-checker/build")
 !2 = !{}
 !3 = !{!4}
 !4 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !5, size: 64)
@@ -176,32 +171,28 @@ attributes #4 = { nounwind }
 !47 = distinct !DILexicalBlock(scope: !22, file: !1, line: 26, column: 9)
 !48 = !DILocation(line: 26, column: 11, scope: !47)
 !49 = !DILocation(line: 26, column: 9, scope: !22)
-!50 = !DILocation(line: 28, column: 5, scope: !51)
+!50 = !DILocation(line: 27, column: 15, scope: !51)
 !51 = distinct !DILexicalBlock(scope: !47, file: !1, line: 26, column: 19)
-!52 = !DILocation(line: 29, column: 14, scope: !53)
-!53 = distinct !DILexicalBlock(scope: !47, file: !1, line: 29, column: 14)
-!54 = !DILocation(line: 29, column: 16, scope: !53)
-!55 = !DILocation(line: 29, column: 14, scope: !47)
-!56 = !DILocalVariable(name: "str1", scope: !57, file: !1, line: 30, type: !4)
-!57 = distinct !DILexicalBlock(scope: !53, file: !1, line: 29, column: 24)
-!58 = !DILocation(line: 30, column: 15, scope: !57)
-!59 = !DILocation(line: 31, column: 25, scope: !57)
-!60 = !DILocation(line: 31, column: 14, scope: !57)
-!61 = !DILocation(line: 33, column: 13, scope: !62)
-!62 = distinct !DILexicalBlock(scope: !57, file: !1, line: 33, column: 13)
-!63 = !DILocation(line: 33, column: 15, scope: !62)
-!64 = !DILocation(line: 33, column: 13, scope: !57)
-!65 = !DILocation(line: 34, column: 18, scope: !66)
-!66 = distinct !DILexicalBlock(scope: !62, file: !1, line: 33, column: 22)
-!67 = !DILocation(line: 34, column: 13, scope: !66)
-!68 = !DILocation(line: 35, column: 9, scope: !66)
-!69 = !DILocation(line: 36, column: 18, scope: !70)
-!70 = distinct !DILexicalBlock(scope: !62, file: !1, line: 35, column: 16)
-!71 = !DILocation(line: 36, column: 13, scope: !70)
-!72 = !DILocation(line: 37, column: 21, scope: !70)
-!73 = !DILocation(line: 37, column: 13, scope: !70)
-!74 = !DILocation(line: 40, column: 5, scope: !57)
-!75 = !DILocation(line: 42, column: 14, scope: !76)
-!76 = distinct !DILexicalBlock(scope: !53, file: !1, line: 41, column: 10)
-!77 = !DILocation(line: 42, column: 9, scope: !76)
-!78 = !DILocation(line: 49, column: 4, scope: !22)
+!52 = !DILocation(line: 27, column: 10, scope: !51)
+!53 = !DILocation(line: 28, column: 5, scope: !51)
+!54 = !DILocation(line: 29, column: 14, scope: !55)
+!55 = distinct !DILexicalBlock(scope: !47, file: !1, line: 29, column: 14)
+!56 = !DILocation(line: 29, column: 16, scope: !55)
+!57 = !DILocation(line: 29, column: 14, scope: !47)
+!58 = !DILocalVariable(name: "str1", scope: !59, file: !1, line: 30, type: !4)
+!59 = distinct !DILexicalBlock(scope: !55, file: !1, line: 29, column: 24)
+!60 = !DILocation(line: 30, column: 15, scope: !59)
+!61 = !DILocation(line: 31, column: 25, scope: !59)
+!62 = !DILocation(line: 31, column: 14, scope: !59)
+!63 = !DILocation(line: 33, column: 13, scope: !64)
+!64 = distinct !DILexicalBlock(scope: !59, file: !1, line: 33, column: 13)
+!65 = !DILocation(line: 33, column: 15, scope: !64)
+!66 = !DILocation(line: 33, column: 13, scope: !59)
+!67 = !DILocation(line: 34, column: 18, scope: !68)
+!68 = distinct !DILexicalBlock(scope: !64, file: !1, line: 33, column: 22)
+!69 = !DILocation(line: 34, column: 13, scope: !68)
+!70 = !DILocation(line: 35, column: 9, scope: !68)
+!71 = !DILocation(line: 37, column: 15, scope: !59)
+!72 = !DILocation(line: 37, column: 10, scope: !59)
+!73 = !DILocation(line: 39, column: 5, scope: !59)
+!74 = !DILocation(line: 46, column: 4, scope: !22)

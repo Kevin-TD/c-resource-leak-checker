@@ -32,6 +32,8 @@ int main () {
    free(str);
    
    strcpy(str, "helloworld");
+
+   // expectations: str must call not satisfied
    
    return(0);
 }

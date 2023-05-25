@@ -34,6 +34,8 @@ int main () {
    strcpy(str, "helloworld");
 
    unknown_function(str);
+
+   // expectation: str must call not satisfied 
    
    return(0);
 }
