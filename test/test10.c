@@ -24,7 +24,7 @@ int main () {
    printf("String = %s,  Address = %u\n", str, str);
 
     if (a == -15) { // impossible
-         free(str); // end
+         free(str);
     }
     else if (a == -10) { // impossible
         char* str1; 
@@ -34,11 +34,19 @@ int main () {
             free(str1);
         } 
 
-         free(str); // then
+         free(str); 
 
     }
     else {
-        // free(str);
+      char* str2; 
+        str2 = (char *) malloc(15);
+
+        if (a == -9) { // very impossible 
+            free(str2);
+        } 
+
+        free(str2);
+        free(str); 
     }
    
     // expectations: %str must call satisfied, %str1 must call not satisfied

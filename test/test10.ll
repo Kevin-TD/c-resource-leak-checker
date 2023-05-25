@@ -33,6 +33,7 @@ entry:
   %str = alloca i8*, align 8
   %a = alloca i32, align 4
   %str1 = alloca i8*, align 8
+  %str2 = alloca i8*, align 8
   store i32 0, i32* %retval, align 4
   call void @llvm.dbg.declare(metadata i8** %str, metadata !26, metadata !DIExpression()), !dbg !27
   call void @llvm.dbg.declare(metadata i32* %a, metadata !28, metadata !DIExpression()), !dbg !29
@@ -60,7 +61,7 @@ entry:
 if.then:                                          ; preds = %entry
   %8 = load i8*, i8** %str, align 8, !dbg !50
   call void @free(i8* %8) #4, !dbg !52
-  br label %if.end14, !dbg !53
+  br label %if.end18, !dbg !53
 
 if.else:                                          ; preds = %entry
   %9 = load i32, i32* %a, align 4, !dbg !54
@@ -83,16 +84,33 @@ if.then11:                                        ; preds = %if.then8
 if.end:                                           ; preds = %if.then11, %if.then8
   %12 = load i8*, i8** %str, align 8, !dbg !71
   call void @free(i8* %12) #4, !dbg !72
-  br label %if.end13, !dbg !73
+  br label %if.end17, !dbg !73
 
 if.else12:                                        ; preds = %if.else
-  br label %if.end13
+  call void @llvm.dbg.declare(metadata i8** %str2, metadata !74, metadata !DIExpression()), !dbg !76
+  %call13 = call noalias i8* @malloc(i64 15) #4, !dbg !77
+  store i8* %call13, i8** %str2, align 8, !dbg !78
+  %13 = load i32, i32* %a, align 4, !dbg !79
+  %cmp14 = icmp eq i32 %13, -9, !dbg !81
+  br i1 %cmp14, label %if.then15, label %if.end16, !dbg !82
 
-if.end13:                                         ; preds = %if.else12, %if.end
-  br label %if.end14
+if.then15:                                        ; preds = %if.else12
+  %14 = load i8*, i8** %str2, align 8, !dbg !83
+  call void @free(i8* %14) #4, !dbg !85
+  br label %if.end16, !dbg !86
 
-if.end14:                                         ; preds = %if.end13, %if.then
-  ret i32 0, !dbg !74
+if.end16:                                         ; preds = %if.then15, %if.else12
+  %15 = load i8*, i8** %str2, align 8, !dbg !87
+  call void @free(i8* %15) #4, !dbg !88
+  %16 = load i8*, i8** %str, align 8, !dbg !89
+  call void @free(i8* %16) #4, !dbg !90
+  br label %if.end17
+
+if.end17:                                         ; preds = %if.end16, %if.end
+  br label %if.end18
+
+if.end18:                                         ; preds = %if.end17, %if.then
+  ret i32 0, !dbg !91
 }
 
 declare dso_local i32 @getchar() #3
@@ -195,4 +213,21 @@ attributes #4 = { nounwind }
 !71 = !DILocation(line: 37, column: 15, scope: !59)
 !72 = !DILocation(line: 37, column: 10, scope: !59)
 !73 = !DILocation(line: 39, column: 5, scope: !59)
-!74 = !DILocation(line: 46, column: 4, scope: !22)
+!74 = !DILocalVariable(name: "str2", scope: !75, file: !1, line: 41, type: !4)
+!75 = distinct !DILexicalBlock(scope: !55, file: !1, line: 40, column: 10)
+!76 = !DILocation(line: 41, column: 13, scope: !75)
+!77 = !DILocation(line: 42, column: 25, scope: !75)
+!78 = !DILocation(line: 42, column: 14, scope: !75)
+!79 = !DILocation(line: 44, column: 13, scope: !80)
+!80 = distinct !DILexicalBlock(scope: !75, file: !1, line: 44, column: 13)
+!81 = !DILocation(line: 44, column: 15, scope: !80)
+!82 = !DILocation(line: 44, column: 13, scope: !75)
+!83 = !DILocation(line: 45, column: 18, scope: !84)
+!84 = distinct !DILexicalBlock(scope: !80, file: !1, line: 44, column: 22)
+!85 = !DILocation(line: 45, column: 13, scope: !84)
+!86 = !DILocation(line: 46, column: 9, scope: !84)
+!87 = !DILocation(line: 48, column: 14, scope: !75)
+!88 = !DILocation(line: 48, column: 9, scope: !75)
+!89 = !DILocation(line: 49, column: 14, scope: !75)
+!90 = !DILocation(line: 49, column: 9, scope: !75)
+!91 = !DILocation(line: 54, column: 4, scope: !22)
