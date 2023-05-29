@@ -31,6 +31,7 @@ typedef std::map<std::string, std::string> VarBranchMap;
 // TODO: how final result is stored will need to change. i want to make it so that for every memory or unsafe function call, dataflow facts are added, INCLUDING information about branching. at the end of the code block, we then conclude if must calls are satisfied. 
 // TODO: do we handle cases where it might call a dealloction function twice? 
 // TODO: handle while loops 
+// TODO!: currently "realloc" is labelled unsafe in unsafe.txt. for the sake of having results, it'll remain this way, but this is to change soon to be under realloc.txt instead. "unsafe.txt" end up not being useful 
 
 namespace dataflow {
 
