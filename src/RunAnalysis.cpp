@@ -21,7 +21,7 @@ namespace dataflow {
  */
 
 
-bool MustCallAnalysis::runOnFunction(Function &F) {
+bool CalledMethodsAnalysis::runOnFunction(Function &F) {
   outs() << "Running " << getAnalysisName() << " on " << F.getName() << "\n";
 
   // Initializing InMap and OutMap.
@@ -43,7 +43,7 @@ bool MustCallAnalysis::runOnFunction(Function &F) {
   return false;
 }
 
-char MustCallAnalysis::ID = 1;
-static RegisterPass<MustCallAnalysis> X("MustCallPass", "Must-call-estimates Analysis",
+char CalledMethodsAnalysis::ID = 1;
+static RegisterPass<CalledMethodsAnalysis> X("CalledMethodsPass", "Called methods analysis",
                                        false, false);
 } // namespace dataflow

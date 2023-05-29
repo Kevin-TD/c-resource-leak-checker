@@ -36,6 +36,7 @@ namespace dataflow {
 
 std::map<std::string, bool> SafeFunctions;
 std::map<std::string, bool> UnsafeFunctions;
+std::map<std::string, bool> ReallocFunctions;
 std::map<std::string, std::string> MemoryFunctions;
 
 void loadFunctions() { 
@@ -43,6 +44,7 @@ void loadFunctions() {
 
   std::ifstream safeFunctionsFile("../src/Functions/safe.txt");
   std::ifstream unsafeFunctionsFile("../src/Functions/unsafe.txt");
+  std::ifstream reallocFunctionsFile("../src/Functions/realloc.txt");
   std::ifstream memoryFunctionsFile("../src/Functions/memory.txt");
 
   std::string line; 
@@ -55,6 +57,12 @@ void loadFunctions() {
   if (unsafeFunctionsFile.is_open()) {
     while (std::getline(unsafeFunctionsFile, line)) {
       UnsafeFunctions[line] = true; 
+    }
+  }
+
+  if (reallocFunctionsFile.is_open()) {
+    while (std::getline(reallocFunctionsFile, line)) {
+      ReallocFunctions[line] = true; 
     }
   }
 
@@ -83,6 +91,7 @@ void loadFunctions() {
   safeFunctionsFile.close();
   unsafeFunctionsFile.close();
   memoryFunctionsFile.close();
+  reallocFunctionsFile.close();
 
 
 }
@@ -282,7 +291,7 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, CME& calledMeth
 }
 
 
-void MustCallAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
+void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
   SetVector<Instruction *> WorkSet;
   SetVector<Value *> PointerSet;
 

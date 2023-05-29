@@ -20,9 +20,9 @@ using namespace llvm;
 
 namespace dataflow {
 
-struct MustCallAnalysis : public FunctionPass {
+struct CalledMethodsAnalysis : public FunctionPass {
   static char ID;
-  MustCallAnalysis() : FunctionPass(ID) {}
+  CalledMethodsAnalysis() : FunctionPass(ID) {}
   
   /**
    * This function is called for each function F in the input C program
@@ -43,7 +43,7 @@ protected:
   void doAnalysis(Function &F, PointerAnalysis *PA);
 
 
-  std::string getAnalysisName() { return "MustCallPass"; }
+  std::string getAnalysisName() { return "CalledMethodsPass"; }
 };
 } // namespace dataflow
 
