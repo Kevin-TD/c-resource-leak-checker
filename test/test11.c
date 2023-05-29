@@ -26,6 +26,9 @@ int main () {
          } // if.then10, preds = if.else, B4
          else if (a == -10) { // if.else11, preds = if.else, B5
             printf("%s", str);
+            char* p; 
+            p = (char*)malloc(15);
+            free(p); 
             // if.then13, preds = if.else11, B6
          } else { 
             realloc(str, 15);
@@ -57,5 +60,5 @@ int main () {
    
    return(0);
 
-   // if.end26, preds = if.end25, if.end19, 17 
+   // if.end26, preds = if.end25, if.end19, B17 
 }

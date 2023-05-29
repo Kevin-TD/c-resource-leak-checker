@@ -14,6 +14,7 @@ entry:
   %retval = alloca i32, align 4
   %str = alloca i8*, align 8
   %a = alloca i32, align 4
+  %p = alloca i8*, align 8
   store i32 0, i32* %retval, align 4
   call void @llvm.dbg.declare(metadata i8** %str, metadata !14, metadata !DIExpression()), !dbg !15
   call void @llvm.dbg.declare(metadata i32* %a, metadata !16, metadata !DIExpression()), !dbg !17
@@ -36,7 +37,7 @@ entry:
   %call6 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([28 x i8], [28 x i8]* @.str.1, i32 0, i32 0), i8* %5, i8* %6), !dbg !33
   %7 = load i32, i32* %a, align 4, !dbg !34
   %cmp = icmp eq i32 %7, -15, !dbg !36
-  br i1 %cmp, label %if.then, label %if.else24, !dbg !37
+  br i1 %cmp, label %if.then, label %if.else25, !dbg !37
 
 if.then:                                          ; preds = %entry
   %8 = load i8*, i8** %str, align 8, !dbg !38
@@ -48,7 +49,7 @@ if.then:                                          ; preds = %entry
 if.then8:                                         ; preds = %if.then
   %10 = load i8*, i8** %str, align 8, !dbg !45
   call void @free(i8* %10) #4, !dbg !47
-  br label %if.end19, !dbg !48
+  br label %if.end20, !dbg !48
 
 if.else:                                          ; preds = %if.then
   %11 = load i32, i32* %a, align 4, !dbg !49
@@ -58,66 +59,71 @@ if.else:                                          ; preds = %if.then
 if.then10:                                        ; preds = %if.else
   %12 = load i8*, i8** %str, align 8, !dbg !53
   %call11 = call i8* @realloc(i8* %12, i64 15) #4, !dbg !55
-  br label %if.end18, !dbg !56
+  br label %if.end19, !dbg !56
 
 if.else12:                                        ; preds = %if.else
   %13 = load i32, i32* %a, align 4, !dbg !57
   %cmp13 = icmp eq i32 %13, -10, !dbg !59
-  br i1 %cmp13, label %if.then14, label %if.else16, !dbg !60
+  br i1 %cmp13, label %if.then14, label %if.else17, !dbg !60
 
 if.then14:                                        ; preds = %if.else12
   %14 = load i8*, i8** %str, align 8, !dbg !61
   %call15 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.3, i32 0, i32 0), i8* %14), !dbg !63
-  br label %if.end, !dbg !64
+  call void @llvm.dbg.declare(metadata i8** %p, metadata !64, metadata !DIExpression()), !dbg !65
+  %call16 = call noalias i8* @malloc(i64 15) #4, !dbg !66
+  store i8* %call16, i8** %p, align 8, !dbg !67
+  %15 = load i8*, i8** %p, align 8, !dbg !68
+  call void @free(i8* %15) #4, !dbg !69
+  br label %if.end, !dbg !70
 
-if.else16:                                        ; preds = %if.else12
-  %15 = load i8*, i8** %str, align 8, !dbg !65
-  %call17 = call i8* @realloc(i8* %15, i64 15) #4, !dbg !67
+if.else17:                                        ; preds = %if.else12
+  %16 = load i8*, i8** %str, align 8, !dbg !71
+  %call18 = call i8* @realloc(i8* %16, i64 15) #4, !dbg !73
   br label %if.end
 
-if.end:                                           ; preds = %if.else16, %if.then14
-  br label %if.end18
-
-if.end18:                                         ; preds = %if.end, %if.then10
+if.end:                                           ; preds = %if.else17, %if.then14
   br label %if.end19
 
-if.end19:                                         ; preds = %if.end18, %if.then8
-  %16 = load i8*, i8** %str, align 8, !dbg !68
-  call void @free(i8* %16) #4, !dbg !69
-  %17 = load i32, i32* %a, align 4, !dbg !70
-  %cmp20 = icmp eq i32 %17, -70, !dbg !72
-  br i1 %cmp20, label %if.then21, label %if.end23, !dbg !73
+if.end19:                                         ; preds = %if.end, %if.then10
+  br label %if.end20
 
-if.then21:                                        ; preds = %if.end19
-  %18 = load i8*, i8** %str, align 8, !dbg !74
-  %call22 = call i8* @realloc(i8* %18, i64 15) #4, !dbg !76
-  br label %if.end23, !dbg !77
+if.end20:                                         ; preds = %if.end19, %if.then8
+  %17 = load i8*, i8** %str, align 8, !dbg !74
+  call void @free(i8* %17) #4, !dbg !75
+  %18 = load i32, i32* %a, align 4, !dbg !76
+  %cmp21 = icmp eq i32 %18, -70, !dbg !78
+  br i1 %cmp21, label %if.then22, label %if.end24, !dbg !79
 
-if.end23:                                         ; preds = %if.then21, %if.end19
-  %19 = load i8*, i8** %str, align 8, !dbg !78
-  call void @free(i8* %19) #4, !dbg !79
-  br label %if.end30, !dbg !80
+if.then22:                                        ; preds = %if.end20
+  %19 = load i8*, i8** %str, align 8, !dbg !80
+  %call23 = call i8* @realloc(i8* %19, i64 15) #4, !dbg !82
+  br label %if.end24, !dbg !83
 
-if.else24:                                        ; preds = %entry
-  %20 = load i32, i32* %a, align 4, !dbg !81
-  %cmp25 = icmp eq i32 %20, -20, !dbg !83
-  br i1 %cmp25, label %if.then26, label %if.else28, !dbg !84
+if.end24:                                         ; preds = %if.then22, %if.end20
+  %20 = load i8*, i8** %str, align 8, !dbg !84
+  call void @free(i8* %20) #4, !dbg !85
+  br label %if.end31, !dbg !86
 
-if.then26:                                        ; preds = %if.else24
-  %21 = load i8*, i8** %str, align 8, !dbg !85
-  %call27 = call i8* @realloc(i8* %21, i64 25) #4, !dbg !87
-  br label %if.end29, !dbg !88
+if.else25:                                        ; preds = %entry
+  %21 = load i32, i32* %a, align 4, !dbg !87
+  %cmp26 = icmp eq i32 %21, -20, !dbg !89
+  br i1 %cmp26, label %if.then27, label %if.else29, !dbg !90
 
-if.else28:                                        ; preds = %if.else24
-  %22 = load i8*, i8** %str, align 8, !dbg !89
-  call void @free(i8* %22) #4, !dbg !91
-  br label %if.end29
+if.then27:                                        ; preds = %if.else25
+  %22 = load i8*, i8** %str, align 8, !dbg !91
+  %call28 = call i8* @realloc(i8* %22, i64 25) #4, !dbg !93
+  br label %if.end30, !dbg !94
 
-if.end29:                                         ; preds = %if.else28, %if.then26
+if.else29:                                        ; preds = %if.else25
+  %23 = load i8*, i8** %str, align 8, !dbg !95
+  call void @free(i8* %23) #4, !dbg !97
   br label %if.end30
 
-if.end30:                                         ; preds = %if.end29, %if.end23
-  ret i32 0, !dbg !92
+if.end30:                                         ; preds = %if.else29, %if.then27
+  br label %if.end31
+
+if.end31:                                         ; preds = %if.end30, %if.end24
+  ret i32 0, !dbg !98
 }
 
 ; Function Attrs: nounwind readnone speculatable
@@ -216,32 +222,38 @@ attributes #4 = { nounwind }
 !61 = !DILocation(line: 28, column: 26, scope: !62)
 !62 = distinct !DILexicalBlock(scope: !58, file: !1, line: 27, column: 29)
 !63 = !DILocation(line: 28, column: 13, scope: !62)
-!64 = !DILocation(line: 30, column: 10, scope: !62)
-!65 = !DILocation(line: 31, column: 21, scope: !66)
-!66 = distinct !DILexicalBlock(scope: !58, file: !1, line: 30, column: 17)
-!67 = !DILocation(line: 31, column: 13, scope: !66)
-!68 = !DILocation(line: 37, column: 15, scope: !39)
-!69 = !DILocation(line: 37, column: 10, scope: !39)
-!70 = !DILocation(line: 39, column: 14, scope: !71)
-!71 = distinct !DILexicalBlock(scope: !39, file: !1, line: 39, column: 14)
-!72 = !DILocation(line: 39, column: 16, scope: !71)
-!73 = !DILocation(line: 39, column: 14, scope: !39)
-!74 = !DILocation(line: 40, column: 21, scope: !75)
-!75 = distinct !DILexicalBlock(scope: !71, file: !1, line: 39, column: 24)
-!76 = !DILocation(line: 40, column: 13, scope: !75)
-!77 = !DILocation(line: 41, column: 10, scope: !75)
-!78 = !DILocation(line: 43, column: 14, scope: !39)
-!79 = !DILocation(line: 43, column: 9, scope: !39)
-!80 = !DILocation(line: 48, column: 5, scope: !39)
-!81 = !DILocation(line: 49, column: 14, scope: !82)
-!82 = distinct !DILexicalBlock(scope: !35, file: !1, line: 49, column: 14)
-!83 = !DILocation(line: 49, column: 16, scope: !82)
-!84 = !DILocation(line: 49, column: 14, scope: !35)
-!85 = !DILocation(line: 50, column: 17, scope: !86)
-!86 = distinct !DILexicalBlock(scope: !82, file: !1, line: 49, column: 24)
-!87 = !DILocation(line: 50, column: 9, scope: !86)
-!88 = !DILocation(line: 51, column: 5, scope: !86)
-!89 = !DILocation(line: 53, column: 14, scope: !90)
-!90 = distinct !DILexicalBlock(scope: !82, file: !1, line: 52, column: 10)
-!91 = !DILocation(line: 53, column: 9, scope: !90)
-!92 = !DILocation(line: 58, column: 4, scope: !10)
+!64 = !DILocalVariable(name: "p", scope: !62, file: !1, line: 29, type: !4)
+!65 = !DILocation(line: 29, column: 19, scope: !62)
+!66 = !DILocation(line: 30, column: 24, scope: !62)
+!67 = !DILocation(line: 30, column: 15, scope: !62)
+!68 = !DILocation(line: 31, column: 18, scope: !62)
+!69 = !DILocation(line: 31, column: 13, scope: !62)
+!70 = !DILocation(line: 33, column: 10, scope: !62)
+!71 = !DILocation(line: 34, column: 21, scope: !72)
+!72 = distinct !DILexicalBlock(scope: !58, file: !1, line: 33, column: 17)
+!73 = !DILocation(line: 34, column: 13, scope: !72)
+!74 = !DILocation(line: 40, column: 15, scope: !39)
+!75 = !DILocation(line: 40, column: 10, scope: !39)
+!76 = !DILocation(line: 42, column: 14, scope: !77)
+!77 = distinct !DILexicalBlock(scope: !39, file: !1, line: 42, column: 14)
+!78 = !DILocation(line: 42, column: 16, scope: !77)
+!79 = !DILocation(line: 42, column: 14, scope: !39)
+!80 = !DILocation(line: 43, column: 21, scope: !81)
+!81 = distinct !DILexicalBlock(scope: !77, file: !1, line: 42, column: 24)
+!82 = !DILocation(line: 43, column: 13, scope: !81)
+!83 = !DILocation(line: 44, column: 10, scope: !81)
+!84 = !DILocation(line: 46, column: 14, scope: !39)
+!85 = !DILocation(line: 46, column: 9, scope: !39)
+!86 = !DILocation(line: 51, column: 5, scope: !39)
+!87 = !DILocation(line: 52, column: 14, scope: !88)
+!88 = distinct !DILexicalBlock(scope: !35, file: !1, line: 52, column: 14)
+!89 = !DILocation(line: 52, column: 16, scope: !88)
+!90 = !DILocation(line: 52, column: 14, scope: !35)
+!91 = !DILocation(line: 53, column: 17, scope: !92)
+!92 = distinct !DILexicalBlock(scope: !88, file: !1, line: 52, column: 24)
+!93 = !DILocation(line: 53, column: 9, scope: !92)
+!94 = !DILocation(line: 54, column: 5, scope: !92)
+!95 = !DILocation(line: 56, column: 14, scope: !96)
+!96 = distinct !DILexicalBlock(scope: !88, file: !1, line: 55, column: 10)
+!97 = !DILocation(line: 56, column: 9, scope: !96)
+!98 = !DILocation(line: 61, column: 4, scope: !10)
