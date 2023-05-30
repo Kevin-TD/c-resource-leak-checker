@@ -12,20 +12,9 @@
 #include <vector> 
 
 
-// std::map<std::string, std::map<std::string, dataflow::CalledMethodsEstimate>> CallMethodsMap; // left = branch name. inner left = var name
-
 namespace dataflow {
     
-    void loadFunctions();
-
-    // consider adding a "is defined/is trackable/is mem alloc var" member
-    struct CalledMethodsEstimate {
-        std::string allocationFunction; 
-        std::string deallocationFunction; 
-        Domain calledMethodsState; 
-    };
-
-    
+    void loadFunctions();    
 
 }
 

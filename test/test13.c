@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// for each entry = ..., preds = {...}  statement, all the code above it (including the line it was declared in) is within that branch up until (and before) another branch declaration (or the declaration of the method)
 
 int main () {
    char *str;

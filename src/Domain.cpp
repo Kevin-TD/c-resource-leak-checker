@@ -14,6 +14,12 @@ Top could be any random variable. Included for instances where we first declare 
 
 */
 
+// sep domains 
+// 1 - allo domain 
+// 2 - deallo/free domains { work on free domain - called methods https://checkerframework.org/manual/#introduction }
+// 3 - compare 
+// called methods use lattice on pg 5 https://dl.acm.org/doi/pdf/10.1145/3377811.3380341 
+
 
 
 namespace dataflow {

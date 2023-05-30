@@ -1,0 +1,5 @@
+malloc free
+malloc0 free0
+malloc1 free1
+malloc2 free2
+malloc3 free3
