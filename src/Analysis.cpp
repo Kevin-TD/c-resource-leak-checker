@@ -22,12 +22,18 @@
 // to run: cd build   then 
 // sh ../run_test.sh <test_num> 
 
-typedef std::map<std::string, std::map<std::string, std::set<std::string>>> CalledMethods; // left = branch name. inner left = var name , inner right = called methods set 
+struct CM {
+  std::set<std::string> cmSet; 
+  bool setInitialized; 
+};
+
+typedef std::map<std::string, std::map<std::string, CM>> CalledMethods; // left = branch name. inner left = var name 
 typedef std::map<std::string, std::string> AliasMap;
 typedef std::map<std::string, std::string> VarBranchMap;
 
 // TODO: handle switch statements 
 // TODO: handle while loops 
+// should we have to worry if a deallocation function is called within the for loop declaration? like a for ( ... ; ... ; free(...)) ? same for while loops
 
 // worth noting that has an expr is declared when IR does "call void @llvm.dbg.declare [other IR ...]"
 
@@ -152,9 +158,33 @@ std::vector<Instruction *> getSuccessors(Instruction *Inst) {
   return Ret;
 }
 
+void loadForLoopBodyBranchNames(Instruction* Inst, std::set<std::string>& branches) {
+
+  auto preds = getPredecessors(Inst); 
+
+  for (auto pred : preds) {
+    std::string predName = pred->getParent()->getName().str(); 
+    
+    if (predName.substr(0, 7).compare("for.inc") != 0  && predName.substr(0, 8).compare("for.cond") != 0) {
+      branches.insert(predName);
+    }
+
+
+    if (predName.substr(0, 8).compare("for.body") == 0) {
+      return; 
+    }
+
+    loadForLoopBodyBranchNames(pred, branches); 
+
+  }
+  
+
+}
+
 
 void transfer(Instruction* I, SetVector<Instruction *>& workSet, CalledMethods& calledMethodsEst, AliasMap& aliasedVars) {
   std::string branchName = I->getParent()->getName().str();
+  logout("inst " << *I << " branch name = " << branchName)
   bool includes = false; 
   for (auto branch : realBranchOrder) {
     if (branch == branchName) {
@@ -166,9 +196,12 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, CalledMethods& 
     realBranchOrder.push_back(branchName);
   }
 
-
   auto preds = getPredecessors(I);
-  if (preds.size() == 1) { // if.then or if.else 
+
+  // for a for.end, it should be lub of
+
+  if (preds.size() == 1 && 
+    (branchName.substr(0, 7).compare("if.then") == 0 ||  branchName.substr(0, 7).compare("if.else") == 0)) { 
     // load predecessor into new branch 
     auto pred = preds[0];
     std::string predBranchName = pred->getParent()->getName().str(); 
@@ -176,14 +209,17 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, CalledMethods& 
 
     for (auto Pair : predCM) {
       std::string predVarName = Pair.first; 
-      std::set<std::string> predCalledMethods = Pair.second; 
+      CM predCalledMethods = Pair.second; 
 
-      calledMethodsEst[branchName][predVarName] = std::set<std::string>(predCalledMethods);
+      calledMethodsEst[branchName][predVarName] = {
+        std::set<std::string>(predCalledMethods.cmSet), 
+        true 
+      };
 
     }
 
   }
-  else if (preds.size() == 2) { // if.end
+  else if (preds.size() == 2 && branchName.substr(0, 6).compare("if.end") == 0) { 
     // lub predecesorrs into new branch 
     auto pred1 = preds[0];
     auto pred2 = preds[1]; 
@@ -197,28 +233,20 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, CalledMethods& 
 
     for (auto Pair1 : pred1CMMap) {
       std::string pred1VarName = Pair1.first; 
-      std::set<std::string> pred1CM = Pair1.second; 
+      CM pred1CM = Pair1.second; 
       
         
       // intersection 
       std::set<std::string> intersection;
-      std::set_intersection(pred1CM.begin(), pred1CM.end(), 
-                    calledMethodsEst[pred2BranchName][pred1VarName].begin(), calledMethodsEst[pred2BranchName][pred1VarName].end(), 
+      std::set_intersection(pred1CM.cmSet.begin(), pred1CM.cmSet.end(), 
+                    calledMethodsEst[pred2BranchName][pred1VarName].cmSet.begin(), calledMethodsEst[pred2BranchName][pred1VarName].cmSet.end(), 
                     std::inserter(intersection, intersection.begin()));
 
-      for (auto s : pred1CM) {
-        logout("pred 1 cm " << s)
-      }
-      for (auto s : calledMethodsEst[pred2BranchName][pred1VarName]) {
-        logout("pred 2 cm " << s)
-      }
-      for (auto s : intersection) {
-        logout("intersection " << s)
-      }
 
-
-      calledMethodsEst[branchName][pred1VarName] = intersection; 
-      assignedVars[branchName][pred1VarName] = true; 
+      calledMethodsEst[branchName][pred1VarName] = {
+        intersection, 
+        true
+      }; 
       
     
     }
@@ -226,17 +254,59 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, CalledMethods& 
     // fill in the rest
     for (auto Pair2 : pred2CMMap) {
         std::string pred2VarName = Pair2.first; 
-        std::set<std::string> pred2CM = Pair2.second; 
+        CM pred2CM = Pair2.second; 
 
-        if (!assignedVars[branchName][pred2VarName]) {
+        if (!calledMethodsEst[branchName][pred2VarName].setInitialized) {
 
-          calledMethodsEst[branchName][pred2VarName] = std::set<std::string>(pred2CM);
+          calledMethodsEst[branchName][pred2VarName] = {
+            std::set<std::string>(pred2CM.cmSet), 
+            true 
+          };
           
         }
 
 
     }
 
+  }
+  else if (branchName.substr(0, 7).compare("for.end") == 0) {
+    std::set<std::string> branches; 
+    loadForLoopBodyBranchNames(I, branches); 
+    
+    std::map<std::string, std::map<std::string, bool>> assignedVars;
+
+    for (std::string predBranch : branches) {
+
+      logout("pred branch = " << predBranch << " main " << branchName)
+
+      auto cmMap = calledMethodsEst[predBranch];
+      for (auto pair : cmMap) {
+        std::string varName = pair.first; 
+        CM cm = pair.second; 
+
+        if (!calledMethodsEst[branchName][varName].setInitialized) {
+          calledMethodsEst[branchName][varName] = {
+            std::set<std::string>(pair.second.cmSet), 
+            true 
+          };
+
+        }
+        else {
+
+          if (calledMethodsEst[predBranch][varName].setInitialized) {
+            std::set<std::string> intersection;
+            std::set_intersection(calledMethodsEst[branchName][varName].cmSet.begin(), calledMethodsEst[branchName][varName].cmSet.end(), 
+                      calledMethodsEst[predBranch][varName].cmSet.begin(), calledMethodsEst[predBranch][varName].cmSet.end(), 
+                      std::inserter(intersection, intersection.begin()));
+
+            calledMethodsEst[branchName][varName].cmSet = intersection;
+          }
+
+        }
+
+      }
+    }
+   
   }
 
 
@@ -311,7 +381,7 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, CalledMethods& 
 
           std::string fnName = Call->getCalledFunction()->getName().str();
 
-          logout("fnName for call = " << fnName)
+          logout("fnName for call = " << fnName << " " << branchName)
 
           if (UnsafeFunctions[fnName]) {
             logout("unsafe func")
@@ -331,12 +401,14 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, CalledMethods& 
 
 
           for (auto Pair : MemoryFunctions) {
-            logout("pairs and fn name = " << Pair.first << " " << Pair.second << " " << fnName)
+            logout("pairs and fn name = " << Pair.first << " " << Pair.second << " " << branchName << " " << argName)
             if (fnName == Pair.first) { // allocation function
 
             }
             else if (fnName == Pair.second) { // deallocation function 
-              calledMethodsEst[branchName][argName].insert(fnName); 
+              calledMethodsEst[branchName][argName].cmSet.insert(fnName); 
+              calledMethodsEst[branchName][argName].setInitialized = true; 
+              break; 
 
             }
           }
@@ -425,6 +497,7 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
   for (auto I : WorkSet) {
    
     transfer(I, WorkSet, calledMethodsEstimate, AliasedVars);
+
   }
 
   errs() << "\n\n CME \n\n";  
@@ -436,7 +509,7 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
       errs() << "> var name = " << Pair1.first << "\n";
       errs() << ">> cm = ";
       std::string cm; 
-      for (auto s : Pair1.second) {
+      for (auto s : Pair1.second.cmSet) {
         cm += s + ", ";
       }
       errs() << cm << "\n"; 
