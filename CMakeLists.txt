@@ -13,7 +13,7 @@ link_directories(${LLVM_LIBRARY_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
 
 
 add_llvm_library(CalledMethodsPass MODULE
-  src/Tree.cpp
+  src/CFG.cpp
   src/Domain.cpp
   src/loadFunctions.cpp
   src/Analysis.cpp

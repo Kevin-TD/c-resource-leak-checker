@@ -2,7 +2,7 @@
 #include "Utils.h"
 #include "PointerAnalysis.h"
 #include "loadFunctions.h"
-#include "Tree.h"
+#include "CFG.h"
 
 #include <map> 
 #include <tuple>
@@ -618,7 +618,7 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
 
   logout("DATAFLOW: ")
 
-  Tree t = Tree("entry"); 
+  CFG TopCFG = CFG("entry"); 
 
   for (auto I : WorkSet) {
    std::string branchName = I->getParent()->getName().str(); 
@@ -629,9 +629,9 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
    std::string predsString;
    std::string succsString;
 
-   Tree* tree = t.getFind(I->getParent()->getName().str()); 
+   CFG* cfg = TopCFG.getFind(I->getParent()->getName().str()); 
 
-   tree->instructions = branchInstMap[I->getParent()->getName().str()]; 
+   cfg->instructions = branchInstMap[I->getParent()->getName().str()]; 
 
    for (auto p : preds) {
     std::string p_name = p->getParent()->getName().str();
@@ -648,60 +648,35 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
    if (succsString == predsString) continue; 
   
 
-
-   for (auto p : preds) {
-    std::string p_name = p->getParent()->getName().str();
-
-    if (p_name == branchName) continue; 
-    if (tree->predecessorIsDefined(p_name, tree)) continue; 
-    if (!t.checkFind(p_name)) continue; 
-    if (t.getFind(p_name)->successorIsDefined(branchName, t.getFind(p_name))) continue; 
-
-    logout("cur branch 1 = " << branchName)
-    
-    std::string kl; 
-    for (auto k : tree->predecessors) {
-      kl += k->getBranchName() + ", ";
-    }
-
-    std::set<std::string> j; 
-    logout("prev preds = " << kl)
-    logout("ALL preds = " << tree->getAllPredsString(j, tree))
-    logout("\nADD P: branch name = " << branchName << " adding pred " << p_name << "\n")
-
-
-    tree->addPredecessor(p_name); 
-    
-
-    
-   }
-
    for (auto p : succs) {
     std::string s_name = p->getParent()->getName().str();
 
     if (s_name == branchName) continue; 
-    if (tree->successorIsDefined(s_name, tree)) continue; 
+    if (cfg->successorIsDefined(s_name, cfg)) continue; 
 
-    if (t.checkFind(s_name)) {
-      logout("\nadding circular successor " << s_name << " branch name " << branchName << "\n")
-      tree->addSuccessor(t.getFind(s_name));
+    if (cfg->checkFind(s_name)) {
+      logout("\nADD S (seen before): branch = " << branchName << " adding succ " << s_name << "\n")
+      cfg->addSuccessor(cfg->getFind(s_name));
+      cfg->getFind(s_name)->addPredecessor(cfg);
+
       continue; 
     } 
 
     logout("cur branch 2 = " << branchName); 
     
     std::string kl; 
-    for (auto k : tree->successors) {
+    for (auto k : cfg->successors) {
       kl += k->getBranchName() + ", ";
     }
 
     std::set<std::string> j; 
     logout("prev succs = " << kl)
-    logout("ALL succs = " << tree->getAllSuccsString(j, tree))
+    logout("ALL succs = " << cfg->getAllSuccsString(j, cfg))
     logout("\nADD S: branch = " << branchName << " adding succ " << s_name << "\n")
 
     
-    tree->addSuccessor(s_name); 
+    cfg->addSuccessor(s_name); 
+    cfg->getFind(s_name)->addPredecessor(cfg); 
   
 
    }
