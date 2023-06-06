@@ -2,6 +2,7 @@
 #include "Utils.h"
 #include "PointerAnalysis.h"
 #include "loadFunctions.h"
+#include "Tree.h"
 
 #include <map> 
 #include <tuple>
@@ -32,14 +33,29 @@ typedef std::map<std::string, std::string> AliasMap;
 typedef std::map<std::string, std::string> VarBranchMap;
 
 // TODO: handle switch statements 
+/*
+ %7 = load i32, i32* %a, align 4, !dbg !90
+  switch i32 %7, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb7
+  ], !dbg !91
+  ^^^ code used for the guard 
+  sw.bb, sw.bb[int], ..., sw.defualt (may not exist)   preds = %entry 
+  sw.epilog is the join, preds = sw.default, sw.bb[...]...
+*/
+
 // TODO: handle while loops 
-// should we have to worry if a deallocation function is called within the for loop declaration? like a for ( ... ; ... ; free(...)) ? same for while loops
+
 
 // worth noting that has an expr is declared when IR does "call void @llvm.dbg.declare [other IR ...]"
+
+// TODO: make sure guards are evaluted and processed  
+// TODO: make sure program does not utterly collapse
 
 // assumptions: 
 // if.end statements have 2 preds
 // if.then, if.else statements have 1 pred
+
 
 namespace dataflow {
 
@@ -169,6 +185,29 @@ void loadForLoopBodyBranchNames(Instruction* Inst, std::set<std::string>& branch
       branches.insert(predName);
     }
 
+    if (predName.substr(0, 10).compare("while.cond") != 0) {
+      branches.insert(predName);
+    }
+    else if (predName.substr(0, 10).compare("while.cond") == 0) {
+      auto preds1 =  getPredecessors(pred);
+      if (preds1.size() == 2) {
+        for (auto pr : preds1) {
+          std::string p = pr->getParent()->getName().str(); 
+          logout("2 preds pname = " << p)
+          if (p.substr(0, 10).compare("while.cond") != 0) {
+            branches.insert(p);
+          }
+          
+        }
+      }
+
+    }
+
+
+    if (predName.substr(0, 10).compare("while.body") == 0) {
+      return; 
+    }
+
 
     if (predName.substr(0, 8).compare("for.body") == 0) {
       return; 
@@ -177,8 +216,49 @@ void loadForLoopBodyBranchNames(Instruction* Inst, std::set<std::string>& branch
     loadForLoopBodyBranchNames(pred, branches); 
 
   }
-  
+}
 
+void loadWhileLoopBranchNames(Instruction* Inst, std::set<std::string>& branches) {
+
+  auto preds = getPredecessors(Inst); 
+
+  for (auto pred : preds) {
+    std::string predName = pred->getParent()->getName().str(); 
+
+    
+    logout("found pred name = " << predName << " inst = " << *pred)
+
+    if (predName.substr(0, 7).compare("for.inc") != 0  && predName.substr(0, 8).compare("for.cond") != 0) {
+      branches.insert(predName);
+    }
+    
+    if (predName.substr(0, 10).compare("while.cond") != 0) {
+      branches.insert(predName);
+    }
+    else if (predName.substr(0, 10).compare("while.cond") == 0) {
+      for (auto pr : getPredecessors(pred)) {
+        std::string p = pr->getParent()->getName().str(); 
+        logout("2 preds pname = " << p)
+        if (p.substr(0, 10).compare("while.cond") != 0) {
+          branches.insert(p);
+        }
+        
+      }
+
+    }
+
+    if (predName.substr(0, 8).compare("for.body") == 0) {
+      return; 
+    }
+
+
+    if (predName.substr(0, 10).compare("while.body") == 0) {
+      return; 
+    }
+
+    loadWhileLoopBranchNames(pred, branches); 
+
+  }
 }
 
 
@@ -307,6 +387,22 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, CalledMethods& 
       }
     }
    
+  }
+  else if (branchName.substr(0, 10).compare("while.body") == 0) {
+    std::set<std::string> branches; 
+    loadWhileLoopBranchNames(I, branches); 
+    for (auto s : branches) {
+      logout("while body rel branch " << s)
+    }
+
+  }
+  else if (branchName.substr(0, 9).compare("while.end") == 0) {
+    std::set<std::string> branches; 
+    loadWhileLoopBranchNames(I, branches); 
+    for (auto s : branches) {
+      logout("rel branch " << s)
+    }
+
   }
 
 
@@ -493,9 +589,12 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
 
   CalledMethods calledMethodsEstimate; 
   AliasMap AliasedVars; 
+  std::map<std::string, std::list<Instruction*>> branchInstMap; 
 
   for (auto I : WorkSet) {
-   
+    std::string branchName = I->getParent()->getName().str();
+    branchInstMap[branchName].push_back(I); 
+
     transfer(I, WorkSet, calledMethodsEstimate, AliasedVars);
 
   }
@@ -516,6 +615,114 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
     }
     errs() << "\n";
   }
+
+  logout("DATAFLOW: ")
+
+  Tree t = Tree("entry"); 
+
+  for (auto I : WorkSet) {
+   std::string branchName = I->getParent()->getName().str(); 
+   auto preds = getPredecessors(I);
+   auto succs = getSuccessors(I); 
+
+
+   std::string predsString;
+   std::string succsString;
+
+   Tree* tree = t.getFind(I->getParent()->getName().str()); 
+
+   tree->instructions = branchInstMap[I->getParent()->getName().str()]; 
+
+   for (auto p : preds) {
+    std::string p_name = p->getParent()->getName().str();
+    predsString += p_name + ", ";    
+   }
+
+   for (auto p : succs) {
+    std::string s_name = p->getParent()->getName().str();
+    succsString += s_name + ", ";
+   }
+
+   if (branchName == succsString) succsString = ""; 
+   if (branchName == predsString) predsString = ""; 
+   if (succsString == predsString) continue; 
+  
+
+
+   for (auto p : preds) {
+    std::string p_name = p->getParent()->getName().str();
+
+    if (p_name == branchName) continue; 
+    if (tree->predecessorIsDefined(p_name, tree)) continue; 
+    if (!t.checkFind(p_name)) continue; 
+    if (t.getFind(p_name)->successorIsDefined(branchName, t.getFind(p_name))) continue; 
+
+    logout("cur branch 1 = " << branchName)
+    
+    std::string kl; 
+    for (auto k : tree->predecessors) {
+      kl += k->getBranchName() + ", ";
+    }
+
+    std::set<std::string> j; 
+    logout("prev preds = " << kl)
+    logout("ALL preds = " << tree->getAllPredsString(j, tree))
+    logout("\nADD P: branch name = " << branchName << " adding pred " << p_name << "\n")
+
+
+    tree->addPredecessor(p_name); 
+    
+
+    
+   }
+
+   for (auto p : succs) {
+    std::string s_name = p->getParent()->getName().str();
+
+    if (s_name == branchName) continue; 
+    if (tree->successorIsDefined(s_name, tree)) continue; 
+
+    if (t.checkFind(s_name)) {
+      logout("\nadding circular successor " << s_name << " branch name " << branchName << "\n")
+      tree->addSuccessor(t.getFind(s_name));
+      continue; 
+    } 
+
+    logout("cur branch 2 = " << branchName); 
+    
+    std::string kl; 
+    for (auto k : tree->successors) {
+      kl += k->getBranchName() + ", ";
+    }
+
+    std::set<std::string> j; 
+    logout("prev succs = " << kl)
+    logout("ALL succs = " << tree->getAllSuccsString(j, tree))
+    logout("\nADD S: branch = " << branchName << " adding succ " << s_name << "\n")
+
+    
+    tree->addSuccessor(s_name); 
+  
+
+   }
+
+   
+   
+   std::string finalStr = "branch = " + branchName + " "; 
+   if (succsString != "") finalStr += " succs = " + succsString; 
+   if (predsString != "") finalStr += " preds = " + predsString; 
+
+   logout(finalStr)
+
+
+
+
+  }
+
+
+
+
+
 
 }
 

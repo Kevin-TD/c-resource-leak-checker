@@ -1,5 +1,5 @@
-; ModuleID = '../test/test17.c'
-source_filename = "../test/test17.c"
+; ModuleID = '../test/test18.c'
+source_filename = "../test/test18.c"
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
@@ -131,45 +131,93 @@ entry:
   %5 = load i8*, i8** %str, align 8, !dbg !87
   %6 = load i8*, i8** %str, align 8, !dbg !88
   %call6 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([28 x i8], [28 x i8]* @.str.1, i32 0, i32 0), i8* %5, i8* %6), !dbg !89
-  call void @llvm.dbg.declare(metadata i32* %i, metadata !90, metadata !DIExpression()), !dbg !92
-  store i32 0, i32* %i, align 4, !dbg !92
-  br label %for.cond, !dbg !93
+  br label %while.cond, !dbg !90
 
-for.cond:                                         ; preds = %for.inc, %entry
-  %7 = load i32, i32* %i, align 4, !dbg !94
-  %cmp = icmp slt i32 %7, 10, !dbg !96
-  br i1 %cmp, label %for.body, label %for.end, !dbg !97
+while.cond:                                       ; preds = %sw.epilog, %entry
+  %7 = load i32, i32* %a, align 4, !dbg !91
+  %cmp = icmp slt i32 %7, 10, !dbg !92
+  br i1 %cmp, label %while.body, label %while.end14, !dbg !90
+
+while.body:                                       ; preds = %while.cond
+  %8 = load i8*, i8** %str, align 8, !dbg !93
+  call void @free(i8* %8) #4, !dbg !95
+  %9 = load i8*, i8** %str, align 8, !dbg !96
+  call void @free0(i8* %9), !dbg !97
+  br label %while.cond7, !dbg !98
+
+while.cond7:                                      ; preds = %while.body9, %while.body
+  %10 = load i32, i32* %a, align 4, !dbg !99
+  %cmp8 = icmp slt i32 %10, 15, !dbg !100
+  br i1 %cmp8, label %while.body9, label %while.end, !dbg !98
+
+while.body9:                                      ; preds = %while.cond7
+  %11 = load i8*, i8** %str, align 8, !dbg !101
+  call void @free(i8* %11) #4, !dbg !103
+  br label %while.cond7, !dbg !98, !llvm.loop !104
+
+while.end:                                        ; preds = %while.cond7
+  call void @llvm.dbg.declare(metadata i32* %i, metadata !106, metadata !DIExpression()), !dbg !108
+  store i32 0, i32* %i, align 4, !dbg !108
+  br label %for.cond, !dbg !109
+
+for.cond:                                         ; preds = %for.inc, %while.end
+  %12 = load i32, i32* %i, align 4, !dbg !110
+  %cmp10 = icmp slt i32 %12, 15, !dbg !112
+  br i1 %cmp10, label %for.body, label %for.end, !dbg !113
 
 for.body:                                         ; preds = %for.cond
-  %8 = load i8*, i8** %str, align 8, !dbg !98
-  call void @free0(i8* %8), !dbg !100
-  br label %for.inc, !dbg !101
+  %13 = load i8*, i8** %str, align 8, !dbg !114
+  call void @free(i8* %13) #4, !dbg !116
+  br label %for.inc, !dbg !117
 
 for.inc:                                          ; preds = %for.body
-  %9 = load i32, i32* %i, align 4, !dbg !102
-  %inc = add nsw i32 %9, 1, !dbg !102
-  store i32 %inc, i32* %i, align 4, !dbg !102
-  br label %for.cond, !dbg !103, !llvm.loop !104
+  %14 = load i32, i32* %i, align 4, !dbg !118
+  %inc = add nsw i32 %14, 1, !dbg !118
+  store i32 %inc, i32* %i, align 4, !dbg !118
+  br label %for.cond, !dbg !119, !llvm.loop !120
 
 for.end:                                          ; preds = %for.cond
-  %10 = load i8*, i8** %str, align 8, !dbg !106
-  call void @free0(i8* %10), !dbg !107
-  %11 = load i32, i32* %a, align 4, !dbg !108
-  %cmp7 = icmp slt i32 %11, 15, !dbg !110
-  br i1 %cmp7, label %if.then, label %if.else, !dbg !111
+  %15 = load i32, i32* %a, align 4, !dbg !122
+  %cmp11 = icmp eq i32 %15, -15, !dbg !124
+  br i1 %cmp11, label %if.then, label %if.end, !dbg !125
 
 if.then:                                          ; preds = %for.end
-  %12 = load i8*, i8** %str, align 8, !dbg !112
-  call void @free1(i8* %12), !dbg !114
-  br label %if.end, !dbg !115
+  %16 = load i8*, i8** %str, align 8, !dbg !126
+  call void @free(i8* %16) #4, !dbg !128
+  br label %if.end, !dbg !129
 
-if.else:                                          ; preds = %for.end
-  %13 = load i8*, i8** %str, align 8, !dbg !116
-  call void @free1(i8* %13), !dbg !118
-  br label %if.end
+if.end:                                           ; preds = %if.then, %for.end
+  %17 = load i32, i32* %a, align 4, !dbg !130
+  %inc12 = add nsw i32 %17, 1, !dbg !130
+  store i32 %inc12, i32* %a, align 4, !dbg !130
+  %18 = load i32, i32* %a, align 4, !dbg !131
+  switch i32 %18, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb13
+  ], !dbg !132
 
-if.end:                                           ; preds = %if.else, %if.then
-  ret i32 0, !dbg !119
+sw.bb:                                            ; preds = %if.end
+  %19 = load i8*, i8** %str, align 8, !dbg !133
+  call void @free(i8* %19) #4, !dbg !135
+  br label %sw.epilog, !dbg !136
+
+sw.bb13:                                          ; preds = %if.end
+  %20 = load i8*, i8** %str, align 8, !dbg !137
+  call void @free(i8* %20) #4, !dbg !138
+  br label %sw.epilog, !dbg !139
+
+sw.default:                                       ; preds = %if.end
+  %21 = load i8*, i8** %str, align 8, !dbg !140
+  call void @free(i8* %21) #4, !dbg !141
+  br label %sw.epilog, !dbg !142
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb13, %sw.bb
+  br label %while.cond, !dbg !90, !llvm.loop !143
+
+while.end14:                                      ; preds = %while.cond
+  %22 = load i8*, i8** %str, align 8, !dbg !145
+  call void @free0(i8* %22), !dbg !146
+  ret i32 0, !dbg !147
 }
 
 declare dso_local i32 @getchar() #3
@@ -196,7 +244,7 @@ attributes #4 = { nounwind }
 !llvm.ident = !{!9}
 
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang version 8.0.1- (branches/release_80)", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug, enums: !2, retainedTypes: !3, nameTableKind: None)
-!1 = !DIFile(filename: "../test/test17.c", directory: "/c-resource-leak-checker/build")
+!1 = !DIFile(filename: "../test/test18.c", directory: "/c-resource-leak-checker/build")
 !2 = !{}
 !3 = !{!4}
 !4 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !5, size: 64)
@@ -285,33 +333,61 @@ attributes #4 = { nounwind }
 !87 = !DILocation(line: 47, column: 43, scope: !66)
 !88 = !DILocation(line: 47, column: 48, scope: !66)
 !89 = !DILocation(line: 47, column: 4, scope: !66)
-!90 = !DILocalVariable(name: "i", scope: !91, file: !1, line: 49, type: !69)
-!91 = distinct !DILexicalBlock(scope: !66, file: !1, line: 49, column: 5)
-!92 = !DILocation(line: 49, column: 14, scope: !91)
-!93 = !DILocation(line: 49, column: 10, scope: !91)
-!94 = !DILocation(line: 49, column: 21, scope: !95)
-!95 = distinct !DILexicalBlock(scope: !91, file: !1, line: 49, column: 5)
-!96 = !DILocation(line: 49, column: 23, scope: !95)
-!97 = !DILocation(line: 49, column: 5, scope: !91)
-!98 = !DILocation(line: 50, column: 15, scope: !99)
-!99 = distinct !DILexicalBlock(scope: !95, file: !1, line: 49, column: 34)
-!100 = !DILocation(line: 50, column: 9, scope: !99)
-!101 = !DILocation(line: 51, column: 5, scope: !99)
-!102 = !DILocation(line: 49, column: 30, scope: !95)
-!103 = !DILocation(line: 49, column: 5, scope: !95)
-!104 = distinct !{!104, !97, !105}
-!105 = !DILocation(line: 51, column: 5, scope: !91)
-!106 = !DILocation(line: 53, column: 11, scope: !66)
-!107 = !DILocation(line: 53, column: 5, scope: !66)
-!108 = !DILocation(line: 55, column: 9, scope: !109)
-!109 = distinct !DILexicalBlock(scope: !66, file: !1, line: 55, column: 9)
-!110 = !DILocation(line: 55, column: 11, scope: !109)
-!111 = !DILocation(line: 55, column: 9, scope: !66)
-!112 = !DILocation(line: 56, column: 15, scope: !113)
-!113 = distinct !DILexicalBlock(scope: !109, file: !1, line: 55, column: 17)
-!114 = !DILocation(line: 56, column: 9, scope: !113)
-!115 = !DILocation(line: 57, column: 5, scope: !113)
-!116 = !DILocation(line: 59, column: 15, scope: !117)
-!117 = distinct !DILexicalBlock(scope: !109, file: !1, line: 58, column: 10)
-!118 = !DILocation(line: 59, column: 9, scope: !117)
-!119 = !DILocation(line: 62, column: 4, scope: !66)
+!90 = !DILocation(line: 49, column: 5, scope: !66)
+!91 = !DILocation(line: 49, column: 12, scope: !66)
+!92 = !DILocation(line: 49, column: 14, scope: !66)
+!93 = !DILocation(line: 50, column: 14, scope: !94)
+!94 = distinct !DILexicalBlock(scope: !66, file: !1, line: 49, column: 20)
+!95 = !DILocation(line: 50, column: 9, scope: !94)
+!96 = !DILocation(line: 51, column: 15, scope: !94)
+!97 = !DILocation(line: 51, column: 9, scope: !94)
+!98 = !DILocation(line: 53, column: 9, scope: !94)
+!99 = !DILocation(line: 53, column: 16, scope: !94)
+!100 = !DILocation(line: 53, column: 18, scope: !94)
+!101 = !DILocation(line: 54, column: 18, scope: !102)
+!102 = distinct !DILexicalBlock(scope: !94, file: !1, line: 53, column: 24)
+!103 = !DILocation(line: 54, column: 13, scope: !102)
+!104 = distinct !{!104, !98, !105}
+!105 = !DILocation(line: 55, column: 9, scope: !94)
+!106 = !DILocalVariable(name: "i", scope: !107, file: !1, line: 57, type: !69)
+!107 = distinct !DILexicalBlock(scope: !94, file: !1, line: 57, column: 9)
+!108 = !DILocation(line: 57, column: 18, scope: !107)
+!109 = !DILocation(line: 57, column: 14, scope: !107)
+!110 = !DILocation(line: 57, column: 25, scope: !111)
+!111 = distinct !DILexicalBlock(scope: !107, file: !1, line: 57, column: 9)
+!112 = !DILocation(line: 57, column: 27, scope: !111)
+!113 = !DILocation(line: 57, column: 9, scope: !107)
+!114 = !DILocation(line: 58, column: 18, scope: !115)
+!115 = distinct !DILexicalBlock(scope: !111, file: !1, line: 57, column: 38)
+!116 = !DILocation(line: 58, column: 13, scope: !115)
+!117 = !DILocation(line: 59, column: 9, scope: !115)
+!118 = !DILocation(line: 57, column: 34, scope: !111)
+!119 = !DILocation(line: 57, column: 9, scope: !111)
+!120 = distinct !{!120, !113, !121}
+!121 = !DILocation(line: 59, column: 9, scope: !107)
+!122 = !DILocation(line: 61, column: 13, scope: !123)
+!123 = distinct !DILexicalBlock(scope: !94, file: !1, line: 61, column: 13)
+!124 = !DILocation(line: 61, column: 15, scope: !123)
+!125 = !DILocation(line: 61, column: 13, scope: !94)
+!126 = !DILocation(line: 62, column: 18, scope: !127)
+!127 = distinct !DILexicalBlock(scope: !123, file: !1, line: 61, column: 23)
+!128 = !DILocation(line: 62, column: 13, scope: !127)
+!129 = !DILocation(line: 63, column: 9, scope: !127)
+!130 = !DILocation(line: 64, column: 10, scope: !94)
+!131 = !DILocation(line: 66, column: 17, scope: !94)
+!132 = !DILocation(line: 66, column: 9, scope: !94)
+!133 = !DILocation(line: 68, column: 22, scope: !134)
+!134 = distinct !DILexicalBlock(scope: !94, file: !1, line: 66, column: 20)
+!135 = !DILocation(line: 68, column: 17, scope: !134)
+!136 = !DILocation(line: 69, column: 17, scope: !134)
+!137 = !DILocation(line: 71, column: 22, scope: !134)
+!138 = !DILocation(line: 71, column: 17, scope: !134)
+!139 = !DILocation(line: 72, column: 17, scope: !134)
+!140 = !DILocation(line: 74, column: 22, scope: !134)
+!141 = !DILocation(line: 74, column: 17, scope: !134)
+!142 = !DILocation(line: 75, column: 9, scope: !134)
+!143 = distinct !{!143, !90, !144}
+!144 = !DILocation(line: 77, column: 5, scope: !66)
+!145 = !DILocation(line: 79, column: 11, scope: !66)
+!146 = !DILocation(line: 79, column: 5, scope: !66)
+!147 = !DILocation(line: 82, column: 4, scope: !66)

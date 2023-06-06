@@ -1,5 +1,5 @@
-; ModuleID = '../test/test17.c'
-source_filename = "../test/test17.c"
+; ModuleID = '../test/test19.c'
+source_filename = "../test/test19.c"
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
@@ -137,12 +137,12 @@ entry:
 
 for.cond:                                         ; preds = %for.inc, %entry
   %7 = load i32, i32* %i, align 4, !dbg !94
-  %cmp = icmp slt i32 %7, 10, !dbg !96
+  %cmp = icmp slt i32 %7, 5, !dbg !96
   br i1 %cmp, label %for.body, label %for.end, !dbg !97
 
 for.body:                                         ; preds = %for.cond
   %8 = load i8*, i8** %str, align 8, !dbg !98
-  call void @free0(i8* %8), !dbg !100
+  call void @free(i8* %8) #4, !dbg !100
   br label %for.inc, !dbg !101
 
 for.inc:                                          ; preds = %for.body
@@ -152,24 +152,7 @@ for.inc:                                          ; preds = %for.body
   br label %for.cond, !dbg !103, !llvm.loop !104
 
 for.end:                                          ; preds = %for.cond
-  %10 = load i8*, i8** %str, align 8, !dbg !106
-  call void @free0(i8* %10), !dbg !107
-  %11 = load i32, i32* %a, align 4, !dbg !108
-  %cmp7 = icmp slt i32 %11, 15, !dbg !110
-  br i1 %cmp7, label %if.then, label %if.else, !dbg !111
-
-if.then:                                          ; preds = %for.end
-  %12 = load i8*, i8** %str, align 8, !dbg !112
-  call void @free1(i8* %12), !dbg !114
-  br label %if.end, !dbg !115
-
-if.else:                                          ; preds = %for.end
-  %13 = load i8*, i8** %str, align 8, !dbg !116
-  call void @free1(i8* %13), !dbg !118
-  br label %if.end
-
-if.end:                                           ; preds = %if.else, %if.then
-  ret i32 0, !dbg !119
+  ret i32 0, !dbg !106
 }
 
 declare dso_local i32 @getchar() #3
@@ -196,7 +179,7 @@ attributes #4 = { nounwind }
 !llvm.ident = !{!9}
 
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang version 8.0.1- (branches/release_80)", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug, enums: !2, retainedTypes: !3, nameTableKind: None)
-!1 = !DIFile(filename: "../test/test17.c", directory: "/c-resource-leak-checker/build")
+!1 = !DIFile(filename: "../test/test19.c", directory: "/c-resource-leak-checker/build")
 !2 = !{}
 !3 = !{!4}
 !4 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !5, size: 64)
@@ -293,25 +276,12 @@ attributes #4 = { nounwind }
 !95 = distinct !DILexicalBlock(scope: !91, file: !1, line: 49, column: 5)
 !96 = !DILocation(line: 49, column: 23, scope: !95)
 !97 = !DILocation(line: 49, column: 5, scope: !91)
-!98 = !DILocation(line: 50, column: 15, scope: !99)
-!99 = distinct !DILexicalBlock(scope: !95, file: !1, line: 49, column: 34)
+!98 = !DILocation(line: 50, column: 14, scope: !99)
+!99 = distinct !DILexicalBlock(scope: !95, file: !1, line: 49, column: 33)
 !100 = !DILocation(line: 50, column: 9, scope: !99)
 !101 = !DILocation(line: 51, column: 5, scope: !99)
-!102 = !DILocation(line: 49, column: 30, scope: !95)
+!102 = !DILocation(line: 49, column: 29, scope: !95)
 !103 = !DILocation(line: 49, column: 5, scope: !95)
 !104 = distinct !{!104, !97, !105}
 !105 = !DILocation(line: 51, column: 5, scope: !91)
-!106 = !DILocation(line: 53, column: 11, scope: !66)
-!107 = !DILocation(line: 53, column: 5, scope: !66)
-!108 = !DILocation(line: 55, column: 9, scope: !109)
-!109 = distinct !DILexicalBlock(scope: !66, file: !1, line: 55, column: 9)
-!110 = !DILocation(line: 55, column: 11, scope: !109)
-!111 = !DILocation(line: 55, column: 9, scope: !66)
-!112 = !DILocation(line: 56, column: 15, scope: !113)
-!113 = distinct !DILexicalBlock(scope: !109, file: !1, line: 55, column: 17)
-!114 = !DILocation(line: 56, column: 9, scope: !113)
-!115 = !DILocation(line: 57, column: 5, scope: !113)
-!116 = !DILocation(line: 59, column: 15, scope: !117)
-!117 = distinct !DILexicalBlock(scope: !109, file: !1, line: 58, column: 10)
-!118 = !DILocation(line: 59, column: 9, scope: !117)
-!119 = !DILocation(line: 62, column: 4, scope: !66)
+!106 = !DILocation(line: 54, column: 4, scope: !66)
