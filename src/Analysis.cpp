@@ -29,33 +29,14 @@ struct CM {
 };
 
 typedef std::map<std::string, std::map<std::string, CM>> CalledMethods; // left = branch name. inner left = var name 
+typedef std::map<std::string, CalledMethods> Memory; // left = branch name, right = called methods 
 typedef std::map<std::string, std::string> AliasMap;
 typedef std::map<std::string, std::string> VarBranchMap;
-
-// TODO: handle switch statements 
-/*
- %7 = load i32, i32* %a, align 4, !dbg !90
-  switch i32 %7, label %sw.default [
-    i32 0, label %sw.bb
-    i32 1, label %sw.bb7
-  ], !dbg !91
-  ^^^ code used for the guard 
-  sw.bb, sw.bb[int], ..., sw.defualt (may not exist)   preds = %entry 
-  sw.epilog is the join, preds = sw.default, sw.bb[...]...
-*/
-
-// TODO: handle while loops 
 
 
 // worth noting that has an expr is declared when IR does "call void @llvm.dbg.declare [other IR ...]"
 
-// TODO: make sure guards are evaluted and processed  
 // TODO: make sure program does not utterly collapse
-
-// assumptions: 
-// if.end statements have 2 preds
-// if.then, if.else statements have 1 pred
-
 
 namespace dataflow {
 
@@ -589,11 +570,11 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
 
   CalledMethods calledMethodsEstimate; 
   AliasMap AliasedVars; 
-  std::map<std::string, std::list<Instruction*>> branchInstMap; 
+  std::map<std::string, std::set<Instruction*>> branchInstMap; 
 
   for (auto I : WorkSet) {
     std::string branchName = I->getParent()->getName().str();
-    branchInstMap[branchName].push_back(I); 
+    branchInstMap[branchName].insert(I); 
 
     transfer(I, WorkSet, calledMethodsEstimate, AliasedVars);
 
@@ -631,7 +612,7 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
 
    CFG* cfg = TopCFG.getFind(I->getParent()->getName().str()); 
 
-   cfg->instructions = branchInstMap[I->getParent()->getName().str()]; 
+   cfg->setInstructions(branchInstMap[I->getParent()->getName().str()]);
 
    for (auto p : preds) {
     std::string p_name = p->getParent()->getName().str();
@@ -652,7 +633,6 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
     std::string s_name = p->getParent()->getName().str();
 
     if (s_name == branchName) continue; 
-    if (cfg->successorIsDefined(s_name, cfg)) continue; 
 
     if (cfg->checkFind(s_name)) {
       logout("\nADD S (seen before): branch = " << branchName << " adding succ " << s_name << "\n")
@@ -662,18 +642,8 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
       continue; 
     } 
 
-    logout("cur branch 2 = " << branchName); 
-    
-    std::string kl; 
-    for (auto k : cfg->successors) {
-      kl += k->getBranchName() + ", ";
-    }
 
-    std::set<std::string> j; 
-    logout("prev succs = " << kl)
-    logout("ALL succs = " << cfg->getAllSuccsString(j, cfg))
     logout("\nADD S: branch = " << branchName << " adding succ " << s_name << "\n")
-
     
     cfg->addSuccessor(s_name); 
     cfg->getFind(s_name)->addPredecessor(cfg); 
@@ -695,7 +665,27 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
   }
 
 
+  
+  for (std::string branchName : realBranchOrder) {
+    auto cur = TopCFG.getFind(branchName); 
 
+    logout("HEAD = " << cur->getBranchName())
+
+    std::string succsName; 
+    std::string predsName; 
+
+    for (auto s : cur->getSuccessors()) {
+      succsName += s->getBranchName() + ", "; 
+    }
+
+    for (auto p : cur->getPredecessors()) {
+      predsName += p->getBranchName() + ", "; 
+    }
+
+    logout("SUCCS = " << succsName)
+    logout("PREDS = " << predsName << "\n\n")
+
+  }
 
 
 

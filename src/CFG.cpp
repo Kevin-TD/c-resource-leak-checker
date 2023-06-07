@@ -8,40 +8,52 @@ CFG::CFG(std::string branchName) {
     this->branchName = branchName;
 }
 
-CFG::CFG(std::string branchName, std::list<Instruction*> instructions) {
+CFG::CFG(std::string branchName, std::set<Instruction*> instructions) {
     this->branchName = branchName;
     this->instructions = instructions; 
 }
 
 
-void CFG::addSuccessor(std::string branchName,  std::list<Instruction*> instructions) {
-    this->successors.push_back(new CFG(branchName, instructions)); 
+void CFG::addSuccessor(std::string branchName,  std::set<Instruction*> instructions) {
+    this->successors.insert(new CFG(branchName, instructions)); 
 }
 
 void CFG::addSuccessor(std::string branchName) {
-    this->successors.push_back(new CFG(branchName)); 
+    this->successors.insert(new CFG(branchName)); 
 }
 
 void CFG::addSuccessor(CFG* tree) {
-    this->successors.push_back(tree); 
+    this->successors.insert(tree); 
 }
 
 
-void CFG::addPredecessor(std::string branchName,  std::list<Instruction*> instructions) {
-    this->predecessors.push_back(new CFG(branchName, instructions)); 
+void CFG::addPredecessor(std::string branchName,  std::set<Instruction*> instructions) {
+    this->predecessors.insert(new CFG(branchName, instructions)); 
 }
 
 void CFG::addPredecessor(std::string branchName) {
-    this->predecessors.push_back(new CFG(branchName)); 
+    this->predecessors.insert(new CFG(branchName)); 
 }
 
 void CFG::addPredecessor(CFG* cfg) {
-    this->predecessors.push_back(cfg); 
+    this->predecessors.insert(cfg); 
 }
 
 
 std::string CFG::getBranchName() {
     return this->branchName; 
+}
+
+std::set<CFG*> CFG::getSuccessors() {
+    return this->successors; 
+}
+
+std::set<CFG*> CFG::getPredecessors() {
+    return this->predecessors; 
+}
+
+void CFG::setInstructions(std::set<Instruction*> instructions) {
+    this->instructions = instructions; 
 }
 
 CFG* CFG::getFind(const std::string& x)  {
@@ -52,36 +64,36 @@ CFG* CFG::getFind(const std::string& x)  {
 }
 
 void CFG::getFind(const std::string& x, CFG* cfg, std::map<CFG*, bool> cfgTracker, CFG*& foundCFG)  {
-    if (foundCFG->branchName != "") return; 
+    if (foundCFG->getBranchName() != "") return; 
 
-    if (x == cfg->branchName) {
+    if (x == cfg->getBranchName()) {
         foundCFG = cfg; 
         return; 
     }
 
     cfgTracker[cfg] = true; 
 
-    for (CFG* succ : cfg->successors) {
+    for (CFG* succ : cfg->getSuccessors()) {
         if (x == succ->getBranchName()) {
             foundCFG = succ; 
             return; 
         }
     }
-    for (CFG* succ : cfg->successors) {
+    for (CFG* succ : cfg->getSuccessors()) {
         if (!cfgTracker[succ]) {
             getFind(x, succ, cfgTracker, foundCFG); 
         }
     }
     
 
-    for (CFG* pred : cfg->predecessors) {
+    for (CFG* pred : cfg->getPredecessors()) {
         if (x == pred->getBranchName()) {
             foundCFG = pred; 
             return; 
         }
     }
 
-    for (CFG* pred : cfg->predecessors) {
+    for (CFG* pred : cfg->getPredecessors()) {
         if (!cfgTracker[pred]) {
             getFind(x, pred, cfgTracker, foundCFG); 
         }
@@ -99,7 +111,7 @@ bool CFG::checkFind(const std::string& x) {
 void CFG::checkFind(const std::string& x, CFG* cfg, std::map<CFG*, bool> cfgTracker, std::string& setTrue) {
     if (setTrue != "") return; 
 
-    if (x == cfg->branchName) {
+    if (x == cfg->getBranchName()) {
         setTrue = x; 
         return;
     }
@@ -107,13 +119,13 @@ void CFG::checkFind(const std::string& x, CFG* cfg, std::map<CFG*, bool> cfgTrac
 
     cfgTracker[cfg] = true; 
 
-    for (CFG* succ : cfg->successors) {
+    for (CFG* succ : cfg->getSuccessors()) {
         if (x == succ->getBranchName()) {
             setTrue = x; 
             return;
         }
     }
-    for (CFG* succ : cfg->successors) {
+    for (CFG* succ : cfg->getSuccessors()) {
         if (!cfgTracker[succ]) {
             checkFind(x, succ, cfgTracker, setTrue); 
         } 
@@ -140,66 +152,41 @@ void CFG::printInsts() {
     }
 }
 
-bool CFG::successorIsDefined(std::string x, CFG* cfg) {
+void CFG::traverse() {
+    std::map<CFG*, bool> cfgTracker;
+    traverse(this, cfgTracker); 
+}
 
-    for (CFG* succ : cfg->successors) {
-        if (x == succ->getBranchName()) {
-            return true; 
-        }
+void CFG::traverse(CFG* cfg, std::map<CFG*, bool> cfgTracker) {
+    errs() << "\nHEAD branch name = " << cfg->getBranchName() << "\n"; 
+
+    cfgTracker[cfg] = true; 
+
+    std::string succs; 
+    std::string preds; 
+
+    for (CFG* succ : cfg->getSuccessors()) {
+        succs += succ->getBranchName() + ", "; 
     }
-    for (CFG* succ : cfg->successors) {
-        return successorIsDefined(x, succ); 
+
+    for (CFG* pred : cfg->getPredecessors()) {
+        preds += pred->getBranchName() + ", "; 
+    }
+
+    errs() << "SUCCS = " << succs << "\n"; 
+    errs() << "PREDS = " << preds << "\n\n"; 
+
+
+    for (CFG* succ : cfg->getSuccessors()) {
+        if (!cfgTracker[succ]) {
+            traverse(succ, cfgTracker); 
+        } 
     }
     
 
-    return false;
-}   
-
-bool CFG::predecessorIsDefined(std::string x, CFG* cfg) {
-    for (CFG* pred : cfg->predecessors) {
-        if (x == pred->getBranchName()) {
-            return true; 
-        }
-    }
-
-    for (CFG* pred : cfg->predecessors) {
-        return predecessorIsDefined(x, pred); 
-    }
-
-    return false;
-}
-
-
-std::string CFG::getAllSuccsString(std::set<std::string> v, CFG* cfg) {
-    for (CFG* succ : cfg->successors) {
-        v.insert(succ->branchName); 
-    }
-
-    for (CFG* succ : cfg->successors) {
-        getAllSuccsString(v, succ); 
-    }
-
-    std::string x; 
-    for (auto m : v) {
-        x += m + ", "; 
-    }
-    return x; 
-
-}
-
-std::string CFG::getAllPredsString(std::set<std::string> v, CFG* cfg) {
-    for (CFG* succ : cfg->predecessors) {
-        v.insert(succ->branchName); 
-    }
-
-    for (CFG* succ : cfg->predecessors) {
-        getAllPredsString(v, succ); 
-    }
-
-    std::string x; 
-    for (auto m : v) {
-        x += m + ", "; 
-    }
-    return x; 
-
+    // for (CFG* pred : cfg->predecessors) {
+    //     if (!cfgTracker[pred]) {
+    //         traverse(pred, cfgTracker); 
+    //     } 
+    // }
 }
