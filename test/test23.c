@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+// if x and p are aliased and p calls free, should only say p calls free or that both x and p call free? 
+
+
 void* malloc0(size_t __size) {
     return malloc(__size);
 }
@@ -43,11 +46,16 @@ int free3(void* p) {
 int main () {
    char* str;
    char** p = &str; 
+   int c = getchar(); 
+
    *p = (char*)malloc(15);
    strcat(*p, "hello");
    printf("String = %s,  Address = %u\n", *p, *p);
-   
-   free(*p);
+
+
+//    free(*p);
+    char** x = &str; 
+    free(*x); 
 
    return(0);
 

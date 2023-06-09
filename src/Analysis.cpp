@@ -154,93 +154,14 @@ std::vector<Instruction *> getSuccessors(Instruction *Inst) {
   return Ret;
 }
 
-void loadForLoopBodyBranchNames(Instruction* Inst, std::set<std::string>& branches) {
-
-  auto preds = getPredecessors(Inst); 
-
-  for (auto pred : preds) {
-    std::string predName = pred->getParent()->getName().str(); 
-    
-    if (predName.substr(0, 7).compare("for.inc") != 0  && predName.substr(0, 8).compare("for.cond") != 0) {
-      branches.insert(predName);
+bool isNumber(const std::string& s) {
+    for (char const &ch : s) {
+        if (std::isdigit(ch) == 0) 
+            return false;
     }
-
-    if (predName.substr(0, 10).compare("while.cond") != 0) {
-      branches.insert(predName);
-    }
-    else if (predName.substr(0, 10).compare("while.cond") == 0) {
-      auto preds1 =  getPredecessors(pred);
-      if (preds1.size() == 2) {
-        for (auto pr : preds1) {
-          std::string p = pr->getParent()->getName().str(); 
-          logout("2 preds pname = " << p)
-          if (p.substr(0, 10).compare("while.cond") != 0) {
-            branches.insert(p);
-          }
-          
-        }
-      }
-
-    }
-
-
-    if (predName.substr(0, 10).compare("while.body") == 0) {
-      return; 
-    }
-
-
-    if (predName.substr(0, 8).compare("for.body") == 0) {
-      return; 
-    }
-
-    loadForLoopBodyBranchNames(pred, branches); 
-
-  }
-}
-
-void loadWhileLoopBranchNames(Instruction* Inst, std::set<std::string>& branches) {
-
-  auto preds = getPredecessors(Inst); 
-
-  for (auto pred : preds) {
-    std::string predName = pred->getParent()->getName().str(); 
-
-    
-    logout("found pred name = " << predName << " inst = " << *pred)
-
-    if (predName.substr(0, 7).compare("for.inc") != 0  && predName.substr(0, 8).compare("for.cond") != 0) {
-      branches.insert(predName);
-    }
-    
-    if (predName.substr(0, 10).compare("while.cond") != 0) {
-      branches.insert(predName);
-    }
-    else if (predName.substr(0, 10).compare("while.cond") == 0) {
-      for (auto pr : getPredecessors(pred)) {
-        std::string p = pr->getParent()->getName().str(); 
-        logout("2 preds pname = " << p)
-        if (p.substr(0, 10).compare("while.cond") != 0) {
-          branches.insert(p);
-        }
-        
-      }
-
-    }
-
-    if (predName.substr(0, 8).compare("for.body") == 0) {
-      return; 
-    }
-
-
-    if (predName.substr(0, 10).compare("while.body") == 0) {
-      return; 
-    }
-
-    loadWhileLoopBranchNames(pred, branches); 
-
-  }
-}
-
+    return true;
+ }
+ 
 
 void transfer(Instruction* I, SetVector<Instruction *>& workSet, CalledMethods& calledMethodsEst, AliasMap& aliasedVars) {
   std::string branchName = I->getParent()->getName().str();
@@ -256,130 +177,6 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, CalledMethods& 
     realBranchOrder.push_back(branchName);
   }
 
-  auto preds = getPredecessors(I);
-
-  // for a for.end, it should be lub of
-
-  if (preds.size() == 1 && 
-    (branchName.substr(0, 7).compare("if.then") == 0 ||  branchName.substr(0, 7).compare("if.else") == 0)) { 
-    // load predecessor into new branch 
-    auto pred = preds[0];
-    std::string predBranchName = pred->getParent()->getName().str(); 
-    auto predCM = calledMethodsEst[predBranchName]; 
-
-    for (auto Pair : predCM) {
-      std::string predVarName = Pair.first; 
-      CM predCalledMethods = Pair.second; 
-
-      calledMethodsEst[branchName][predVarName] = {
-        std::set<std::string>(predCalledMethods.cmSet), 
-        true 
-      };
-
-    }
-
-  }
-  else if (preds.size() == 2 && branchName.substr(0, 6).compare("if.end") == 0) { 
-    // lub predecesorrs into new branch 
-    auto pred1 = preds[0];
-    auto pred2 = preds[1]; 
-
-    std::string pred1BranchName = pred1->getParent()->getName().str(); 
-    std::string pred2BranchName = pred2->getParent()->getName().str(); 
-
-    auto pred1CMMap = calledMethodsEst[pred1BranchName]; 
-    auto pred2CMMap = calledMethodsEst[pred2BranchName]; 
-    std::map<std::string, std::map<std::string, bool>> assignedVars;
-
-    for (auto Pair1 : pred1CMMap) {
-      std::string pred1VarName = Pair1.first; 
-      CM pred1CM = Pair1.second; 
-      
-        
-      // intersection 
-      std::set<std::string> intersection;
-      std::set_intersection(pred1CM.cmSet.begin(), pred1CM.cmSet.end(), 
-                    calledMethodsEst[pred2BranchName][pred1VarName].cmSet.begin(), calledMethodsEst[pred2BranchName][pred1VarName].cmSet.end(), 
-                    std::inserter(intersection, intersection.begin()));
-
-
-      calledMethodsEst[branchName][pred1VarName] = {
-        intersection, 
-        true
-      }; 
-      
-    
-    }
-
-    // fill in the rest
-    for (auto Pair2 : pred2CMMap) {
-        std::string pred2VarName = Pair2.first; 
-        CM pred2CM = Pair2.second; 
-        if (!calledMethodsEst[branchName][pred2VarName].setInitialized) {
-          calledMethodsEst[branchName][pred2VarName] = {
-            std::set<std::string>(pred2CM.cmSet), 
-            true 
-          }; 
-        }
-    }
-
-  }
-  else if (branchName.substr(0, 7).compare("for.end") == 0) {
-    std::set<std::string> branches; 
-    loadForLoopBodyBranchNames(I, branches); 
-    
-    std::map<std::string, std::map<std::string, bool>> assignedVars;
-
-    for (std::string predBranch : branches) {
-
-      logout("pred branch = " << predBranch << " main " << branchName)
-
-      auto cmMap = calledMethodsEst[predBranch];
-      for (auto pair : cmMap) {
-        std::string varName = pair.first; 
-        CM cm = pair.second; 
-
-        if (!calledMethodsEst[branchName][varName].setInitialized) {
-          calledMethodsEst[branchName][varName] = {
-            std::set<std::string>(pair.second.cmSet), 
-            true 
-          };
-
-        }
-        else {
-
-          if (calledMethodsEst[predBranch][varName].setInitialized) {
-            std::set<std::string> intersection;
-            std::set_intersection(calledMethodsEst[branchName][varName].cmSet.begin(), calledMethodsEst[branchName][varName].cmSet.end(), 
-                      calledMethodsEst[predBranch][varName].cmSet.begin(), calledMethodsEst[predBranch][varName].cmSet.end(), 
-                      std::inserter(intersection, intersection.begin()));
-
-            calledMethodsEst[branchName][varName].cmSet = intersection;
-          }
-
-        }
-
-      }
-    }
-   
-  }
-  else if (branchName.substr(0, 10).compare("while.body") == 0) {
-    std::set<std::string> branches; 
-    loadWhileLoopBranchNames(I, branches); 
-    for (auto s : branches) {
-      logout("while body rel branch " << s)
-    }
-
-  }
-  else if (branchName.substr(0, 9).compare("while.end") == 0) {
-    std::set<std::string> branches; 
-    loadWhileLoopBranchNames(I, branches); 
-    for (auto s : branches) {
-      logout("rel branch " << s)
-    }
-
-  }
-
 
    if (auto Alloca = dyn_cast<AllocaInst>(I)) {
       logout("allocate inst, name = " << ("%" + Alloca->getName()))
@@ -388,7 +185,15 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, CalledMethods& 
     }
     else if (auto Load = dyn_cast<LoadInst>(I)) {
       logout("(load) name is " << variable(Load) << " for " << variable(Load->getPointerOperand()) )
-      aliasedVars[variable(Load)] = variable(Load->getPointerOperand()); 
+
+      std::string varName = variable(Load->getPointerOperand()); 
+      while (varName.size() > 1 && isNumber(varName.substr(1))) { 
+        varName = aliasedVars[varName]; 
+      }
+
+      logout(variable(Load) << " -> " << varName)
+
+      aliasedVars[variable(Load)] = varName;
     }
     else if (auto Store = dyn_cast<StoreInst>(I)) {
 
@@ -431,8 +236,10 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, CalledMethods& 
           Value *argument = Call->getArgOperand(i);
           std::string argName = variable(argument);
 
-          if (aliasedVars.count(argName) != 0) {
-            argName = aliasedVars[argName];
+
+          argName = aliasedVars[argName];
+          while (argName.size() > 1 && isNumber(argName.substr(1))) {
+            argName = aliasedVars[argName]; 
           }
 
           logout("arg = " << argName) 
@@ -517,7 +324,16 @@ void transferUnbranched(Instruction* I, SetVector<Instruction *>& workSet, std::
     
   }
   else if (auto Load = dyn_cast<LoadInst>(I)) {
-    aliasedVars[variable(Load)] = variable(Load->getPointerOperand()); 
+    logout("(load) name is " << variable(Load) << " for " << variable(Load->getPointerOperand()) )
+
+      std::string varName = variable(Load->getPointerOperand()); 
+      while (varName.size() > 1 && isNumber(varName.substr(1))) {
+        varName = aliasedVars[varName]; 
+      }
+
+      logout(variable(Load) << " -> " << varName)
+
+      aliasedVars[variable(Load)] = varName;
   }
   else if (auto Store = dyn_cast<StoreInst>(I)) {
 
@@ -553,8 +369,9 @@ void transferUnbranched(Instruction* I, SetVector<Instruction *>& workSet, std::
         Value *argument = Call->getArgOperand(i);
         std::string argName = variable(argument);
 
-        if (aliasedVars.count(argName) != 0) {
-          argName = aliasedVars[argName];
+        argName = aliasedVars[argName];
+        while (argName.size() > 1 && isNumber(argName.substr(1))) {
+          argName = aliasedVars[argName]; 
         }
 
 
@@ -845,7 +662,7 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
 
   }
 
-  errs() << "\n\n CME \n\n";  
+
   for (auto branch : realBranchOrder) {
     errs() << "branch name = " << branch << "\n";
     for (auto Pair1 : calledMethodsEstimate[branch]) {
@@ -862,7 +679,6 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
     errs() << "\n";
   }
 
-  logout("DATAFLOW: ")
 
   CFG TopCFG = CFG("entry"); 
 
@@ -900,32 +716,16 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
     if (s_name == branchName) continue; 
 
     if (cfg->checkFind(s_name)) {
-      logout("\nADD S (seen before): branch = " << branchName << " adding succ " << s_name << "\n")
       cfg->addSuccessor(cfg->getFind(s_name));
       cfg->getFind(s_name)->addPredecessor(cfg);
-
       continue; 
     } 
 
-
-    logout("\nADD S: branch = " << branchName << " adding succ " << s_name << "\n")
-    
     cfg->addSuccessor(s_name); 
     cfg->getFind(s_name)->addPredecessor(cfg); 
   
 
    }
-
-   
-   
-   std::string finalStr = "branch = " + branchName + " "; 
-   if (succsString != "") finalStr += " succs = " + succsString; 
-   if (predsString != "") finalStr += " preds = " + predsString; 
-
-   logout(finalStr)
-
-
-
 
   }
 

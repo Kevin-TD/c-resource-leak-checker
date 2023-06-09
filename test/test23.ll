@@ -109,26 +109,35 @@ entry:
   %retval = alloca i32, align 4
   %str = alloca i8*, align 8
   %p = alloca i8**, align 8
+  %c = alloca i32, align 4
+  %x = alloca i8**, align 8
   store i32 0, i32* %retval, align 4
   call void @llvm.dbg.declare(metadata i8** %str, metadata !70, metadata !DIExpression()), !dbg !71
   call void @llvm.dbg.declare(metadata i8*** %p, metadata !72, metadata !DIExpression()), !dbg !74
   store i8** %str, i8*** %p, align 8, !dbg !74
-  %call = call noalias i8* @malloc(i64 15) #4, !dbg !75
-  %0 = load i8**, i8*** %p, align 8, !dbg !76
-  store i8* %call, i8** %0, align 8, !dbg !77
-  %1 = load i8**, i8*** %p, align 8, !dbg !78
-  %2 = load i8*, i8** %1, align 8, !dbg !79
-  %call1 = call i8* @strcat(i8* %2, i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str, i32 0, i32 0)) #4, !dbg !80
-  %3 = load i8**, i8*** %p, align 8, !dbg !81
-  %4 = load i8*, i8** %3, align 8, !dbg !82
-  %5 = load i8**, i8*** %p, align 8, !dbg !83
-  %6 = load i8*, i8** %5, align 8, !dbg !84
-  %call2 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([28 x i8], [28 x i8]* @.str.1, i32 0, i32 0), i8* %4, i8* %6), !dbg !85
-  %7 = load i8**, i8*** %p, align 8, !dbg !86
-  %8 = load i8*, i8** %7, align 8, !dbg !87
-  call void @free(i8* %8) #4, !dbg !88
-  ret i32 0, !dbg !89
+  call void @llvm.dbg.declare(metadata i32* %c, metadata !75, metadata !DIExpression()), !dbg !76
+  %call = call i32 @getchar(), !dbg !77
+  store i32 %call, i32* %c, align 4, !dbg !76
+  %call1 = call noalias i8* @malloc(i64 15) #4, !dbg !78
+  %0 = load i8**, i8*** %p, align 8, !dbg !79
+  store i8* %call1, i8** %0, align 8, !dbg !80
+  %1 = load i8**, i8*** %p, align 8, !dbg !81
+  %2 = load i8*, i8** %1, align 8, !dbg !82
+  %call2 = call i8* @strcat(i8* %2, i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str, i32 0, i32 0)) #4, !dbg !83
+  %3 = load i8**, i8*** %p, align 8, !dbg !84
+  %4 = load i8*, i8** %3, align 8, !dbg !85
+  %5 = load i8**, i8*** %p, align 8, !dbg !86
+  %6 = load i8*, i8** %5, align 8, !dbg !87
+  %call3 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([28 x i8], [28 x i8]* @.str.1, i32 0, i32 0), i8* %4, i8* %6), !dbg !88
+  call void @llvm.dbg.declare(metadata i8*** %x, metadata !89, metadata !DIExpression()), !dbg !90
+  store i8** %str, i8*** %x, align 8, !dbg !90
+  %7 = load i8**, i8*** %x, align 8, !dbg !91
+  %8 = load i8*, i8** %7, align 8, !dbg !92
+  call void @free(i8* %8) #4, !dbg !93
+  ret i32 0, !dbg !94
 }
+
+declare dso_local i32 @getchar() #3
 
 ; Function Attrs: nounwind
 declare dso_local i8* @strcat(i8*, i8*) #2
@@ -220,18 +229,23 @@ attributes #4 = { nounwind }
 !72 = !DILocalVariable(name: "p", scope: !67, file: !1, line: 45, type: !73)
 !73 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !4, size: 64)
 !74 = !DILocation(line: 45, column: 11, scope: !67)
-!75 = !DILocation(line: 46, column: 16, scope: !67)
-!76 = !DILocation(line: 46, column: 5, scope: !67)
-!77 = !DILocation(line: 46, column: 7, scope: !67)
-!78 = !DILocation(line: 47, column: 12, scope: !67)
-!79 = !DILocation(line: 47, column: 11, scope: !67)
-!80 = !DILocation(line: 47, column: 4, scope: !67)
-!81 = !DILocation(line: 48, column: 44, scope: !67)
-!82 = !DILocation(line: 48, column: 43, scope: !67)
-!83 = !DILocation(line: 48, column: 48, scope: !67)
-!84 = !DILocation(line: 48, column: 47, scope: !67)
-!85 = !DILocation(line: 48, column: 4, scope: !67)
-!86 = !DILocation(line: 50, column: 10, scope: !67)
-!87 = !DILocation(line: 50, column: 9, scope: !67)
+!75 = !DILocalVariable(name: "c", scope: !67, file: !1, line: 46, type: !43)
+!76 = !DILocation(line: 46, column: 8, scope: !67)
+!77 = !DILocation(line: 46, column: 12, scope: !67)
+!78 = !DILocation(line: 48, column: 16, scope: !67)
+!79 = !DILocation(line: 48, column: 5, scope: !67)
+!80 = !DILocation(line: 48, column: 7, scope: !67)
+!81 = !DILocation(line: 49, column: 12, scope: !67)
+!82 = !DILocation(line: 49, column: 11, scope: !67)
+!83 = !DILocation(line: 49, column: 4, scope: !67)
+!84 = !DILocation(line: 50, column: 44, scope: !67)
+!85 = !DILocation(line: 50, column: 43, scope: !67)
+!86 = !DILocation(line: 50, column: 48, scope: !67)
+!87 = !DILocation(line: 50, column: 47, scope: !67)
 !88 = !DILocation(line: 50, column: 4, scope: !67)
-!89 = !DILocation(line: 52, column: 4, scope: !67)
+!89 = !DILocalVariable(name: "x", scope: !67, file: !1, line: 54, type: !73)
+!90 = !DILocation(line: 54, column: 12, scope: !67)
+!91 = !DILocation(line: 55, column: 11, scope: !67)
+!92 = !DILocation(line: 55, column: 10, scope: !67)
+!93 = !DILocation(line: 55, column: 5, scope: !67)
+!94 = !DILocation(line: 57, column: 4, scope: !67)
