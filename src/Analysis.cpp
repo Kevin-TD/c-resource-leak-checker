@@ -29,7 +29,6 @@ struct CM {
 };
 
 typedef std::map<std::string, std::map<std::string, CM>> CalledMethods; // left = branch name. inner left = var name 
-typedef std::map<std::string, CalledMethods> Memory; // left = branch name, right = called methods 
 typedef std::map<std::string, std::string> AliasMap;
 typedef std::map<std::string, std::string> VarBranchMap;
 
@@ -316,17 +315,12 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, CalledMethods& 
     for (auto Pair2 : pred2CMMap) {
         std::string pred2VarName = Pair2.first; 
         CM pred2CM = Pair2.second; 
-
         if (!calledMethodsEst[branchName][pred2VarName].setInitialized) {
-
           calledMethodsEst[branchName][pred2VarName] = {
             std::set<std::string>(pred2CM.cmSet), 
             true 
-          };
-          
+          }; 
         }
-
-
     }
 
   }
@@ -502,6 +496,277 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, CalledMethods& 
 
 }
 
+void transferUnbranched(Instruction* I, SetVector<Instruction *>& workSet, std::map<std::string, CM>& calledMethodsSet, AliasMap& aliasedVars) {
+  bool includes = false; 
+  std::string branchName = I->getParent()->getName().str();
+  for (auto branch : realBranchOrder) {
+    if (branch == branchName) {
+      includes = true; 
+      break;
+    }
+  }
+  if (!includes) {
+    realBranchOrder.push_back(branchName);
+  }
+
+  auto preds = getPredecessors(I);
+
+
+  if (auto Alloca = dyn_cast<AllocaInst>(I)) {
+    calledMethodsSet["%" + Alloca->getName().str()] = {};
+    
+  }
+  else if (auto Load = dyn_cast<LoadInst>(I)) {
+    aliasedVars[variable(Load)] = variable(Load->getPointerOperand()); 
+  }
+  else if (auto Store = dyn_cast<StoreInst>(I)) {
+
+    //   store i8* %call, i8** %str, align 8, !dbg !17
+
+    Value* valueToStore = Store->getOperand(0);       // i8* %call
+    Value* receivingValue = Store->getOperand(1);   // i8** %str
+    
+    for (auto Inst : workSet) {
+      if (valueToStore == Inst) {
+        if (auto Call = dyn_cast<CallInst>(Inst)) {
+          std::string varName = variable(Store->getOperand(1)); 
+          std::string fnName = Call->getCalledFunction()->getName().str(); 
+          if (
+            UnsafeFunctions.count(fnName) == 0  && 
+            UnsafeFunctions.count(MemoryFunctions[fnName]) == 0 && 
+            MemoryFunctions[fnName].size() > 0
+          ) {
+            //  calledMethodsEst[branchName][varName].insert(fnName);   
+            //  allocation function 
+
+          }
+
+        }
+
+      }
+    }
+
+  
+  }
+  else if (auto Call = dyn_cast<CallInst>(I)) {
+    for (unsigned i = 0; i < Call->getNumArgOperands(); ++i) {
+        Value *argument = Call->getArgOperand(i);
+        std::string argName = variable(argument);
+
+        if (aliasedVars.count(argName) != 0) {
+          argName = aliasedVars[argName];
+        }
+
+
+        // * i THINK this is what distinguishes "real" variables defined in the program from constants and other irrelevant llvm stuff 
+        if (argName[0] != '%') return; 
+
+        // * (i think this handles) cases where an entirely random and undefined (implicitly declared) function shows up 
+        if (Call->getCalledFunction() == NULL) {
+          const DebugLoc &debugLoc = I->getDebugLoc();
+          std::string location = "Line " + std::to_string(debugLoc.getLine()) + ", Col " + std::to_string(debugLoc.getCol());
+
+          errs() << "CME-WARNING: unknown (unforseen occurence) & unsafe func on " << location << ". must call satisfied property for '" << argName << "' set to false.\n";
+          
+          return; 
+        }
+
+        std::string fnName = Call->getCalledFunction()->getName().str();
+
+
+        if (UnsafeFunctions[fnName]) {
+          logout("unsafe func")
+          return; 
+        }
+
+        if (ReallocFunctions[fnName]) {
+          logout("realloc func")
+          // calledMethodsEst[branchName][argName].insert(fnName); 
+          return; 
+        }
+
+        if (SafeFunctions[fnName]) {
+          logout("safe func")
+          return; 
+        }
+
+
+        for (auto Pair : MemoryFunctions) {
+          if (fnName == Pair.first) { // allocation function
+
+          }
+          else if (fnName == Pair.second) { // deallocation function 
+            calledMethodsSet[argName].cmSet.insert(fnName); 
+            calledMethodsSet[argName].setInitialized = true; 
+            break; 
+
+          }
+        }
+        
+
+
+
+    }
+  }
+  else if (auto Branch = dyn_cast<BranchInst>(I)) {
+
+  }
+
+
+}
+
+void analyzeCFG(CFG* cfg, CalledMethods& PreCalledMethods, CalledMethods& PostCalledMethods, std::list<std::string> branchesAnalyzed, AliasMap& AliasedVars, std::string priorBranch) {
+  std::string currentBranch =  cfg->getBranchName(); 
+
+  std::string m; 
+  for (auto k : branchesAnalyzed) {
+    m += k + ", ";
+  }
+  logout("branches analyzed = " << m)
+
+  if (currentBranch == "entry") { 
+
+    PreCalledMethods[currentBranch] = {}; 
+    llvm::SetVector<Instruction*> instructions = cfg->getInstructions(); 
+
+    for (Instruction* I : instructions) {
+      transferUnbranched(I, instructions, PostCalledMethods[currentBranch], AliasedVars);
+    }
+
+    branchesAnalyzed.push_back(currentBranch); 
+
+    for (CFG* succ : cfg->getSuccessors()) {
+      analyzeCFG(succ, PreCalledMethods, PostCalledMethods, branchesAnalyzed, AliasedVars, currentBranch); 
+    }
+
+  }
+
+  else {
+    std::map<std::string, CM> PriorPreCM = std::map<std::string, CM>(PreCalledMethods[currentBranch]); 
+    std::map<std::string, CM> PriorPostCM = std::map<std::string, CM>(PostCalledMethods[currentBranch]); 
+
+    bool foundCurrent = std::find(branchesAnalyzed.begin(), branchesAnalyzed.end(), currentBranch) != branchesAnalyzed.end();
+
+    logout("-----\nlogging priorprecm prior = " << priorBranch << " current = " << currentBranch )
+    for (auto p : PriorPreCM) {
+      std::string m; 
+      for (auto k : p.second.cmSet) {
+        m += k + ", ";
+      }
+      logout(p.first << " " << m)
+    }
+
+
+    if (PriorPreCM.size() > 0) {
+      logout("need to lub for " << currentBranch << " " << priorBranch)
+      
+
+      std::map<std::string, CM> CurrentPreCM = std::map<std::string, CM>(PostCalledMethods[priorBranch]);
+      llvm::SetVector<Instruction*> instructions = cfg->getInstructions(); 
+     
+
+      // lub PriorPreCM and CurrentPreCM
+      std::map<std::string, CM> lub; 
+
+      for (auto Pair1 : PriorPreCM) {
+        std::string varName = Pair1.first; 
+        CM priorPreCM = Pair1.second; 
+        
+          
+        // intersection 
+        std::set<std::string> intersection;
+
+        std::set_intersection(priorPreCM.cmSet.begin(), priorPreCM.cmSet.end(), 
+                      CurrentPreCM[varName].cmSet.begin(), CurrentPreCM[varName].cmSet.end(), 
+                      std::inserter(intersection, intersection.begin()));
+
+        logout("for var name " << varName)
+
+        std::string m,k; 
+        for (auto i : priorPreCM.cmSet) {
+          m += i + ", ";
+        }
+        for (auto i : CurrentPreCM[varName].cmSet) {
+          k += i + ", ";
+        }
+        logout("prior pre cm = " << m)
+        logout("current pre cm = " << k)
+
+
+        lub[varName] = {
+          intersection, 
+          true
+        }; 
+        
+      
+      }
+
+      // fill in the rest 
+      for (auto Pair1 : PriorPostCM) {
+        std::string varName = Pair1.first; 
+        CM priorPostCM = Pair1.second; 
+
+        if (!lub[varName].setInitialized) {
+          
+          lub[varName] = {
+            std::set<std::string>(priorPostCM.cmSet), 
+            true 
+          }; 
+
+        }
+      }
+
+      PreCalledMethods[currentBranch] = std::map<std::string, CM>(lub);
+
+      for (Instruction* I : instructions) {
+        transferUnbranched(I, instructions, lub, AliasedVars);
+      }
+
+      PostCalledMethods[currentBranch] = lub; 
+
+      branchesAnalyzed.push_back(currentBranch); 
+
+      for (CFG* succ : cfg->getSuccessors()) {
+        bool found = std::find(branchesAnalyzed.begin(), branchesAnalyzed.end(), succ->getBranchName()) != branchesAnalyzed.end();
+        if (!found) {
+          logout("analyzing succesor " << succ->getBranchName())
+          analyzeCFG(succ, PreCalledMethods, PostCalledMethods, branchesAnalyzed, AliasedVars, currentBranch); 
+        }
+        else {
+          logout("not analyzing successor " << succ->getBranchName())
+        }
+      }
+
+    }
+    else {
+      logout("doing normal flow for " << currentBranch << " and prior = " << priorBranch)  
+
+      std::map<std::string, CM> priorPostCM = std::map<std::string, CM>(PostCalledMethods[priorBranch]); 
+
+      PreCalledMethods[currentBranch] = std::map<std::string, CM>(priorPostCM); 
+      llvm::SetVector<Instruction*> instructions = cfg->getInstructions(); 
+
+      std::map<std::string, CM> flowInto = std::map<std::string, CM>(PostCalledMethods[priorBranch]); 
+
+       for (Instruction* I : instructions) {
+        transferUnbranched(I, instructions, flowInto, AliasedVars);
+      }
+
+      PostCalledMethods[currentBranch] = flowInto;
+
+      branchesAnalyzed.push_back(currentBranch); 
+      
+
+      for (CFG* succ : cfg->getSuccessors()) {
+        analyzeCFG(succ, PreCalledMethods, PostCalledMethods, branchesAnalyzed, AliasedVars, currentBranch); 
+      }
+
+    }
+
+  }
+
+}
+
 
 void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
   SetVector<Instruction *> WorkSet;
@@ -570,7 +835,7 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
 
   CalledMethods calledMethodsEstimate; 
   AliasMap AliasedVars; 
-  std::map<std::string, std::set<Instruction*>> branchInstMap; 
+  std::map<std::string, SetVector<Instruction*>> branchInstMap; 
 
   for (auto I : WorkSet) {
     std::string branchName = I->getParent()->getName().str();
@@ -664,26 +929,35 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
 
   }
 
+  CalledMethods PreCalledMethods; 
+  CalledMethods PostCalledMethods; 
+  std::list<std::string> branchesAnalyzed; 
 
-  
-  for (std::string branchName : realBranchOrder) {
-    auto cur = TopCFG.getFind(branchName); 
+  analyzeCFG(&TopCFG, PreCalledMethods, PostCalledMethods, branchesAnalyzed, AliasedVars, ""); 
 
-    logout("HEAD = " << cur->getBranchName())
 
-    std::string succsName; 
-    std::string predsName; 
-
-    for (auto s : cur->getSuccessors()) {
-      succsName += s->getBranchName() + ", "; 
+  logout("\n\nPOST CALLED METHODS")
+  for (auto Pair1 : PostCalledMethods) {
+    std::string branchName = Pair1.first; 
+    logout("branch = " << branchName)
+    for (auto Pair2 : Pair1.second) {
+      std::string cm; 
+      for (auto m : Pair2.second.cmSet) {
+        cm += m + ", "; 
+      }
+      logout(">> var name = " << Pair2.first << " cm = " << cm)
     }
+  }
 
-    for (auto p : cur->getPredecessors()) {
-      predsName += p->getBranchName() + ", "; 
-    }
+  logout("\n\nLAST BRANCH CALLED METHODS = " << realBranchOrder.back())
+  for (auto Pair : PostCalledMethods[realBranchOrder.back()]) {
 
-    logout("SUCCS = " << succsName)
-    logout("PREDS = " << predsName << "\n\n")
+      std::string cm; 
+      for (auto m : Pair.second.cmSet) {
+        cm += m + ", "; 
+      }
+      logout(">> var name = " << Pair.first << " cm = " << cm)
+    
 
   }
 

@@ -39,42 +39,22 @@ int main () {
    int a = getchar();
 
    str = (char *) malloc(15);
-   strcpy(str, "helloworld");
-   printf("String = %s,  Address = %u\n", str, str);
 
-   str = (char *) realloc(str, 25);
-   strcat(str, "hello");
-   printf("String = %s,  Address = %u\n", str, str);  
-
-    while (a < 10) {
-        while (a < 15) {
-            free(str);
-        }
-
-        for (int i = 0; i < 15; i++) {
-            free(str);
-        }
-
-        if (a == -15) {
-            free(str);
-        }
-        a++; 
+    do {
+        free1(str);
 
         switch (a) {
-            case 0:
+            case -15:
                 free(str);
                 break; 
-            case 1: 
+            case -10: 
                 free(str); 
-                break;
+                break; 
             default:
-                free(str);
+                free(str); 
+                break; 
         }
-        
-    }
-
-    free0(str);
-    
+    } while (a > 15);
 
    return(0);
 

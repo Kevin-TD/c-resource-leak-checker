@@ -8,13 +8,13 @@ CFG::CFG(std::string branchName) {
     this->branchName = branchName;
 }
 
-CFG::CFG(std::string branchName, std::set<Instruction*> instructions) {
+CFG::CFG(std::string branchName, llvm::SetVector<Instruction*> instructions) {
     this->branchName = branchName;
     this->instructions = instructions; 
 }
 
 
-void CFG::addSuccessor(std::string branchName,  std::set<Instruction*> instructions) {
+void CFG::addSuccessor(std::string branchName, llvm::SetVector<Instruction*> instructions) {
     this->successors.insert(new CFG(branchName, instructions)); 
 }
 
@@ -27,7 +27,7 @@ void CFG::addSuccessor(CFG* tree) {
 }
 
 
-void CFG::addPredecessor(std::string branchName,  std::set<Instruction*> instructions) {
+void CFG::addPredecessor(std::string branchName, llvm::SetVector<Instruction*> instructions) {
     this->predecessors.insert(new CFG(branchName, instructions)); 
 }
 
@@ -52,7 +52,7 @@ std::set<CFG*> CFG::getPredecessors() {
     return this->predecessors; 
 }
 
-void CFG::setInstructions(std::set<Instruction*> instructions) {
+void CFG::setInstructions(llvm::SetVector<Instruction*> instructions) {
     this->instructions = instructions; 
 }
 
@@ -146,47 +146,6 @@ void CFG::checkFind(const std::string& x, CFG* cfg, std::map<CFG*, bool> cfgTrac
     }
 }
 
-void CFG::printInsts() {
-    for (auto I : this->instructions) {
-        errs() << *I << "\n";
-    }
-}
-
-void CFG::traverse() {
-    std::map<CFG*, bool> cfgTracker;
-    traverse(this, cfgTracker); 
-}
-
-void CFG::traverse(CFG* cfg, std::map<CFG*, bool> cfgTracker) {
-    errs() << "\nHEAD branch name = " << cfg->getBranchName() << "\n"; 
-
-    cfgTracker[cfg] = true; 
-
-    std::string succs; 
-    std::string preds; 
-
-    for (CFG* succ : cfg->getSuccessors()) {
-        succs += succ->getBranchName() + ", "; 
-    }
-
-    for (CFG* pred : cfg->getPredecessors()) {
-        preds += pred->getBranchName() + ", "; 
-    }
-
-    errs() << "SUCCS = " << succs << "\n"; 
-    errs() << "PREDS = " << preds << "\n\n"; 
-
-
-    for (CFG* succ : cfg->getSuccessors()) {
-        if (!cfgTracker[succ]) {
-            traverse(succ, cfgTracker); 
-        } 
-    }
-    
-
-    // for (CFG* pred : cfg->predecessors) {
-    //     if (!cfgTracker[pred]) {
-    //         traverse(pred, cfgTracker); 
-    //     } 
-    // }
+llvm::SetVector<Instruction*> CFG::getInstructions() {
+    return this->instructions; 
 }
