@@ -11,8 +11,8 @@
 
 // perhaps we'll report an error whenever critical functions are re-defined  
 
-void *malloc(size_t __size) {
-    printf("false malloc");
+char *strcpy(char *__restrict__ __dest, const char *__restrict__ __src) {
+    printf("a mimicry");
 }
 
 int main () {
@@ -30,8 +30,16 @@ int main () {
    printf("String = %s,  Address = %u\n", str, str);
 
    free(str);
-
-   // expectations: no results, as malloc would no longer be considered a memory allocating function. warning that malloc is re-defined would emit
+   
+   strcpy(str, "helloworld");
    
    return(0);
 }
+
+/*
+Results (if ALLOWED_REDEFINE false)
+entry a {}
+entry retval {} 
+entry str {}
+
+*/

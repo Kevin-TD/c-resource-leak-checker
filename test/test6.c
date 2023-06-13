@@ -2,22 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-// if there is a re-definition of a critical function, automatically cast it as an unsafe function. if it was casted as anything else, delete them 
-// LLVM IR can't seem to distinguish between a call for malloc from C library or one we just locally defined 
-// additionally, the code itself calls the locally defined malloc function anyhow 
+// this is a test more for the consistency pass 
+// should be able to conclude that trivially_malloc is effectively the same as malloc
 
-// running the code with the real malloc causes no error
-// running the code with the fake malloc causes seg fault; i think this is suitable grounds to then simply cast it as an unsafe function 
-
-// perhaps we'll report an error whenever critical functions are re-defined  
-
-char *strcpy(char *__restrict__ __dest, const char *__restrict__ __src) {
-    printf("a mimicry");
+void* trivially_malloc(size_t __size) {
+    malloc(__size);
 }
 
 int main () {
    char *str;
-   int a;
+   int a = getchar();
 
    /* Initial memory allocation */
    str = (char *) malloc(15);
@@ -29,13 +23,39 @@ int main () {
    strcat(str, "hello");
    printf("String = %s,  Address = %u\n", str, str);
 
-   free(str);
+    if (a == -15) { // impossible
+         free(str);
+    }
+    else if (a == -10) { // impossible
+        char* str1; 
+        str1 = (char *) malloc(15);
+
+        if (a == -9) { // very impossible 
+            free(str1);
+        } 
+
+         free(str); 
+
+    }
+    else {
+      char* str2; 
+        str2 = (char *) malloc(15);
+
+        if (a == -9) { // very impossible 
+            free(str2);
+        } 
+
+        free(str2);
+        free(str); 
+    }
    
-   strcpy(str, "helloworld");
-
-   unknown_function(str);
-
-   // expectation: str must call not satisfied 
    
    return(0);
 }
+
+/*
+Results 
+if.end18 str {free}
+
+
+*/

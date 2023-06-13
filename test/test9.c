@@ -2,49 +2,88 @@
 #include <stdlib.h>
 #include <string.h>
 
-// this is a test more for the consistency pass 
-// should be able to conclude that trivially_malloc is effectively the same as malloc
+void* malloc0(size_t __size) {
+    return malloc(__size);
+}
 
-void* trivially_malloc(size_t __size) {
-    malloc(__size);
+void* malloc1(size_t __size) {
+    return malloc(__size);
+}
+
+void* malloc2(size_t __size) {
+    return malloc(__size);
+}
+
+void* malloc3(size_t __size) {
+    return malloc(__size);
+}
+
+void free0(void* p) {
+    free(p);
+}
+
+void free1(void* p) {
+    free(p);
+}
+
+void free2(void* p) {
+    free(p);
+}
+
+void free3(void* p) {
+    free(p);
 }
 
 int main () {
    char *str;
    int a = getchar();
 
-   /* Initial memory allocation */
    str = (char *) malloc(15);
    strcpy(str, "helloworld");
    printf("String = %s,  Address = %u\n", str, str);
 
-   /* Reallocating memory */
    str = (char *) realloc(str, 25);
    strcat(str, "hello");
-   printf("String = %s,  Address = %u\n", str, str);
+   printf("String = %s,  Address = %u\n", str, str);  
 
-   free(str);
-
-    if (a == -15) { // impossible
-
-    }
-    else if (a == -10) { // impossible
-        char* str1; 
-        str1 = (char *) malloc(15);
-
-        if (a == -9) { // very impossible 
-            free(str1);
-        } else {
-            free(str1);
-            realloc(str, 15);
+    while (a < 10) {
+        while (a < 15) {
+            free(str);
         }
 
+        for (int i = 0; i < 15; i++) {
+            free(str);
+        }
+
+        if (a == -15) {
+            free(str);
+        }
+        a++; 
+
+        switch (a) {
+            case 0:
+                free(str);
+                break; 
+            case 1: 
+                free(str); 
+                break;
+            default:
+                free(str);
+        }
+        
     }
-    else {
-        free(str);
-    }
-   
-    // expectations: %str must call not satisfied, %str1 must call satisfied
-   
+
+    free0(str);
+    
+
    return(0);
+
+ 
 }
+
+/*
+Results 
+sw.epilog str {free}
+while.end14 str {free0}
+
+*/

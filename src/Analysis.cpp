@@ -33,17 +33,13 @@ typedef std::map<std::string, std::string> AliasMap;
 typedef std::map<std::string, std::string> VarBranchMap;
 
 
-// worth noting that has an expr is declared when IR does "call void @llvm.dbg.declare [other IR ...]"
-
-// TODO: make sure program does not utterly collapse
-
 namespace dataflow {
 
 std::map<std::string, bool> SafeFunctions;
 std::map<std::string, bool> UnsafeFunctions;
 std::map<std::string, bool> ReallocFunctions;
 std::map<std::string, std::string> MemoryFunctions;
-std::vector<std::string> realBranchOrder; // ONLY for debugging purposes 
+std::vector<std::string> realBranchOrder; 
 
 void loadFunctions() { 
   // working directory is /build 
@@ -163,10 +159,9 @@ bool isNumber(const std::string& s) {
  }
  
 
-void transfer(Instruction* I, SetVector<Instruction *>& workSet, CalledMethods& calledMethodsEst, AliasMap& aliasedVars) {
-  std::string branchName = I->getParent()->getName().str();
-  logout("inst " << *I << " branch name = " << branchName)
+void populateAliasedVars(Instruction* I, SetVector<Instruction *>& workSet, AliasMap& aliasedVars) {
   bool includes = false; 
+  std::string branchName = I->getParent()->getName().str();
   for (auto branch : realBranchOrder) {
     if (branch == branchName) {
       includes = true; 
@@ -178,146 +173,26 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, CalledMethods& 
   }
 
 
-   if (auto Alloca = dyn_cast<AllocaInst>(I)) {
-      logout("allocate inst, name = " << ("%" + Alloca->getName()))
-      calledMethodsEst[branchName]["%" + Alloca->getName().str()] = {};
-      
-    }
-    else if (auto Load = dyn_cast<LoadInst>(I)) {
-      logout("(load) name is " << variable(Load) << " for " << variable(Load->getPointerOperand()) )
+
+ if (auto Load = dyn_cast<LoadInst>(I)) {
+    logout("(load) name is " << variable(Load) << " for " << variable(Load->getPointerOperand()) )
 
       std::string varName = variable(Load->getPointerOperand()); 
-      while (varName.size() > 1 && isNumber(varName.substr(1))) { 
+      while (varName.size() > 1 && isNumber(varName.substr(1))) {
         varName = aliasedVars[varName]; 
       }
 
       logout(variable(Load) << " -> " << varName)
 
       aliasedVars[variable(Load)] = varName;
-    }
-    else if (auto Store = dyn_cast<StoreInst>(I)) {
+  }
 
-      //   store i8* %call, i8** %str, align 8, !dbg !17
-
-      Value* valueToStore = Store->getOperand(0);       // i8* %call
-      Value* receivingValue = Store->getOperand(1);   // i8** %str
-
-      logout("value to store = " << valueToStore << " !!!! " << *valueToStore)
-      logout("value that's receiving = " << variable(receivingValue))
-
-      
-      for (auto Inst : workSet) {
-        if (valueToStore == Inst) {
-          if (auto Call = dyn_cast<CallInst>(Inst)) {
-            std::string varName = variable(Store->getOperand(1)); 
-            std::string fnName = Call->getCalledFunction()->getName().str(); 
-            logout("fn name = " << fnName)
-
-            if (
-              UnsafeFunctions.count(fnName) == 0  && 
-              UnsafeFunctions.count(MemoryFunctions[fnName]) == 0 && 
-              MemoryFunctions[fnName].size() > 0
-            ) {
-              //  calledMethodsEst[branchName][varName].insert(fnName);   
-               logout("fn name true for " << branchName << " " << varName)
-              //  allocation function 
-
-            }
-
-          }
-
-        }
-      }
-
-    
-    }
-    else if (auto Call = dyn_cast<CallInst>(I)) {
-      for (unsigned i = 0; i < Call->getNumArgOperands(); ++i) {
-          Value *argument = Call->getArgOperand(i);
-          std::string argName = variable(argument);
-
-
-          argName = aliasedVars[argName];
-          while (argName.size() > 1 && isNumber(argName.substr(1))) {
-            argName = aliasedVars[argName]; 
-          }
-
-          logout("arg = " << argName) 
-
-          // * i THINK this is what distinguishes "real" variables defined in the program from constants and other irrelevant llvm stuff 
-          if (argName[0] != '%') return; 
-
-          // * (i think this handles) cases where an entirely random and undefined (implicitly declared) function shows up 
-          if (Call->getCalledFunction() == NULL) {
-            const DebugLoc &debugLoc = I->getDebugLoc();
-            std::string location = "Line " + std::to_string(debugLoc.getLine()) + ", Col " + std::to_string(debugLoc.getCol());
-
-            errs() << "CME-WARNING: unknown (unforseen occurence) & unsafe func on " << location << ". must call satisfied property for '" << argName << "' set to false.\n";
-            
-            return; 
-          }
-
-          std::string fnName = Call->getCalledFunction()->getName().str();
-
-          logout("fnName for call = " << fnName << " " << branchName)
-
-          if (UnsafeFunctions[fnName]) {
-            logout("unsafe func")
-            return; 
-          }
-
-          if (ReallocFunctions[fnName]) {
-            logout("realloc func")
-            // calledMethodsEst[branchName][argName].insert(fnName); 
-            return; 
-          }
-
-          if (SafeFunctions[fnName]) {
-            logout("safe func")
-            return; 
-          }
-
-
-          for (auto Pair : MemoryFunctions) {
-            logout("pairs and fn name = " << Pair.first << " " << Pair.second << " " << branchName << " " << argName)
-            if (fnName == Pair.first) { // allocation function
-
-            }
-            else if (fnName == Pair.second) { // deallocation function 
-              calledMethodsEst[branchName][argName].cmSet.insert(fnName); 
-              calledMethodsEst[branchName][argName].setInitialized = true; 
-              break; 
-
-            }
-          }
-          
-
-
-
-      }
-    }
-    else if (auto Branch = dyn_cast<BranchInst>(I)) {
-
-    }
 
 
 }
 
-void transferUnbranched(Instruction* I, SetVector<Instruction *>& workSet, std::map<std::string, CM>& calledMethodsSet, AliasMap& aliasedVars) {
-  bool includes = false; 
-  std::string branchName = I->getParent()->getName().str();
-  for (auto branch : realBranchOrder) {
-    if (branch == branchName) {
-      includes = true; 
-      break;
-    }
-  }
-  if (!includes) {
-    realBranchOrder.push_back(branchName);
-  }
 
-  auto preds = getPredecessors(I);
-
+void transfer(Instruction* I, SetVector<Instruction *>& workSet, std::map<std::string, CM>& calledMethodsSet, AliasMap& aliasedVars) {
 
   if (auto Alloca = dyn_cast<AllocaInst>(I)) {
     calledMethodsSet["%" + Alloca->getName().str()] = {};
@@ -383,7 +258,8 @@ void transferUnbranched(Instruction* I, SetVector<Instruction *>& workSet, std::
           const DebugLoc &debugLoc = I->getDebugLoc();
           std::string location = "Line " + std::to_string(debugLoc.getLine()) + ", Col " + std::to_string(debugLoc.getCol());
 
-          errs() << "CME-WARNING: unknown (unforseen occurence) & unsafe func on " << location << ". must call satisfied property for '" << argName << "' set to false.\n";
+          errs() << "CME-WARNING: unknown (unforseen occurence) & unsafe func on " << location << ". must call set for '" << argName << "' set to empty.\n";
+          calledMethodsSet[argName].cmSet = {}; 
           
           return; 
         }
@@ -392,13 +268,16 @@ void transferUnbranched(Instruction* I, SetVector<Instruction *>& workSet, std::
 
 
         if (UnsafeFunctions[fnName]) {
-          logout("unsafe func")
+          logout("unsafe func, cm set emptied")
+          calledMethodsSet[argName].cmSet = {}; 
+
           return; 
         }
 
         if (ReallocFunctions[fnName]) {
-          logout("realloc func")
-          // calledMethodsEst[branchName][argName].insert(fnName); 
+          logout("realloc func, cm set emptied")
+          calledMethodsSet[argName].cmSet = {};
+
           return; 
         }
 
@@ -447,7 +326,7 @@ void analyzeCFG(CFG* cfg, CalledMethods& PreCalledMethods, CalledMethods& PostCa
     llvm::SetVector<Instruction*> instructions = cfg->getInstructions(); 
 
     for (Instruction* I : instructions) {
-      transferUnbranched(I, instructions, PostCalledMethods[currentBranch], AliasedVars);
+      transfer(I, instructions, PostCalledMethods[currentBranch], AliasedVars);
     }
 
     branchesAnalyzed.push_back(currentBranch); 
@@ -536,7 +415,7 @@ void analyzeCFG(CFG* cfg, CalledMethods& PreCalledMethods, CalledMethods& PostCa
       PreCalledMethods[currentBranch] = std::map<std::string, CM>(lub);
 
       for (Instruction* I : instructions) {
-        transferUnbranched(I, instructions, lub, AliasedVars);
+        transfer(I, instructions, lub, AliasedVars);
       }
 
       PostCalledMethods[currentBranch] = lub; 
@@ -566,7 +445,7 @@ void analyzeCFG(CFG* cfg, CalledMethods& PreCalledMethods, CalledMethods& PostCa
       std::map<std::string, CM> flowInto = std::map<std::string, CM>(PostCalledMethods[priorBranch]); 
 
        for (Instruction* I : instructions) {
-        transferUnbranched(I, instructions, flowInto, AliasedVars);
+        transfer(I, instructions, flowInto, AliasedVars);
       }
 
       PostCalledMethods[currentBranch] = flowInto;
@@ -634,95 +513,63 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
   
 
   if (fnName != "main") return; 
-  
+
+  AliasMap AliasedVars; 
+
+  struct InstructionHolder {
+    SetVector<Instruction*> branch; 
+    SetVector<Instruction*> successors; 
+  }; 
+
+  std::map<std::string, InstructionHolder> branchInstructionMap; 
   
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     WorkSet.insert(&(*I));
     PointerSet.insert(&(*I));
-    logout("inst = " << *I);
-    logout("block = " << I->getParent()->getName())
-    logout("preds = ")
-    std::vector<Instruction *> preds = getPredecessors(&(*I));
-    for (auto pred : preds) {
-      logout(pred->getParent()->getName())
-    }
-    logout("end of preds")
 
-  }
-
-  CalledMethods calledMethodsEstimate; 
-  AliasMap AliasedVars; 
-  std::map<std::string, SetVector<Instruction*>> branchInstMap; 
-
-  for (auto I : WorkSet) {
     std::string branchName = I->getParent()->getName().str();
-    branchInstMap[branchName].insert(I); 
+    populateAliasedVars(&(*I), WorkSet, AliasedVars); 
 
-    transfer(I, WorkSet, calledMethodsEstimate, AliasedVars);
+    auto succs = getSuccessors(&(*I)); 
 
-  }
+    branchInstructionMap[branchName].branch.insert(&(*I)); 
 
-
-  for (auto branch : realBranchOrder) {
-    errs() << "branch name = " << branch << "\n";
-    for (auto Pair1 : calledMethodsEstimate[branch]) {
-
-
-      errs() << "> var name = " << Pair1.first << "\n";
-      errs() << ">> cm = ";
-      std::string cm; 
-      for (auto s : Pair1.second.cmSet) {
-        cm += s + ", ";
-      }
-      errs() << cm << "\n"; 
+    for (auto succ : succs) {
+      branchInstructionMap[branchName].successors.insert(succ); 
     }
-    errs() << "\n";
+
   }
+
+  
 
 
   CFG TopCFG = CFG("entry"); 
 
-  for (auto I : WorkSet) {
-   std::string branchName = I->getParent()->getName().str(); 
-   auto preds = getPredecessors(I);
-   auto succs = getSuccessors(I); 
+  for (auto branchName : realBranchOrder) {  
+    auto succs = branchInstructionMap[branchName].successors; 
 
 
-   std::string predsString;
-   std::string succsString;
 
-   CFG* cfg = TopCFG.getFind(I->getParent()->getName().str()); 
+   CFG* cfg = TopCFG.getFind(branchName);   
 
-   cfg->setInstructions(branchInstMap[I->getParent()->getName().str()]);
+   cfg->setInstructions(branchInstructionMap[branchName].branch);
 
-   for (auto p : preds) {
-    std::string p_name = p->getParent()->getName().str();
-    predsString += p_name + ", ";    
-   }
 
-   for (auto p : succs) {
-    std::string s_name = p->getParent()->getName().str();
-    succsString += s_name + ", ";
-   }
+   for (auto succ : succs) {
+    std::string succName = succ->getParent()->getName().str();
 
-   if (branchName == succsString) succsString = ""; 
-   if (branchName == predsString) predsString = ""; 
-   if (succsString == predsString) continue; 
-  
 
-   for (auto p : succs) {
-    std::string s_name = p->getParent()->getName().str();
+    if (succName == branchName) continue; 
 
-    if (s_name == branchName) continue; 
 
-    if (cfg->checkFind(s_name)) {
-      cfg->addSuccessor(cfg->getFind(s_name));
-      cfg->getFind(s_name)->addPredecessor(cfg);
+    if (cfg->checkFind(succName)) {
+      cfg->addSuccessor(cfg->getFind(succName));
+      cfg->getFind(succName)->addPredecessor(cfg);
       continue; 
     } 
 
-    cfg->addSuccessor(s_name); 
-    cfg->getFind(s_name)->addPredecessor(cfg); 
+    cfg->addSuccessor(succName); 
+    cfg->getFind(succName)->addPredecessor(cfg);
   
 
    }

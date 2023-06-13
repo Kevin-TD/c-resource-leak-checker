@@ -2,6 +2,37 @@
 #include <stdlib.h>
 #include <string.h>
 
+void* malloc0(size_t __size) {
+    return malloc(__size);
+}
+
+void* malloc1(size_t __size) {
+    return malloc(__size);
+}
+
+void* malloc2(size_t __size) {
+    return malloc(__size);
+}
+
+void* malloc3(size_t __size) {
+    return malloc(__size);
+}
+
+void free0(void* p) {
+    free(p);
+}
+
+void free1(void* p) {
+    free(p);
+}
+
+void free2(void* p) {
+    free(p);
+}
+
+void free3(void* p) {
+    free(p);
+}
 
 int main () {
    char *str;
@@ -11,33 +42,36 @@ int main () {
    strcpy(str, "helloworld");
    printf("String = %s,  Address = %u\n", str, str);
 
-   free(str);
+   str = (char *) realloc(str, 25);
+   strcat(str, "hello");
+   printf("String = %s,  Address = %u\n", str, str);  
 
-
-    // for called methods, if any single one of these branches does not satisfy a must call, then we conclude at the end that must call is not satisfied 
-   if (a == -15) { // impossible
-
-    }
-    else if (a == -10) { // impossible
-        if (a == -5) {
-
-        }
-        else if (a == -100) {
-
+    if (a == -15) { // entry, preds = {}, B0
+        free0(str);
+        free(str);
+        char* m; 
+        m = (char*)malloc(15); 
+        free(m);
+        if (a == -200) {
+            free0(m);
         }
         else {
-            realloc(str, 25);
+            free0(m);
         }
-        
     }
     else {
         free(str);
     }
 
-    // expectations: must call not satisfied 
-    // reasoning: if in any branch (even if we know it is not possible to reach it) an unsafe method is called, the must call should no longer be satisfied 
-
-
-   
    return(0);
+
+ 
 }
+
+/*
+Results (ALLOW_REDEFINE set true)
+if.end11 str {free}
+if.end m {free, free0}
+if.end str {free, free0}
+
+*/

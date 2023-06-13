@@ -2,29 +2,62 @@
 #include <stdlib.h>
 #include <string.h>
 
-// for each entry = ..., preds = {...}  statement, all the code above it (including the line it was declared in) is within that branch up until (and before) another branch declaration (or the declaration of the method)
+void* malloc0(size_t __size) {
+    return malloc(__size);
+}
+
+void* malloc1(size_t __size) {
+    return malloc(__size);
+}
+
+void* malloc2(size_t __size) {
+    return malloc(__size);
+}
+
+void* malloc3(size_t __size) {
+    return malloc(__size);
+}
+
+int free0(void* p) {
+    free(p);
+    return 1; 
+}
+
+int free1(void* p) {
+    free(p);
+    return 1;
+}
+
+int free2(void* p) {
+    free(p);
+    return 1;
+}
+
+int free3(void* p) {
+    free(p);
+    return 1; 
+}
+
+
 
 int main () {
    char *str;
    int a = getchar();
 
    str = (char *) malloc(15);
-   strcpy(str, "helloworld");
-   printf("String = %s,  Address = %u\n", str, str);
 
-   str = (char *) realloc(str, 25);
-   strcat(str, "hello");
-   printf("String = %s,  Address = %u\n", str, str);  
+    // int i = 0; i < ... ; i++
+   for (free0(str); free1(str); free2(str)) {
 
-    if (a == -15) { // entry, preds = {}, B0
-         free(str);
-         char* s; 
-         s = (char*)malloc(15);
-         free(s);
-    }
+   }
 
-   free(str);
    return(0);
 
  
 }
+
+/*
+Results: 
+for.end str {free0, free1}
+
+*/

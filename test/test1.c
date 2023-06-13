@@ -1,28 +1,31 @@
-int method1(int a, int b) {
-  return a + b; 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int main () {
+   char *str;
+
+   /* Initial memory allocation */
+   str = (char *) malloc(15);
+   strcpy(str, "helloworld");
+   printf("String = %s,  Address = %u\n", str, str);
+
+   /* Reallocating memory */
+   str = (char *) realloc(str, 25);
+   strcat(str, "hello");
+   printf("String = %s,  Address = %u\n", str, str);
+
+   free(str);
+   
+   return(0);
 }
 
-int method2(int a, int b) {
-  return a - b; 
-}
+/*
+Results: 
+entry %str {free}
+entry %retval {}
 
-int method3(int a) {
-  return a;
-}
-
-int main() {
-  int a = 5;
-  int b = 6; 
-  int c = getchar(); 
-
-  if (c > 15) {
-    a = method1(a, a);
-  }
-  else {
-    a = method2(a, b); 
-  }
-  b = method2(method3(c), method3(a - c)); 
+Format: [branch name] [var name] [called methods]
 
 
-  return 0;
-}
+*/

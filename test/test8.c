@@ -2,50 +2,70 @@
 #include <stdlib.h>
 #include <string.h>
 
-// this is a test more for the consistency pass 
-// should be able to conclude that trivially_malloc is effectively the same as malloc
+void* malloc0(size_t __size) {
+    return malloc(__size);
+}
 
-void* trivially_malloc(size_t __size) {
-    malloc(__size);
+void* malloc1(size_t __size) {
+    return malloc(__size);
+}
+
+void* malloc2(size_t __size) {
+    return malloc(__size);
+}
+
+void* malloc3(size_t __size) {
+    return malloc(__size);
+}
+
+void free0(void* p) {
+    free(p);
+}
+
+void free1(void* p) {
+    free(p);
+}
+
+void free2(void* p) {
+    free(p);
+}
+
+void free3(void* p) {
+    free(p);
 }
 
 int main () {
    char *str;
    int a = getchar();
 
-   /* Initial memory allocation */
    str = (char *) malloc(15);
    strcpy(str, "helloworld");
    printf("String = %s,  Address = %u\n", str, str);
 
-   /* Reallocating memory */
    str = (char *) realloc(str, 25);
    strcat(str, "hello");
-   printf("String = %s,  Address = %u\n", str, str);
+   printf("String = %s,  Address = %u\n", str, str);  
 
-    if (a == -15) { // impossible
-
+    for (int i = 0; i < 10; i++) {
+        free0(str);
     }
-    else if (a == -10) { // impossible
-        char* str1; 
-        str1 = (char *) malloc(15);
 
-        if (a == -9) { // very impossible 
-            free(str1);
-        } else {
-            free(str1);
-            realloc(str, 15);
-        }
+    free0(str); 
 
+    if (a < 15) {
+        free1(str);
     }
     else {
-        free(str);
+        free1(str);
     }
 
-    // expectations: str does not have called methods satisfied, str1 has called methods satisfied 
-
-   
-   
-   
    return(0);
+
+ 
 }
+
+/*
+Results
+if.end str {free0, free1}
+
+*/
