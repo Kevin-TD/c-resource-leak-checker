@@ -1,0 +1,4 @@
+ALLOW_REDEFINE true
+if.end11 %str {free}
+if.end %m {free,free0}
+if.end %str {free,free0}

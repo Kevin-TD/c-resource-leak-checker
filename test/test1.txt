@@ -1,0 +1,3 @@
+ALLOW_REDEFINE false
+entry %str {free}
+entry %retval {}

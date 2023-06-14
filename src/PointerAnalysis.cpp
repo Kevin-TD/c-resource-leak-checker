@@ -75,7 +75,6 @@ PointerAnalysis::PointerAnalysis(Function &F) {
     else
       break;
   }
-  print(PointsTo);
 }
 
 bool PointerAnalysis::alias(std::string &Ptr1, std::string &Ptr2) const {

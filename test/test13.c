@@ -63,6 +63,5 @@ int main () {
 /*
 Results: 
 entry %p {free}
-! do we say %p = {free}, or %str = {free}, or both that %p = %str = {free} ?
 
 */

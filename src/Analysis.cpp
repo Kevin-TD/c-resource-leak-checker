@@ -1,13 +1,13 @@
 #include "RunAnalysis.h"
 #include "Utils.h"
 #include "PointerAnalysis.h"
-#include "loadFunctions.h"
 #include "CFG.h"
 
 #include <map> 
 #include <tuple>
 #include <vector> 
 #include <list>
+#include <fstream>
 
 #define DEBUG true
 #if DEBUG
@@ -22,6 +22,10 @@
 
 // to run: cd build   then 
 // sh ../run_test.sh <test_num> 
+
+// work on automating tests 
+// fix branch analysis (instead of not executing one seen before, check set of inputs differ)
+// update pointer analysis to make it say both
 
 struct CM {
   std::set<std::string> cmSet; 
@@ -464,28 +468,129 @@ void analyzeCFG(CFG* cfg, CalledMethods& PreCalledMethods, CalledMethods& PostCa
 }
 
 
-void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
+void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::string optLoadFileName) {
   SetVector<Instruction *> WorkSet;
   SetVector<Value *> PointerSet;
 
   
   std::string fnName = F.getName().str(); 
+
+  int slashCount = 0; 
+  std::string testName; 
+  // assuming that format of optLoadFileName is ../test/test{num}.c
+
+  for (char c : optLoadFileName) { 
+    if (c == '/') {
+      slashCount++; 
+      continue; 
+    }
+
+    if (slashCount == 2) {
+      if (c == '.') break;
+
+      testName += c; 
+    }
+
+  }
+
+
   bool functionIsKnown = false; 
-  logout("fnname = " << fnName)
+  logout("fnname = " << fnName << " opt load file name = " << testName)
 
   loadFunctions();
 
-  // check if code re-defines a safe function or memory function. if so, cast it as a unsafe function
-  if (SafeFunctions[fnName]) {
-    SafeFunctions[fnName] = false; 
-    UnsafeFunctions[fnName] = true; 
-    functionIsKnown = true; 
-    errs() << "CME-WARNING: Re-definition of safe function '" << fnName << "' identified on  and will be labelled as unsafe.\n";
+  CalledMethods ExpectedResult; 
+  bool ALLOW_REDEFINE;  // ONLY for debugging purposes 
+
+  std::ifstream testFile("../test/" + testName + ".txt");
+  std::string line; 
+
+  if (testFile.is_open()) {
+    while (std::getline(testFile, line)) {
+      if (line.size() > 14 && line.substr(0, 14) == "ALLOW_REDEFINE") {
+        std::string allowedRedefValue = line.substr(15);
+        if (allowedRedefValue == "true") {
+          ALLOW_REDEFINE = true; 
+        }
+        else if (allowedRedefValue == "false") {
+          ALLOW_REDEFINE = false; 
+        }
+        continue; 
+      }
+
+
+      int spaceCount = 0; 
+      std::string branchName;
+      std::string varName;
+      std::set<std::string> calledMethodsSet; 
+      std::string currentCM; 
+
+      for (char c : line) {
+        if (c == ' ') {
+          spaceCount++;
+          continue; 
+        }
+
+        if (spaceCount == 0) {
+          branchName += c; 
+        }
+        else if (spaceCount == 1) {
+          varName += c; 
+        }
+        else if (spaceCount == 2) {
+          if (c == '{') {
+            continue; 
+          }
+          if (c == ',' || c == '}') {
+            if (currentCM.size() > 0)
+              calledMethodsSet.insert(currentCM);
+            currentCM = ""; 
+            continue; 
+          }
+          currentCM += c; 
+
+
+        }
+      }
+
+      ExpectedResult[branchName][varName] = {
+        calledMethodsSet, 
+        true 
+      }; 
+
+
+    }
+
   }
 
-  bool ALLOW_REDEFINE = true;  // ONLY for debugging purposes 
+
+  testFile.close(); 
+
+  logout("\n\nEXPECTED CALLED METHODS")
+  for (auto Pair1 : ExpectedResult) {
+    std::string branchName = Pair1.first; 
+    logout("branch = " << branchName)
+    for (auto Pair2 : Pair1.second) {
+      std::string cm; 
+      for (auto m : Pair2.second.cmSet) {
+        cm += m + ", "; 
+      }
+      logout(">> var name = " << Pair2.first << " cm = " << cm)
+    }
+  }
+
+
+ 
 
   if (!ALLOW_REDEFINE) {
+        // check if code re-defines a safe function or memory function. if so, cast it as a unsafe function
+    if (SafeFunctions[fnName]) {
+      SafeFunctions[fnName] = false; 
+      UnsafeFunctions[fnName] = true; 
+      functionIsKnown = true; 
+      errs() << "CME-WARNING: Re-definition of safe function '" << fnName << "' identified on  and will be labelled as unsafe.\n";
+    }
+
     for (auto Pair : MemoryFunctions) {
       if (fnName == Pair.first) {
         UnsafeFunctions[fnName] = true; 
@@ -606,6 +711,66 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA) {
       logout(">> var name = " << Pair.first << " cm = " << cm)
     
 
+  }
+
+  errs() << "\n\nRUNNING TESTS - ALLOWED_REDEFINE = " << ALLOW_REDEFINE << " TEST NAME - " << testName << "\n\n";
+  for (auto Pair1 : ExpectedResult) {
+    std::string branchName = Pair1.first; 
+    logout("branch = " << branchName)
+    
+    for (auto Pair2 : Pair1.second) {
+
+      std::string cm; 
+      std::string varName =  Pair2.first; 
+
+      int itr = 0; 
+      for (auto cmString : Pair2.second.cmSet) {
+        if (itr  != Pair2.second.cmSet.size() - 1) {
+          cm += cmString + ", ";
+        }
+        else {
+          cm += cmString; 
+        }
+
+        itr++; 
+      }
+
+     
+      logout(">> var name = " << varName << " cm = " << cm)
+
+      std::set<std::string> analysisCMSet = PostCalledMethods[branchName][varName].cmSet;
+      std::set<std::string> expectedCMSet = Pair2.second.cmSet; 
+
+
+      std::string analysisCm; 
+      itr = 0; 
+      for (auto cmString : analysisCMSet) {
+        if (itr != analysisCMSet.size() - 1) {
+          analysisCm += cmString + ", ";
+        }
+        else {
+          analysisCm += cmString; 
+        }
+
+        itr++; 
+      }
+
+
+      errs() << "Test for branch name = " << branchName << " var name = " << varName;
+
+      if (analysisCMSet == expectedCMSet) {
+        errs() << " passed\n"; 
+      }
+      else {
+        errs() << " **FAILED**\n"; 
+
+
+      }
+      errs() << "EXPECTED {" << cm << "}\n"; 
+      errs() << "RECEIVED {" << analysisCm << "}\n\n"; 
+
+
+    }
   }
 
 

@@ -9,6 +9,7 @@
 #include "llvm/IR/ValueMap.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/IR/Module.h"
 #include <algorithm>
 #include <iterator>
 #include <map>
@@ -40,7 +41,7 @@ protected:
    *
    * @param F The function to be analyzed.
    */
-  void doAnalysis(Function &F, PointerAnalysis *PA);
+  void doAnalysis(Function &F, PointerAnalysis *PA, std::string optLoadFileName);
 
 
   std::string getAnalysisName() { return "CalledMethodsPass"; }
