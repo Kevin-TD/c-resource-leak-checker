@@ -22,10 +22,8 @@
 
 // to run: cd build   then 
 // sh ../run_test.sh <test_num> 
-
-// work on automating tests 
-// fix branch analysis (instead of not executing one seen before, check set of inputs differ)
-// update pointer analysis to make it say both
+// or to run all tests: sh ../run_all.sh 
+// note for run all tests is that if you add more tests, you'll have to modify run_all.sh to include that test number
 
 struct CM {
   std::set<std::string> cmSet; 
@@ -216,11 +214,9 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, std::map<std::s
   }
   else if (auto Store = dyn_cast<StoreInst>(I)) {
 
-    //   store i8* %call, i8** %str, align 8, !dbg !17
-
-    Value* valueToStore = Store->getOperand(0);       // i8* %call
-    Value* receivingValue = Store->getOperand(1);   // i8** %str
-    
+    Value* valueToStore = Store->getOperand(0);      
+    Value* receivingValue = Store->getOperand(1);   
+ 
     for (auto Inst : workSet) {
       if (valueToStore == Inst) {
         if (auto Call = dyn_cast<CallInst>(Inst)) {
@@ -235,11 +231,20 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, std::map<std::s
             //  allocation function 
 
           }
-
+          return; 
         }
 
       }
     }
+    
+    // for pointer aliasing
+    std::string lval = variable(receivingValue); 
+    std::string rval = variable(valueToStore);  
+
+    if (lval[0] == rval[0] && lval[0] == '%') {
+      aliasedVars[lval] = rval; 
+    }
+  
 
   
   }
@@ -253,9 +258,23 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, std::map<std::s
           argName = aliasedVars[argName]; 
         }
 
+        
 
         // * i THINK this is what distinguishes "real" variables defined in the program from constants and other irrelevant llvm stuff 
         if (argName[0] != '%') return; 
+
+        std::list<std::string> allAliases;
+        allAliases.push_back(argName); 
+        while (argName != "") {
+          argName = aliasedVars[argName]; 
+          if (argName != "") 
+            allAliases.push_back(argName); 
+        }
+
+        for (auto alias : allAliases) {
+          logout("alias = " << alias)
+        }
+
 
         // * (i think this handles) cases where an entirely random and undefined (implicitly declared) function shows up 
         if (Call->getCalledFunction() == NULL) {
@@ -263,7 +282,10 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, std::map<std::s
           std::string location = "Line " + std::to_string(debugLoc.getLine()) + ", Col " + std::to_string(debugLoc.getCol());
 
           errs() << "CME-WARNING: unknown (unforseen occurence) & unsafe func on " << location << ". must call set for '" << argName << "' set to empty.\n";
-          calledMethodsSet[argName].cmSet = {}; 
+
+          for (std::string aliasArg : allAliases) {
+            calledMethodsSet[aliasArg].cmSet = {}; 
+          }
           
           return; 
         }
@@ -273,14 +295,18 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, std::map<std::s
 
         if (UnsafeFunctions[fnName]) {
           logout("unsafe func, cm set emptied")
-          calledMethodsSet[argName].cmSet = {}; 
+          for (std::string aliasArg : allAliases) {
+            calledMethodsSet[aliasArg].cmSet = {}; 
+          }
 
           return; 
         }
 
         if (ReallocFunctions[fnName]) {
           logout("realloc func, cm set emptied")
-          calledMethodsSet[argName].cmSet = {};
+          for (std::string aliasArg : allAliases) {
+            calledMethodsSet[aliasArg].cmSet = {}; 
+          }
 
           return; 
         }
@@ -296,8 +322,11 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, std::map<std::s
 
           }
           else if (fnName == Pair.second) { // deallocation function 
-            calledMethodsSet[argName].cmSet.insert(fnName); 
-            calledMethodsSet[argName].setInitialized = true; 
+            for (std::string aliasArg : allAliases) {
+              calledMethodsSet[aliasArg].cmSet.insert(fnName); 
+              calledMethodsSet[aliasArg].setInitialized = true; 
+            }
+            
             break; 
 
           }
@@ -315,14 +344,8 @@ void transfer(Instruction* I, SetVector<Instruction *>& workSet, std::map<std::s
 
 }
 
-void analyzeCFG(CFG* cfg, CalledMethods& PreCalledMethods, CalledMethods& PostCalledMethods, std::list<std::string> branchesAnalyzed, AliasMap& AliasedVars, std::string priorBranch) {
+void analyzeCFG(CFG* cfg, CalledMethods& PreCalledMethods, CalledMethods& PostCalledMethods, AliasMap& AliasedVars, std::string priorBranch) {
   std::string currentBranch =  cfg->getBranchName(); 
-
-  std::string m; 
-  for (auto k : branchesAnalyzed) {
-    m += k + ", ";
-  }
-  logout("branches analyzed = " << m)
 
   if (currentBranch == "entry") { 
 
@@ -333,10 +356,9 @@ void analyzeCFG(CFG* cfg, CalledMethods& PreCalledMethods, CalledMethods& PostCa
       transfer(I, instructions, PostCalledMethods[currentBranch], AliasedVars);
     }
 
-    branchesAnalyzed.push_back(currentBranch); 
 
     for (CFG* succ : cfg->getSuccessors()) {
-      analyzeCFG(succ, PreCalledMethods, PostCalledMethods, branchesAnalyzed, AliasedVars, currentBranch); 
+      analyzeCFG(succ, PreCalledMethods, PostCalledMethods, AliasedVars, currentBranch); 
     }
 
   }
@@ -345,7 +367,6 @@ void analyzeCFG(CFG* cfg, CalledMethods& PreCalledMethods, CalledMethods& PostCa
     std::map<std::string, CM> PriorPreCM = std::map<std::string, CM>(PreCalledMethods[currentBranch]); 
     std::map<std::string, CM> PriorPostCM = std::map<std::string, CM>(PostCalledMethods[currentBranch]); 
 
-    bool foundCurrent = std::find(branchesAnalyzed.begin(), branchesAnalyzed.end(), currentBranch) != branchesAnalyzed.end();
 
     logout("-----\nlogging priorprecm prior = " << priorBranch << " current = " << currentBranch )
     for (auto p : PriorPreCM) {
@@ -359,12 +380,43 @@ void analyzeCFG(CFG* cfg, CalledMethods& PreCalledMethods, CalledMethods& PostCa
 
     if (PriorPreCM.size() > 0) {
       logout("need to lub for " << currentBranch << " " << priorBranch)
-      
 
       std::map<std::string, CM> CurrentPreCM = std::map<std::string, CM>(PostCalledMethods[priorBranch]);
-      llvm::SetVector<Instruction*> instructions = cfg->getInstructions(); 
-     
+      
 
+      // check if inputs (pre) differ
+      bool currentAndPriorPreCMEqual = true; 
+      for (auto Pair : CurrentPreCM) {
+        std::string varName = Pair.first; 
+        CM currentPreCM = Pair.second; 
+
+        if (
+          (currentPreCM.cmSet != PriorPreCM[varName].cmSet) || 
+          (currentPreCM.setInitialized != PriorPreCM[varName].setInitialized)
+        ) {
+          currentAndPriorPreCMEqual = false; 
+          break; 
+        }
+      }
+
+      for (auto Pair : PriorPreCM) {
+        std::string varName = Pair.first; 
+        CM priorPreCM = Pair.second; 
+
+        if (
+          (priorPreCM.cmSet != CurrentPreCM[varName].cmSet) || 
+          (priorPreCM.setInitialized != CurrentPreCM[varName].setInitialized)
+        ) {
+          currentAndPriorPreCMEqual = false; 
+          break; 
+        }
+
+      }
+
+      if (currentAndPriorPreCMEqual) return; 
+
+      llvm::SetVector<Instruction*> instructions = cfg->getInstructions(); 
+    
       // lub PriorPreCM and CurrentPreCM
       std::map<std::string, CM> lub; 
 
@@ -401,6 +453,7 @@ void analyzeCFG(CFG* cfg, CalledMethods& PreCalledMethods, CalledMethods& PostCa
       
       }
 
+    
       // fill in the rest 
       for (auto Pair1 : PriorPostCM) {
         std::string varName = Pair1.first; 
@@ -424,18 +477,11 @@ void analyzeCFG(CFG* cfg, CalledMethods& PreCalledMethods, CalledMethods& PostCa
 
       PostCalledMethods[currentBranch] = lub; 
 
-      branchesAnalyzed.push_back(currentBranch); 
-
       for (CFG* succ : cfg->getSuccessors()) {
-        bool found = std::find(branchesAnalyzed.begin(), branchesAnalyzed.end(), succ->getBranchName()) != branchesAnalyzed.end();
-        if (!found) {
-          logout("analyzing succesor " << succ->getBranchName())
-          analyzeCFG(succ, PreCalledMethods, PostCalledMethods, branchesAnalyzed, AliasedVars, currentBranch); 
-        }
-        else {
-          logout("not analyzing successor " << succ->getBranchName())
-        }
+        logout("analyzing succesor " << succ->getBranchName())
+        analyzeCFG(succ, PreCalledMethods, PostCalledMethods, AliasedVars, currentBranch); 
       }
+      
 
     }
     else {
@@ -454,11 +500,10 @@ void analyzeCFG(CFG* cfg, CalledMethods& PreCalledMethods, CalledMethods& PostCa
 
       PostCalledMethods[currentBranch] = flowInto;
 
-      branchesAnalyzed.push_back(currentBranch); 
       
 
       for (CFG* succ : cfg->getSuccessors()) {
-        analyzeCFG(succ, PreCalledMethods, PostCalledMethods, branchesAnalyzed, AliasedVars, currentBranch); 
+        analyzeCFG(succ, PreCalledMethods, PostCalledMethods, AliasedVars, currentBranch); 
       }
 
     }
@@ -500,7 +545,7 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::st
   loadFunctions();
 
   CalledMethods ExpectedResult; 
-  bool ALLOW_REDEFINE;  // ONLY for debugging purposes 
+  bool ALLOW_REDEFINE;  // ONLY for debugging purposes. exists so we can make our own functions without code saying it is a re-definition or clang saying it is undefined 
 
   std::ifstream testFile("../test/" + testName + ".txt");
   std::string line; 
@@ -565,21 +610,6 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::st
 
 
   testFile.close(); 
-
-  logout("\n\nEXPECTED CALLED METHODS")
-  for (auto Pair1 : ExpectedResult) {
-    std::string branchName = Pair1.first; 
-    logout("branch = " << branchName)
-    for (auto Pair2 : Pair1.second) {
-      std::string cm; 
-      for (auto m : Pair2.second.cmSet) {
-        cm += m + ", "; 
-      }
-      logout(">> var name = " << Pair2.first << " cm = " << cm)
-    }
-  }
-
-
  
 
   if (!ALLOW_REDEFINE) {
@@ -653,8 +683,6 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::st
   for (auto branchName : realBranchOrder) {  
     auto succs = branchInstructionMap[branchName].successors; 
 
-
-
    CFG* cfg = TopCFG.getFind(branchName);   
 
    cfg->setInstructions(branchInstructionMap[branchName].branch);
@@ -683,9 +711,8 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::st
 
   CalledMethods PreCalledMethods; 
   CalledMethods PostCalledMethods; 
-  std::list<std::string> branchesAnalyzed; 
 
-  analyzeCFG(&TopCFG, PreCalledMethods, PostCalledMethods, branchesAnalyzed, AliasedVars, ""); 
+  analyzeCFG(&TopCFG, PreCalledMethods, PostCalledMethods, AliasedVars, ""); 
 
 
   logout("\n\nPOST CALLED METHODS")
@@ -713,6 +740,12 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::st
 
   }
 
+  // typedef std::map<std::string, std::string> AliasMap;
+  logout("aliased vars")
+  for (auto Pair : AliasedVars) {
+    logout(Pair.first << " -> " << Pair.second)
+  }
+
   errs() << "\n\nRUNNING TESTS - ALLOWED_REDEFINE = " << ALLOW_REDEFINE << " TEST NAME - " << testName << "\n\n";
   for (auto Pair1 : ExpectedResult) {
     std::string branchName = Pair1.first; 
@@ -736,7 +769,6 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::st
       }
 
      
-      logout(">> var name = " << varName << " cm = " << cm)
 
       std::set<std::string> analysisCMSet = PostCalledMethods[branchName][varName].cmSet;
       std::set<std::string> expectedCMSet = Pair2.second.cmSet; 

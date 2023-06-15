@@ -1,0 +1,4 @@
+ALLOW_REDEFINE true
+entry %p {free}
+entry %str {free}
+entry %x {free}
