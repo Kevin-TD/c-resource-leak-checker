@@ -28,7 +28,7 @@ public:
     CFG* getFind(const std::string& x); 
 
     void addSuccessor(std::string branchName,  llvm::SetVector<Instruction*> instructions); 
-    void addSuccessor(std::string branchName); 
+    CFG* addSuccessor(std::string branchName); 
     void addSuccessor(CFG* cfg); 
 
     void addPredecessor(std::string branchName,  llvm::SetVector<Instruction*> instructions); 

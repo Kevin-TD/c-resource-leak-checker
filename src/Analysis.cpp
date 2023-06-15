@@ -30,6 +30,11 @@ struct CM {
   bool setInitialized; 
 };
 
+struct InstructionHolder {
+    SetVector<Instruction*> branch; 
+    SetVector<Instruction*> successors; 
+}; 
+
 typedef std::map<std::string, std::map<std::string, CM>> CalledMethods; // left = branch name. inner left = var name 
 typedef std::map<std::string, std::string> AliasMap;
 typedef std::map<std::string, std::string> VarBranchMap;
@@ -42,6 +47,8 @@ std::map<std::string, bool> UnsafeFunctions;
 std::map<std::string, bool> ReallocFunctions;
 std::map<std::string, std::string> MemoryFunctions;
 std::vector<std::string> realBranchOrder; 
+CalledMethods ExpectedResult; 
+bool ALLOW_REDEFINE;  // ONLY for debugging purposes. exists so we can make our own functions without code saying it is a re-definition or clang saying it is undefined 
 
 void loadFunctions() { 
   // working directory is /build 
@@ -98,6 +105,180 @@ void loadFunctions() {
   reallocFunctionsFile.close();
 
 
+}
+
+std::string getTestName(std::string optLoadFileName) {
+  int slashCount = 0; 
+  std::string testName; 
+  // assuming that format of optLoadFileName is ../test/test{num}.c, returns test{num}
+  for (char c : optLoadFileName) { 
+    if (c == '/') {
+      slashCount++; 
+      continue; 
+    }
+
+    if (slashCount == 2) {
+      if (c == '.') break;
+
+      testName += c; 
+    }
+  }
+  return testName; 
+}
+
+void loadExpectedResult(std::string testName, CalledMethods& expectedResult) {
+  std::ifstream testFile("../test/" + testName + ".txt");
+  std::string line; 
+
+  if (testFile.is_open()) {
+    while (std::getline(testFile, line)) {
+      if (line.size() > 14 && line.substr(0, 14) == "ALLOW_REDEFINE") {
+        std::string allowedRedefValue = line.substr(15);
+        if (allowedRedefValue == "true") {
+          ALLOW_REDEFINE = true; 
+        }
+        else if (allowedRedefValue == "false") {
+          ALLOW_REDEFINE = false; 
+        }
+        continue; 
+      }
+
+
+      int spaceCount = 0; 
+      std::string branchName;
+      std::string varName;
+      std::set<std::string> calledMethodsSet; 
+      std::string currentCM; 
+
+      for (char c : line) {
+        if (c == ' ') {
+          spaceCount++;
+          continue; 
+        }
+
+        if (spaceCount == 0) {
+          branchName += c; 
+        }
+        else if (spaceCount == 1) {
+          varName += c; 
+        }
+        else if (spaceCount == 2) {
+          if (c == '{') {
+            continue; 
+          }
+          if (c == ',' || c == '}') {
+            if (currentCM.size() > 0)
+              calledMethodsSet.insert(currentCM);
+            currentCM = ""; 
+            continue; 
+          }
+          currentCM += c; 
+
+
+        }
+      }
+
+      expectedResult[branchName][varName] = {
+        calledMethodsSet, 
+        true 
+      }; 
+    }
+
+  }
+  testFile.close(); 
+}
+
+
+void buildCFG(CFG& topCFG, std::vector<std::string> branchOrder, std::map<std::string, InstructionHolder> branchInstMap) {
+  topCFG = CFG("entry"); 
+  std::map<std::string, CFG*> cfgMap; 
+  cfgMap["entry"] = &topCFG; 
+
+  for (auto branchName : branchOrder) {  
+    auto succs = branchInstMap[branchName].successors; 
+
+    CFG* cfg = cfgMap[branchName]; 
+
+    cfg->setInstructions(branchInstMap[branchName].branch);
+
+   for (auto succ : succs) {
+    std::string succName = succ->getParent()->getName().str();
+
+    if (succName == branchName) continue; 
+
+    if (cfgMap.count(succName) > 0) {
+      cfg->addSuccessor(cfgMap[succName]);
+      continue; 
+    } 
+
+
+    cfgMap[succName] = cfg->addSuccessor(succName); 
+
+
+
+   }
+
+  }
+}
+
+void runTests(CalledMethods expectedCM, CalledMethods receivedCM) {
+   for (auto Pair1 : expectedCM) {
+    std::string branchName = Pair1.first; 
+    logout("branch = " << branchName)
+    
+    for (auto Pair2 : Pair1.second) {
+
+      std::string cm; 
+      std::string varName =  Pair2.first; 
+
+      int itr = 0; 
+      for (auto cmString : Pair2.second.cmSet) {
+        if (itr  != Pair2.second.cmSet.size() - 1) {
+          cm += cmString + ", ";
+        }
+        else {
+          cm += cmString; 
+        }
+
+        itr++; 
+      }
+
+     
+
+      std::set<std::string> analysisCMSet = receivedCM[branchName][varName].cmSet;
+      std::set<std::string> expectedCMSet = Pair2.second.cmSet; 
+
+
+      std::string analysisCm; 
+      itr = 0; 
+      for (auto cmString : analysisCMSet) {
+        if (itr != analysisCMSet.size() - 1) {
+          analysisCm += cmString + ", ";
+        }
+        else {
+          analysisCm += cmString; 
+        }
+
+        itr++; 
+      }
+
+
+      errs() << "Test for branch name = " << branchName << " var name = " << varName;
+
+      if (analysisCMSet == expectedCMSet) {
+        errs() << " passed\n"; 
+      }
+      else {
+        errs() << " **FAILED**\n"; 
+
+
+      }
+      errs() << "EXPECTED {" << cm << "}\n"; 
+      errs() << "RECEIVED {" << analysisCm << "}\n\n"; 
+
+
+    }
+  }
 }
 
 /**
@@ -516,100 +697,16 @@ void analyzeCFG(CFG* cfg, CalledMethods& PreCalledMethods, CalledMethods& PostCa
 void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::string optLoadFileName) {
   SetVector<Instruction *> WorkSet;
   SetVector<Value *> PointerSet;
-
-  
   std::string fnName = F.getName().str(); 
 
   int slashCount = 0; 
-  std::string testName; 
-  // assuming that format of optLoadFileName is ../test/test{num}.c
-
-  for (char c : optLoadFileName) { 
-    if (c == '/') {
-      slashCount++; 
-      continue; 
-    }
-
-    if (slashCount == 2) {
-      if (c == '.') break;
-
-      testName += c; 
-    }
-
-  }
-
+  std::string testName = getTestName(optLoadFileName); 
 
   bool functionIsKnown = false; 
   logout("fnname = " << fnName << " opt load file name = " << testName)
 
   loadFunctions();
-
-  CalledMethods ExpectedResult; 
-  bool ALLOW_REDEFINE;  // ONLY for debugging purposes. exists so we can make our own functions without code saying it is a re-definition or clang saying it is undefined 
-
-  std::ifstream testFile("../test/" + testName + ".txt");
-  std::string line; 
-
-  if (testFile.is_open()) {
-    while (std::getline(testFile, line)) {
-      if (line.size() > 14 && line.substr(0, 14) == "ALLOW_REDEFINE") {
-        std::string allowedRedefValue = line.substr(15);
-        if (allowedRedefValue == "true") {
-          ALLOW_REDEFINE = true; 
-        }
-        else if (allowedRedefValue == "false") {
-          ALLOW_REDEFINE = false; 
-        }
-        continue; 
-      }
-
-
-      int spaceCount = 0; 
-      std::string branchName;
-      std::string varName;
-      std::set<std::string> calledMethodsSet; 
-      std::string currentCM; 
-
-      for (char c : line) {
-        if (c == ' ') {
-          spaceCount++;
-          continue; 
-        }
-
-        if (spaceCount == 0) {
-          branchName += c; 
-        }
-        else if (spaceCount == 1) {
-          varName += c; 
-        }
-        else if (spaceCount == 2) {
-          if (c == '{') {
-            continue; 
-          }
-          if (c == ',' || c == '}') {
-            if (currentCM.size() > 0)
-              calledMethodsSet.insert(currentCM);
-            currentCM = ""; 
-            continue; 
-          }
-          currentCM += c; 
-
-
-        }
-      }
-
-      ExpectedResult[branchName][varName] = {
-        calledMethodsSet, 
-        true 
-      }; 
-
-
-    }
-
-  }
-
-
-  testFile.close(); 
+  loadExpectedResult(testName, ExpectedResult);
  
 
   if (!ALLOW_REDEFINE) {
@@ -650,12 +747,6 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::st
   if (fnName != "main") return; 
 
   AliasMap AliasedVars; 
-
-  struct InstructionHolder {
-    SetVector<Instruction*> branch; 
-    SetVector<Instruction*> successors; 
-  }; 
-
   std::map<std::string, InstructionHolder> branchInstructionMap; 
   
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
@@ -666,48 +757,17 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::st
     populateAliasedVars(&(*I), WorkSet, AliasedVars); 
 
     auto succs = getSuccessors(&(*I)); 
-
     branchInstructionMap[branchName].branch.insert(&(*I)); 
-
     for (auto succ : succs) {
       branchInstructionMap[branchName].successors.insert(succ); 
     }
 
   }
 
-  
 
 
-  CFG TopCFG = CFG("entry"); 
-
-  for (auto branchName : realBranchOrder) {  
-    auto succs = branchInstructionMap[branchName].successors; 
-
-   CFG* cfg = TopCFG.getFind(branchName);   
-
-   cfg->setInstructions(branchInstructionMap[branchName].branch);
-
-
-   for (auto succ : succs) {
-    std::string succName = succ->getParent()->getName().str();
-
-
-    if (succName == branchName) continue; 
-
-
-    if (cfg->checkFind(succName)) {
-      cfg->addSuccessor(cfg->getFind(succName));
-      cfg->getFind(succName)->addPredecessor(cfg);
-      continue; 
-    } 
-
-    cfg->addSuccessor(succName); 
-    cfg->getFind(succName)->addPredecessor(cfg);
-  
-
-   }
-
-  }
+  CFG TopCFG; 
+  buildCFG(TopCFG, realBranchOrder, branchInstructionMap); 
 
   CalledMethods PreCalledMethods; 
   CalledMethods PostCalledMethods; 
@@ -728,82 +788,15 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::st
     }
   }
 
-  logout("\n\nLAST BRANCH CALLED METHODS = " << realBranchOrder.back())
-  for (auto Pair : PostCalledMethods[realBranchOrder.back()]) {
-
-      std::string cm; 
-      for (auto m : Pair.second.cmSet) {
-        cm += m + ", "; 
-      }
-      logout(">> var name = " << Pair.first << " cm = " << cm)
-    
-
-  }
-
-  // typedef std::map<std::string, std::string> AliasMap;
   logout("aliased vars")
   for (auto Pair : AliasedVars) {
     logout(Pair.first << " -> " << Pair.second)
   }
 
   errs() << "\n\nRUNNING TESTS - ALLOWED_REDEFINE = " << ALLOW_REDEFINE << " TEST NAME - " << testName << "\n\n";
-  for (auto Pair1 : ExpectedResult) {
-    std::string branchName = Pair1.first; 
-    logout("branch = " << branchName)
-    
-    for (auto Pair2 : Pair1.second) {
+  runTests(ExpectedResult, PostCalledMethods);
 
-      std::string cm; 
-      std::string varName =  Pair2.first; 
-
-      int itr = 0; 
-      for (auto cmString : Pair2.second.cmSet) {
-        if (itr  != Pair2.second.cmSet.size() - 1) {
-          cm += cmString + ", ";
-        }
-        else {
-          cm += cmString; 
-        }
-
-        itr++; 
-      }
-
-     
-
-      std::set<std::string> analysisCMSet = PostCalledMethods[branchName][varName].cmSet;
-      std::set<std::string> expectedCMSet = Pair2.second.cmSet; 
-
-
-      std::string analysisCm; 
-      itr = 0; 
-      for (auto cmString : analysisCMSet) {
-        if (itr != analysisCMSet.size() - 1) {
-          analysisCm += cmString + ", ";
-        }
-        else {
-          analysisCm += cmString; 
-        }
-
-        itr++; 
-      }
-
-
-      errs() << "Test for branch name = " << branchName << " var name = " << varName;
-
-      if (analysisCMSet == expectedCMSet) {
-        errs() << " passed\n"; 
-      }
-      else {
-        errs() << " **FAILED**\n"; 
-
-
-      }
-      errs() << "EXPECTED {" << cm << "}\n"; 
-      errs() << "RECEIVED {" << analysisCm << "}\n\n"; 
-
-
-    }
-  }
+ 
 
 
 

@@ -18,8 +18,10 @@ void CFG::addSuccessor(std::string branchName, llvm::SetVector<Instruction*> ins
     this->successors.insert(new CFG(branchName, instructions)); 
 }
 
-void CFG::addSuccessor(std::string branchName) {
-    this->successors.insert(new CFG(branchName)); 
+CFG* CFG::addSuccessor(std::string branchName) {
+    CFG* cfg = new CFG(branchName);
+    this->successors.insert(cfg); 
+    return cfg; 
 }
 
 void CFG::addSuccessor(CFG* tree) {
