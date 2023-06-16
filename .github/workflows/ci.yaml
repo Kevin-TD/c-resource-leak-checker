@@ -1,0 +1,26 @@
+name: Build Analysis
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Pull Docker Image
+      run: docker pull cis547/cis547-base:latest
+
+    - name: Run Analysis in Docker
+      run: |
+        docker run -it -v $(pwd):/$(basename $(pwd)) -w /$(basename $(pwd)) cis547/cis547-base:latest \
+        bash -c "export LD_LIBRARY_PATH=/opt/mirtk/lib:${LD_LIBRARY_PATH} && \
+        mkdir build && cd build && \
+        cmake .. && \
+        make"
+
+    - name: Check Make Exit Status
+      run: echo $?
+
