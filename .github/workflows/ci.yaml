@@ -17,7 +17,7 @@ jobs:
       run: |
         docker run -v $(pwd):/$(basename $(pwd)) -w /$(basename $(pwd)) cis547/cis547-base:latest \
         bash -c "export LD_LIBRARY_PATH=/opt/mirtk/lib:${LD_LIBRARY_PATH} && \
-        mkdir build && cd build && \
+        rm -rf build && mkdir build && cd build && \
         cmake .. && \
         make"
 
