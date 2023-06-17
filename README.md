@@ -1,4 +1,4 @@
-# C-resource-leak-checker
+# c-resource-leak-checker
 
 This analysis runs with docker; here are the steps to run the analysis: 
 
