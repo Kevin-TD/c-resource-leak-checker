@@ -25,6 +25,9 @@
 // or to run all tests: sh ../run_all.sh 
 // note for run all tests is that if you add more tests, you'll have to modify run_all.sh to include that test number
 
+// updated: automated testing, aliasing, checking if inputs have changed 
+// todo: must call pass; what is done for branching if in one branch malloc is called and another it is not? just need it explained
+
 struct CM {
   std::set<std::string> cmSet; 
   bool setInitialized; 
@@ -221,7 +224,9 @@ void buildCFG(CFG& topCFG, std::vector<std::string> branchOrder, std::map<std::s
   }
 }
 
-void runTests(CalledMethods expectedCM, CalledMethods receivedCM) {
+bool runTests(CalledMethods expectedCM, CalledMethods receivedCM) {
+   bool testPassed = EXIT_SUCCESS; 
+
    for (auto Pair1 : expectedCM) {
     std::string branchName = Pair1.first; 
     logout("branch = " << branchName)
@@ -270,6 +275,7 @@ void runTests(CalledMethods expectedCM, CalledMethods receivedCM) {
       }
       else {
         errs() << " **FAILED**\n"; 
+        testPassed = EXIT_FAILURE; 
 
 
       }
@@ -279,6 +285,8 @@ void runTests(CalledMethods expectedCM, CalledMethods receivedCM) {
 
     }
   }
+
+  return testPassed; 
 }
 
 /**
@@ -794,7 +802,7 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::st
   }
 
   errs() << "\n\nRUNNING TESTS - ALLOWED_REDEFINE = " << ALLOW_REDEFINE << " TEST NAME - " << testName << "\n\n";
-  runTests(ExpectedResult, PostCalledMethods);
+  std::exit(runTests(ExpectedResult, PostCalledMethods));
 
  
 
