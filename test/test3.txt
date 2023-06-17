@@ -1,0 +1,4 @@
+ALLOW_REDEFINE false
+entry %a {}
+entry %retval {} 
+entry %str {}

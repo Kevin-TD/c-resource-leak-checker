@@ -1,6 +1,8 @@
 (cd build)
-run any of following in terminal (first for test1, second for test2. identical commands, just different file names)
 
-make clean ; cmake .. ; make ; clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test1.c -o ../test/test1.ll ; opt -load MustCallPass.so -MustCallEstimates ../test/test1.ll 
+make ; clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test2.c -o ../test/test2.ll ; opt -load MustCallPass.so -MustCallPass ../test/test2.ll 
 
-make clean ; cmake .. ; make ; clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test2.c -o ../test/test2.ll ; opt -load MustCallPass.so -MustCallEstimates ../test/test2.ll 
+make ; clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test3.c -o ../test/test3.ll ; opt -load MustCallPass.so -MustCallPass ../test/test3.ll 
+
+
+alternatively: chmod +x ../run_test.sh ; ../run_test.sh

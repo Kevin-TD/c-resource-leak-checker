@@ -1,0 +1,5 @@
+.vscode
+build
+test/*.ll
+*.DS_Store
+.DS_Store

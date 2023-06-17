@@ -1,0 +1,3 @@
+ALLOW_REDEFINE true
+sw.epilog %str {free}
+while.end14 %str {free0}

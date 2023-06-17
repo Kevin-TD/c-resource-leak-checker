@@ -11,8 +11,8 @@
 
 // perhaps we'll report an error whenever critical functions are re-defined  
 
-void unknown_function(char* s) {
-    printf("do nothing!");
+char *strcpy(char *__restrict__ __dest, const char *__restrict__ __src) {
+    printf("a mimicry");
 }
 
 int main () {
@@ -30,20 +30,16 @@ int main () {
    printf("String = %s,  Address = %u\n", str, str);
 
    free(str);
-
-   unknown_function(str);
-
    
+   strcpy(str, "helloworld");
    
    return(0);
 }
 
 /*
-Results (if ALLOW_REDEFINED false): 
+Results (if ALLOWED_REDEFINE false)
 entry a {}
-entry retval {}
+entry retval {} 
 entry str {}
-
-
 
 */

@@ -1,0 +1,6 @@
+ALLOW_REDEFINE false
+if.end %str1 {free}
+if.end16 %a {}
+if.end16 %retval {}
+if.end16 %str {}
+if.end16 %str1 {}

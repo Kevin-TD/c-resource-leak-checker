@@ -1,5 +1,5 @@
-#ifndef DIV_ZERO_ANALYSIS_H
-#define DIV_ZERO_ANALYSIS_H
+#ifndef RUN_ANALYSIS_H
+#define RUN_ANALYSIS_H
 
 #include "llvm/ADT/SetVector.h"
 #include "llvm/IR/CFG.h"
@@ -9,6 +9,7 @@
 #include "llvm/IR/ValueMap.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/IR/Module.h"
 #include <algorithm>
 #include <iterator>
 #include <map>
@@ -20,10 +21,10 @@ using namespace llvm;
 
 namespace dataflow {
 
-
-struct MustCallAnalysis : public FunctionPass {
+struct CalledMethodsAnalysis : public FunctionPass {
   static char ID;
-  MustCallAnalysis() : FunctionPass(ID) {}
+  CalledMethodsAnalysis() : FunctionPass(ID) {}
+  
   /**
    * This function is called for each function F in the input C program
    * that the compiler encounters during a pass.
@@ -40,11 +41,11 @@ protected:
    *
    * @param F The function to be analyzed.
    */
-  void doAnalysis(Function &F, PointerAnalysis *PA);
+  void doAnalysis(Function &F, PointerAnalysis *PA, std::string optLoadFileName);
 
 
-  std::string getAnalysisName() { return "MustCallEstimates"; }
+  std::string getAnalysisName() { return "CalledMethodsPass"; }
 };
 } // namespace dataflow
 
-#endif // DIV_ZERO_ANALYSIS_H
+#endif // RUN_ANALYSIS_H

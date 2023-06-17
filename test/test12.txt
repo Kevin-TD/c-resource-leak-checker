@@ -1,0 +1,2 @@
+ALLOW_REDEFINE true
+for.end %str {free0,free1}
