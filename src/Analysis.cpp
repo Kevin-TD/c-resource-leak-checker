@@ -780,7 +780,7 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::st
   CalledMethods PreCalledMethods; 
   CalledMethods PostCalledMethods; 
 
-  analyzeCFG(&TopCFG, PreCalledMethods, PostCalledMethods, AliasedVars, ""); 
+  // analyzeCFG(&TopCFG, PreCalledMethods, PostCalledMethods, AliasedVars, ""); 
 
 
   logout("\n\nPOST CALLED METHODS")
