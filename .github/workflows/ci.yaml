@@ -19,7 +19,7 @@ jobs:
         bash -c "export LD_LIBRARY_PATH=/opt/mirtk/lib:${LD_LIBRARY_PATH} && \
         rm -rf build && mkdir build && cd build && \
         cmake .. && \
-        make"
+        sh ../run_all.sh"
 
     - name: Check Make Exit Status
       run: echo $?
