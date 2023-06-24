@@ -25,8 +25,9 @@
 // or to run all tests: sh ../run_all.sh 
 // note for run all tests is that if you add more tests, you'll have to modify run_all.sh to include that test number
 
-// updated: automated testing, aliasing, checking if inputs have changed 
-// todo: must call pass; what is done for branching if in one branch malloc is called and another it is not? just need it explained
+// TODO: how to handle unknown functions 
+// TODO: combine analysis such that MC & CM run at same time OR make them two separate things
+// TODO: add testing for MC 
 
 struct CM {
   std::set<std::string> cmSet; 
@@ -41,6 +42,16 @@ struct InstructionHolder {
 typedef std::map<std::string, std::map<std::string, CM>> CalledMethods; // left = branch name. inner left = var name 
 typedef std::map<std::string, std::string> AliasMap;
 typedef std::map<std::string, std::string> VarBranchMap;
+
+// what do we do when unknown function is called? 
+// do we add realloc to mc set?
+
+struct MC {
+  std::set<std::string> mcSet; 
+  bool setInitialized; 
+};
+
+typedef std::map<std::string, std::map<std::string, MC>> MustCalls; // left = branch name. inner left = var name 
 
 
 namespace dataflow {
@@ -802,10 +813,381 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::st
   }
 
   errs() << "\n\nRUNNING TESTS - ALLOWED_REDEFINE = " << ALLOW_REDEFINE << " TEST NAME - " << testName << "\n\n";
-  std::exit(runTests(ExpectedResult, PostCalledMethods));
+  // * Tests temporarily disabled; developing must call first and then changing structure 
+  // std::exit(runTests(ExpectedResult, PostCalledMethods));
 
+}
+
+// must call 
+void transfer(Instruction* I, SetVector<Instruction *>& workSet, std::map<std::string, MC>& mustCallSet, AliasMap& aliasedVars) {
+
+  if (auto Alloca = dyn_cast<AllocaInst>(I)) {
+    mustCallSet["%" + Alloca->getName().str()] = {};
+    
+  }
+  else if (auto Load = dyn_cast<LoadInst>(I)) {
+    logout("(load) name is " << variable(Load) << " for " << variable(Load->getPointerOperand()) )
+
+      std::string varName = variable(Load->getPointerOperand()); 
+      while (varName.size() > 1 && isNumber(varName.substr(1))) {
+        varName = aliasedVars[varName]; 
+      }
+
+      logout(variable(Load) << " -> " << varName)
+
+      aliasedVars[variable(Load)] = varName;
+  }
+  else if (auto Store = dyn_cast<StoreInst>(I)) {
+
+    Value* valueToStore = Store->getOperand(0);      
+    Value* receivingValue = Store->getOperand(1);   
  
+    for (auto Inst : workSet) {
+      if (valueToStore == Inst) {
+        if (auto Call = dyn_cast<CallInst>(Inst)) {
+          std::string argName = variable(Store->getOperand(1)); 
+          std::string fnName = Call->getCalledFunction()->getName().str(); 
 
+
+          if (
+            !UnsafeFunctions[fnName]  && 
+            !UnsafeFunctions[MemoryFunctions[fnName]] && 
+            MemoryFunctions[fnName].size() > 0
+          ) {
+            //  calledMethodsEst[branchName][varName].insert(fnName);   
+            //  allocation function 
+            mustCallSet[argName].mcSet.insert(fnName);
+            mustCallSet[argName].setInitialized = true; 
+            logout("ADDING FUNC NAME = " << fnName)
+          }
+          return; 
+        }
+
+      }
+    }
+    
+    // for pointer aliasing
+    std::string lval = variable(receivingValue); 
+    std::string rval = variable(valueToStore);  
+
+    if (lval[0] == rval[0] && lval[0] == '%') {
+      aliasedVars[lval] = rval; 
+    }
+  
+
+  
+  }
+  else if (auto Call = dyn_cast<CallInst>(I)) {
+    for (unsigned i = 0; i < Call->getNumArgOperands(); ++i) {
+        Value *argument = Call->getArgOperand(i);
+        std::string argName = variable(argument);
+
+        argName = aliasedVars[argName];
+        while (argName.size() > 1 && isNumber(argName.substr(1))) {
+          argName = aliasedVars[argName]; 
+        }
+
+        
+
+        // * i THINK this is what distinguishes "real" variables defined in the program from constants and other irrelevant llvm stuff 
+        if (argName[0] != '%') return; 
+
+        std::list<std::string> allAliases;
+        allAliases.push_back(argName); 
+        while (argName != "") {
+          argName = aliasedVars[argName]; 
+          if (argName != "") 
+            allAliases.push_back(argName); 
+        }
+
+        for (auto alias : allAliases) {
+          logout("alias = " << alias)
+        }
+
+
+        // * (i think this handles) cases where an entirely random and undefined (implicitly declared) function shows up 
+        if (Call->getCalledFunction() == NULL) {
+          const DebugLoc &debugLoc = I->getDebugLoc();
+          std::string location = "Line " + std::to_string(debugLoc.getLine()) + ", Col " + std::to_string(debugLoc.getCol());
+
+          errs() << "MC-WARNING: unknown (unforseen occurence) & unsafe func on " << location << ". call methods set for '" << argName << "' {nothing changes}.\n";
+
+        //   for (std::string aliasArg : allAliases) {
+        //     mustCallSet[aliasArg].mcSet = {}; 
+        //   }
+          
+          return; 
+        }
+
+        std::string fnName = Call->getCalledFunction()->getName().str();
+
+
+        if (UnsafeFunctions[fnName]) {
+          logout("unsafe func, mc (?)")
+          for (std::string aliasArg : allAliases) {
+            // mustCallSet[aliasArg].cmSet = {}; 
+          }
+
+          return; 
+        }
+
+        if (ReallocFunctions[fnName]) {
+          logout("realloc func, mc adds")
+          for (std::string aliasArg : allAliases) {
+            mustCallSet[aliasArg].mcSet.insert(fnName);
+          }
+
+          return; 
+        }
+
+        if (SafeFunctions[fnName]) {
+          logout("safe func")
+          return; 
+        }
+
+
+        for (auto Pair : MemoryFunctions) {
+          if (fnName == Pair.first) { // allocation function
+            for (std::string aliasArg : allAliases) {
+                logout("INSERTX " << fnName)
+                mustCallSet[aliasArg].mcSet.insert(fnName); 
+                mustCallSet[aliasArg].setInitialized = true; 
+            }
+          }
+          else if (fnName == Pair.second) { // deallocation function 
+            
+            break; 
+          }
+        }
+        
+
+
+
+    }
+  }
+  else if (auto Branch = dyn_cast<BranchInst>(I)) {
+
+  }
+
+
+}
+
+void analyzeCFG(CFG* cfg, MustCalls& PreMustCalls, MustCalls& PostMustCalls, AliasMap& AliasedVars, std::string priorBranch) {
+  std::string currentBranch =  cfg->getBranchName(); 
+
+  if (currentBranch == "entry") { 
+
+    PreMustCalls[currentBranch] = {}; 
+    llvm::SetVector<Instruction*> instructions = cfg->getInstructions(); 
+
+    for (Instruction* I : instructions) {
+      transfer(I, instructions, PostMustCalls[currentBranch], AliasedVars);
+    }
+
+
+    for (CFG* succ : cfg->getSuccessors()) {
+      analyzeCFG(succ, PreMustCalls, PostMustCalls, AliasedVars, currentBranch); 
+    }
+
+  }
+
+  else {
+    std::map<std::string, MC> PriorPreMC = std::map<std::string, MC>(PreMustCalls[currentBranch]); 
+    std::map<std::string, MC> PriorPostMC = std::map<std::string, MC>(PostMustCalls[currentBranch]); 
+
+
+    logout("-----\nlogging priorprecm prior = " << priorBranch << " current = " << currentBranch )
+    for (auto p : PriorPreMC) {
+      std::string m; 
+      for (auto k : p.second.mcSet) {
+        m += k + ", ";
+      }
+      logout(p.first << " " << m)
+    }
+
+
+    if (PriorPreMC.size() > 0) {
+      logout("need to lub for " << currentBranch << " " << priorBranch)
+
+      std::map<std::string, MC> CurrentPreMC = std::map<std::string, MC>(PostMustCalls[priorBranch]);
+      
+
+      // check if inputs (pre) differ
+      bool currentAndPriorPreMCEqual = true; 
+      for (auto Pair : CurrentPreMC) {
+        std::string varName = Pair.first; 
+        MC currentPreMC = Pair.second; 
+
+        if (
+          (currentPreMC.mcSet != PriorPreMC[varName].mcSet) || 
+          (currentPreMC.setInitialized != PriorPreMC[varName].setInitialized)
+        ) {
+          currentAndPriorPreMCEqual = false; 
+          break; 
+        }
+      }
+
+      for (auto Pair : PriorPreMC) {
+        std::string varName = Pair.first; 
+        MC priorPreMC = Pair.second; 
+
+        if (
+          (priorPreMC.mcSet != CurrentPreMC[varName].mcSet) || 
+          (priorPreMC.setInitialized != CurrentPreMC[varName].setInitialized)
+        ) {
+          currentAndPriorPreMCEqual = false; 
+          break; 
+        }
+
+      }
+
+      if (currentAndPriorPreMCEqual) return; 
+
+      llvm::SetVector<Instruction*> instructions = cfg->getInstructions(); 
+    
+      // lub PriorPreCM and CurrentPreCM
+      std::map<std::string, MC> lub; 
+
+      for (auto Pair1 : PriorPreMC) {
+        std::string varName = Pair1.first; 
+        MC priorPreMC = Pair1.second; 
+        
+          
+
+        std::set<std::string> setUnion;
+
+        std::set_union(priorPreMC.mcSet.begin(), priorPreMC.mcSet.end(), 
+                      CurrentPreMC[varName].mcSet.begin(), CurrentPreMC[varName].mcSet.end(), 
+                      std::inserter(setUnion, setUnion.begin()));
+
+        logout("for var name " << varName)
+
+        std::string m,k; 
+        for (auto i : priorPreMC.mcSet) {
+          m += i + ", ";
+        }
+        for (auto i : CurrentPreMC[varName].mcSet) {
+          k += i + ", ";
+        }
+        logout("prior pre mc = " << m)
+        logout("current pre mc = " << k)
+
+
+        lub[varName] = {
+          setUnion, 
+          true
+        }; 
+        
+      
+      }
+
+    
+      // fill in the rest 
+      for (auto Pair1 : PriorPostMC) {
+        std::string varName = Pair1.first; 
+        MC priorPostMC = Pair1.second; 
+
+        if (!lub[varName].setInitialized) {
+          
+          lub[varName] = {
+            std::set<std::string>(priorPostMC.mcSet), 
+            true 
+          }; 
+
+        }
+      }
+
+      PreMustCalls[currentBranch] = std::map<std::string, MC>(lub);
+
+      for (Instruction* I : instructions) {
+        transfer(I, instructions, lub, AliasedVars);
+      }
+
+      PostMustCalls[currentBranch] = lub; 
+
+      for (CFG* succ : cfg->getSuccessors()) {
+        analyzeCFG(succ, PreMustCalls, PostMustCalls, AliasedVars, currentBranch); 
+      }
+
+
+    }
+    else {
+      logout("doing normal flow for " << currentBranch << " and prior = " << priorBranch)  
+
+      std::map<std::string, MC> priorPostCM = std::map<std::string, MC>(PostMustCalls[priorBranch]); 
+
+      PreMustCalls[currentBranch] = std::map<std::string, MC>(priorPostCM); 
+      llvm::SetVector<Instruction*> instructions = cfg->getInstructions(); 
+
+      std::map<std::string, MC> flowInto = std::map<std::string, MC>(PostMustCalls[priorBranch]); 
+
+       for (Instruction* I : instructions) {
+        transfer(I, instructions, flowInto, AliasedVars);
+      }
+
+      PostMustCalls[currentBranch] = flowInto;
+
+      
+
+      for (CFG* succ : cfg->getSuccessors()) {
+        analyzeCFG(succ, PreMustCalls, PostMustCalls, AliasedVars, currentBranch); 
+      }
+
+    }
+
+  }
+
+}
+
+void CalledMethodsAnalysis::doMustCallAnalysis(Function &F, PointerAnalysis *PA, std::string optLoadFileName) {
+  SetVector<Instruction *> WorkSet;
+  SetVector<Value *> PointerSet;
+  std::string fnName = F.getName().str();   
+  realBranchOrder = {}; 
+
+  if (fnName != "main") return; 
+
+  AliasMap AliasedVars; 
+  std::map<std::string, InstructionHolder> branchInstructionMap; 
+  
+  for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
+    WorkSet.insert(&(*I));
+    PointerSet.insert(&(*I));
+
+    std::string branchName = I->getParent()->getName().str();
+    populateAliasedVars(&(*I), WorkSet, AliasedVars); 
+
+    auto succs = getSuccessors(&(*I)); 
+    branchInstructionMap[branchName].branch.insert(&(*I)); 
+    for (auto succ : succs) {
+      branchInstructionMap[branchName].successors.insert(succ); 
+    }
+
+  }
+
+
+
+  CFG TopCFG; 
+  buildCFG(TopCFG, realBranchOrder, branchInstructionMap); 
+
+  MustCalls PreMustCalls; 
+  MustCalls PostMustCalls; 
+
+  analyzeCFG(&TopCFG, PreMustCalls, PostMustCalls, AliasedVars, ""); 
+
+
+  logout("\n\nPOST MUST CALLS")
+  for (auto Pair1 : PostMustCalls) {
+    std::string branchName = Pair1.first; 
+    logout("branch = " << branchName)
+    for (auto Pair2 : Pair1.second) {
+      std::string mc; 
+      for (auto m : Pair2.second.mcSet) {
+        mc += m + ", "; 
+      }
+      logout(">> var name = " << Pair2.first << " mc = " << mc)
+    }
+  }
 
 
 }

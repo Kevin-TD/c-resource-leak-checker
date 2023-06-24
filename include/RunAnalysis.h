@@ -42,6 +42,7 @@ protected:
    * @param F The function to be analyzed.
    */
   void doAnalysis(Function &F, PointerAnalysis *PA, std::string optLoadFileName);
+  void doMustCallAnalysis(Function &F, PointerAnalysis *PA, std::string optLoadFileName);
 
 
   std::string getAnalysisName() { return "CalledMethodsPass"; }
