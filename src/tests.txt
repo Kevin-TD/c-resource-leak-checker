@@ -1,8 +1,0 @@
-(cd build)
-
-make ; clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test2.c -o ../test/test2.ll ; opt -load MustCallPass.so -MustCallPass ../test/test2.ll 
-
-make ; clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test3.c -o ../test/test3.ll ; opt -load MustCallPass.so -MustCallPass ../test/test3.ll 
-
-
-alternatively: chmod +x ../run_test.sh ; ../run_test.sh

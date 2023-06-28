@@ -23,6 +23,8 @@ std::string variable(const Value *Val);
  */
 std::string address(const Value *Val);
 
+bool isNumber(const std::string& s);
+
 
 } // namespace dataflow
 

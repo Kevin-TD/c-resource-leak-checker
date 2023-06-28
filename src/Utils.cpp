@@ -30,4 +30,12 @@ std::string address(const Value *Val) {
   return Code;
 }
 
+bool isNumber(const std::string& s) {
+  for (char const &ch : s) {
+      if (std::isdigit(ch) == 0) 
+          return false;
+  }
+  return true;
+}
+
 } // namespace dataflow

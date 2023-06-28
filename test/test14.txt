@@ -1,4 +1,4 @@
 ALLOW_REDEFINE true
-entry %p {free}
-entry %str {free}
-entry %x {free}
+CalledMethods entry %p {free}
+CalledMethods entry %str {free}
+CalledMethods entry %x {free}

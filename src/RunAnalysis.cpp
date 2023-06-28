@@ -5,7 +5,6 @@ namespace dataflow {
 bool CalledMethodsAnalysis::runOnFunction(Function &F) {
   auto PA = new PointerAnalysis(F);
   doAnalysis(F, PA, F.getParent()->getSourceFileName());
-  doMustCallAnalysis(F, PA, F.getParent()->getSourceFileName());
 
   return false;
 }

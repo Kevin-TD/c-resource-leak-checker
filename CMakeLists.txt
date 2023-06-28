@@ -14,6 +14,9 @@ link_directories(${LLVM_LIBRARY_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
 
 add_llvm_library(CalledMethodsPass MODULE
   src/CFG.cpp
+  src/CalledMethods.cpp
+  src/MustCall.cpp
+  src/PassType.cpp
   src/Analysis.cpp
   src/RunAnalysis.cpp
   src/PointerAnalysis.cpp

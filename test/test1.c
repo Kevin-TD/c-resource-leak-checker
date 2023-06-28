@@ -22,6 +22,10 @@ int main () {
 
 /*
 Results: 
+
+CalledMethods entry %retval {}
+MustCall entry 
+
 entry %str {free}
 entry %retval {}
 

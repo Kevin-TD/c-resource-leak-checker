@@ -1,2 +1,2 @@
 ALLOW_REDEFINE true
-while.end %str {free0,free2}
+CalledMethods while.end %str {free0,free2}
