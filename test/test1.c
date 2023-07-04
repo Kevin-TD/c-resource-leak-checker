@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+char* str2; 
+
 int main () {
    char *str;
 
@@ -16,6 +19,9 @@ int main () {
    printf("String = %s,  Address = %u\n", str, str);
 
    free(str);
+
+   str2 = (char*) malloc(15);
+   free(str2); 
    
    return(0);
 }

@@ -15,8 +15,6 @@
 #include <map>
 #include <string>
 
-#include "PointerAnalysis.h"
-
 using namespace llvm; 
 
 namespace dataflow {
@@ -41,7 +39,7 @@ protected:
    *
    * @param F The function to be analyzed.
    */
-  void doAnalysis(Function &F, PointerAnalysis *PA, std::string optLoadFileName);
+  void doAnalysis(Function &F, std::string optLoadFileName);
 
 
   std::string getAnalysisName() { return "CalledMethodsPass"; }

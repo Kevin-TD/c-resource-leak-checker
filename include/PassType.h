@@ -3,46 +3,56 @@
 
 #include "RunAnalysis.h"
 #include "Utils.h"
-#include "PointerAnalysis.h"
 #include "CFG.h"
 
 #include <set>
 #include <fstream>
 
+// mapping between LLVM intermediate variables (e.g., %6, %7, %8) and variables visible in the code (e.g., %str). Used to find all local must-aliases, though it is not expected to find all of them
 typedef std::map<std::string, std::string> AliasMap;
 
-struct MethodsSetHolder {
+struct MaybeUninitMethodsSet {
     std::set<std::string> methodsSet; 
     bool setInitialized; 
 };
 
-typedef std::map<std::string, std::map<std::string, MethodsSetHolder>> MappedMethods;
+// mapping for an entire program; first string is branch name, second string is var name 
+typedef std::map<std::string, std::map<std::string, MaybeUninitMethodsSet>> MappedMethods;
 
 class PassType {
-private: 
+protected: 
     AliasMap aliasedVars; 
     std::string testName; 
     CFG* cfg; 
     MappedMethods expectedResult; 
     
-    virtual void analyzeCFG(CFG* cfg, MappedMethods& PreMappedMethods, MappedMethods& PostMappedMethods, std::string priorBranch) = 0; 
-    virtual void transfer(Instruction* I,  SetVector<Instruction *> workSet, std::map<std::string, MethodsSetHolder>& inputMethodsSet) = 0;
+    void analyzeCFG(CFG* cfg, MappedMethods& PreMappedMethods, MappedMethods& PostMappedMethods, std::string priorBranch); 
+    virtual void leastUpperBound(MaybeUninitMethodsSet& preMethods, MaybeUninitMethodsSet& curMethods, std::set<std::string>& result) = 0;  
+    
+    void transfer(Instruction* instruction,  SetVector<Instruction *> workSet, std::map<std::string, MaybeUninitMethodsSet>& inputMethodsSet); 
+    virtual void onAllocationFunctionCall(MaybeUninitMethodsSet& input, std::string& fnName) = 0; 
+    virtual void onDeallocationFunctionCall(MaybeUninitMethodsSet& input, std::string& fnName) = 0; 
+    virtual void onUnknownFunctionCall(MaybeUninitMethodsSet& input) = 0; 
+    virtual void onUnsafeFunctionCall(MaybeUninitMethodsSet& input, std::string& fnName) = 0; 
+    virtual void onReallocFunctionCall(MaybeUninitMethodsSet& input, std::string& fnName) = 0; 
+    virtual void onSafeFunctionCall(MaybeUninitMethodsSet& input, std::string& fnName) = 0; 
 public:    
-    void setFunctions(std::map<std::string, bool> safeFunctions, std::map<std::string, bool> unsafeFunctions, std::map<std::string, bool> reallocFunctions, std::map<std::string, std::string> memoryFunctions); 
+    void setFunctions(std::set<std::string> safeFunctions, std::set<std::string> unsafeFunctions, std::set<std::string> reallocFunctions, std::map<std::string, std::string> memoryFunctions); 
     void buildExpectedResult(std::string testName); 
 
-    std::map<std::string, bool> safeFunctions;
-    std::map<std::string, bool> unsafeFunctions; 
-    std::map<std::string, bool> reallocFunctions;
+    std::set<std::string> safeFunctions;
+    std::set<std::string> unsafeFunctions; 
+    std::set<std::string> reallocFunctions;
     std::map<std::string, std::string> memoryFunctions;
     std::string passName; 
 
    
-    bool runTests(MappedMethods receivedResult); 
     MappedMethods generatePassResults(); 
 
     void setCFG(CFG* cfg); 
     void setAliasedVars(AliasMap aliasedVars); 
+
+    MappedMethods getExpectedResult(); 
 }; 
 
 

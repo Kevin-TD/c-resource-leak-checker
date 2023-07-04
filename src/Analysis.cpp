@@ -1,10 +1,11 @@
 #include "RunAnalysis.h"
 #include "Utils.h"
-#include "PointerAnalysis.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "MustCall.h"
 #include "PassType.h"
+#include "Debug.h"
+#include "TestRunner.h"
 
 #include <map> 
 #include <tuple>
@@ -12,60 +13,29 @@
 #include <list>
 #include <fstream>
 
-#define DEBUG true
-#if DEBUG
-#define logout(x) errs() << x << "\n";
-#define logDomain(x) x->print(errs()); 
-#define logOutMemory(x) printMemory(x);
-#else
-#define logout(x) 
-#define logDomain(x) 
-#define logOutMemory(x) 
-#endif 
-
 // to run: cd build   then 
 // sh ../run_test.sh <test_num> 
 // or to run all tests: sh ../run_all.sh 
 // note for run all tests is that if you add more tests, you'll have to modify run_all.sh to include that test number
 
-// TODO: how to handle unknown functions 
-// TODO: combine analysis such that MC & CM run at same time OR make them two separate things
-// TODO: add testing for MC 
-
-struct CM {
-  std::set<std::string> cmSet; 
-  bool setInitialized; 
-};
 
 struct InstructionHolder {
     SetVector<Instruction*> branch; 
     SetVector<Instruction*> successors; 
 }; 
 
-
-// what do we do when unknown function is called? 
-// do we add realloc to mc set?
-
-struct MC {
-  std::set<std::string> mcSet; 
-  bool setInitialized; 
-};
-
-typedef std::map<std::string, std::map<std::string, MC>> MustCalls; // left = branch name. inner left = var name 
-
-
 namespace dataflow {
 
-std::map<std::string, bool> SafeFunctions;
-std::map<std::string, bool> UnsafeFunctions;
-std::map<std::string, bool> ReallocFunctions;
+std::set<std::string> SafeFunctions;
+std::set<std::string> UnsafeFunctions;
+std::set<std::string> ReallocFunctions;
 std::map<std::string, std::string> MemoryFunctions;
 std::vector<std::string> realBranchOrder; 
 MappedMethods ExpectedResult; 
 bool ALLOW_REDEFINE;  // ONLY for debugging purposes. exists so we can make our own functions without code saying it is a re-definition or clang saying it is undefined 
 bool loadAndBuild = false; 
-CalledMethods calledMethods("CalledMethods"); 
-MustCall mustCall("MustCall"); 
+CalledMethods calledMethods;
+MustCall mustCall;
 
 void loadFunctions() { 
   // working directory is /build 
@@ -78,19 +48,19 @@ void loadFunctions() {
   std::string line; 
   if (safeFunctionsFile.is_open()) {
     while (std::getline(safeFunctionsFile, line)) {
-      SafeFunctions[line] = true; 
+      SafeFunctions.insert(line);
     }
   }
 
   if (unsafeFunctionsFile.is_open()) {
     while (std::getline(unsafeFunctionsFile, line)) {
-      UnsafeFunctions[line] = true; 
+      UnsafeFunctions.insert(line);
     }
   }
 
   if (reallocFunctionsFile.is_open()) {
     while (std::getline(reallocFunctionsFile, line)) {
-      ReallocFunctions[line] = true; 
+      ReallocFunctions.insert(line);
     }
   }
 
@@ -224,9 +194,9 @@ std::vector<Instruction *> getSuccessors(Instruction *Inst) {
   return Ret;
 }
  
-void populateAliasedVars(Instruction* I, SetVector<Instruction *>& workSet, AliasMap& aliasedVars) {
+void populateAliasedVars(Instruction* instruction, SetVector<Instruction *>& workSet, AliasMap& aliasedVars) {
   bool includes = false; 
-  std::string branchName = I->getParent()->getName().str();
+  std::string branchName = instruction->getParent()->getName().str();
   for (auto branch : realBranchOrder) {
     if (branch == branchName) {
       includes = true; 
@@ -237,21 +207,33 @@ void populateAliasedVars(Instruction* I, SetVector<Instruction *>& workSet, Alia
     realBranchOrder.push_back(branchName);
   }
 
- if (auto Load = dyn_cast<LoadInst>(I)) {
+ if (auto Load = dyn_cast<LoadInst>(instruction)) {
     logout("(load) name is " << variable(Load) << " for " << variable(Load->getPointerOperand()) )
     std::string varName = variable(Load->getPointerOperand()); 
     while (varName.size() > 1 && isNumber(varName.substr(1))) {
       varName = aliasedVars[varName]; 
     }
 
-    logout(variable(Load) << " -> " << varName)
-    aliasedVars[variable(Load)] = varName;
+    std::string loadName = dataflow::variable(Load); 
+      
+    if (loadName[0] == '@') {
+      loadName[0] = '%';
+    }
+
+    if (varName[0] == '@') {
+      varName[0] = '%'; 
+    }
+
+    logout(loadName << " -> " << varName)
+
+    aliasedVars[loadName] = varName;
+
   }
 }
 
 
 
-void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::string optLoadFileName) {
+void CalledMethodsAnalysis::doAnalysis(Function &F, std::string optLoadFileName) {
   SetVector<Instruction *> WorkSet;
   SetVector<Value *> PointerSet;
   std::string fnName = F.getName().str(); 
@@ -272,22 +254,22 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::st
 
   if (!ALLOW_REDEFINE) {
         // check if code re-defines a safe function or memory function. if so, cast it as a unsafe function
-    if (SafeFunctions[fnName]) {
-      SafeFunctions[fnName] = false; 
-      UnsafeFunctions[fnName] = true; 
+    if (SafeFunctions.count(fnName)) {
+      SafeFunctions.erase(fnName);
+      UnsafeFunctions.insert(fnName);
       functionIsKnown = true; 
-      errs() << "**ANALYSIS-WARNING**: Re-definition of safe function '" << fnName << "' identified on  and will be labelled as unsafe.\n";
+      errs() << "**ANALYSIS-WARNING**: Re-definition of safe function '" << fnName << "' identified and will be labelled as unsafe.\n";
     }
 
     for (auto Pair : MemoryFunctions) {
       if (fnName == Pair.first) {
-        UnsafeFunctions[fnName] = true; 
+        UnsafeFunctions.insert(fnName);  
         functionIsKnown = true; 
         errs() << "**ANALYSIS-WARNING**: Re-definition of allocation function '" << fnName << "' identified and will be labelled as unsafe.\n";
       }
 
       if (fnName == Pair.second) {
-        UnsafeFunctions[fnName] = true; 
+        UnsafeFunctions.insert(fnName);
         functionIsKnown = true; 
         errs() << "**ANALYSIS-WARNING**: Re-definition of deallocation function '" << fnName << "' identified and will be labelled as unsafe.\n";
       }
@@ -300,7 +282,7 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::st
 
   if (!functionIsKnown && !ALLOW_REDEFINE) {
     errs() << "**ANALYSIS-WARNING**: Unknown function '" << fnName << "' identified and will be labelled as unsafe.\n";
-    UnsafeFunctions[fnName] = true; 
+    UnsafeFunctions.insert(fnName);
   }
 
   
@@ -374,10 +356,10 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, PointerAnalysis *PA, std::st
 
 
   errs() << "\n\nRUNNING CALLED METHODS TESTS - ALLOWED_REDEFINE = " << ALLOW_REDEFINE << " TEST NAME - " << testName << "\n\n";
-  bool calledMethodsResult = calledMethods.runTests(PostCalledMethods); 
+  bool calledMethodsResult = TestRunner::runTests(calledMethods.getExpectedResult(), PostCalledMethods); 
 
   errs() << "\n\nRUNNING MUST CALL TESTS - ALLOWED_REDEFINE = " << ALLOW_REDEFINE << " TEST NAME - " << testName << "\n\n";
-  bool mustCallResult = mustCall.runTests(PostMustCalls); 
+  bool mustCallResult = TestRunner::runTests(mustCall.getExpectedResult(), PostMustCalls); 
 
   if (calledMethodsResult == EXIT_SUCCESS && mustCallResult == EXIT_SUCCESS) {
     std::exit(EXIT_SUCCESS);

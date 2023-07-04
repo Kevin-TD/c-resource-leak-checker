@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+// "calls" annotation, "must call" annotations 
+
 #define Annotate(x) __attribute__((annotate(x)))
 
 Annotate("DoesFree")

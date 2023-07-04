@@ -31,11 +31,9 @@ std::string address(const Value *Val) {
 }
 
 bool isNumber(const std::string& s) {
-  for (char const &ch : s) {
-      if (std::isdigit(ch) == 0) 
-          return false;
-  }
-  return true;
+  char* endPtr;
+  std::strtol(s.c_str(), &endPtr, 10);
+  return endPtr != s.c_str() && *endPtr == '\0';
 }
 
 } // namespace dataflow
