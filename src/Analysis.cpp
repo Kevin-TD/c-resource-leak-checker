@@ -3,7 +3,7 @@
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "MustCall.h"
-#include "PassType.h"
+#include "DataflowPass.h"
 #include "Debug.h"
 #include "TestRunner.h"
 
@@ -235,7 +235,6 @@ void populateAliasedVars(Instruction* instruction, SetVector<Instruction *>& wor
 
 void CalledMethodsAnalysis::doAnalysis(Function &F, std::string optLoadFileName) {
   SetVector<Instruction *> WorkSet;
-  SetVector<Value *> PointerSet;
   std::string fnName = F.getName().str(); 
 
   std::string testName = getTestName(optLoadFileName); 
@@ -245,9 +244,9 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, std::string optLoadFileName)
 
   if (!loadAndBuild) {
     loadFunctions();
-    calledMethods.buildExpectedResult(testName);
-    mustCall.buildExpectedResult(testName);
-    ALLOW_REDEFINE = getAllowedRedefine(testName); 
+    calledMethods.setExpectedResult(TestRunner::buildExpectedResults(testName, calledMethods.passName));
+    mustCall.setExpectedResult(TestRunner::buildExpectedResults(testName, mustCall.passName));
+    ALLOW_REDEFINE = TestRunner::getAllowedRedefine(testName); 
     loadAndBuild = true; 
   }
 
@@ -285,7 +284,6 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, std::string optLoadFileName)
     UnsafeFunctions.insert(fnName);
   }
 
-  
 
   if (fnName != "main") return; 
 
@@ -298,7 +296,6 @@ void CalledMethodsAnalysis::doAnalysis(Function &F, std::string optLoadFileName)
   
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     WorkSet.insert(&(*I));
-    PointerSet.insert(&(*I));
 
     std::string branchName = I->getParent()->getName().str();
     populateAliasedVars(&(*I), WorkSet, AliasedVars); 

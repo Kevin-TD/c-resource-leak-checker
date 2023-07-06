@@ -1,9 +1,9 @@
 #ifndef MUST_CALL_H
 #define MUST_CALL_H
 
-#include "PassType.h"
+#include "DataflowPass.h"
 
-class MustCall : public PassType {
+class MustCall : public DataflowPass {
 protected:    
     void leastUpperBound(MaybeUninitMethodsSet& preMethods, MaybeUninitMethodsSet& curMethods, std::set<std::string>& result); 
     void onAllocationFunctionCall(MaybeUninitMethodsSet& input, std::string& fnName);

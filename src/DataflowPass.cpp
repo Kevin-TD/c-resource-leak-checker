@@ -1,121 +1,35 @@
-#include "PassType.h"
+#include "DataflowPass.h"
 #include "Debug.h"
+#include "TestRunner.h"
 #include <fstream>
 
-void PassType::setFunctions(std::set<std::string> safeFunctions, std::set<std::string> unsafeFunctions, std::set<std::string> reallocFunctions, std::map<std::string, std::string> memoryFunctions) {
+void DataflowPass::setFunctions(std::set<std::string> safeFunctions, std::set<std::string> unsafeFunctions, std::set<std::string> reallocFunctions, std::map<std::string, std::string> memoryFunctions) {
     this->safeFunctions = safeFunctions;
     this->unsafeFunctions = unsafeFunctions; 
     this->reallocFunctions = reallocFunctions; 
     this->memoryFunctions = memoryFunctions; 
 }
 
-void PassType::buildExpectedResult(std::string testName) {
-  std::ifstream testFile("../test/" + testName + ".txt");
-  std::string line; 
-
-  if (testFile.is_open()) {
-    while (std::getline(testFile, line)) {
-      if (line.size() > 14 && line.substr(0, 14) == "ALLOW_REDEFINE") {
-        continue; 
-      }
-
-      int spaceCount = 0; 
-      std::string branchName;
-      std::string varName;
-      std::set<std::string> calledMethodsSet; 
-      std::string currentCM; 
-      std::string passType; 
-
-      for (char c : line) {
-        if (c == ' ') {
-          spaceCount++;
-          continue; 
-        }
-
-        if (spaceCount == 0) {
-          passType += c; 
-        }
-        else if (spaceCount == 1) {
-          if (passType != this->passName) {
-            break; 
-          }
-          
-          branchName += c; 
-        }
-        else if (spaceCount == 2) {
-          varName += c; 
-        }
-        else if (spaceCount == 3) {
-          if (c == '{') {
-            continue; 
-          }
-          if (c == ',' || c == '}') {
-            if (currentCM.size() > 0)
-              calledMethodsSet.insert(currentCM);
-            currentCM = ""; 
-            continue; 
-          }
-          currentCM += c; 
-
-
-        }
-      }
-
-      if (passType == this->passName) {
-        this->expectedResult[branchName][varName] = {
-          calledMethodsSet, 
-          true 
-        }; 
-      }
-    }
-
-  }
-  testFile.close(); 
+void DataflowPass::setExpectedResult(MappedMethods expectedResult) {
+  this->expectedResult = expectedResult; 
 }
 
-MappedMethods PassType::generatePassResults() {
+MappedMethods DataflowPass::generatePassResults() {
     MappedMethods PreMappedMethods; 
     MappedMethods PostMappedMethods; 
     this->analyzeCFG(this->cfg, PreMappedMethods, PostMappedMethods, ""); 
     return PostMappedMethods; 
 }
 
-void PassType::setCFG(CFG* cfg) {
+void DataflowPass::setCFG(CFG* cfg) {
     this->cfg = cfg; 
 }
 
-void PassType::setAliasedVars(AliasMap aliasedVars) {
+void DataflowPass::setAliasedVars(AliasMap aliasedVars) {
     this->aliasedVars = aliasedVars; 
 }
 
-bool getAllowedRedefine(std::string testName) {
-    std::ifstream testFile("../test/" + testName + ".txt");
-    std::string line; 
-    bool ALLOW_REDEFINE;
-
-    if (testFile.is_open()) {
-        while (std::getline(testFile, line)) {
-            if (line.size() > 14 && line.substr(0, 14) == "ALLOW_REDEFINE") {
-                std::string allowedRedefValue = line.substr(15);
-                if (allowedRedefValue == "true") {
-                    ALLOW_REDEFINE = true; 
-                    break;
-                }
-                else if (allowedRedefValue == "false") {
-                    ALLOW_REDEFINE = false; 
-                    break; 
-                }
-            }
-        }
-
-    }
-    testFile.close(); 
-
-    return ALLOW_REDEFINE; 
-}
-
-
-void PassType::transfer(Instruction* instruction, SetVector<Instruction *> workSet, std::map<std::string, MaybeUninitMethodsSet>& inputMethodsSet) {
+void DataflowPass::transfer(Instruction* instruction, SetVector<Instruction *> workSet, std::map<std::string, MaybeUninitMethodsSet>& inputMethodsSet) {
    if (auto Alloca = dyn_cast<AllocaInst>(instruction)) {
     /*
     Typically allocation instructions are used for local identifiers which start with a %, so it's fine to add a % to the name here 
@@ -188,9 +102,7 @@ void PassType::transfer(Instruction* instruction, SetVector<Instruction *> workS
           argName = aliasedVars[argName]; 
         }
 
-
-        // * i THINK this is what distinguishes "real" variables defined in the program from constants and other irrelevant llvm stuff 
-        if (argName[0] != '%') return; 
+        if (argName == "") return; 
 
         std::list<std::string> allAliases;
 
@@ -262,7 +174,7 @@ void PassType::transfer(Instruction* instruction, SetVector<Instruction *> workS
 }
 
 
-void PassType::analyzeCFG(CFG* cfg, MappedMethods& PreMappedMethods, MappedMethods& PostMappedMethods, std::string priorBranch) {
+void DataflowPass::analyzeCFG(CFG* cfg, MappedMethods& PreMappedMethods, MappedMethods& PostMappedMethods, std::string priorBranch) {
   std::string currentBranch =  cfg->getBranchName(); 
 
   if (currentBranch == "entry") { 
@@ -398,6 +310,6 @@ void PassType::analyzeCFG(CFG* cfg, MappedMethods& PreMappedMethods, MappedMetho
   }
 }
 
-MappedMethods PassType::getExpectedResult() {
+MappedMethods DataflowPass::getExpectedResult() {
   return this->expectedResult; 
 }

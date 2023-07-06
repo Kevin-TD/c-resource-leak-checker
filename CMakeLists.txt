@@ -16,7 +16,7 @@ add_llvm_library(CalledMethodsPass MODULE
   src/CFG.cpp
   src/CalledMethods.cpp
   src/MustCall.cpp
-  src/PassType.cpp
+  src/DataflowPass.cpp
   src/TestRunner.cpp
   src/Analysis.cpp
   src/RunAnalysis.cpp

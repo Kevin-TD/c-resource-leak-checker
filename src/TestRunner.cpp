@@ -62,3 +62,95 @@ bool TestRunner::runTests(MappedMethods expectedResult, MappedMethods receivedRe
 
   return testPassed; 
 }
+
+bool TestRunner::getAllowedRedefine(std::string testName) {
+    std::ifstream testFile("../test/" + testName + ".txt");
+    std::string line; 
+    bool ALLOW_REDEFINE;
+
+    if (testFile.is_open()) {
+        while (std::getline(testFile, line)) {
+            if (line.size() > 14 && line.substr(0, 14) == "ALLOW_REDEFINE") {
+                std::string allowedRedefValue = line.substr(15);
+                if (allowedRedefValue == "true") {
+                    ALLOW_REDEFINE = true; 
+                    break;
+                }
+                else if (allowedRedefValue == "false") {
+                    ALLOW_REDEFINE = false; 
+                    break; 
+                }
+            }
+        }
+
+    }
+    testFile.close(); 
+
+    return ALLOW_REDEFINE; 
+}
+
+MappedMethods TestRunner::buildExpectedResults(std::string testName, std::string passName) {
+  std::ifstream testFile("../test/" + testName + ".txt");
+  std::string line; 
+  MappedMethods expectedResult; 
+
+  if (testFile.is_open()) {
+    while (std::getline(testFile, line)) {
+      if (line.size() > 14 && line.substr(0, 14) == "ALLOW_REDEFINE") {
+        continue; 
+      }
+
+      int spaceCount = 0; 
+      std::string branchName;
+      std::string varName;
+      std::set<std::string> calledMethodsSet; 
+      std::string currentCM; 
+      std::string passType; 
+
+      for (char c : line) {
+        if (c == ' ') {
+          spaceCount++;
+          continue; 
+        }
+
+        if (spaceCount == 0) {
+          passType += c; 
+        }
+        else if (spaceCount == 1) {
+          if (passType != passName) {
+            break; 
+          }
+          
+          branchName += c; 
+        }
+        else if (spaceCount == 2) {
+          varName += c; 
+        }
+        else if (spaceCount == 3) {
+          if (c == '{') {
+            continue; 
+          }
+          if (c == ',' || c == '}') {
+            if (currentCM.size() > 0)
+              calledMethodsSet.insert(currentCM);
+            currentCM = ""; 
+            continue; 
+          }
+          currentCM += c; 
+
+
+        }
+      }
+
+      if (passType == passName) {
+        expectedResult[branchName][varName] = {
+          calledMethodsSet, 
+          true 
+        }; 
+      }
+    }
+
+  }
+  testFile.close(); 
+  return expectedResult; 
+}

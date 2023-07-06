@@ -1,9 +1,9 @@
 #ifndef CALLED_METHODS_H
 #define CALLED_METHODS_H
 
-#include "PassType.h"
+#include "DataflowPass.h"
 
-class CalledMethods : public PassType {
+class CalledMethods : public DataflowPass {
 protected:
     void leastUpperBound(MaybeUninitMethodsSet& preMethods, MaybeUninitMethodsSet& curMethods, std::set<std::string>& result); 
     void onAllocationFunctionCall(MaybeUninitMethodsSet& input, std::string& fnName);

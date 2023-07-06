@@ -1,10 +1,11 @@
-# run with `python3 ../run_all.py`  (must be in build dir)
+#! python3 ../run_all.py`  
+# must be in build dir
 
 import os
 import sys
 
 # checks if cwd is build
-if os.getcwd().split("/")[2] != "build":
+if os.path.split(os.getcwd())[1] != "build":
     print(f"WARNING: not in build dir; cwd is {os.getcwd()}")
 
 print("Making analysis")

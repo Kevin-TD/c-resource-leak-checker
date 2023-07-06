@@ -1,5 +1,5 @@
-#ifndef PASS_H
-#define PASS_H
+#ifndef DATAFLOW_PASS_H
+#define DATAFLOW_PASS_H
 
 #include "RunAnalysis.h"
 #include "Utils.h"
@@ -8,7 +8,7 @@
 #include <set>
 #include <fstream>
 
-// mapping between LLVM intermediate variables (e.g., %6, %7, %8) and variables visible in the code (e.g., %str). Used to find all local must-aliases, though it is not expected to find all of them
+// mapping between LLVM intermediate variables (e.g., %6, %7, %8) and variables visible in the code (e.g., %str). Used to find local must-aliases, though it is not expected to find all of them
 typedef std::map<std::string, std::string> AliasMap;
 
 struct MaybeUninitMethodsSet {
@@ -19,7 +19,7 @@ struct MaybeUninitMethodsSet {
 // mapping for an entire program; first string is branch name, second string is var name 
 typedef std::map<std::string, std::map<std::string, MaybeUninitMethodsSet>> MappedMethods;
 
-class PassType {
+class DataflowPass {
 protected: 
     AliasMap aliasedVars; 
     std::string testName; 
@@ -38,7 +38,7 @@ protected:
     virtual void onSafeFunctionCall(MaybeUninitMethodsSet& input, std::string& fnName) = 0; 
 public:    
     void setFunctions(std::set<std::string> safeFunctions, std::set<std::string> unsafeFunctions, std::set<std::string> reallocFunctions, std::map<std::string, std::string> memoryFunctions); 
-    void buildExpectedResult(std::string testName); 
+    
 
     std::set<std::string> safeFunctions;
     std::set<std::string> unsafeFunctions; 
@@ -50,12 +50,11 @@ public:
     MappedMethods generatePassResults(); 
 
     void setCFG(CFG* cfg); 
-    void setAliasedVars(AliasMap aliasedVars); 
+    void setAliasedVars(AliasMap aliasedVars);
+    void setExpectedResult(MappedMethods expectedResult);  
 
     MappedMethods getExpectedResult(); 
 }; 
 
-
-bool getAllowedRedefine(std::string testName); 
 
 #endif 
