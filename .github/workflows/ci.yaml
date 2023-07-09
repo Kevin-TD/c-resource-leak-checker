@@ -22,7 +22,7 @@ jobs:
         rm -rf build && mkdir build && cd build && \
         cmake .. && \
         cd ../ && \
-        find . -name '.cpp' -o -name '*.h' | xargs clang-format -style=LLVM -i && \
+        find . -name '*.cpp' -o -name '*.h' | xargs clang-format -style=LLVM -i && \
         cd build && \
         python3 ../run_all.py"
 

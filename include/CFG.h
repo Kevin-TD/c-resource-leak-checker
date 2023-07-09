@@ -20,7 +20,6 @@ public:
   CFG(std::string branchName, llvm::SetVector<Instruction *> instructions);
   CFG(std::string branchName);
 
-
   void addSuccessor(std::string branchName,
                     llvm::SetVector<Instruction *> instructions);
   CFG *addSuccessor(std::string branchName);
