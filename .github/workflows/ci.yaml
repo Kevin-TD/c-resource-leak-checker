@@ -12,12 +12,18 @@ jobs:
 
     - name: Pull Docker Image
       run: docker pull cis547/cis547-base:latest
-
-    - name: Run Analysis in Docker
+    
+    - name: Install clang format
       run: |
         sudo apt-get update
         sudo apt install -y clang-format
+    
+    - name: Check code formatting
+      run: |
         find . -path ./build -prune -o \( -name '*.cpp' -o -name '*.h' \) -print | xargs clang-format --dry-run -Werror --style=LLVM
+
+    - name: Run Analysis in Docker
+      run: |
         docker run -v $(pwd):/$(basename $(pwd)) -w /$(basename $(pwd)) cis547/cis547-base:latest \
         bash -c "export LD_LIBRARY_PATH=/opt/mirtk/lib:${LD_LIBRARY_PATH} && \
         rm -rf build && mkdir build && cd build && \
