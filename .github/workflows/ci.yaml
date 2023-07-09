@@ -15,8 +15,8 @@ jobs:
 
     - name: Run Analysis in Docker
       run: |
-        apt-get update
-        apt install -y clang-format
+        sudo apt-get update
+        sudo apt install -y clang-format
         docker run -v $(pwd):/$(basename $(pwd)) -w /$(basename $(pwd)) cis547/cis547-base:latest \
         bash -c "export LD_LIBRARY_PATH=/opt/mirtk/lib:${LD_LIBRARY_PATH} && \
         rm -rf build && mkdir build && cd build && \
