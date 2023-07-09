@@ -23,6 +23,8 @@ jobs:
         cmake .. && \
         python3 ../run_all.py"
         find . -path ./build -prune -o \( -name '*.cpp' -o -name '*.h' \) -print | xargs clang-format -style=LLVM -i 
+        git config user.email "kdiggs0618@gmail.com"
+        git config user.name "Kevin-TD"
         git add .
         git commit -m "Apply clang-format changes"
         git push
