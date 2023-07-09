@@ -13,12 +13,12 @@ jobs:
     - name: Pull Docker Image
       run: docker pull cis547/cis547-base:latest
     
-    - name: Install clang format
+    - name: Install Clang Format
       run: |
         sudo apt-get update
         sudo apt install -y clang-format
     
-    - name: Check code formatting
+    - name: Check Code Formatting
       run: |
         find . -path ./build -prune -o \( -name '*.cpp' -o -name '*.h' \) -print | xargs clang-format --dry-run -Werror --style=LLVM
 
