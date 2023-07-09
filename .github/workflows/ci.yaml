@@ -22,9 +22,10 @@ jobs:
         rm -rf build && mkdir build && cd build && \
         cmake .. && \
         cd ../ && \
-        python3 format_code.py && \
+        find . -name '*.cpp' -o -name '*.h' | xargs clang-format -style=LLVM -i && \
         cd build && \
-        python3 ../run_all.py"
+        python3 ../run_all.py && \
+        cp -r ./* /$(basename $(pwd))"
 
     - name: Check Make Exit Status
       run: echo $?
