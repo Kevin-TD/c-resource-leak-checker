@@ -23,7 +23,8 @@ jobs:
         cmake .. && \
         cd ../ && \
         find . -name '.cpp' -o -name '*.h' | xargs clang-format -style=LLVM -i && \
-        python3 run_all.py"
+        cd build && \
+        python3 ../run_all.py"
 
     - name: Check Make Exit Status
       run: echo $?
