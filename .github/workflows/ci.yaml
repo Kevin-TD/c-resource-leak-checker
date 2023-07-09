@@ -22,7 +22,7 @@ jobs:
         rm -rf build && mkdir build && cd build && \
         cmake .. && \
         python3 ../run_all.py"
-        find . -name '*.cpp' -o -name '*.h' | xargs clang-format -style=LLVM -i 
+        find . -path ./build -prune -o \( -name '*.cpp' -o -name '*.h' \) -print | xargs clang-format -style=LLVM -i 
 
     - name: Check Make Exit Status
       run: echo $?
