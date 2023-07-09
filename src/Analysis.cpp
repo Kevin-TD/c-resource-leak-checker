@@ -26,9 +26,15 @@ struct InstructionHolder {
 
 namespace dataflow {
 
-std::set<std::string> SafeFunctions; std::set<std::string> UnsafeFunctions; std::set<std::string> ReallocFunctions; std::map<std::string, std::string> MemoryFunctions;
-std::vector<std::string> realBranchOrder; MappedMethods ExpectedResult;
-bool ALLOW_REDEFINE; // ONLY for debugging purposes. exists so we can make our own functions without code saying it is a re-definition or clang saying it is undefined
+std::set<std::string> SafeFunctions;
+std::set<std::string> UnsafeFunctions;
+std::set<std::string> ReallocFunctions;
+std::map<std::string, std::string> MemoryFunctions;
+std::vector<std::string> realBranchOrder;
+MappedMethods ExpectedResult;
+bool ALLOW_REDEFINE; // ONLY for debugging purposes. exists so we can make our
+                     // own functions without code saying it is a re-definition
+                     // or clang saying it is undefined
 bool loadAndBuild = false;
 CalledMethods calledMethods;
 MustCall mustCall;

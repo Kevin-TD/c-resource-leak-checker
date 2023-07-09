@@ -17,17 +17,12 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt install -y clang-format
+        find . -path ./build -prune -o \( -name '*.cpp' -o -name '*.h' \) -print | xargs clang-format --dry-run -Werror --style=LLVM
         docker run -v $(pwd):/$(basename $(pwd)) -w /$(basename $(pwd)) cis547/cis547-base:latest \
         bash -c "export LD_LIBRARY_PATH=/opt/mirtk/lib:${LD_LIBRARY_PATH} && \
         rm -rf build && mkdir build && cd build && \
         cmake .. && \
         python3 ../run_all.py"
-        find . -path ./build -prune -o \( -name '*.cpp' -o -name '*.h' \) -print | xargs clang-format -style=LLVM -i 
-        git config user.email "kdiggs0618@gmail.com"
-        git config user.name "Kevin-TD"
-        git add .
-        git commit -m "Apply clang-format changes"
-        git push
 
     - name: Check Make Exit Status
       run: echo $?
