@@ -15,17 +15,14 @@ jobs:
 
     - name: Run Analysis in Docker
       run: |
+        apt-get update
+        apt install -y clang-format
         docker run -v $(pwd):/$(basename $(pwd)) -w /$(basename $(pwd)) cis547/cis547-base:latest \
         bash -c "export LD_LIBRARY_PATH=/opt/mirtk/lib:${LD_LIBRARY_PATH} && \
-        apt-get update && \
-        apt install -y clang-format && \
         rm -rf build && mkdir build && cd build && \
         cmake .. && \
-        cd ../ && \
-        find . -name '*.cpp' -o -name '*.h' | xargs clang-format -style=LLVM -i && \
-        cd build && \
-        python3 ../run_all.py && \
-        cp -r ./* /$(basename $(pwd))"
+        python3 ../run_all.py"
+        find . -name '*.cpp' -o -name '*.h' | xargs clang-format -style=LLVM -i 
 
     - name: Check Make Exit Status
       run: echo $?
