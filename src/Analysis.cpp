@@ -23,10 +23,6 @@ struct InstructionHolder {
   SetVector<Instruction *> branch;
   SetVector<Instruction *> successors;
 };
-// apt-get install -y clang-format
-
-// after cmake. cd ../
-// find . -name "*.cpp" -o -name "*.h" | xargs clang-format -style=LLVM -i
 
 namespace dataflow {
 
