@@ -1,2 +1,2 @@
 ALLOW_REDEFINE true
-do.end %str {free,free1}
+CalledMethods do.end %str {free,free1}

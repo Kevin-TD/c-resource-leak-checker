@@ -10,12 +10,11 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Constants.h"
 #include <algorithm>
 #include <iterator>
 #include <map>
 #include <string>
-
-#include "PointerAnalysis.h"
 
 using namespace llvm; 
 
@@ -41,7 +40,7 @@ protected:
    *
    * @param F The function to be analyzed.
    */
-  void doAnalysis(Function &F, PointerAnalysis *PA, std::string optLoadFileName);
+  void doAnalysis(Function &F, std::string optLoadFileName);
 
 
   std::string getAnalysisName() { return "CalledMethodsPass"; }

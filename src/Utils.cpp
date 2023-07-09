@@ -30,4 +30,10 @@ std::string address(const Value *Val) {
   return Code;
 }
 
+bool isNumber(const std::string& s) {
+  char* endPtr;
+  std::strtol(s.c_str(), &endPtr, 10);
+  return endPtr != s.c_str() && *endPtr == '\0';
+}
+
 } // namespace dataflow

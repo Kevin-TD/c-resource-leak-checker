@@ -1,2 +1,2 @@
 ALLOW_REDEFINE false
-if.end16 %str {}
+CalledMethods if.end16 %str {}
