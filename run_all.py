@@ -1,4 +1,4 @@
-#! python3 ../run_all.py`  
+#! python3 ../run_all.py
 # must be in build dir
 
 import os

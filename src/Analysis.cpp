@@ -1,51 +1,54 @@
-#include "RunAnalysis.h"
-#include "Utils.h"
 #include "CFG.h"
 #include "CalledMethods.h"
-#include "MustCall.h"
 #include "DataflowPass.h"
 #include "Debug.h"
+#include "MustCall.h"
+#include "RunAnalysis.h"
 #include "TestRunner.h"
+#include "Utils.h"
 
-#include <map> 
-#include <tuple>
-#include <vector> 
-#include <list>
 #include <fstream>
+#include <list>
+#include <map>
+#include <tuple>
+#include <vector>
 
-// to run: cd build   then 
-// sh ../run_test.sh <test_num> 
-// or to run all tests: sh ../run_all.sh 
-// note for run all tests is that if you add more tests, you'll have to modify run_all.sh to include that test number
-
+// to run: cd build   then
+// sh ../run_test.sh <test_num>
+// or to run all tests: sh ../run_all.sh
+// note for run all tests is that if you add more tests, you'll have to modify
+// run_all.sh to include that test number
 
 struct InstructionHolder {
-    SetVector<Instruction*> branch; 
-    SetVector<Instruction*> successors; 
-}; 
+  SetVector<Instruction *> branch;
+  SetVector<Instruction *> successors;
+};
+// apt-get install -y clang-format
+
+// after cmake. cd ../
+// find . -name "*.cpp" -o -name "*.h" | xargs clang-format -style=LLVM -i
 
 namespace dataflow {
 
-std::set<std::string> SafeFunctions;
-std::set<std::string> UnsafeFunctions;
-std::set<std::string> ReallocFunctions;
-std::map<std::string, std::string> MemoryFunctions;
-std::vector<std::string> realBranchOrder; 
-MappedMethods ExpectedResult; 
-bool ALLOW_REDEFINE;  // ONLY for debugging purposes. exists so we can make our own functions without code saying it is a re-definition or clang saying it is undefined 
-bool loadAndBuild = false; 
+std::set<std::string> SafeFunctions; std::set<std::string> UnsafeFunctions; std::set<std::string> ReallocFunctions; std::map<std::string, std::string> MemoryFunctions;
+std::vector<std::string> realBranchOrder; MappedMethods ExpectedResult;
+bool ALLOW_REDEFINE; // ONLY for debugging purposes. exists so we can make our own functions without code saying it is a re-definition or clang saying it is undefined
+bool loadAndBuild = false;
 CalledMethods calledMethods;
 MustCall mustCall;
 
-void loadFunctions() { 
-  // working directory is /build 
+void loadFunctions() {
+  // working directory is /build
 
   std::ifstream safeFunctionsFile("../src/Functions/safe.txt");
   std::ifstream unsafeFunctionsFile("../src/Functions/unsafe.txt");
   std::ifstream reallocFunctionsFile("../src/Functions/realloc.txt");
-  std::ifstream memoryFunctionsFile("../src/Functions/test_memory.txt"); //*NOTE: test memory being used here instead of "real" memory allocation functions 
+  std::ifstream memoryFunctionsFile(
+      "../src/Functions/test_memory.txt"); //*NOTE: test memory being used here
+                                           // instead of "real" memory
+                                           // allocation functions
 
-  std::string line; 
+  std::string line;
   if (safeFunctionsFile.is_open()) {
     while (std::getline(safeFunctionsFile, line)) {
       SafeFunctions.insert(line);
@@ -67,78 +70,76 @@ void loadFunctions() {
   if (memoryFunctionsFile.is_open()) {
     while (std::getline(memoryFunctionsFile, line)) {
       std::string allocationFunction;
-      std::string deallocationFunction;  
-      std::string s;          
+      std::string deallocationFunction;
+      std::string s;
 
       for (int i = 0; i < line.size(); i++) {
         if (line[i] == ' ') {
-          allocationFunction = s; 
-          s = ""; 
+          allocationFunction = s;
+          s = "";
           continue;
         }
         s += line[i];
       }
-      deallocationFunction = s; 
-      
+      deallocationFunction = s;
+
       MemoryFunctions[allocationFunction] = deallocationFunction;
     }
-
   }
-
 
   safeFunctionsFile.close();
   unsafeFunctionsFile.close();
   memoryFunctionsFile.close();
   reallocFunctionsFile.close();
-
-
 }
 
 std::string getTestName(std::string optLoadFileName) {
-  int slashCount = 0; 
-  std::string testName; 
-  // assuming that format of optLoadFileName is ../test/test{num}.c, returns test{num}
-  for (char c : optLoadFileName) { 
+  int slashCount = 0;
+  std::string testName;
+  // assuming that format of optLoadFileName is ../test/test{num}.c, returns
+  // test{num}
+  for (char c : optLoadFileName) {
     if (c == '/') {
-      slashCount++; 
-      continue; 
+      slashCount++;
+      continue;
     }
 
     if (slashCount == 2) {
-      if (c == '.') break;
+      if (c == '.')
+        break;
 
-      testName += c; 
+      testName += c;
     }
   }
-  return testName; 
+  return testName;
 }
 
-void buildCFG(CFG& topCFG, std::vector<std::string> branchOrder, std::map<std::string, InstructionHolder> branchInstMap) {
-  topCFG = CFG("entry"); 
-  std::map<std::string, CFG*> cfgMap; 
-  cfgMap["entry"] = &topCFG; 
+void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
+              std::map<std::string, InstructionHolder> branchInstMap) {
+  topCFG = CFG("entry");
+  std::map<std::string, CFG *> cfgMap;
+  cfgMap["entry"] = &topCFG;
 
-  for (auto branchName : branchOrder) {  
-    auto succs = branchInstMap[branchName].successors; 
+  for (auto branchName : branchOrder) {
+    auto succs = branchInstMap[branchName].successors;
 
-    CFG* cfg = cfgMap[branchName]; 
+    CFG *cfg = cfgMap[branchName];
 
     cfg->setInstructions(branchInstMap[branchName].branch);
 
-   for (auto succ : succs) {
-    std::string succName = succ->getParent()->getName().str();
+    for (auto succ : succs) {
+      std::string succName = succ->getParent()->getName().str();
 
-    if (succName == branchName) continue; 
+      if (succName == branchName)
+        continue;
 
-    if (cfgMap.count(succName) > 0) {
-      cfg->addSuccessor(cfgMap[succName]);
-      continue; 
-    } 
+      if (cfgMap.count(succName) > 0) {
+        cfg->addSuccessor(cfgMap[succName]);
+        continue;
+      }
 
-
-    cfgMap[succName] = cfg->addSuccessor(succName); 
-   }
-
+      cfgMap[succName] = cfg->addSuccessor(succName);
+    }
   }
 }
 
@@ -193,13 +194,15 @@ std::vector<Instruction *> getSuccessors(Instruction *Inst) {
   }
   return Ret;
 }
- 
-void populateAliasedVars(Instruction* instruction, SetVector<Instruction *>& workSet, AliasMap& aliasedVars) {
-  bool includes = false; 
+
+void populateAliasedVars(Instruction *instruction,
+                         SetVector<Instruction *> &workSet,
+                         AliasMap &aliasedVars) {
+  bool includes = false;
   std::string branchName = instruction->getParent()->getName().str();
   for (auto branch : realBranchOrder) {
     if (branch == branchName) {
-      includes = true; 
+      includes = true;
       break;
     }
   }
@@ -207,166 +210,161 @@ void populateAliasedVars(Instruction* instruction, SetVector<Instruction *>& wor
     realBranchOrder.push_back(branchName);
   }
 
- if (auto Load = dyn_cast<LoadInst>(instruction)) {
-    logout("(load) name is " << variable(Load) << " for " << variable(Load->getPointerOperand()) )
-    std::string varName = variable(Load->getPointerOperand()); 
+  if (auto Load = dyn_cast<LoadInst>(instruction)) {
+    logout("(load) name is " << variable(Load) << " for "
+                             << variable(Load->getPointerOperand()))
+        std::string varName = variable(Load->getPointerOperand());
     while (varName.size() > 1 && isNumber(varName.substr(1))) {
-      varName = aliasedVars[varName]; 
+      varName = aliasedVars[varName];
     }
 
-    std::string loadName = dataflow::variable(Load); 
-      
+    std::string loadName = dataflow::variable(Load);
+
     if (loadName[0] == '@') {
       loadName[0] = '%';
     }
 
     if (varName[0] == '@') {
-      varName[0] = '%'; 
+      varName[0] = '%';
     }
 
     logout(loadName << " -> " << varName)
 
-    aliasedVars[loadName] = varName;
-
+        aliasedVars[loadName] = varName;
   }
 }
 
-
-
-void CalledMethodsAnalysis::doAnalysis(Function &F, std::string optLoadFileName) {
+void CalledMethodsAnalysis::doAnalysis(Function &F,
+                                       std::string optLoadFileName) {
   SetVector<Instruction *> WorkSet;
-  std::string fnName = F.getName().str(); 
+  std::string fnName = F.getName().str();
 
-  std::string testName = getTestName(optLoadFileName); 
+  std::string testName = getTestName(optLoadFileName);
 
-  bool functionIsKnown = false; 
+  bool functionIsKnown = false;
   logout("fnname = " << fnName << " opt load file name = " << testName)
 
-  if (!loadAndBuild) {
+      if (!loadAndBuild) {
     loadFunctions();
-    calledMethods.setExpectedResult(TestRunner::buildExpectedResults(testName, calledMethods.passName));
-    mustCall.setExpectedResult(TestRunner::buildExpectedResults(testName, mustCall.passName));
-    ALLOW_REDEFINE = TestRunner::getAllowedRedefine(testName); 
-    loadAndBuild = true; 
+    calledMethods.setExpectedResult(
+        TestRunner::buildExpectedResults(testName, calledMethods.passName));
+    mustCall.setExpectedResult(
+        TestRunner::buildExpectedResults(testName, mustCall.passName));
+    ALLOW_REDEFINE = TestRunner::getAllowedRedefine(testName);
+    loadAndBuild = true;
   }
 
-
   if (!ALLOW_REDEFINE) {
-        // check if code re-defines a safe function or memory function. if so, cast it as a unsafe function
+    // check if code re-defines a safe function or memory function. if so, cast
+    // it as a unsafe function
     if (SafeFunctions.count(fnName)) {
       SafeFunctions.erase(fnName);
       UnsafeFunctions.insert(fnName);
-      functionIsKnown = true; 
-      errs() << "**ANALYSIS-WARNING**: Re-definition of safe function '" << fnName << "' identified and will be labelled as unsafe.\n";
+      functionIsKnown = true;
+      errs() << "**ANALYSIS-WARNING**: Re-definition of safe function '"
+             << fnName << "' identified and will be labelled as unsafe.\n";
     }
 
     for (auto Pair : MemoryFunctions) {
       if (fnName == Pair.first) {
-        UnsafeFunctions.insert(fnName);  
-        functionIsKnown = true; 
-        errs() << "**ANALYSIS-WARNING**: Re-definition of allocation function '" << fnName << "' identified and will be labelled as unsafe.\n";
+        UnsafeFunctions.insert(fnName);
+        functionIsKnown = true;
+        errs() << "**ANALYSIS-WARNING**: Re-definition of allocation function '"
+               << fnName << "' identified and will be labelled as unsafe.\n";
       }
 
       if (fnName == Pair.second) {
         UnsafeFunctions.insert(fnName);
-        functionIsKnown = true; 
-        errs() << "**ANALYSIS-WARNING**: Re-definition of deallocation function '" << fnName << "' identified and will be labelled as unsafe.\n";
+        functionIsKnown = true;
+        errs()
+            << "**ANALYSIS-WARNING**: Re-definition of deallocation function '"
+            << fnName << "' identified and will be labelled as unsafe.\n";
       }
     }
   }
 
   if (fnName == "main") {
-    functionIsKnown = true; 
+    functionIsKnown = true;
   }
 
   if (!functionIsKnown && !ALLOW_REDEFINE) {
-    errs() << "**ANALYSIS-WARNING**: Unknown function '" << fnName << "' identified and will be labelled as unsafe.\n";
+    errs() << "**ANALYSIS-WARNING**: Unknown function '" << fnName
+           << "' identified and will be labelled as unsafe.\n";
     UnsafeFunctions.insert(fnName);
   }
 
+  if (fnName != "main")
+    return;
 
-  if (fnName != "main") return; 
+  AliasMap AliasedVars;
+  std::map<std::string, InstructionHolder> branchInstructionMap;
 
-
-  AliasMap AliasedVars; 
-  std::map<std::string, InstructionHolder> branchInstructionMap; 
-  
- 
-  
-  
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     WorkSet.insert(&(*I));
 
     std::string branchName = I->getParent()->getName().str();
-    populateAliasedVars(&(*I), WorkSet, AliasedVars); 
+    populateAliasedVars(&(*I), WorkSet, AliasedVars);
 
-    auto succs = getSuccessors(&(*I)); 
-    branchInstructionMap[branchName].branch.insert(&(*I)); 
+    auto succs = getSuccessors(&(*I));
+    branchInstructionMap[branchName].branch.insert(&(*I));
     for (auto succ : succs) {
-      branchInstructionMap[branchName].successors.insert(succ); 
+      branchInstructionMap[branchName].successors.insert(succ);
     }
-
   }
 
+  CFG TopCFG;
+  buildCFG(TopCFG, realBranchOrder, branchInstructionMap);
 
+  calledMethods.setFunctions(SafeFunctions, UnsafeFunctions, ReallocFunctions,
+                             MemoryFunctions);
+  calledMethods.setCFG(&TopCFG);
+  calledMethods.setAliasedVars(AliasedVars);
 
-  CFG TopCFG; 
-  buildCFG(TopCFG, realBranchOrder, branchInstructionMap); 
+  mustCall.setFunctions(SafeFunctions, UnsafeFunctions, ReallocFunctions,
+                        MemoryFunctions);
+  mustCall.setCFG(&TopCFG);
+  mustCall.setAliasedVars(AliasedVars);
 
-  calledMethods.setFunctions(SafeFunctions, UnsafeFunctions, ReallocFunctions, MemoryFunctions); 
-  calledMethods.setCFG(&TopCFG); 
-  calledMethods.setAliasedVars(AliasedVars); 
+  MappedMethods PostCalledMethods = calledMethods.generatePassResults();
+  MappedMethods PostMustCalls = mustCall.generatePassResults();
 
-  mustCall.setFunctions(SafeFunctions, UnsafeFunctions, ReallocFunctions, MemoryFunctions); 
-  mustCall.setCFG(&TopCFG); 
-  mustCall.setAliasedVars(AliasedVars); 
-
-  MappedMethods PostCalledMethods = calledMethods.generatePassResults(); 
-  MappedMethods PostMustCalls = mustCall.generatePassResults(); 
-
-
-  logout("\n\nPOST CALLED METHODS")
-  for (auto Pair1 : PostCalledMethods) {
-    std::string branchName = Pair1.first; 
-    logout("branch = " << branchName)
-    for (auto Pair2 : Pair1.second) {
-      std::string cm; 
+  logout("\n\nPOST CALLED METHODS") for (auto Pair1 : PostCalledMethods) {
+    std::string branchName = Pair1.first;
+    logout("branch = " << branchName) for (auto Pair2 : Pair1.second) {
+      std::string cm;
       for (auto m : Pair2.second.methodsSet) {
-        cm += m + ", "; 
+        cm += m + ", ";
       }
       logout(">> var name = " << Pair2.first << " cm = " << cm)
     }
   }
 
-  logout("\n\nPOST MUST CALLS")
-  for (auto Pair1 : PostMustCalls) {
-    std::string branchName = Pair1.first; 
-    logout("branch = " << branchName)
-    for (auto Pair2 : Pair1.second) {
-      std::string mc; 
+  logout("\n\nPOST MUST CALLS") for (auto Pair1 : PostMustCalls) {
+    std::string branchName = Pair1.first;
+    logout("branch = " << branchName) for (auto Pair2 : Pair1.second) {
+      std::string mc;
       for (auto m : Pair2.second.methodsSet) {
-        mc += m + ", "; 
+        mc += m + ", ";
       }
       logout(">> var name = " << Pair2.first << " mc = " << mc)
     }
   }
 
+  errs() << "\n\nRUNNING CALLED METHODS TESTS - ALLOWED_REDEFINE = "
+         << ALLOW_REDEFINE << " TEST NAME - " << testName << "\n\n";
+  bool calledMethodsResult = TestRunner::runTests(
+      calledMethods.getExpectedResult(), PostCalledMethods);
 
-  errs() << "\n\nRUNNING CALLED METHODS TESTS - ALLOWED_REDEFINE = " << ALLOW_REDEFINE << " TEST NAME - " << testName << "\n\n";
-  bool calledMethodsResult = TestRunner::runTests(calledMethods.getExpectedResult(), PostCalledMethods); 
-
-  errs() << "\n\nRUNNING MUST CALL TESTS - ALLOWED_REDEFINE = " << ALLOW_REDEFINE << " TEST NAME - " << testName << "\n\n";
-  bool mustCallResult = TestRunner::runTests(mustCall.getExpectedResult(), PostMustCalls); 
+  errs() << "\n\nRUNNING MUST CALL TESTS - ALLOWED_REDEFINE = "
+         << ALLOW_REDEFINE << " TEST NAME - " << testName << "\n\n";
+  bool mustCallResult =
+      TestRunner::runTests(mustCall.getExpectedResult(), PostMustCalls);
 
   if (calledMethodsResult == EXIT_SUCCESS && mustCallResult == EXIT_SUCCESS) {
     std::exit(EXIT_SUCCESS);
-  }
-  else {
+  } else {
     std::exit(EXIT_FAILURE);
   }
-  
-
 }
-
 
 } // namespace dataflow
