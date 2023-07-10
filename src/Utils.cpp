@@ -21,17 +21,8 @@ std::string variable(const Value *Val) {
   return RetVal;
 }
 
-std::string address(const Value *Val) {
-  std::string Code;
-  raw_string_ostream SS(Code);
-  Val->print(SS);
-  Code.erase(0, Code.find_first_not_of(WHITESPACES));
-  Code = "@(" + Code + ")";
-  return Code;
-}
-
-bool isNumber(const std::string& s) {
-  char* endPtr;
+bool isNumber(const std::string &s) {
+  char *endPtr;
   std::strtol(s.c_str(), &endPtr, 10);
   return endPtr != s.c_str() && *endPtr == '\0';
 }

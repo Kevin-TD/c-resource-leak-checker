@@ -9,6 +9,6 @@ bool CalledMethodsAnalysis::runOnFunction(Function &F) {
 }
 
 char CalledMethodsAnalysis::ID = 1;
-static RegisterPass<CalledMethodsAnalysis> X("CalledMethodsPass", "Called methods analysis",
-                                       false, false);
+static RegisterPass<CalledMethodsAnalysis>
+    X("CalledMethodsPass", "Called methods analysis", false, false);
 } // namespace dataflow

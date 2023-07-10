@@ -15,16 +15,7 @@ namespace dataflow {
  */
 std::string variable(const Value *Val);
 
-/**
- * @brief Encode the memory address of an llvm Value
- *
- * @param Val The llvm Value to get the encoding of
- * @return std::string The encoded memory address of Val
- */
-std::string address(const Value *Val);
-
-bool isNumber(const std::string& s);
-
+bool isNumber(const std::string &s);
 
 } // namespace dataflow
 
