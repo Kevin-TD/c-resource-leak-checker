@@ -1,14 +1,13 @@
 #include "DataflowPass.h"
 #include "Debug.h"
 #include "TestRunner.h"
+#include "Utils.h"
 #include <fstream>
 
 void DataflowPass::setFunctions(
-    std::set<std::string> safeFunctions, std::set<std::string> unsafeFunctions,
-    std::set<std::string> reallocFunctions,
+    std::set<std::string> safeFunctions, std::set<std::string> reallocFunctions,
     std::map<std::string, std::string> memoryFunctions) {
   this->safeFunctions = safeFunctions;
-  this->unsafeFunctions = unsafeFunctions;
   this->reallocFunctions = reallocFunctions;
   this->memoryFunctions = memoryFunctions;
 }
@@ -33,41 +32,85 @@ void DataflowPass::setAliasedVars(AliasMap aliasedVars) {
 void DataflowPass::transfer(
     Instruction *instruction, SetVector<Instruction *> workSet,
     std::map<std::string, MaybeUninitMethodsSet> &inputMethodsSet) {
-  if (auto Alloca = dyn_cast<AllocaInst>(instruction)) {
-    /*
-    Typically allocation instructions are used for local identifiers which start
-    with a %, so it's fine to add a % to the name here
-    */
-    inputMethodsSet["%" + Alloca->getName().str()] = {};
 
-  } else if (auto Store = dyn_cast<StoreInst>(instruction)) {
+  if (auto Store = dyn_cast<StoreInst>(instruction)) {
     Value *valueToStore = Store->getOperand(0);
     Value *receivingValue = Store->getOperand(1);
 
-    for (auto Inst : workSet) {
+    logout("\nvalue to store = " << *valueToStore)
+        logout("receiving value = " << *receivingValue)
+
+            for (auto Inst : workSet) {
       if (valueToStore == Inst) {
         if (auto Call = dyn_cast<CallInst>(Inst)) {
+          /*
+            For some x = malloc(params ...), we are only considering tracking x
+            (argName)
+            TODO: rename "argName" to "assignedVarName"
+          */
           std::string argName = dataflow::variable(Store->getOperand(1));
 
           if (argName[0] == '@') {
             argName[0] = '%';
           }
 
-          std::string fnName = Call->getCalledFunction()->getName().str();
-
-          if (!this->unsafeFunctions.count(fnName) &&
-              !this->unsafeFunctions.count(this->memoryFunctions[fnName]) &&
-              this->memoryFunctions[fnName].size() > 0) {
-            this->onAllocationFunctionCall(inputMethodsSet[argName], fnName);
+          while (argName.size() > 1 && dataflow::isNumber(argName.substr(1))) {
+            argName = aliasedVars[argName];
           }
-          return;
+
+          logout("arg name store inst call = " << argName
+                                               << " and inst = " << *Inst)
+
+              std::string fnName = Call->getCalledFunction()->getName().str();
+
+          ProgramVariable assignedVar = ProgramVariable(Store->getOperand(1));
+          std::set<std::string> allAliases =
+              this->programVariables.findVarAndNamedAliases(
+                  assignedVar.getCleanedName());
+          for (auto a : allAliases) {
+            logout("x100 store alias = " << a)
+          }
+
+          if (this->memoryFunctions[fnName].size() > 0) {
+            for (std::string alias : allAliases) {
+              logout("calling on alloc function for argname "
+                     << alias << " and fnname " << fnName) this
+                  ->onAllocationFunctionCall(inputMethodsSet[alias], fnName);
+            }
+          }
+          break;
+        } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(Inst)) {
+          std::string argName = dataflow::variable(Store->getOperand(1));
+          logout("arg name store inst bitcast = " << argName)
+
+              if (argName[0] == '@') {
+            argName[0] = '%';
+          }
+
+          if (CallInst *call = dyn_cast<CallInst>(bitcast->getOperand(0))) {
+            std::string fnName = call->getCalledFunction()->getName().str();
+
+            logout("fnname store inst bitcast = " << fnName)
+
+                ProgramVariable bitcastVar =
+                    ProgramVariable(Store->getOperand(1));
+            std::set<std::string> allAliases =
+                this->programVariables.findVarAndNamedAliases(
+                    bitcastVar.getCleanedName());
+            for (auto a : allAliases) {
+              logout("x101 bitcast alias = " << a)
+            }
+
+            if (this->memoryFunctions[fnName].size() > 0) {
+              for (auto alias : allAliases) {
+                this->onAllocationFunctionCall(inputMethodsSet[alias], fnName);
+              }
+            }
+            break;
+          }
         }
       }
     }
-
-    // for pointer aliasing
-    std::string lval = dataflow::variable(receivingValue);
-    std::string rval = dataflow::variable(valueToStore);
 
     /*
     LLVM identifiers either start with @ (global identifier) or % (local
@@ -77,17 +120,6 @@ void DataflowPass::transfer(
     @'s
 
     */
-    if (lval[0] == '@') {
-      lval[0] = '%';
-    }
-
-    if (rval[0] == '@') {
-      rval[0] = '%';
-    }
-
-    if (lval[0] == rval[0] && lval[0] == '%') {
-      aliasedVars[lval] = rval;
-    }
 
   } else if (auto Call = dyn_cast<CallInst>(instruction)) {
     for (unsigned i = 0; i < Call->getNumArgOperands(); ++i) {
@@ -95,22 +127,34 @@ void DataflowPass::transfer(
       std::string argName = dataflow::variable(argument);
 
       argName = aliasedVars[argName];
-      while (argName.size() > 1 && dataflow::isNumber(argName.substr(1))) {
+      logout("arg number = " << i) logout("pre arg name = " << argName)
+
+          while (argName.size() > 1 && dataflow::isNumber(argName.substr(1))) {
         argName = aliasedVars[argName];
+        logout("arg name now " << argName)
       }
 
-      if (argName == "")
-        return;
+      if (argName == "") {
+        continue;
+      }
 
-      std::list<std::string> allAliases;
+      std::list<std::string> allAliases2;
 
       while (argName != "") {
-        allAliases.push_back(argName);
-        argName = aliasedVars[argName];
+        allAliases2.push_back(argName);
+        logout("arg name pushed " << argName) argName = aliasedVars[argName];
       }
 
-      for (auto alias : allAliases) {
-        logout("alias = " << alias)
+      logout("for call inst " << *Call) for (auto alias : allAliases2){
+          logout("alias = " << alias)}
+
+      ProgramVariable functionCallVar = ProgramVariable(Call->getArgOperand(i));
+      logout("cleaned name = " << functionCallVar.getCleanedName())
+          std::set<std::string>
+              allAliases = this->programVariables.findVarAndNamedAliases(
+                  functionCallVar.getCleanedName());
+      for (auto a : allAliases) {
+        logout("x102 functionCallVar alias = " << a)
       }
 
       // * (i think this handles) cases where an undefined to us function shows
@@ -120,52 +164,70 @@ void DataflowPass::transfer(
         std::string location = "Line " + std::to_string(debugLoc.getLine()) +
                                ", Col " + std::to_string(debugLoc.getCol());
 
-        errs() << "WARNING: unknown (unforseen occurence) & unsafe func on "
-               << location << "\n";
+        errs() << "WARNING: implicitly declared function call on " << location
+               << "\n";
 
         for (std::string aliasArg : allAliases) {
           this->onUnknownFunctionCall(inputMethodsSet[aliasArg]);
         }
 
-        return;
+        continue;
       }
 
       std::string fnName = Call->getCalledFunction()->getName().str();
 
-      if (this->unsafeFunctions.count(fnName)) {
-        for (std::string aliasArg : allAliases) {
-          this->onUnsafeFunctionCall(inputMethodsSet[aliasArg], fnName);
-        }
-        return;
-      }
+      logout("call fnname = " << fnName)
 
-      if (this->reallocFunctions.count(fnName)) {
+          if (this->reallocFunctions.count(fnName)) {
         for (std::string aliasArg : allAliases) {
           this->onReallocFunctionCall(inputMethodsSet[aliasArg], fnName);
         }
-        return;
+        continue;
       }
 
       if (this->safeFunctions.count(fnName)) {
         for (std::string aliasArg : allAliases) {
           this->onSafeFunctionCall(inputMethodsSet[aliasArg], fnName);
         }
-        return;
+        continue;
       }
 
+      // call void @free(i8* %7) #2, !dbg !291   <- args matter
+      // %call5 = call noalias i8* @aligned_alloc(i64 %4, i64 %5) #2, !dbg !287
+      // <- args do not matter
+      /*
+        we are making the following assumption:
+        for deallocation functions, the arguments matter since they will contain
+        the pointers/var names to memory for allocation functions, the arguments
+        do not matter since they are typically numbers. the variable that is
+        receiving the memory is handled elswhere (in the handling of store
+        insts)
+      */
+
+      bool loopBroken = false;
       for (auto Pair : this->memoryFunctions) {
         if (fnName == Pair.first) {
           for (std::string aliasArg : allAliases) {
-            this->onAllocationFunctionCall(inputMethodsSet[aliasArg], fnName);
+            logout("not calling onalloc for "
+                   << aliasArg << " of fnName " << fnName << " and inst "
+                   << *instruction << " and just returning now") return;
           }
-          break;
         } else if (fnName == Pair.second) {
           for (std::string aliasArg : allAliases) {
             this->onDeallocationFunctionCall(inputMethodsSet[aliasArg], fnName);
           }
+          loopBroken = true;
           break;
         }
       }
+
+      if (loopBroken) {
+        continue;
+      }
+
+      // only cases here are calls to functions not already seen before
+
+      logout("also unknown functionc call " << fnName)
     }
   }
 }
@@ -298,6 +360,11 @@ void DataflowPass::analyzeCFG(CFG *cfg, MappedMethods &PreMappedMethods,
       }
     }
   }
+}
+
+void DataflowPass::setProgramVariables(
+    ProgramVariablesHandler programVariables) {
+  this->programVariables = programVariables;
 }
 
 MappedMethods DataflowPass::getExpectedResult() { return this->expectedResult; }

@@ -1,3 +1,14 @@
-ALLOW_REDEFINE true
-CalledMethods if.end7 %str {}
-MustCall if.end7 %str {malloc,malloc2,malloc1}
+MustCall entry str {malloc}
+MustCall entry numbers {calloc}
+MustCall entry n {}
+MustCall entry pageSize {}
+MustCall entry alignedMemory {valloc}
+MustCall entry alignment {}
+MustCall entry size {}
+MustCall entry alignedBlock {aligned_alloc}
+MustCall entry alignment {}
+MustCall entry size {}
+CalledMethods entry str {free}
+CalledMethods entry numbers {free}
+CalledMethods entry alignedMemory {free}
+CalledMethods entry alignedBlock {free}

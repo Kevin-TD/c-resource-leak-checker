@@ -14,10 +14,6 @@ void CalledMethods::onDeallocationFunctionCall(MaybeUninitMethodsSet &input,
 void CalledMethods::onUnknownFunctionCall(MaybeUninitMethodsSet &input) {
   input.methodsSet = {};
 }
-void CalledMethods::onUnsafeFunctionCall(MaybeUninitMethodsSet &input,
-                                         std::string &fnName) {
-  input.methodsSet = {};
-}
 void CalledMethods::onReallocFunctionCall(MaybeUninitMethodsSet &input,
                                           std::string &fnName) {
   input.methodsSet = {};
