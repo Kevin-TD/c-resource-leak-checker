@@ -26,16 +26,3 @@ int main () {
    return(0);
 }
 
-/*
-Results: 
-
-CalledMethods entry %retval {}
-MustCall entry 
-
-entry %str {free}
-entry %retval {}
-
-Format: [branch name] [var name] [called methods]
-
-
-*/

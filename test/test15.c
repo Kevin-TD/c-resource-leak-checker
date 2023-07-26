@@ -3,8 +3,6 @@
 #include <unistd.h>
 #include "../Annotations/Annotations.h"
 
-
-
 int main() {
     // malloc 
     char* str; 

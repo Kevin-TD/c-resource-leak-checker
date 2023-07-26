@@ -2,13 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// this is a test more for the consistency pass 
-// should be able to conclude that trivially_malloc is effectively the same as malloc
-
-void* trivially_malloc(size_t __size) {
-    malloc(__size);
-}
-
 int main () {
    char *str;
    int a = getchar();
@@ -52,10 +45,3 @@ int main () {
    
    return(0);
 }
-
-/*
-Results 
-if.end18 str {free}
-
-
-*/

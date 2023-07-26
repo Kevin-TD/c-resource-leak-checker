@@ -4,6 +4,9 @@
 import os
 import sys
 
+
+results = []
+
 # checks if cwd is build
 if os.path.split(os.getcwd())[1] != "build":
     print(f"WARNING: not in build dir; cwd is {os.getcwd()}")
@@ -32,8 +35,17 @@ for testFile in testFiles:
             
             if exit_status != 0:
                 testsPassed = False
+                results.append(f"{fileName} failed")
+            else:
+                results.append(f"{fileName} passed")
+
         else:
-            print(f"Test .txt file for {fileName} DOES NOT exist; no commands ran")
+            results.append(f"{fileName}.txt did not exist; did not execute")
+
+
+print("---------TEST RESULTS---------")
+for result in results:
+    print(result)
 
 if testsPassed:
     sys.exit(0)

@@ -1,2 +1,1 @@
-ALLOW_REDEFINE false
-CalledMethods if.end18 %str {free}
+CalledMethods if.end18 str {free}

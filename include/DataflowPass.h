@@ -18,12 +18,6 @@ Derived class ProgramFunction : ProgramNamedKeyword
 Derived class ProgramAnnotation : ProgramNamedKeyword
 */
 
-// mapping between LLVM intermediate variables (e.g., %6, %7, %8) and variables
-// visible in the code (e.g., %str). Also can map two local variables (e.g., %x
-// -> %p).  Used to find local must-aliases, though it is not expected to find
-// all of them. something like %10 -> %9 in the map should not occur
-typedef std::map<std::string, std::string> AliasMap;
-
 struct MaybeUninitMethodsSet {
   std::set<std::string> methodsSet;
   bool setInitialized;
@@ -36,7 +30,6 @@ typedef std::map<std::string, std::map<std::string, MaybeUninitMethodsSet>>
 
 class DataflowPass {
 protected:
-  AliasMap aliasedVars;
   ProgramVariablesHandler programVariables;
   std::string testName;
   CFG *cfg;
@@ -73,7 +66,6 @@ public:
   MappedMethods generatePassResults();
 
   void setCFG(CFG *cfg);
-  void setAliasedVars(AliasMap aliasedVars);
   void setExpectedResult(MappedMethods expectedResult);
   void setProgramVariables(ProgramVariablesHandler programVariables);
 

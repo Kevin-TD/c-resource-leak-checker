@@ -38,9 +38,3 @@ int main () {
    
    return(0);
 }
-
-/*
-Results: 
-if.end16 str {}
-
-*/

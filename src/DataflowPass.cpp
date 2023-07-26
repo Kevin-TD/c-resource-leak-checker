@@ -25,10 +25,6 @@ MappedMethods DataflowPass::generatePassResults() {
 
 void DataflowPass::setCFG(CFG *cfg) { this->cfg = cfg; }
 
-void DataflowPass::setAliasedVars(AliasMap aliasedVars) {
-  this->aliasedVars = aliasedVars;
-}
-
 void DataflowPass::transfer(
     Instruction *instruction, SetVector<Instruction *> workSet,
     std::map<std::string, MaybeUninitMethodsSet> &inputMethodsSet) {
@@ -48,27 +44,15 @@ void DataflowPass::transfer(
             (argName)
             TODO: rename "argName" to "assignedVarName"
           */
-          std::string argName = dataflow::variable(Store->getOperand(1));
+         
 
-          if (argName[0] == '@') {
-            argName[0] = '%';
-          }
-
-          while (argName.size() > 1 && dataflow::isNumber(argName.substr(1))) {
-            argName = aliasedVars[argName];
-          }
-
-          logout("arg name store inst call = " << argName
-                                               << " and inst = " << *Inst)
-
-              std::string fnName = Call->getCalledFunction()->getName().str();
-
+          std::string fnName = Call->getCalledFunction()->getName().str();
           ProgramVariable assignedVar = ProgramVariable(Store->getOperand(1));
           std::set<std::string> allAliases =
               this->programVariables.findVarAndNamedAliases(
                   assignedVar.getCleanedName());
           for (auto a : allAliases) {
-            logout("x100 store alias = " << a)
+            logout("store alias = " << a)
           }
 
           if (this->memoryFunctions[fnName].size() > 0) {
@@ -98,7 +82,7 @@ void DataflowPass::transfer(
                 this->programVariables.findVarAndNamedAliases(
                     bitcastVar.getCleanedName());
             for (auto a : allAliases) {
-              logout("x101 bitcast alias = " << a)
+              logout("bitcast alias = " << a)
             }
 
             if (this->memoryFunctions[fnName].size() > 0) {
@@ -123,38 +107,13 @@ void DataflowPass::transfer(
 
   } else if (auto Call = dyn_cast<CallInst>(instruction)) {
     for (unsigned i = 0; i < Call->getNumArgOperands(); ++i) {
-      Value *argument = Call->getArgOperand(i);
-      std::string argName = dataflow::variable(argument);
-
-      argName = aliasedVars[argName];
-      logout("arg number = " << i) logout("pre arg name = " << argName)
-
-          while (argName.size() > 1 && dataflow::isNumber(argName.substr(1))) {
-        argName = aliasedVars[argName];
-        logout("arg name now " << argName)
-      }
-
-      if (argName == "") {
-        continue;
-      }
-
-      std::list<std::string> allAliases2;
-
-      while (argName != "") {
-        allAliases2.push_back(argName);
-        logout("arg name pushed " << argName) argName = aliasedVars[argName];
-      }
-
-      logout("for call inst " << *Call) for (auto alias : allAliases2){
-          logout("alias = " << alias)}
-
-      ProgramVariable functionCallVar = ProgramVariable(Call->getArgOperand(i));
-      logout("cleaned name = " << functionCallVar.getCleanedName())
+      ProgramVariable argumentVar = ProgramVariable(Call->getArgOperand(i));
+      logout("cleaned name = " << argumentVar.getCleanedName())
           std::set<std::string>
               allAliases = this->programVariables.findVarAndNamedAliases(
-                  functionCallVar.getCleanedName());
+                  argumentVar.getCleanedName());
       for (auto a : allAliases) {
-        logout("x102 functionCallVar alias = " << a)
+        logout("argumentVar alias = " << a)
       }
 
       // * (i think this handles) cases where an undefined to us function shows
@@ -227,7 +186,14 @@ void DataflowPass::transfer(
 
       // only cases here are calls to functions not already seen before
 
-      logout("also unknown functionc call " << fnName)
+      logout("also unknown functionc call " << fnName) 
+
+      // annotation reasoning goes here ... 
+
+      // if no annotations, treat it as unknown function 
+      for (std::string aliasArg : allAliases) {
+          this->onUnknownFunctionCall(inputMethodsSet[aliasArg]);
+      }
     }
   }
 }

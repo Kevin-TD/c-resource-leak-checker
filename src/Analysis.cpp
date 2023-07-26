@@ -3,10 +3,10 @@
 #include "DataflowPass.h"
 #include "Debug.h"
 #include "MustCall.h"
-#include "ProgramVariablesHandler.h"
 #include "RunAnalysis.h"
 #include "TestRunner.h"
 #include "Utils.h"
+#include "ProgramVariablesHandler.h"
 
 #include <fstream>
 #include <list>
@@ -20,12 +20,11 @@
 // note for run all tests is that if you add more tests, you'll have to modify
 // run_all.sh to include that test number
 
-// if a known function is being re-defined, issue a warning and do not check its
-// annotations. treat it as is we want to remove UnsafeFunctions and just have
-// unknown functions wherein we check its annotations to determine what to do
-// with it also we want to remove allowe_redefined
+// if a known function is being re-defined, issue a warning and do not check its annotations. treat it as is
+// we want to remove UnsafeFunctions and just have unknown functions wherein we check its annotations to determine what to do with it 
+// also we want to remove allowe_redefined 
 
-// so remove unsafe functions, remove allow_redefined, change test cases
+// so remove unsafe functions, remove allow_redefined, change test cases 
 
 struct InstructionHolder {
   SetVector<Instruction *> branch;
@@ -48,7 +47,8 @@ void loadFunctions() {
 
   std::ifstream safeFunctionsFile("../src/Functions/safe.txt");
   std::ifstream reallocFunctionsFile("../src/Functions/realloc.txt");
-  std::ifstream memoryFunctionsFile("../src/Functions/memory.txt");
+  std::ifstream memoryFunctionsFile(
+      "../src/Functions/memory.txt");
 
   std::string line;
   if (safeFunctionsFile.is_open()) {
@@ -190,9 +190,8 @@ std::vector<Instruction *> getSuccessors(Instruction *Inst) {
   return Ret;
 }
 
-void populateAliasedVars(Instruction *instruction,
+void doAliasReasoning(Instruction *instruction,
                          SetVector<Instruction *> &workSet,
-                         AliasMap &aliasedVars,
                          ProgramVariablesHandler &programVariables) {
   bool includes = false;
   std::string branchName = instruction->getParent()->getName().str();
@@ -206,100 +205,44 @@ void populateAliasedVars(Instruction *instruction,
     realBranchOrder.push_back(branchName);
   }
 
-  if (LoadInst *Load = dyn_cast<LoadInst>(instruction)) {
+  if (LoadInst* Load = dyn_cast<LoadInst>(instruction)) {
     logout("(load) name is " << variable(Load) << " for "
                              << variable(Load->getPointerOperand()))
         std::string varName = variable(Load->getPointerOperand());
+    
+    ProgramVariable receivingVar = ProgramVariable(Load); 
+    ProgramVariable givingVar = ProgramVariable(Load->getPointerOperand()); 
 
-    ProgramVariable receivingVar = ProgramVariable(Load);
-    ProgramVariable givingVar = ProgramVariable(Load->getPointerOperand());
+    programVariables.addAlias(receivingVar, givingVar); 
 
-    programVariables.addAlias(receivingVar, givingVar);
-
-    while (varName.size() > 1 && isNumber(varName.substr(1))) {
-      varName = aliasedVars[varName];
-    }
-
-    std::string loadName = dataflow::variable(Load);
-
-    if (loadName[0] == '@') {
-      loadName[0] = '%';
-    }
-
-    if (varName[0] == '@') {
-      varName[0] = '%';
-    }
-
-    logout(loadName << " -> " << varName) aliasedVars[loadName] = varName;
-
-  } else if (StoreInst *store = dyn_cast<StoreInst>(instruction)) {
-    Value *valueToStore = store->getOperand(0);
-    Value *receivingValue = store->getOperand(1);
+  }
+  else if (StoreInst* store = dyn_cast<StoreInst>(instruction)) {
+    Value* valueToStore = store->getOperand(0);
+    Value* receivingValue = store->getOperand(1);
 
     ProgramVariable varToStore = ProgramVariable(store->getOperand(0));
-    ProgramVariable receivingVar = ProgramVariable(store->getOperand(1));
+    ProgramVariable receivingVar = ProgramVariable(store->getOperand(1)); 
 
     for (auto Inst : workSet) {
-      if (valueToStore == Inst) {
-        if (CallInst *call = dyn_cast<CallInst>(Inst)) {
-          return;
+      if (valueToStore == Inst) { 
+        if (CallInst* call = dyn_cast<CallInst>(Inst)) {
+          return; 
         }
       }
     }
 
-    programVariables.addAlias(varToStore, receivingVar);
+    programVariables.addAlias(varToStore, receivingVar); 
 
-    std::string receivingValueString = dataflow::variable(receivingValue);
-    std::string valueToStoreString = dataflow::variable(valueToStore);
 
-    if (receivingValueString[0] == '@') {
-      receivingValueString[0] = '%';
-    }
-
-    if (valueToStoreString[0] == '@') {
-      valueToStoreString[0] = '%';
-    }
-
-    while (receivingValueString.size() > 1 &&
-           dataflow::isNumber(receivingValueString.substr(1))) {
-      receivingValueString = aliasedVars[receivingValueString];
-    }
-
-    while (valueToStoreString.size() > 1 &&
-           dataflow::isNumber(valueToStoreString.substr(1))) {
-      valueToStoreString = aliasedVars[valueToStoreString];
-    }
-
-    if (receivingValueString[0] == valueToStoreString[0] &&
-        receivingValueString[0] == '%') {
-      logout("making aliases " << receivingValueString << " -> "
-                               << valueToStoreString)
-          aliasedVars[receivingValueString] = valueToStoreString;
-    }
-
-  } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
-    std::string source = variable(bitcast);
+  } else if (BitCastInst* bitcast = dyn_cast<BitCastInst>(instruction)) {  
+    std::string source = variable(bitcast); 
     std::string destination = variable(bitcast->getOperand(0));
 
-    ProgramVariable sourceVar = ProgramVariable(bitcast);
-    ProgramVariable destinationVar = ProgramVariable(bitcast->getOperand(0));
+    ProgramVariable sourceVar = ProgramVariable(bitcast); 
+    ProgramVariable destinationVar = ProgramVariable(bitcast->getOperand(0)); 
 
-    programVariables.addAlias(sourceVar, destinationVar);
+    programVariables.addAlias(sourceVar, destinationVar); 
 
-    while (destination.size() > 1 && isNumber(destination.substr(1))) {
-      destination = aliasedVars[destination];
-    }
-
-    if (source[0] == '@') {
-      source[0] = '%';
-    }
-
-    if (destination[0] == '@') {
-      destination[0] = '%';
-    }
-
-    logout("from bit cast " << source << " -> " << destination)
-        aliasedVars[source] = destination;
   }
 }
 
@@ -313,7 +256,7 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
   bool functionIsKnown = false;
   logout("fnname = " << fnName << " opt load file name = " << testName)
 
-      if (!loadAndBuild) {
+  if (!loadAndBuild) {
     loadFunctions();
     calledMethods.setExpectedResult(
         TestRunner::buildExpectedResults(testName, calledMethods.passName));
@@ -322,111 +265,109 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
     loadAndBuild = true;
   }
 
+
   // check if code re-defines a pre-defined function
   if (SafeFunctions.count(fnName)) {
-    errs() << "**ANALYSIS-WARNING**: Re-definition of safe function '" << fnName
-           << "' identified.\n";
+    errs() << "**ANALYSIS-WARNING**: Re-definition of safe function '"
+            << fnName << "' identified. Function erased from safe functions.\n";
+    SafeFunctions.erase(fnName);
   }
 
   if (ReallocFunctions.count(fnName)) {
-    errs() << "**ANALYSIS-WARNING**: Re-definition of realloc function '"
-           << fnName << "' identified.\n";
+    errs() << "**ANALYSIS-WARNING**: Re-definition of realloc function '" << fnName << "' identified. Function erased from realloc functions.\n"; 
+    ReallocFunctions.erase(fnName); 
   }
 
   for (auto Pair : MemoryFunctions) {
     if (fnName == Pair.first) {
       errs() << "**ANALYSIS-WARNING**: Re-definition of allocation function '"
-             << fnName << "' identified.\n";
+              << fnName << "' identified. Function's alloc and dealloc functions erased from memory functions.\n";
+      MemoryFunctions.erase(fnName); 
     }
 
     if (fnName == Pair.second) {
-      errs() << "**ANALYSIS-WARNING**: Re-definition of deallocation function '"
-             << fnName << "' identified.\n";
+      errs()
+          << "**ANALYSIS-WARNING**: Re-definition of deallocation function '"
+          << fnName << "' identified. Function's alloc and dealloc functions erased from memory functions.\n";
+      MemoryFunctions.erase(fnName); 
     }
   }
+  
+
+
 
   if (fnName != "main") {
-    // annotation reasoning here; not complete yet but some of the reasoning is
-    // here
+    // annotation reasoning here; not complete yet but some of the reasoning is here
 
-    // plan: have a class wherein you pass it the function and it extracts the
-    // annotations on the function and the annotations on each parameter .need
-    // to first look at every paramater and assign {}. then analyze note:
-    // annotations on the return type will appear exactly the same as if they
-    // were on the function itself note: with LLVM IR, if you put two
-    // annotations on a var, theyll appear as two 'separate' names; e.g.,
-    // %param3.addr3 and %param3.addr4 refer to the same var. im assuming that
-    // if we use the same alias reasoning this'll be resolved easily
+    // plan: have a class wherein you pass it the function and it extracts the annotations on the function and the annotations on each parameter
+    // .need to first look at every paramater and assign {}. then analyze 
+    // note: annotations on the return type will appear exactly the same as if they were on the function itself 
+    // note: with LLVM IR, if you put two annotations on a var, theyll appear as two 'separate' names; e.g., %param3.addr3 and %param3.addr4 refer to the same var. im assuming that if we use the same alias reasoning this'll be resolved easily 
 
-    GlobalVariable *glob =
-        F.getParent()->getGlobalVariable("llvm.global.annotations");
-    std::string annotation;
+    GlobalVariable* glob = F.getParent()->getGlobalVariable("llvm.global.annotations");
 
-    for (llvm::Argument &arg : F.args()) {
+    
+
+    std::string annotation; 
+
+    for (llvm::Argument& arg : F.args()) {
       logout("arg " << arg.getName().str())
     }
 
-    auto *ca = dyn_cast<ConstantArray>(glob->getInitializer());
 
-    for (unsigned i = 0; i < ca->getNumOperands(); ++i) {
-      if (ConstantStruct *structAn =
-              dyn_cast<ConstantStruct>(ca->getOperand(i))) {
-        if (ConstantExpr *expr =
-                dyn_cast<ConstantExpr>(structAn->getOperand(0))) {
-          if (ConstantExpr *note =
-                  cast<ConstantExpr>(structAn->getOperand(1))) {
-            if (GlobalVariable *annotateStr =
-                    dyn_cast<GlobalVariable>(note->getOperand(0))) {
-              if (ConstantDataSequential *data =
-                      dyn_cast<ConstantDataSequential>(
-                          annotateStr->getInitializer())) {
-                if (expr->getOpcode() != Instruction::BitCast ||
-                    expr->getOperand(0) != &F) {
-                  continue;
+    if (glob != NULL) {
+      auto *ca = dyn_cast<ConstantArray>(glob->getInitializer());
+      for (unsigned i = 0; i < ca->getNumOperands(); ++i) {
+        if (ConstantStruct* structAn = dyn_cast<ConstantStruct>(ca->getOperand(i))) {
+          if (ConstantExpr* expr = dyn_cast<ConstantExpr>(structAn->getOperand(0))) {
+            if (ConstantExpr* note = cast<ConstantExpr>(structAn->getOperand(1))) {
+              if (GlobalVariable* annotateStr = dyn_cast<GlobalVariable>(note->getOperand(0))) {
+                if (ConstantDataSequential* data = dyn_cast<ConstantDataSequential>(annotateStr->getInitializer())) {
+                  if (expr->getOpcode() != Instruction::BitCast || expr->getOperand(0) != &F) {
+                      continue;
+                  }
+                  logout("annotation = " << data->getAsString().str())
                 }
-                logout("annotation = " << data->getAsString().str())
               }
             }
           }
         }
       }
+      
     }
 
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
-      Instruction *instruction = (&(*I));
+      Instruction* instruction = (&(*I));
 
-      if (CallInst *callInst = dyn_cast<CallInst>(instruction)) {
-        Function *calledFunction = callInst->getCalledFunction();
-        if (calledFunction->getName() == "llvm.var.annotation") {
+      if (CallInst* callInst = dyn_cast<CallInst>(instruction)) {
+        Function* calledFunction = callInst->getCalledFunction();
+        if (calledFunction->getName() == "llvm.var.annotation") { 
           logout("assigned var " << variable(callInst->getOperand(0)))
 
-              if (ConstantExpr *ce =
-                      cast<ConstantExpr>(callInst->getOperand(1))) {
-            if (ce->getOpcode() == Instruction::GetElementPtr) {
-              if (GlobalVariable *annoteStr =
-                      dyn_cast<GlobalVariable>(ce->getOperand(0))) {
-                if (ConstantDataSequential *data =
-                        dyn_cast<ConstantDataSequential>(
-                            annoteStr->getInitializer())) {
-                  if (data->isString()) {
-                    logout("Found data " << data->getAsString())
+          if (ConstantExpr* ce = cast<ConstantExpr>(callInst->getOperand(1))) {
+              if (ce->getOpcode() == Instruction::GetElementPtr) {
+                if (GlobalVariable* annoteStr = dyn_cast<GlobalVariable>(ce->getOperand(0))) {
+                  if (ConstantDataSequential* data = dyn_cast<ConstantDataSequential>(annoteStr->getInitializer())) {
+                    if (data->isString()) {
+                      logout("Found data " << data->getAsString())
+                    }
                   }
                 }
               }
             }
           }
         }
-      } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
-        std::string source = "%" + bitcast->getName().str();
+      else if (BitCastInst* bitcast = dyn_cast<BitCastInst>(instruction)) {  
+        std::string source = "%" + bitcast->getName().str(); 
         std::string destination = variable(bitcast->getOperand(0));
         logout("bitcast for alias map " << source << " -> " << destination)
       }
+
     }
 
     return;
   }
 
-  AliasMap AliasedVars;
   ProgramVariablesHandler AliasedProgramVars;
   std::map<std::string, InstructionHolder> branchInstructionMap;
 
@@ -434,7 +375,7 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
     WorkSet.insert(&(*I));
 
     std::string branchName = I->getParent()->getName().str();
-    populateAliasedVars(&(*I), WorkSet, AliasedVars, AliasedProgramVars);
+    doAliasReasoning(&(*I), WorkSet, AliasedProgramVars);
 
     auto succs = getSuccessors(&(*I));
     branchInstructionMap[branchName].branch.insert(&(*I));
@@ -443,24 +384,23 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
     }
   }
 
-  logout("ALIAS MAP") for (auto p :
-                           AliasedVars){logout(p.first << " -> " << p.second)}
-
   logout("ALIASED PROGRAM VARS") {
     for (ProgramVariable pv : AliasedProgramVars.getProgramVariables()) {
-      logout("var = " << pv.getRawName()) errs() << "aliases = ";
+      logout("var = " << pv.getRawName()) 
+      errs() << "aliases = "; 
       for (std::string alias : pv.getNamedAliases(true)) {
-        errs() << alias << " ";
+        errs() << alias << " "; 
       }
-      errs() << "\n";
+      errs() << "\n"; 
+
     }
   }
   logout("END")
 
-      for (auto s : AliasedProgramVars.findVarAndNamedAliases("p")) {
+  for (auto s : AliasedProgramVars.findVarAndNamedAliases("p")) {
     logout("aliases p " << s)
   }
-  for (auto s : AliasedProgramVars.findVarAndNamedAliases("str2")) {
+  for (auto s : AliasedProgramVars.findVarAndNamedAliases("str2"))  {
     logout("aliases str2 " << s)
   }
 
@@ -468,21 +408,24 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
     logout("aliases x " << s)
   }
 
+
   CFG TopCFG;
   buildCFG(TopCFG, realBranchOrder, branchInstructionMap);
 
-  calledMethods.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions);
+  calledMethods.setFunctions(SafeFunctions, ReallocFunctions,
+                             MemoryFunctions);
   calledMethods.setCFG(&TopCFG);
-  calledMethods.setAliasedVars(AliasedVars);
-  calledMethods.setProgramVariables(AliasedProgramVars);
+  calledMethods.setProgramVariables(AliasedProgramVars); 
 
-  mustCall.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions);
+  mustCall.setFunctions(SafeFunctions, ReallocFunctions,
+                        MemoryFunctions);
   mustCall.setCFG(&TopCFG);
-  mustCall.setAliasedVars(AliasedVars);
-  mustCall.setProgramVariables(AliasedProgramVars);
+  mustCall.setProgramVariables(AliasedProgramVars); 
 
   MappedMethods PostCalledMethods = calledMethods.generatePassResults();
   MappedMethods PostMustCalls = mustCall.generatePassResults();
+
+  
 
   logout("\n\nPOST CALLED METHODS") for (auto Pair1 : PostCalledMethods) {
     std::string branchName = Pair1.first;
