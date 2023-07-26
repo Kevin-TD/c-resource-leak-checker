@@ -44,7 +44,6 @@ void DataflowPass::transfer(
             (argName)
             TODO: rename "argName" to "assignedVarName"
           */
-         
 
           std::string fnName = Call->getCalledFunction()->getName().str();
           ProgramVariable assignedVar = ProgramVariable(Store->getOperand(1));
@@ -186,13 +185,13 @@ void DataflowPass::transfer(
 
       // only cases here are calls to functions not already seen before
 
-      logout("also unknown functionc call " << fnName) 
+      logout("also unknown functionc call " << fnName)
 
-      // annotation reasoning goes here ... 
+          // annotation reasoning goes here ...
 
-      // if no annotations, treat it as unknown function 
-      for (std::string aliasArg : allAliases) {
-          this->onUnknownFunctionCall(inputMethodsSet[aliasArg]);
+          // if no annotations, treat it as unknown function
+          for (std::string aliasArg : allAliases) {
+        this->onUnknownFunctionCall(inputMethodsSet[aliasArg]);
       }
     }
   }
