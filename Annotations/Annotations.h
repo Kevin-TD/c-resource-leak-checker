@@ -5,10 +5,10 @@
 // unsure how much we'll be needing these
 #define Owning __attribute__((annotate("Owning")))
 #define MustCallAlias                                                          \
-  __attribute__(                                                               \
-      (annotate("MustCallAlias"))) // implementation will be tricky  since this
-                                   // needs a pair of annotations, one on the
-                                   // return type and one for a parameter
+  __attribute__((                                                              \
+      annotate("MustCallAlias"))) // implementation will be tricky  since this
+                                  // needs a pair of annotations, one on the
+                                  // return type and one for a parameter
 
 // we need to be able to give annotations for an entire function or a paramter,
 // right?

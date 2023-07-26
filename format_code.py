@@ -9,4 +9,4 @@ if os.path.split(os.getcwd())[1] != "c-resource-leak-checker":
     print(f"WARNING: not in dir /c-resource-leak-checker; cwd is {os.getcwd()}")
     sys.exit(1)
 
-os.system("find . -path ./build -prune -o \( -name '*.cpp' -o -name '*.h' \) -print | xargs clang-format -style=LLVM -i ")
+os.system("find . -path ./build -prune -o \( -name '*.cpp' -o -name '*.h' \) -print | xargs clang-format -style=LLVM -i")
