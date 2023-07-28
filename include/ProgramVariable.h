@@ -14,6 +14,7 @@ private:
   // name is llvm IR name maybe with % or @
   std::string rawName;
 
+  // underapproximation of must-aliases
   std::list<ProgramVariable> aliases;
 
 public:

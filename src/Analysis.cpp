@@ -20,12 +20,9 @@
 // note for run all tests is that if you add more tests, you'll have to modify
 // run_all.sh to include that test number
 
-// if a known function is being re-defined, issue a warning and do not check its
-// annotations. treat it as is we want to remove UnsafeFunctions and just have
-// unknown functions wherein we check its annotations to determine what to do
-// with it also we want to remove allowe_redefined
-
-// so remove unsafe functions, remove allow_redefined, change test cases
+// if a known function is being re-defined, issue a warning and
+// remove it from safe/realloc/memory functions (wherever it's in).
+// it's annotations should be checked (once annotations are fully implemented)
 
 struct InstructionHolder {
   SetVector<Instruction *> branch;
@@ -295,6 +292,8 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
   }
 
   if (fnName != "main") {
+    // TODO: move annotation reasoning to separate class
+
     // annotation reasoning here; not complete yet but some of the reasoning is
     // here
 

@@ -12,6 +12,12 @@ void does_free(char* s CalledMethods("free")) {
     free(s); 
 }
 
+/*
+TODO: change "CalledMethods" to EnsuresCalledMethods / Calls instead of "CalledMethods"
+- with EnsuresCalledMethods assume it's true & check it later 
+TODO: ensure annotations are easily accessible in the header. for now, change syntax for parameters such that it's something like EnsuresMustCall("s", "free"); also for structs, make it like EnsuresMustCall("X.x", "free")
+*/
+
 // return type is something that we must call free on 
 /*
    ! now, my_struct has a MustCall on its field x and y. when we pass in the struct here and say it calls free on the struct, how are we encoding it so it calls free on a specific field? 
