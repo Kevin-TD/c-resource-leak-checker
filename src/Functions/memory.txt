@@ -1,1 +1,4 @@
 malloc free
+valloc free
+calloc free
+aligned_alloc free

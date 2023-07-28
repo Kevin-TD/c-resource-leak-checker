@@ -1,5 +1,3 @@
-#define Annotate(x) __attribute__((annotate(x)))
-
 #define MustCall(x) __attribute__((annotate("MustCall: {" #x "}")))
 #define CalledMethods(x) __attribute__((annotate("CalledMethods: {" #x "}")))
 #define MustCallUnknown __attribute__((annotate("MustCallUnknown: {}")))

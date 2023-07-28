@@ -13,6 +13,8 @@ link_directories(${LLVM_LIBRARY_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
 
 
 add_llvm_library(CalledMethodsPass MODULE
+  src/ProgramVariable.cpp
+  src/ProgramVariablesHandler.cpp
   src/CFG.cpp
   src/CalledMethods.cpp
   src/MustCall.cpp

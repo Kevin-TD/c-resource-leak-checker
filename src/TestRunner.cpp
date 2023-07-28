@@ -57,30 +57,6 @@ bool TestRunner::runTests(MappedMethods expectedResult,
   return testPassed;
 }
 
-bool TestRunner::getAllowedRedefine(std::string testName) {
-  std::ifstream testFile("../test/" + testName + ".txt");
-  std::string line;
-  bool ALLOW_REDEFINE;
-
-  if (testFile.is_open()) {
-    while (std::getline(testFile, line)) {
-      if (line.size() > 14 && line.substr(0, 14) == "ALLOW_REDEFINE") {
-        std::string allowedRedefValue = line.substr(15);
-        if (allowedRedefValue == "true") {
-          ALLOW_REDEFINE = true;
-          break;
-        } else if (allowedRedefValue == "false") {
-          ALLOW_REDEFINE = false;
-          break;
-        }
-      }
-    }
-  }
-  testFile.close();
-
-  return ALLOW_REDEFINE;
-}
-
 MappedMethods TestRunner::buildExpectedResults(std::string testName,
                                                std::string passName) {
   std::ifstream testFile("../test/" + testName + ".txt");

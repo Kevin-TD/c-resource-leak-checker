@@ -2,16 +2,21 @@
 #define DATAFLOW_PASS_H
 
 #include "CFG.h"
+#include "ProgramVariablesHandler.h"
 #include "RunAnalysis.h"
 #include "Utils.h"
 
 #include <fstream>
 #include <set>
 
-// mapping between LLVM intermediate variables (e.g., %6, %7, %8) and variables
-// visible in the code (e.g., %str). Used to find local must-aliases, though it
-// is not expected to find all of them
-typedef std::map<std::string, std::string> AliasMap;
+/*
+considering an alternative design:
+
+Base class ProgramNamedKeyword
+Derived class ProgramVariable : ProgramNamedKeyword
+Derived class ProgramFunction : ProgramNamedKeyword
+Derived class ProgramAnnotation : ProgramNamedKeyword
+*/
 
 struct MaybeUninitMethodsSet {
   std::set<std::string> methodsSet;
@@ -25,7 +30,7 @@ typedef std::map<std::string, std::map<std::string, MaybeUninitMethodsSet>>
 
 class DataflowPass {
 protected:
-  AliasMap aliasedVars;
+  ProgramVariablesHandler programVariables;
   std::string testName;
   CFG *cfg;
   MappedMethods expectedResult;
@@ -43,8 +48,6 @@ protected:
   virtual void onDeallocationFunctionCall(MaybeUninitMethodsSet &input,
                                           std::string &fnName) = 0;
   virtual void onUnknownFunctionCall(MaybeUninitMethodsSet &input) = 0;
-  virtual void onUnsafeFunctionCall(MaybeUninitMethodsSet &input,
-                                    std::string &fnName) = 0;
   virtual void onReallocFunctionCall(MaybeUninitMethodsSet &input,
                                      std::string &fnName) = 0;
   virtual void onSafeFunctionCall(MaybeUninitMethodsSet &input,
@@ -52,12 +55,10 @@ protected:
 
 public:
   void setFunctions(std::set<std::string> safeFunctions,
-                    std::set<std::string> unsafeFunctions,
                     std::set<std::string> reallocFunctions,
                     std::map<std::string, std::string> memoryFunctions);
 
   std::set<std::string> safeFunctions;
-  std::set<std::string> unsafeFunctions;
   std::set<std::string> reallocFunctions;
   std::map<std::string, std::string> memoryFunctions;
   std::string passName;
@@ -65,8 +66,8 @@ public:
   MappedMethods generatePassResults();
 
   void setCFG(CFG *cfg);
-  void setAliasedVars(AliasMap aliasedVars);
   void setExpectedResult(MappedMethods expectedResult);
+  void setProgramVariables(ProgramVariablesHandler programVariables);
 
   MappedMethods getExpectedResult();
 };

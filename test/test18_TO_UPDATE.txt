@@ -1,0 +1,2 @@
+CalledMethods if.end7 str {}
+MustCall if.end7 str {malloc,malloc2,malloc1}

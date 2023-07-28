@@ -1,4 +1,3 @@
-ALLOW_REDEFINE false
-CalledMethods entry %a {}
-CalledMethods entry %retval {} 
-CalledMethods entry %str {}
+CalledMethods entry a {}
+CalledMethods entry retval {} 
+CalledMethods entry str {}

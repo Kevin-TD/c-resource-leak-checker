@@ -1,4 +1,0 @@
-ALLOW_REDEFINE true
-CalledMethods if.end11 %str {free}
-CalledMethods if.end %m {free,free0}
-CalledMethods if.end %str {free,free0}

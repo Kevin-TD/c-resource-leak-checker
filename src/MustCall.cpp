@@ -12,8 +12,6 @@ void MustCall::onAllocationFunctionCall(MaybeUninitMethodsSet &input,
 void MustCall::onDeallocationFunctionCall(MaybeUninitMethodsSet &input,
                                           std::string &fnName) {}
 void MustCall::onUnknownFunctionCall(MaybeUninitMethodsSet &input) {}
-void MustCall::onUnsafeFunctionCall(MaybeUninitMethodsSet &input,
-                                    std::string &fnName) {}
 void MustCall::onReallocFunctionCall(MaybeUninitMethodsSet &input,
                                      std::string &fnName) {}
 void MustCall::onSafeFunctionCall(MaybeUninitMethodsSet &input,

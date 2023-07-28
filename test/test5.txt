@@ -1,6 +1,5 @@
-ALLOW_REDEFINE false
-CalledMethods if.end %str1 {free}
-CalledMethods if.end16 %a {}
-CalledMethods if.end16 %retval {}
-CalledMethods if.end16 %str {}
-CalledMethods if.end16 %str1 {}
+CalledMethods if.end str1 {free}
+CalledMethods if.end16 a {}
+CalledMethods if.end16 retval {}
+CalledMethods if.end16 str {}
+CalledMethods if.end16 str1 {}

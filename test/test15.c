@@ -1,86 +1,43 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <unistd.h>
 #include "../Annotations/Annotations.h"
 
-MustCall("mallocX")
-MustCall("mallocY")
-void* malloc0(size_t __size) {
-    return malloc(__size);
-}
+int main() {
+    // malloc 
+    char* str; 
+    str = (char*)malloc(15);
 
-MustCall("mallocZ")
-void* malloc1(size_t __size MustCall("mallocY")) {
-    return malloc(__size);
-}
+    // calloc 
+    int n = 5;
+    int* numbers = (int*)calloc(n, sizeof(int));
+    
 
-void* malloc2(size_t __size) {
-    return malloc(__size);
-}
+    // valloc
+    size_t pageSize = sysconf(_SC_PAGESIZE);
+    void* alignedMemory = valloc(pageSize);
+    printf("valloc Allocated memory address: %p\n", alignedMemory);
 
-void* malloc3(size_t __size) {
-    return malloc(__size);
-}
+    // aligned_alloc
+    size_t alignment = 16;
+    size_t size = 32;
+    void* alignedBlock = aligned_alloc(alignment, size);
+    printf("aligned_alloc Allocated memory address: %p\n", alignedBlock);
 
-int free0(void* p) {
-    free(p);
-    return 1; 
-}
+    free(str);
+    free(numbers);
+    free(alignedMemory);
+    free(alignedBlock);
 
-int free1(void* p) {
-    int a = getchar(); 
+    char* str2;
+   char** p = &str2; 
+   char*** x = &p;
 
-    if (a == -15) {
-        free(p);
-    }
-
-    return 1;
-}
-
-int free2(void* p) {
-    free(p);
-    return 1;
-}
-
-int free3(void* p) {
-    free(p);
-    return 1; 
-}
-
-void hidden(char* str) {
-    int a = getchar(); 
-
-    if (a == -15) {
-        str = (char *)malloc(15); 
-    }
-    else if (a == -10) {
-        free(str); 
-    }
-}
+   *p = (char*)malloc(15);
+   free(**x);
 
 
 
-int main () {
-   char* str;
-   int a = getchar(); 
+    return 0; 
 
-   if (a == -15) {
-    str = (char *) malloc(15);
-   }
-
-   else if (a == -10) {
-    str = (char *) malloc2(15);
-   }
-   else {
-    str = (char *) malloc1(15);
-   }
-
-   hidden(str); 
-
-
-
-
-   return(0);
-
- 
 }
