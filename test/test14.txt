@@ -1,7 +1,6 @@
-ALLOW_REDEFINE true
 CalledMethods entry p {free}
 CalledMethods entry str {free}
 CalledMethods entry x {free}
-MustCall entry p {malloc}
-MustCall entry str {malloc}
-MustCall entry x {malloc}
+MustCall entry p {free}
+MustCall entry str {free}
+MustCall entry x {free}

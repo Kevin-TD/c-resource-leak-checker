@@ -1,6 +1,17 @@
-#define MustCall(x) __attribute__((annotate("MustCall: {" #x "}")))
-#define CalledMethods(x) __attribute__((annotate("CalledMethods: {" #x "}")))
-#define MustCallUnknown __attribute__((annotate("MustCallUnknown: {}")))
+#define MustCall(target, method)                                               \
+  __attribute__((annotate("TOOL_CHECKER MustCall " target " " method)))
+#define EnsuresCalledMethods(target, methods)                                  \
+  __attribute__((                                                              \
+      annotate("TOOL_CHECKER EnsuresCalledMethods " target " " methods)))
+
+#define METHODS(m) "methods = {" m "}"
+
+#define FUNCTION(functionName) "target = FUNCTION(" functionName ")"
+#define AT_PARAMETER(nthParameter) ".PARAM(" nthParameter ")"
+#define AT_RETURN ".RETURN"
+#define STRUCT(structName) "target = STRUCT(" structName ")"
+
+#define AT_FIELD(target) ".FIELD(" target ")"
 
 // unsure how much we'll be needing these
 #define Owning __attribute__((annotate("Owning")))

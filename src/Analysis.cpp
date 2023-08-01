@@ -9,10 +9,7 @@
 #include "Utils.h"
 
 #include <fstream>
-#include <list>
 #include <map>
-#include <tuple>
-#include <vector>
 
 // to run: cd build   then
 // sh ../run_test.sh <test_num>
@@ -294,17 +291,25 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
   if (fnName != "main") {
     // TODO: move annotation reasoning to separate class
 
-    // annotation reasoning here; not complete yet but some of the reasoning is
-    // here
+    // loading in global variables
+    LLVMContext context;
+    SMDiagnostic error;
 
-    // plan: have a class wherein you pass it the function and it extracts the
-    // annotations on the function and the annotations on each parameter .need
-    // to first look at every paramater and assign {}. then analyze note:
-    // annotations on the return type will appear exactly the same as if they
-    // were on the function itself note: with LLVM IR, if you put two
-    // annotations on a var, theyll appear as two 'separate' names; e.g.,
-    // %param3.addr3 and %param3.addr4 refer to the same var. im assuming that
-    // if we use the same alias reasoning this'll be resolved easily
+    std::unique_ptr<Module> M =
+        parseIRFile("../test/" + testName + ".ll", error, context);
+
+    for (llvm::GlobalVariable &globalVar : M->globals()) {
+      if (globalVar.hasInitializer()) {
+        llvm::Constant *initializer = globalVar.getInitializer();
+        if (llvm::ConstantDataSequential *dataSeq =
+                llvm::dyn_cast<llvm::ConstantDataSequential>(initializer)) {
+          if (dataSeq->isString()) {
+            std::string stringValue = dataSeq->getAsString().str();
+            llvm::outs() << "String: " << stringValue << "\n";
+          }
+        }
+      }
+    }
 
     GlobalVariable *glob =
         F.getParent()->getGlobalVariable("llvm.global.annotations");
@@ -392,28 +397,6 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
     }
   }
 
-  logout("ALIASED PROGRAM VARS") {
-    for (ProgramVariable pv : AliasedProgramVars.getProgramVariables()) {
-      logout("var = " << pv.getRawName()) errs() << "aliases = ";
-      for (std::string alias : pv.getNamedAliases(true)) {
-        errs() << alias << " ";
-      }
-      errs() << "\n";
-    }
-  }
-  logout("END")
-
-      for (auto s : AliasedProgramVars.findVarAndNamedAliases("p")) {
-    logout("aliases p " << s)
-  }
-  for (auto s : AliasedProgramVars.findVarAndNamedAliases("str2")) {
-    logout("aliases str2 " << s)
-  }
-
-  for (auto s : AliasedProgramVars.findVarAndNamedAliases("x")) {
-    logout("aliases x " << s)
-  }
-
   CFG TopCFG;
   buildCFG(TopCFG, realBranchOrder, branchInstructionMap);
 
@@ -427,6 +410,14 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
 
   MappedMethods PostCalledMethods = calledMethods.generatePassResults();
   MappedMethods PostMustCalls = mustCall.generatePassResults();
+
+  logout("\n\nPROGRAM VARS") for (ProgramVariable pv :
+                                  AliasedProgramVars.getProgramVariables()) {
+    logout("var raw name = " << pv.getRawName()) for (auto s :
+                                                      pv.getAllAliases(false)) {
+      logout(">> alias raw name = " << s)
+    }
+  }
 
   logout("\n\nPOST CALLED METHODS") for (auto Pair1 : PostCalledMethods) {
     std::string branchName = Pair1.first;

@@ -58,7 +58,8 @@ void DataflowPass::transfer(
             for (std::string alias : allAliases) {
               logout("calling on alloc function for argname "
                      << alias << " and fnname " << fnName) this
-                  ->onAllocationFunctionCall(inputMethodsSet[alias], fnName);
+                  ->onAllocationFunctionCall(inputMethodsSet[alias],
+                                             this->memoryFunctions[fnName]);
             }
           }
           break;
@@ -86,7 +87,8 @@ void DataflowPass::transfer(
 
             if (this->memoryFunctions[fnName].size() > 0) {
               for (auto alias : allAliases) {
-                this->onAllocationFunctionCall(inputMethodsSet[alias], fnName);
+                this->onAllocationFunctionCall(inputMethodsSet[alias],
+                                               this->memoryFunctions[fnName]);
               }
             }
             break;
@@ -115,8 +117,12 @@ void DataflowPass::transfer(
         logout("argumentVar alias = " << a)
       }
 
-      // * (i think this handles) cases where an undefined to us function shows
-      // up
+      /*
+      handles the case where function being called is "an indirect function
+      invocation", meaning its target is determined at runtime. we are not
+      running the original code, so we will treat it as an unkown function Docs:
+      https://www.few.vu.nl/~lsc300/LLVM/doxygen/classllvm_1_1CallInst.html#a0bcd4131e1a1d92215f5385b4e16cd2e
+      */
       if (Call->getCalledFunction() == NULL) {
         const DebugLoc &debugLoc = instruction->getDebugLoc();
         std::string location = "Line " + std::to_string(debugLoc.getLine()) +
