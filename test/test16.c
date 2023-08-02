@@ -4,33 +4,55 @@
 #include "../Annotations/Annotations.h"
 
 struct my_struct {
-    char* x MustCall("free"); 
-    char* y MustCall("free"); 
-}; 
+    MustCall(STRUCT("my_struct") AT_FIELD("x"), METHODS("free"))
+    MustCall(STRUCT("my_struct") AT_FIELD("y"), METHODS("free"))
+    char* x; // MustCall("free")
+    char* y; // MustCall("free")
+};
 
-void does_free(char* s CalledMethods("free")) {
+Calls(FUNCTION("does_free") AT_PARAMETER("1"), METHODS("free"))
+void does_free(char* s) { 
     free(s); 
 }
 
 /*
-TODO: change "CalledMethods" to EnsuresCalledMethods / Calls instead of "CalledMethods"
-- with EnsuresCalledMethods assume it's true & check it later 
-TODO: ensure annotations are easily accessible in the header. for now, change syntax for parameters such that it's something like EnsuresMustCall("s", "free"); also for structs, make it like EnsuresMustCall("X.x", "free")
+void does_free(char* s MustCall("free")) { 
+    free(s); 
+}
 */
 
-// return type is something that we must call free on 
-/*
-   ! now, my_struct has a MustCall on its field x and y. when we pass in the struct here and say it calls free on the struct, how are we encoding it so it calls free on a specific field? 
-*/
-CalledMethods("something on the header, it should be able to distinguish")
-CalledMethods("something else too")
-char* MustCall("free") creates_obligation(char* s CalledMethods("free"), struct my_struct CalledMethods("free") X) {
+
+Calls(FUNCTION("creates_obligation") AT_PARAMETER("1"), METHODS("free"))
+Calls(FUNCTION("creates_obligation") AT_PARAMETER("2") AT_FIELD("x"), METHODS("free"))
+MustCall(FUNCTION("creates_obligation") AT_RETURN, METHODS("free")) 
+char* creates_obligation(char* s, struct my_struct X) {    
     free(s);  
     free(X.x); 
     char* str = (char*)malloc(15); 
     return str; 
 }
 
+/*
+char* MustCall("free") creates_obligation(char* s Calls("free"), struct my_struct X Calls("free", "x")) {    
+    free(s);  
+    free(X.x); 
+    char* str = (char*)malloc(15); 
+    return str; 
+}
+*/
+
+Calls(FUNCTION("does_something") AT_RETURN AT_FIELD("x"), METHODS("free"))
+struct my_struct does_something(struct my_struct S) {
+    free(S.x); 
+    return S; 
+}
+
+/*
+struct my_struct Calls("free", "x") does_something(struct my_struct S Calls("free", "x")) {
+    free(S.x); 
+    return S; 
+}
+*/
 
 int main() {
     struct my_struct k; 

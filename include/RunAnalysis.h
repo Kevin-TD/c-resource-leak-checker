@@ -7,9 +7,12 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueMap.h"
+#include "llvm/IRReader/IRReader.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <iterator>
@@ -29,17 +32,10 @@ struct CalledMethodsAnalysis : public FunctionPass {
   /**
    * This function is called for each function F in the input C program
    * that the compiler encounters during a pass.
-   * You do not need to modify this function.
    */
   bool runOnFunction(Function &F) override;
 
 protected:
-  /**
-   * @brief This function implements the chaotic iteration algorithm using
-   * flowIn(), transfer(), and flowOut().
-   *
-   * @param F The function to be analyzed.
-   */
   void doAnalysis(Function &F, std::string optLoadFileName);
 
   std::string getAnalysisName() { return "CalledMethodsPass"; }

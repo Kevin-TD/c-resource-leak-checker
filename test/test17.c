@@ -3,12 +3,13 @@
 #include <unistd.h>
 #include "../Annotations/Annotations.h"
 
-
-void does_malloc(char* str MustCall("free")) {
+MustCall(FUNCTION("does_malloc") AT_PARAMETER("1"), METHODS("free"))
+void does_malloc(char* str) {
     str = (char*)malloc(15); 
 }
 
-void does_free(char* str CalledMethods("free")) {
+Calls(FUNCTION("does_free") AT_PARAMETER("1"), METHODS("free"))
+void does_free(char* str) {
     free(str); 
 }
 

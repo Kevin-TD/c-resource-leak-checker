@@ -1,4 +1,4 @@
 CalledMethods entry str {free}
 CalledMethods entry str2 {free}
-MustCall entry str {malloc}
-MustCall entry str2 {malloc}
+MustCall entry str {free}
+MustCall entry str2 {free}
