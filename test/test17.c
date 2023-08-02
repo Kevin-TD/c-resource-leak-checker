@@ -8,7 +8,7 @@ void does_malloc(char* str) {
     str = (char*)malloc(15); 
 }
 
-EnsuresCalledMethods(FUNCTION("does_free") AT_PARAMETER("1"), METHODS("free"))
+Calls(FUNCTION("does_free") AT_PARAMETER("1"), METHODS("free"))
 void does_free(char* str) {
     free(str); 
 }

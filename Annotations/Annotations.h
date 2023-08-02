@@ -1,8 +1,7 @@
 #define MustCall(target, method)                                               \
   __attribute__((annotate("TOOL_CHECKER MustCall " target " " method)))
-#define EnsuresCalledMethods(target, methods)                                  \
-  __attribute__((                                                              \
-      annotate("TOOL_CHECKER EnsuresCalledMethods " target " " methods)))
+#define Calls(target, methods)                                                 \
+  __attribute__((annotate("TOOL_CHECKER Calls " target " " methods)))
 
 #define METHODS(m) "methods = {" m "}"
 
