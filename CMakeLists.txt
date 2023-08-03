@@ -14,6 +14,11 @@ link_directories(${LLVM_LIBRARY_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
 
 add_llvm_library(CalledMethodsPass MODULE
   src/ProgramVariable.cpp
+  src/Annotation.cpp
+  src/FunctionAnnotation.cpp
+  src/ParameterAnnotation.cpp
+  src/ReturnAnnotation.cpp 
+  src/StructAnnotation.cpp
   src/ProgramVariablesHandler.cpp
   src/CFG.cpp
   src/CalledMethods.cpp
@@ -24,3 +29,5 @@ add_llvm_library(CalledMethodsPass MODULE
   src/RunAnalysis.cpp
   src/Utils.cpp
 )
+
+target_compile_options(CalledMethodsPass PRIVATE -frtti)

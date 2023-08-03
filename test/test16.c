@@ -16,6 +16,36 @@ void does_free(char* s) {
 }
 
 /*
+
+Function Annotations are not actually supported but it's there for our consideration 
+
+StructAnnotation, FunctionAnnotation, ParameterAnnotation, ReturnAnnotation 
+- AnnotationType [All]: enum AnnotationType {MustCall, Calls}
+- Methods [All]: set<str> 
+- Name [All]
+- Field [Struct, Parameter, Return]: str
+- NthParameter (1-indexed) [Parameter]: int
+
+- getAnnotation(struct name = "...", field = "..."): pair<AnnotationType, Methods>
+- getAnnotation(function name = "..."): pair<AnnotationType, Methods>
+- getAnnotation(function name = "...", nthParameter = ... ):  pair<AnnotationType, Methods> 
+
+- Annotation(raw_annotation)
+
+
+String: TOOL_CHECKER Calls target = FUNCTION(does_free).PARAM(1) methods = {free}
+String: TOOL_CHECKER MustCall target = STRUCT(my_struct).FIELD(x) methods = {free}
+String: TOOL_CHECKER MustCall target = STRUCT(my_struct).FIELD(y) methods = {free}
+String: TOOL_CHECKER Calls target = FUNCTION(creates_obligation).PARAM(1) methods = {free}
+String: TOOL_CHECKER Calls target = FUNCTION(creates_obligation).PARAM(2).FIELD(x) methods = {free}
+String: TOOL_CHECKER MustCall target = FUNCTION(creates_obligation).RETURN methods = {free}
+String: TOOL_CHECKER Calls target = FUNCTION(does_something).RETURN.FIELD(x) methods = {free}
+
+
+*/
+
+
+/*
 void does_free(char* s MustCall("free")) { 
     free(s); 
 }
@@ -69,3 +99,32 @@ int main() {
     // all obligations satisfied 
 
 }
+
+/*
+Annotation output for this test 
+
+String: TOOL_CHECKER Calls target = FUNCTION(does_free).PARAM(1) methods = free  <-- Raw String 
+@Calls ParameterAnnotation Function Name = does_free Parameter = #1  methods = {free, } <-- String Representation of Annotation in the code 
+
+String: ../test/test16.c
+undefined annotation
+
+String: TOOL_CHECKER MustCall target = STRUCT(my_struct).FIELD(x) methods = free
+@MustCall StructAnnotation Struct Name = my_struct Field = x methods = {free, }
+
+String: TOOL_CHECKER MustCall target = STRUCT(my_struct).FIELD(y) methods = free
+@MustCall StructAnnotation Struct Name = my_struct Field = y methods = {free, }
+
+String: TOOL_CHECKER Calls target = FUNCTION(creates_obligation).PARAM(1) methods = free
+@Calls ParameterAnnotation Function Name = creates_obligation Parameter = #1  methods = {free, }
+
+String: TOOL_CHECKER Calls target = FUNCTION(creates_obligation).PARAM(2).FIELD(x) methods = free
+@Calls ParameterAnnotation Function Name = creates_obligation Parameter = #2 Field = x methods = {free, }
+
+String: TOOL_CHECKER MustCall target = FUNCTION(creates_obligation).RETURN methods = free
+@MustCall ReturnAnnotation Function Name = creates_obligation  methods = {free, }
+
+String: TOOL_CHECKER Calls target = FUNCTION(does_something).RETURN.FIELD(x) methods = free
+@Calls ReturnAnnotation Function Name = does_something Field = x methods = {free, }
+
+*/

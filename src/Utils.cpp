@@ -2,7 +2,6 @@
 #include "RunAnalysis.h"
 
 const char *WHITESPACES = " \t\n\r";
-const size_t VARIABLE_PADDED_LEN = 8;
 
 namespace dataflow {
 
@@ -25,6 +24,29 @@ bool isNumber(const std::string &s) {
   char *endPtr;
   std::strtol(s.c_str(), &endPtr, 10);
   return endPtr != s.c_str() && *endPtr == '\0';
+}
+
+std::vector<std::string> splitString(const std::string &input, char delimiter) {
+  std::vector<std::string> result;
+  std::stringstream ss(input);
+  std::string token;
+
+  while (getline(ss, token, delimiter)) {
+    result.push_back(token);
+  }
+
+  return result;
+}
+
+std::string removeWhitespace(const std::string &input) {
+  std::string result = input;
+  result.erase(std::remove_if(result.begin(), result.end(), ::isspace),
+               result.end());
+  return result;
+}
+
+std::string sliceString(const std::string &str, int i, int j) {
+  return str.substr(i, j - i + 1);
 }
 
 } // namespace dataflow

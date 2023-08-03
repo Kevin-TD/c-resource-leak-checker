@@ -1,10 +1,15 @@
+#include "Annotation.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "DataflowPass.h"
 #include "Debug.h"
+#include "FunctionAnnotation.h"
 #include "MustCall.h"
+#include "ParameterAnnotation.h"
 #include "ProgramVariablesHandler.h"
+#include "ReturnAnnotation.h"
 #include "RunAnalysis.h"
+#include "StructAnnotation.h"
 #include "TestRunner.h"
 #include "Utils.h"
 
@@ -34,15 +39,16 @@ std::map<std::string, std::string> MemoryFunctions;
 std::vector<std::string> realBranchOrder;
 MappedMethods ExpectedResult;
 bool loadAndBuild = false;
+bool doAnnos = false;
 CalledMethods calledMethods;
 MustCall mustCall;
 
 void loadFunctions() {
   // working directory is /build
 
-  std::ifstream safeFunctionsFile("../src/Functions/safe.txt");
-  std::ifstream reallocFunctionsFile("../src/Functions/realloc.txt");
-  std::ifstream memoryFunctionsFile("../src/Functions/memory.txt");
+  std::ifstream safeFunctionsFile("../Functions/safe.txt");
+  std::ifstream reallocFunctionsFile("../Functions/realloc.txt");
+  std::ifstream memoryFunctionsFile("../Functions/memory.txt");
 
   std::string line;
   if (safeFunctionsFile.is_open()) {
@@ -288,10 +294,17 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
     }
   }
 
-  if (fnName != "main") {
-    // TODO: move annotation reasoning to separate class
+  if (!doAnnos) {
+    // annotation parsing is completed, next is
 
-    // loading in global variables
+    // TODO: move annotation reasoning to separate class
+    // TODO: change from using "doAnnos"; perhaps include in the loadAndBuild
+    // once more handling for annotations is built and we can call something
+    // like .generateAnnotations() annotation class should hold all the code's
+    // annotations and then you'd be able to do something like
+    // getAnnotation(struct name = ..., field = ...) and it would return the
+    // annotion type (MustCall/CalledMethods) and methods (free)
+
     LLVMContext context;
     SMDiagnostic error;
 
@@ -306,40 +319,24 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
           if (dataSeq->isString()) {
             std::string stringValue = dataSeq->getAsString().str();
             llvm::outs() << "String: " << stringValue << "\n";
-          }
-        }
-      }
-    }
 
-    GlobalVariable *glob =
-        F.getParent()->getGlobalVariable("llvm.global.annotations");
+            Annotation *anno = generateAnnotation(stringValue);
+            if (anno->annotationIsUndefined()) {
+              logout("undefined annotation")
+            } else {
 
-    std::string annotation;
-
-    for (llvm::Argument &arg : F.args()) {
-      logout("arg " << arg.getName().str())
-    }
-
-    if (glob != NULL) {
-      auto *ca = dyn_cast<ConstantArray>(glob->getInitializer());
-      for (unsigned i = 0; i < ca->getNumOperands(); ++i) {
-        if (ConstantStruct *structAn =
-                dyn_cast<ConstantStruct>(ca->getOperand(i))) {
-          if (ConstantExpr *expr =
-                  dyn_cast<ConstantExpr>(structAn->getOperand(0))) {
-            if (ConstantExpr *note =
-                    cast<ConstantExpr>(structAn->getOperand(1))) {
-              if (GlobalVariable *annotateStr =
-                      dyn_cast<GlobalVariable>(note->getOperand(0))) {
-                if (ConstantDataSequential *data =
-                        dyn_cast<ConstantDataSequential>(
-                            annotateStr->getInitializer())) {
-                  if (expr->getOpcode() != Instruction::BitCast ||
-                      expr->getOperand(0) != &F) {
-                    continue;
-                  }
-                  logout("annotation = " << data->getAsString().str())
-                }
+              if (StructAnnotation *sa =
+                      dynamic_cast<StructAnnotation *>(anno)) {
+                logout(sa->generateStringRep())
+              } else if (FunctionAnnotation *sa =
+                             dynamic_cast<FunctionAnnotation *>(anno)) {
+                logout(sa->generateStringRep())
+              } else if (ParameterAnnotation *sa =
+                             dynamic_cast<ParameterAnnotation *>(anno)) {
+                logout(sa->generateStringRep())
+              } else if (ReturnAnnotation *sa =
+                             dynamic_cast<ReturnAnnotation *>(anno)) {
+                logout(sa->generateStringRep())
               }
             }
           }
@@ -347,38 +344,7 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
       }
     }
 
-    for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
-      Instruction *instruction = (&(*I));
-
-      if (CallInst *callInst = dyn_cast<CallInst>(instruction)) {
-        Function *calledFunction = callInst->getCalledFunction();
-        if (calledFunction->getName() == "llvm.var.annotation") {
-          logout("assigned var " << variable(callInst->getOperand(0)))
-
-              if (ConstantExpr *ce =
-                      cast<ConstantExpr>(callInst->getOperand(1))) {
-            if (ce->getOpcode() == Instruction::GetElementPtr) {
-              if (GlobalVariable *annoteStr =
-                      dyn_cast<GlobalVariable>(ce->getOperand(0))) {
-                if (ConstantDataSequential *data =
-                        dyn_cast<ConstantDataSequential>(
-                            annoteStr->getInitializer())) {
-                  if (data->isString()) {
-                    logout("Found data " << data->getAsString())
-                  }
-                }
-              }
-            }
-          }
-        }
-      } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
-        std::string source = "%" + bitcast->getName().str();
-        std::string destination = variable(bitcast->getOperand(0));
-        logout("bitcast for alias map " << source << " -> " << destination)
-      }
-    }
-
-    return;
+    doAnnos = true;
   }
 
   ProgramVariablesHandler AliasedProgramVars;

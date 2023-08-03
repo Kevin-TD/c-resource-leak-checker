@@ -17,6 +17,13 @@ std::string variable(const Value *Val);
 
 bool isNumber(const std::string &s);
 
+std::vector<std::string> splitString(const std::string &input, char delimiter);
+
+std::string removeWhitespace(const std::string &input);
+
+// inclusive bounds [i, j]
+std::string sliceString(const std::string &str, int i, int j);
+
 } // namespace dataflow
 
 #endif // UTILS_H
