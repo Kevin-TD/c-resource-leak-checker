@@ -17,6 +17,21 @@ std::string variable(const Value *Val);
 
 bool isNumber(const std::string &s);
 
+std::vector<std::string> splitString(const std::string &input, char delimiter);
+
+void removeWhitespace(std::string &input);
+
+// inclusive bounds [i, j]
+std::string sliceString(const std::string &str, int i, int j);
+
+/*
+returns true iff str begins with a letter or an underscore and is followed by
+zero or more letters, numbers, or underscores
+*/
+bool isValidCVariableName(const std::string &str);
+
+bool hasOnlyOneBalancedParentheses(const std::string &str);
+
 } // namespace dataflow
 
 #endif // UTILS_H

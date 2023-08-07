@@ -3,7 +3,7 @@
 #define Calls(target, methods)                                                 \
   __attribute__((annotate("TOOL_CHECKER Calls " target " " methods)))
 
-#define METHODS(m) "methods = {" m "}"
+#define METHODS(m) "methods = " m
 
 #define FUNCTION(functionName) "target = FUNCTION(" functionName ")"
 #define AT_PARAMETER(nthParameter) ".PARAM(" nthParameter ")"

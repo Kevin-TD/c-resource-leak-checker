@@ -16,6 +16,24 @@ void does_free(char* s) {
 }
 
 /*
+
+Function Annotations are not actually supported but it's there for our consideration 
+
+StructAnnotation, FunctionAnnotation, ParameterAnnotation, ReturnAnnotation 
+- AnnotationType [All]: enum AnnotationType {MustCall, Calls}
+- Methods [All]: set<str> 
+- Name [All]
+- Field [Struct, Parameter, Return]: str
+- NthParameter (1-indexed) [Parameter]: int
+
+- getAnnotation(struct name = "...", field = "..."): pair<AnnotationType, Methods>
+- getAnnotation(function name = "..."): pair<AnnotationType, Methods>
+- getAnnotation(function name = "...", nthParameter = ... ):  pair<AnnotationType, Methods> 
+
+*/
+
+
+/*
 void does_free(char* s MustCall("free")) { 
     free(s); 
 }
