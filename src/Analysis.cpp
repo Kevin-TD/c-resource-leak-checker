@@ -3,6 +3,7 @@
 #include "CalledMethods.h"
 #include "DataflowPass.h"
 #include "Debug.h"
+#include "ErrorAnnotation.h"
 #include "FunctionAnnotation.h"
 #include "MustCall.h"
 #include "ParameterAnnotation.h"
@@ -295,7 +296,7 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
   }
 
   if (!doAnnos) {
-    // annotation parsing is completed, next is
+    // annotation parsing is completed, next is the following TODO's
 
     // TODO: move annotation reasoning to separate class
     // TODO: change from using "doAnnos"; perhaps include in the loadAndBuild
@@ -321,23 +322,21 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
             llvm::outs() << "String: " << stringValue << "\n";
 
             Annotation *anno = generateAnnotation(stringValue);
-            if (anno->annotationIsUndefined()) {
-              logout("undefined annotation")
-            } else {
 
-              if (StructAnnotation *sa =
-                      dynamic_cast<StructAnnotation *>(anno)) {
-                logout(sa->generateStringRep())
-              } else if (FunctionAnnotation *sa =
-                             dynamic_cast<FunctionAnnotation *>(anno)) {
-                logout(sa->generateStringRep())
-              } else if (ParameterAnnotation *sa =
-                             dynamic_cast<ParameterAnnotation *>(anno)) {
-                logout(sa->generateStringRep())
-              } else if (ReturnAnnotation *sa =
-                             dynamic_cast<ReturnAnnotation *>(anno)) {
-                logout(sa->generateStringRep())
-              }
+            if (StructAnnotation *sa = dynamic_cast<StructAnnotation *>(anno)) {
+              logout(sa->generateStringRep() << "\n")
+            } else if (FunctionAnnotation *sa =
+                           dynamic_cast<FunctionAnnotation *>(anno)) {
+              logout(sa->generateStringRep() << "\n")
+            } else if (ParameterAnnotation *sa =
+                           dynamic_cast<ParameterAnnotation *>(anno)) {
+              logout(sa->generateStringRep() << "\n")
+            } else if (ReturnAnnotation *sa =
+                           dynamic_cast<ReturnAnnotation *>(anno)) {
+              logout(sa->generateStringRep() << "\n")
+            } else if (ErrorAnnotation *sa =
+                           dynamic_cast<ErrorAnnotation *>(anno)) {
+              logout("undefined annotation\n")
             }
           }
         }

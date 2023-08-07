@@ -19,10 +19,18 @@ bool isNumber(const std::string &s);
 
 std::vector<std::string> splitString(const std::string &input, char delimiter);
 
-std::string removeWhitespace(const std::string &input);
+void removeWhitespace(std::string &input);
 
 // inclusive bounds [i, j]
 std::string sliceString(const std::string &str, int i, int j);
+
+/*
+returns true if str begins with a letter or an underscore and is followed by by
+zero or more letters, numbers, or underscores
+*/
+bool isValidCVariableName(const std::string &str);
+
+bool hasOnlyOneBalancedParentheses(const std::string &str);
 
 } // namespace dataflow
 

@@ -6,7 +6,6 @@
 enum AnnotationType {
   MustCallAnnotation,
   CallsAnnotation,
-  UndefinedAnnotation
 };
 
 class Annotation {
@@ -16,11 +15,11 @@ protected:
   std::string targetName;
 
 public:
-  Annotation();
-  bool annotationIsUndefined();
   virtual std::string generateStringRep() = 0;
 };
 
 Annotation *generateAnnotation(const std::string &rawAnnotationString);
+bool methodsArgumentIsCorrectlyFormatted(const std::string &rawMethodsString);
+bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString);
 
 #endif

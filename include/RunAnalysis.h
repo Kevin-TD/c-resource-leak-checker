@@ -1,3 +1,5 @@
+// c stdlib directives are for .cpp files
+
 #ifndef RUN_ANALYSIS_H
 #define RUN_ANALYSIS_H
 
@@ -16,12 +18,14 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include <algorithm>
+#include <cctype>
 #include <iostream>
 #include <iterator>
 #include <list>
 #include <map>
 #include <set>
 #include <sstream>
+#include <stack>
 #include <string>
 #include <vector>
 

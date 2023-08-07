@@ -38,15 +38,50 @@ std::vector<std::string> splitString(const std::string &input, char delimiter) {
   return result;
 }
 
-std::string removeWhitespace(const std::string &input) {
-  std::string result = input;
-  result.erase(std::remove_if(result.begin(), result.end(), ::isspace),
-               result.end());
-  return result;
+void removeWhitespace(std::string &input) {
+  input.erase(
+      std::remove_if(input.begin(), input.end(),
+                     [](char c) { return std::isspace(c) || c == '\0'; }),
+      input.end());
 }
 
 std::string sliceString(const std::string &str, int i, int j) {
   return str.substr(i, j - i + 1);
+}
+
+bool isValidCVariableName(const std::string &str) {
+  if (str.empty() || !std::isalpha(str[0]) && str[0] != '_') {
+    return false;
+  }
+
+  for (int i = 1; i < str.length(); i++) {
+    if (!std::isalnum(str[i]) && str[i] != '_') {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool hasOnlyOneBalancedParentheses(const std::string &str) {
+  std::stack<char> parenthesesStack;
+  int balancedPairs = 0;
+
+  for (char c : str) {
+    if (c == '(') {
+      parenthesesStack.push(c);
+    } else if (c == ')') {
+
+      // Unbalanced: encountered closing parenthesis without an opening one
+      if (parenthesesStack.empty()) {
+        return false;
+      }
+      parenthesesStack.pop();
+      balancedPairs++;
+    }
+  }
+
+  return parenthesesStack.empty() && balancedPairs == 1;
 }
 
 } // namespace dataflow
