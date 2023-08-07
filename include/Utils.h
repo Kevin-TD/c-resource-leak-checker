@@ -25,7 +25,7 @@ void removeWhitespace(std::string &input);
 std::string sliceString(const std::string &str, int i, int j);
 
 /*
-returns true if str begins with a letter or an underscore and is followed by by
+returns true iff str begins with a letter or an underscore and is followed by
 zero or more letters, numbers, or underscores
 */
 bool isValidCVariableName(const std::string &str);

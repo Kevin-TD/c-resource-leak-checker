@@ -74,6 +74,46 @@ bool methodsArgumentIsCorrectlyFormatted(const std::string &rawMethodsString) {
   return true;
 }
 
+// a raw correct annotation looks like:
+// TOOL_CHECKER (Calls || MustCall) target = {FUNCTION ||
+// STRUCT}(name).?PARAM(int).?FIELD(str) methods = str examples:
+/*
+TOOL_CHECKER Calls target = FUNCTION(does_free) methods = free
+-- FunctionAnnotation; not anticipated that we'll be needing it but some
+handling for it is here just in case
+
+TOOL_CHECKER Calls target = FUNCTION(does_free).PARAM(1) methods = free
+-- ParameterAnnotation
+
+TOOL_CHECKER Calls target = FUNCTION(creates_obligation).PARAM(2).FIELD(x)
+methods = free
+-- ParameterAnnotation with field
+
+TOOL_CHECKER MustCall target = FUNCTION(creates_obligation).RETURN methods =
+free
+-- ReturnAnnotation
+
+TOOL_CHECKER Calls target = FUNCTION(does_something).RETURN.FIELD(x) methods =
+free
+-- ReturnAnnotation with field
+
+TOOL_CHECKER MustCall target = STRUCT(my_struct).FIELD(x) methods = free
+-- StructAnnotation; always has FIELD specifier
+
+Example for chunks:
+
+TOOL_CHECKER Calls target = FUNCTION(creates_obligation).PARAM(2).FIELD(x)
+methods = free1, free2 chunks = ['TOOL_CHECKER', 'Calls', 'target', '=',
+'FUNCTION(creates_obligation).PARAM(2).FIELD(x)', 'methods', '=', 'free1,',
+'free2'] chunks[0] should be TOOL_CHECKER to help verify it's one of our own
+annotations and not an unrelated string chunks[1] is annotation type
+(Calls/MustCall) chunks[2] is "target" keyword, chunks[3] is "=" chunks[4] is
+the target itself (FUNCTION/STRUCT potentially with sensible PARAM and FIELD
+specifiers) chunks[5] is "methods" keyword, chunks[6] is "=" chunks[7..end]
+are all the methods
+*/
+
+// TODO: make method more generic and write automated testing for that
 bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
   std::vector<std::string> chunks =
       dataflow::splitString(rawAnnotationString, ' ');
@@ -331,6 +371,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
   for (int i = 7; i < chunks.size(); i++) {
 
     // removing potential "\0"'s in the string
+    // LLVM IR automatically adds "\00" to the end of every string so they must
+    // be filtered out
     chunks[i].erase(std::remove(chunks[i].begin(), chunks[i].end(), '\0'),
                     chunks[i].end());
 
@@ -379,45 +421,6 @@ Annotation *generateAnnotation(const std::string &rawAnnotationString) {
   AnnotationType annoType;
   std::vector<std::string> chunks =
       dataflow::splitString(rawAnnotationString, ' ');
-
-  // raw annotation
-  // TOOL_CHECKER (Calls || MustCall) target = {FUNCTION ||
-  // STRUCT}(name).?PARAM(int).?FIELD(str) methods = str examples:
-  /*
-  TOOL_CHECKER Calls target = FUNCTION(does_free) methods = free
-  -- FunctionAnnotation; not anticipated that we'll be needing it but some
-  handling for it is here just in case
-
-  TOOL_CHECKER Calls target = FUNCTION(does_free).PARAM(1) methods = free
-  -- ParameterAnnotation
-
-  TOOL_CHECKER Calls target = FUNCTION(creates_obligation).PARAM(2).FIELD(x)
-  methods = free
-  -- ParameterAnnotation with field
-
-  TOOL_CHECKER MustCall target = FUNCTION(creates_obligation).RETURN methods =
-  free
-  -- ReturnAnnotation
-
-  TOOL_CHECKER Calls target = FUNCTION(does_something).RETURN.FIELD(x) methods =
-  free
-  -- ReturnAnnotation with field
-
-  TOOL_CHECKER MustCall target = STRUCT(my_struct).FIELD(x) methods = free
-  -- StructAnnotation; always has FIELD specifier
-
-  Example for chunks:
-
-  TOOL_CHECKER Calls target = FUNCTION(creates_obligation).PARAM(2).FIELD(x)
-  methods = free1, free2 chunks = ['TOOL_CHECKER', 'Calls', 'target', '=',
-  'FUNCTION(creates_obligation).PARAM(2).FIELD(x)', 'methods', '=', 'free1,',
-  'free2'] chunks[0] should be TOOL_CHECKER to help verify it's one of our own
-  annotations and not an unrelated string chunks[1] is annotation type
-  (Calls/MustCall) chunks[2] is "target" keyword, chunks[3] is "=" chunks[4] is
-  the target itself (FUNCTION/STRUCT potentially with sensible PARAM and FIELD
-  specifiers) chunks[5] is "methods" keyword, chunks[6] is "=" chunks[7..end]
-  are all the methods
-  */
 
   if (chunks[1] == "Calls") {
     annoType = AnnotationType::CallsAnnotation;
