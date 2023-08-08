@@ -234,13 +234,61 @@ void doAliasReasoning(Instruction *instruction,
     programVariables.addAlias(varToStore, receivingVar);
 
   } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
-    std::string source = variable(bitcast);
-    std::string destination = variable(bitcast->getOperand(0));
-
     ProgramVariable sourceVar = ProgramVariable(bitcast);
     ProgramVariable destinationVar = ProgramVariable(bitcast->getOperand(0));
 
     programVariables.addAlias(sourceVar, destinationVar);
+  } else if (GetElementPtrInst *gepInst =
+                 dyn_cast<GetElementPtrInst>(instruction)) {
+
+    // for some struct k { int x; int y }, here are two example getInst:
+    // %y = getelementptr inbounds %struct.my_struct, %struct.my_struct* %k, i32
+    // 0, i32 1, !dbg !57 %x = getelementptr inbounds %struct.my_struct,
+    // %struct.my_struct* %k, i32 0, i32 0, !dbg !54 last argument on RHS is the
+    // index of the struct
+    /*
+    LLVM removes field names and just makes them indices
+    example:
+    struct s {
+      int a; // index 0
+      int b; // index 1
+      int c; // index 2
+    }
+    see:
+    https://mapping-high-level-constructs-to-llvm-ir.readthedocs.io/en/latest/basic-constructs/structures.html
+    */
+
+    // gepinst could also look like:
+    // %2 = getelementptr inbounds { i8*, i8* }, { i8*, i8* }* %1, i32 0, i32 0,
+    // !dbg !84 in which case we see if %1 is bitcast: %1 = bitcast
+    // %struct.my_struct* %k to { i8*, i8* }*, !dbg !84 then we alias %k.0 and
+    // %2
+
+    llvm::Type *structType = gepInst->getPointerOperandType();
+    llvm::Value *pointerOperand = gepInst->getPointerOperand();
+
+    if (llvm::PointerType *pointerType =
+            llvm::dyn_cast<llvm::PointerType>(pointerOperand->getType())) {
+      if (llvm::StructType *structType =
+              llvm::dyn_cast<llvm::StructType>(pointerType->getElementType())) {
+        llvm::Value *indexValue = gepInst->getOperand(2);
+        if (llvm::ConstantInt *constIndex =
+                llvm::dyn_cast<llvm::ConstantInt>(indexValue)) {
+          ProgramVariable sourceVar = ProgramVariable(gepInst);
+          int index = constIndex->getValue().getSExtValue();
+
+          if (BitCastInst *bitcast = dyn_cast<BitCastInst>(pointerOperand)) {
+            ProgramVariable structVar =
+                ProgramVariable(bitcast->getOperand(0), index);
+            programVariables.addAlias(sourceVar, structVar);
+            return;
+          }
+
+          ProgramVariable structVar = ProgramVariable(pointerOperand, index);
+          programVariables.addAlias(sourceVar, structVar);
+        }
+      }
+    }
   }
 }
 
@@ -344,6 +392,10 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
     }
 
     doAnnos = true;
+  }
+
+  if (fnName != "main") {
+    return;
   }
 
   ProgramVariablesHandler AliasedProgramVars;

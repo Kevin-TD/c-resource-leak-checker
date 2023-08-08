@@ -14,11 +14,14 @@ private:
   // name is llvm IR name maybe with % or @
   std::string rawName;
 
-  // underapproximation of must-aliases
+  // under-approximation of must-aliases
   std::list<ProgramVariable> aliases;
 
 public:
   ProgramVariable(Value *value);
+
+  // for struct variables
+  ProgramVariable(Value *value, int index);
 
   std::string getRawName();
   std::string getCleanedName();
@@ -41,6 +44,9 @@ public:
 
   std::set<std::string> getNamedAliases(bool cleanNames);
   std::set<std::string> getAllAliases(bool cleanNames);
+
+  std::list<ProgramVariable *> getNamedAliasesVars();
+  std::list<ProgramVariable *> getAllAliasesVars();
 };
 
 #endif

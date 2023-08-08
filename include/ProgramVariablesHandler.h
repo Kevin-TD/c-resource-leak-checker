@@ -13,6 +13,9 @@ public:
   std::list<ProgramVariable> getProgramVariables();
 
   std::set<std::string> findVarAndNamedAliases(std::string cleanedName);
+
+  std::list<ProgramVariable *>
+  findProgramVarAndNamedAliases(std::string cleanedName);
 };
 
 #endif

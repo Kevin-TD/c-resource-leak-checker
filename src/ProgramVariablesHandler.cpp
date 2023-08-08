@@ -47,3 +47,21 @@ ProgramVariablesHandler::findVarAndNamedAliases(std::string cleanedName) {
 
   return std::set<std::string>();
 }
+
+std::list<ProgramVariable *>
+ProgramVariablesHandler::findProgramVarAndNamedAliases(
+    std::string cleanedName) {
+  for (ProgramVariable &pv : this->programVariables) {
+    if (pv.getCleanedName() == cleanedName) {
+      return pv.getNamedAliasesVars();
+    }
+
+    for (std::string alias : pv.getAllAliases(true)) {
+      if (alias == cleanedName) {
+        return pv.getNamedAliasesVars();
+      }
+    }
+  }
+
+  return std::list<ProgramVariable *>();
+}
