@@ -8,6 +8,11 @@ bool CalledMethodsAnalysis::runOnFunction(Function &F) {
   return false;
 }
 
+bool CalledMethodsAnalysis::doFinalization(Module &M) {
+  onEnd();
+  return false;
+}
+
 char CalledMethodsAnalysis::ID = 1;
 static RegisterPass<CalledMethodsAnalysis>
     X("CalledMethodsPass", "Called methods analysis", false, false);

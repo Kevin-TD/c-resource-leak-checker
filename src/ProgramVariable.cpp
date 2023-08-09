@@ -11,6 +11,16 @@ ProgramVariable::ProgramVariable(Value *value) {
   }
 }
 
+ProgramVariable::ProgramVariable(Value *value, int index) {
+  this->value = value;
+  this->rawName = dataflow::variable(value) + "." + std::to_string(index);
+  this->cleanedName = this->rawName;
+
+  if (this->cleanedName[0] == '%' || this->cleanedName[0] == '@') {
+    this->cleanedName.erase(0, 1);
+  }
+}
+
 std::string ProgramVariable::getRawName() { return this->rawName; }
 
 std::string ProgramVariable::getCleanedName() { return this->cleanedName; }

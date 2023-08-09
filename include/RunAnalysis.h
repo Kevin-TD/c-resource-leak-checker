@@ -43,8 +43,12 @@ struct CalledMethodsAnalysis : public FunctionPass {
    */
   bool runOnFunction(Function &F) override;
 
+  // calls when all functions have been passed
+  bool doFinalization(Module &M) override;
+
 protected:
   void doAnalysis(Function &F, std::string optLoadFileName);
+  void onEnd();
 
   std::string getAnalysisName() { return "CalledMethodsPass"; }
 };
