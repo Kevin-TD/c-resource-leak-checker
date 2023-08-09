@@ -48,7 +48,7 @@ struct CalledMethodsAnalysis : public FunctionPass {
 
 protected:
   void doAnalysis(Function &F, std::string optLoadFileName);
-  void onEnd(); 
+  void onEnd();
 
   std::string getAnalysisName() { return "CalledMethodsPass"; }
 };

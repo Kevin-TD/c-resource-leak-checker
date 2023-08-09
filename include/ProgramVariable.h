@@ -45,7 +45,6 @@ public:
   // returns aliases as their string representation
   std::set<std::string> getNamedAliases(bool cleanNames);
   std::set<std::string> getAllAliases(bool cleanNames);
-
 };
 
 #endif

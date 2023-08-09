@@ -9,7 +9,7 @@ bool CalledMethodsAnalysis::runOnFunction(Function &F) {
 }
 
 bool CalledMethodsAnalysis::doFinalization(Module &M) {
-  onEnd(); 
+  onEnd();
   return false;
 }
 
