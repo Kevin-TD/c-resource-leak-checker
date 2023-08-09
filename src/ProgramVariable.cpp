@@ -86,30 +86,3 @@ std::set<std::string> ProgramVariable::getAllAliases(bool cleanNames) {
   }
   return allAliases;
 }
-
-std::list<ProgramVariable *> ProgramVariable::getNamedAliasesVars() {
-  std::list<ProgramVariable *> namedAliases;
-
-  if (this->hasProgramName()) {
-    namedAliases.push_back(this);
-  }
-
-  for (ProgramVariable pv : this->aliases) {
-    if (pv.hasProgramName()) {
-      namedAliases.push_back(&pv);
-    }
-  }
-  return namedAliases;
-}
-
-std::list<ProgramVariable *> ProgramVariable::getAllAliasesVars() {
-  std::list<ProgramVariable *> allAliases;
-
-  allAliases.push_back(this);
-
-  for (ProgramVariable pv : this->aliases) {
-    allAliases.push_back(&pv);
-  }
-
-  return allAliases;
-}

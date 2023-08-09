@@ -46,10 +46,6 @@ public:
   std::set<std::string> getNamedAliases(bool cleanNames);
   std::set<std::string> getAllAliases(bool cleanNames);
 
-  // returns aliases as ProgramVariable*, which is useful if we may need the
-  // original Value*
-  std::list<ProgramVariable *> getNamedAliasesVars();
-  std::list<ProgramVariable *> getAllAliasesVars();
 };
 
 #endif

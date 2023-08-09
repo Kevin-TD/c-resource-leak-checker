@@ -41,6 +41,7 @@ std::vector<std::string> realBranchOrder;
 MappedMethods ExpectedResult;
 bool loadAndBuild = false;
 bool doAnnos = false;
+bool anyTestFailed = false; 
 CalledMethods calledMethods;
 MustCall mustCall;
 
@@ -394,10 +395,6 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
     doAnnos = true;
   }
 
-  if (fnName != "main") {
-    return;
-  }
-
   ProgramVariablesHandler AliasedProgramVars;
   std::map<std::string, InstructionHolder> branchInstructionMap;
 
@@ -467,11 +464,18 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
          << " TEST NAME - " << testName << "\n\n";
   bool mustCallResult =
       TestRunner::runTests(mustCall.getExpectedResult(), PostMustCalls);
+  
+  if (calledMethodsResult == EXIT_FAILURE || mustCallResult == EXIT_FAILURE) {
+    anyTestFailed = true; 
+  }
 
-  if (calledMethodsResult == EXIT_SUCCESS && mustCallResult == EXIT_SUCCESS) {
-    std::exit(EXIT_SUCCESS);
-  } else {
+}
+
+void CalledMethodsAnalysis::onEnd() {
+  if (anyTestFailed) {
     std::exit(EXIT_FAILURE);
+  } else {
+    std::exit(EXIT_SUCCESS); 
   }
 }
 
