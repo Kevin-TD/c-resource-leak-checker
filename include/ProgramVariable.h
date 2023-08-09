@@ -42,8 +42,12 @@ public:
 
   void addAlias(ProgramVariable pv);
 
-  // returns aliases as their string representation
+  // returns aliases as their string representation only for aliases that are
+  // given names in the LLVM IR. intermediate variables like %7, %8 are unnamed;
+  // variables present in the C code like %str are named
   std::set<std::string> getNamedAliases(bool cleanNames);
+
+  // returns both named and unnamed aliases
   std::set<std::string> getAllAliases(bool cleanNames);
 };
 
