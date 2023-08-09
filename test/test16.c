@@ -57,15 +57,15 @@ struct my_struct Calls("free", "x") does_something(struct my_struct S Calls("fre
 
 MustCall(STRUCT("my_struct") AT_FIELD("x"), METHODS("free"))
 MustCall(STRUCT("my_struct") AT_FIELD("y"), METHODS("free"))
-MustCall(STRUCT("my_struct") AT_FIELD("x"), METHODS("free"))
-MustCall(STRUCT("my_struct") AT_FIELD("y"), METHODS("free"))
+MustCall(STRUCT("struct_2") AT_FIELD("x"), METHODS("free"))
+MustCall(STRUCT("struct_2") AT_FIELD("y"), METHODS("free"))
 Calls(FUNCTION("does_free") AT_PARAMETER("1"), METHODS("free"))
 Calls(FUNCTION("creates_obligation") AT_PARAMETER("1"), METHODS("free"))
 Calls(FUNCTION("creates_obligation") AT_PARAMETER("2") AT_FIELD("x"), METHODS("free"))
 MustCall(FUNCTION("creates_obligation") AT_RETURN, METHODS("free")) 
 Calls(FUNCTION("does_something") AT_RETURN AT_FIELD("x"), METHODS("free"))
-MustCall(STRUCT("my_struct") AT_FIELD("x"), METHODS("free"))
-MustCall(STRUCT("my_struct") AT_FIELD("y"), METHODS("free"))
+MustCall(STRUCT("my_struct_3") AT_FIELD("x"), METHODS("free"))
+MustCall(STRUCT("my_struct_3") AT_FIELD("y"), METHODS("free"))
 int main() {
     struct my_struct_3 {
         char* x; // MustCall("free")
