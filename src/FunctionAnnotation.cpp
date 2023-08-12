@@ -6,6 +6,7 @@ FunctionAnnotation::FunctionAnnotation(AnnotationType annotationType,
   this->annotationType = annotationType;
   this->annotationMethods = annotationMethods;
   this->targetName = targetName;
+  this->isVerified = false;
 }
 
 std::string FunctionAnnotation::generateStringRep() {
@@ -25,4 +26,8 @@ std::string FunctionAnnotation::generateStringRep() {
 
   return "@" + annoTypeString + " FunctionAnnotation Name = " + targetName +
          " methods = " + annoMethodsString;
+}
+
+bool FunctionAnnotation::functionNameEquals(const std::string &functionName) {
+  return functionName.compare(this->targetName) == 0;
 }

@@ -1,3 +1,2 @@
-CalledMethods entry a {}
-CalledMethods entry retval {} 
-CalledMethods entry str {}
+pass=CalledMethods function=main branch=entry var=a methods={}
+pass=CalledMethods function=main branch=entry var=str methods={}

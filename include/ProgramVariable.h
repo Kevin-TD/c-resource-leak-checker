@@ -17,6 +17,12 @@ private:
   // under-approximation of must-aliases
   std::list<ProgramVariable> aliases;
 
+  // bool indicates whether the generated ProgramVariable is actually a program
+  // variable. It can be the case that the *Value is just the number 0, which
+  // isn't really the types of variables we are looking for. this is true if the
+  // LLVM name for the Value* starts with a % or @ and false if otherwise.
+  bool varIsIdentifier;
+
 public:
   ProgramVariable(Value *value);
 
@@ -41,6 +47,8 @@ public:
   bool equalsRawName(std::string otherRawName);
 
   void addAlias(ProgramVariable pv);
+
+  bool isIdentifier();
 
   // returns aliases as their string representation only for aliases that are
   // given names in the LLVM IR. intermediate variables like %7, %8 are unnamed;

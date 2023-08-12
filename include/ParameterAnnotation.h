@@ -7,6 +7,7 @@ class ParameterAnnotation : public Annotation {
 private:
   std::string field;
   int nthParameter;
+  bool hasField;
 
 public:
   ParameterAnnotation(AnnotationType annotationType,
@@ -14,6 +15,13 @@ public:
                       std::string targetName, std::string field,
                       int nthParameter);
   std::string generateStringRep();
+  bool nthParameterEquals(int param);
+  bool functionNameEquals(const std::string &functionName);
+  bool fieldNameEquals(const std::string &field);
+  bool paramHasField();
+
+  std::string getField();
+  int getNthParameter();
 };
 
 #endif

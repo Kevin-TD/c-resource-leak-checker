@@ -12,6 +12,10 @@ public:
                    std::set<std::string> annotationMethods,
                    std::string targetName, std::string field);
   std::string generateStringRep();
+  bool structNameEquals(const std::string &structName);
+  bool fieldNameEquals(const std::string &fieldName);
+
+  std::string getFieldName();
 };
 
 #endif

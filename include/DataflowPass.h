@@ -1,22 +1,20 @@
 #ifndef DATAFLOW_PASS_H
 #define DATAFLOW_PASS_H
 
+#include "Annotation.h"
+#include "AnnotationHandler.h"
 #include "CFG.h"
+#include "ErrorAnnotation.h"
+#include "FunctionAnnotation.h"
+#include "ParameterAnnotation.h"
 #include "ProgramVariablesHandler.h"
+#include "ReturnAnnotation.h"
 #include "RunAnalysis.h"
+#include "StructAnnotation.h"
 #include "Utils.h"
 
 #include <fstream>
 #include <set>
-
-/*
-considering an alternative design:
-
-Base class ProgramNamedKeyword
-Derived class ProgramVariable : ProgramNamedKeyword
-Derived class ProgramFunction : ProgramNamedKeyword
-Derived class ProgramAnnotation : ProgramNamedKeyword
-*/
 
 struct MaybeUninitMethodsSet {
   std::set<std::string> methodsSet;
@@ -28,12 +26,16 @@ struct MaybeUninitMethodsSet {
 typedef std::map<std::string, std::map<std::string, MaybeUninitMethodsSet>>
     MappedMethods;
 
+// mapping between function name and a MappedMethods
+typedef std::map<std::string, MappedMethods> FunctionMappedMethods;
+
 class DataflowPass {
 protected:
   ProgramVariablesHandler programVariables;
+  AnnotationHandler annotations;
   std::string testName;
   CFG *cfg;
-  MappedMethods expectedResult;
+  FunctionMappedMethods expectedResult;
 
   void analyzeCFG(CFG *cfg, MappedMethods &PreMappedMethods,
                   MappedMethods &PostMappedMethods, std::string priorBranch);
@@ -52,11 +54,14 @@ protected:
                                      std::string &fnName) = 0;
   virtual void onSafeFunctionCall(MaybeUninitMethodsSet &input,
                                   std::string &fnName) = 0;
+  virtual void onAnnotation(MaybeUninitMethodsSet &input, std::string &fnName,
+                            AnnotationType annotationType) = 0;
 
 public:
   void setFunctions(std::set<std::string> safeFunctions,
                     std::set<std::string> reallocFunctions,
-                    std::map<std::string, std::string> memoryFunctions);
+                    std::map<std::string, std::string> memoryFunctions,
+                    AnnotationHandler annotations);
 
   std::set<std::string> safeFunctions;
   std::set<std::string> reallocFunctions;
@@ -66,10 +71,11 @@ public:
   MappedMethods generatePassResults();
 
   void setCFG(CFG *cfg);
-  void setExpectedResult(MappedMethods expectedResult);
+  void setExpectedResult(FunctionMappedMethods expectedResult);
   void setProgramVariables(ProgramVariablesHandler programVariables);
+  void setAnnotations(AnnotationHandler annotations);
 
-  MappedMethods getExpectedResult();
+  FunctionMappedMethods getExpectedResult();
 };
 
 #endif

@@ -5,10 +5,11 @@
 
 class TestRunner {
 public:
-  static bool runTests(MappedMethods expectedResult,
+  static bool runTests(const std::string functionName,
+                       FunctionMappedMethods expectedResult,
                        MappedMethods receivedResult);
-  static MappedMethods buildExpectedResults(std::string testName,
-                                            std::string passName);
+  static FunctionMappedMethods buildExpectedResults(std::string testName,
+                                                    std::string passName);
 };
 
 #endif

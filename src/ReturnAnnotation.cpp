@@ -7,6 +7,8 @@ ReturnAnnotation::ReturnAnnotation(AnnotationType annotationType,
   this->annotationMethods = annotationMethods;
   this->targetName = targetName;
   this->field = field;
+  this->hasField = (field != "");
+  this->isVerified = false;
 }
 
 std::string ReturnAnnotation::generateStringRep() {
@@ -33,3 +35,15 @@ std::string ReturnAnnotation::generateStringRep() {
          " ReturnAnnotation Function Name = " + this->targetName + " " +
          fieldString + " methods = " + annoMethodsString;
 }
+
+bool ReturnAnnotation::fieldNameEquals(const std::string &field) {
+  return field.compare(this->field) == 0;
+}
+
+bool ReturnAnnotation::returnHasField() { return this->hasField; }
+
+bool ReturnAnnotation::functionNameEquals(const std::string &functionName) {
+  return functionName.compare(this->targetName) == 0;
+}
+
+std::string ReturnAnnotation::getField() { return this->field; }

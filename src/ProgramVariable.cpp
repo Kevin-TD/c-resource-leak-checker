@@ -4,10 +4,13 @@
 ProgramVariable::ProgramVariable(Value *value) {
   this->value = value;
   this->rawName = dataflow::variable(value);
-  this->cleanedName = dataflow::variable(value);
+  this->cleanedName = this->rawName;
+  this->varIsIdentifier = true;
 
   if (this->cleanedName[0] == '%' || this->cleanedName[0] == '@') {
     this->cleanedName.erase(0, 1);
+  } else {
+    this->varIsIdentifier = false;
   }
 }
 
@@ -15,9 +18,12 @@ ProgramVariable::ProgramVariable(Value *value, int index) {
   this->value = value;
   this->rawName = dataflow::variable(value) + "." + std::to_string(index);
   this->cleanedName = this->rawName;
+  this->varIsIdentifier = true;
 
   if (this->cleanedName[0] == '%' || this->cleanedName[0] == '@') {
     this->cleanedName.erase(0, 1);
+  } else {
+    this->varIsIdentifier = false;
   }
 }
 
@@ -28,6 +34,8 @@ std::string ProgramVariable::getCleanedName() { return this->cleanedName; }
 Value *ProgramVariable::getValue() { return this->value; }
 
 bool ProgramVariable::hasProgramName() { return this->value->hasName(); }
+
+bool ProgramVariable::isIdentifier() { return this->varIsIdentifier; }
 
 bool ProgramVariable::equalsValue(Value *otherValue) {
   return this->value == otherValue;

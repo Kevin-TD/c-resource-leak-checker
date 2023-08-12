@@ -7,6 +7,16 @@
 #include "StructAnnotation.h"
 #include "Utils.h"
 
+bool Annotation::annotationIsVerified() { return this->isVerified; }
+
+AnnotationType Annotation::getAnnotationType() { return this->annotationType; }
+
+std::set<std::string> Annotation::getAnnotationMethods() {
+  return this->annotationMethods;
+}
+
+std::string Annotation::getName() { return this->targetName; }
+
 // TODO: error reporting should be more robust and not just a debug logout
 // message; it should potentially be managed by a class that contains the
 // different types of errors
@@ -336,10 +346,10 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
     std::string fieldName =
         dataflow::sliceString(targetChunks[1], targetChunks[1].find('(') + 1,
                               targetChunks[1].find(')') - 1);
-    if (!dataflow::isValidCVariableName(fieldName)) {
+    if (!dataflow::isNumber(fieldName)) {
       logout("Annotation String Error 20: invalid annotation '"
              << rawAnnotationString << "' FIELD argument '" << fieldName
-             << "' is not valid C variable name") return false;
+             << "' is not a number") return false;
     }
     // targetChunks[1] is "FIELD(str"
 
@@ -500,4 +510,16 @@ Annotation *generateAnnotation(const std::string &rawAnnotationString) {
   }
 
   return new ErrorAnnotation();
+}
+
+std::string annotationTypeToString(AnnotationType anno) {
+  switch (anno) {
+  case AnnotationType::MustCallAnnotation:
+    return "MustCallAnnotation";
+    break;
+  case AnnotationType::CallsAnnotation:
+    return "MustCallAnnotation";
+    break;
+  }
+  return "";
 }

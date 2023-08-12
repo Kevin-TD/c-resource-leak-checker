@@ -1,23 +1,44 @@
 #include "Utils.h"
+#include "Debug.h"
 #include "RunAnalysis.h"
 
 const char *WHITESPACES = " \t\n\r";
 
 namespace dataflow {
 
+/*
+This code previously could not handle IR vars that arised from being a parameter
+of a function. All the instructions that could be handled were in the form [var
+name] = [inst]. but for parameters, it is just [type] [name] (e.g., "i8* %s"
+instead of something like "%s = alloca i8*, align 8").
+*/
 std::string variable(const Value *Val) {
   std::string Code;
   raw_string_ostream SS(Code);
   Val->print(SS);
+
+  // checks if Code does not contain '=', in which case, treat it as a parameter
+  // to a function
+  if (Code.find_first_of('=') == std::string::npos) {
+    logout("0.FOR VAL " << *Val << " RETURNING "
+                        << sliceString(
+                               Code, Code.find(' ') + 1,
+                               Code.size() -
+                                   1)) return sliceString(Code,
+                                                          Code.find(' ') + 1,
+                                                          Code.size() - 1);
+  }
+
   Code.erase(0, Code.find_first_not_of(WHITESPACES));
-  auto RetVal = Code.substr(0, Code.find_first_of(WHITESPACES));
+  std::string RetVal = Code.substr(0, Code.find_first_of(WHITESPACES));
+
   if (RetVal == "ret" || RetVal == "br" || RetVal == "store") {
-    return Code;
+    logout("1.FOR VAL " << *Val << " RETURNING " << Code) return Code;
   }
   if (RetVal == "i1" || RetVal == "i8" || RetVal == "i32" || RetVal == "i64") {
     RetVal = Code;
   }
-  return RetVal;
+  logout("2.FOR VAL " << *Val << " RETURNING " << RetVal) return RetVal;
 }
 
 bool isNumber(const std::string &s) {
@@ -82,6 +103,22 @@ bool hasOnlyOneBalancedParentheses(const std::string &str) {
   }
 
   return parenthesesStack.empty() && balancedPairs == 1;
+}
+
+std::string setToString(std::set<std::string> &setString) {
+  std::string result = "{";
+  int setStringSize = setString.size();
+
+  int iterator = 0;
+  for (std::string str : setString) {
+    result += str;
+    if (iterator != setStringSize - 1) {
+      result += ", ";
+    }
+    iterator++;
+  }
+  result += "}";
+  return result;
 }
 
 } // namespace dataflow
