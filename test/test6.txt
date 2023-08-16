@@ -1,1 +1,1 @@
-pass=CalledMethods function=main branch=if.end18 var=str methods={free}
+pass=CalledMethods function=main var=str methods={free}

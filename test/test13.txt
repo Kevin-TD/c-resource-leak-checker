@@ -1,2 +1,2 @@
-pass=CalledMethods function=main branch=entry var=p methods={free}
-pass=CalledMethods function=main branch=entry var=str methods={free}
+pass=CalledMethods function=main var=p methods={free}
+pass=CalledMethods function=main var=str methods={free}

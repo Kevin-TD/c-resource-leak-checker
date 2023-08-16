@@ -445,13 +445,17 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
 
   errs() << "\n\nRUNNING CALLED METHODS TESTS - "
          << " TEST NAME - " << testName << "\n\n";
+
+  std::string lastBranchName = realBranchOrder.back();
+
   bool calledMethodsResult = TestRunner::runTests(
-      fnName, calledMethods.getExpectedResult(), PostCalledMethods);
+      fnName, lastBranchName, calledMethods.getExpectedResult(),
+      PostCalledMethods);
 
   errs() << "\n\nRUNNING MUST CALL TESTS "
          << " TEST NAME - " << testName << "\n\n";
-  bool mustCallResult =
-      TestRunner::runTests(fnName, mustCall.getExpectedResult(), PostMustCalls);
+  bool mustCallResult = TestRunner::runTests(
+      fnName, lastBranchName, mustCall.getExpectedResult(), PostMustCalls);
 
   if (calledMethodsResult == EXIT_FAILURE || mustCallResult == EXIT_FAILURE) {
     anyTestFailed = true;

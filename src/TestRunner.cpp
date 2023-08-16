@@ -3,6 +3,7 @@
 #include "Utils.h"
 
 bool TestRunner::runTests(const std::string functionName,
+                          const std::string lastBranchName,
                           FunctionMappedMethods expectedResult,
                           MappedMethods receivedResult) {
   bool testPassed = EXIT_SUCCESS;
@@ -10,6 +11,10 @@ bool TestRunner::runTests(const std::string functionName,
   logout("Function Name Test Running = "
          << functionName) for (auto Pair1 : expectedResult[functionName]) {
     std::string branchName = Pair1.first;
+    if (branchName == "") {
+      branchName = lastBranchName;
+    }
+
     logout("branch = " << branchName)
 
         for (auto Pair2 : Pair1.second) {
@@ -62,6 +67,15 @@ FunctionMappedMethods TestRunner::buildExpectedResults(std::string testName,
       std::vector<std::string> arguments = dataflow::splitString(line, ' ');
       for (std::string arg : arguments) {
         std::vector<std::string> argChunks = dataflow::splitString(arg, '=');
+
+        if (argChunks.size() != 2) {
+          logout("**TEST RUNNER ERROR: Too few or too many spaces in argument '"
+                 << arg << "' on line '" << line
+                 << "'. Make sure methods arg contains no spaces (e.g., {x, y} "
+                    "is wrong, {x,y} is correct) Returning result "
+                    "early.") return expectedResult;
+        }
+
         std::string type = argChunks[0];
         std::string input = argChunks[1];
 
@@ -80,7 +94,21 @@ FunctionMappedMethods TestRunner::buildExpectedResults(std::string testName,
               ',');
           methodsSet =
               std::set<std::string>(methodsSetVec.begin(), methodsSetVec.end());
+        } else {
+          logout("**TEST RUNNER ERROR: Unrecognized argument '"
+                 << type << "' on line '" << line
+                 << "'. Returning early") return expectedResult;
         }
+      }
+
+      if (functionName == "") {
+        logout("**TEST RUNNER ERROR: Function name argument missing on line '"
+               << line << "'. Returning early") return expectedResult;
+      }
+
+      if (varName == "") {
+        logout("**TEST RUNNER ERROR: Variable name argument missing on line '"
+               << line << "'. Returning early") return expectedResult;
       }
 
       if (passName == inputPassName) {

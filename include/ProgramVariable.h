@@ -17,10 +17,21 @@ private:
   // under-approximation of must-aliases
   std::list<ProgramVariable> aliases;
 
-  // bool indicates whether the generated ProgramVariable is actually a program
-  // variable. It can be the case that the *Value is just the number 0, which
-  // isn't really the types of variables we are looking for. this is true if the
-  // LLVM name for the Value* starts with a % or @ and false if otherwise.
+  void fixNameAndIdentifier();
+
+  // bool indicates whether the generated ProgramVariable is actually an
+  // identifying variable in the program whose name in the IR begins with a % or
+  // @ or not.
+  /* this is relevant in the following case:
+  in the IR the instruction 'store i32 0, i32* %retval align` the alias
+  reasoning previously assumed that whatever we were storing into %retval would
+  be a variable/identifier and that we should store the 0 as a ProgramVariable
+  that's aliased to %retval, but it not correct to store the number zero as a
+  variable. additionally, if there's also the `instruction %0 = load i8**, i8***
+  %p, align 8, !dbg !23`, we should be aliasing %0 with %p and their cleaned
+  names would be 0 and p, but the program had would think the %0 was referring
+  to the ProgramVariable 0, messing up the aliasing reasoning
+  */
   bool varIsIdentifier;
 
 public:

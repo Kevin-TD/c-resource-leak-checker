@@ -1,2 +1,2 @@
-pass=CalledMethods function=main branch=entry var=a methods={}
-pass=CalledMethods function=main branch=entry var=str methods={}
+pass=CalledMethods function=main var=a methods={}
+pass=CalledMethods function=main var=str methods={}

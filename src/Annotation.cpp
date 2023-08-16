@@ -518,7 +518,7 @@ std::string annotationTypeToString(AnnotationType anno) {
     return "MustCallAnnotation";
     break;
   case AnnotationType::CallsAnnotation:
-    return "MustCallAnnotation";
+    return "CallsAnnotation";
     break;
   }
   return "";

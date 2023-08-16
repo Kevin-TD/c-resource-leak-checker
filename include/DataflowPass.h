@@ -27,6 +27,9 @@ typedef std::map<std::string, std::map<std::string, MaybeUninitMethodsSet>>
     MappedMethods;
 
 // mapping between function name and a MappedMethods
+// TODO: just make this a class
+// TODO?: make all test run at the very end
+
 typedef std::map<std::string, MappedMethods> FunctionMappedMethods;
 
 class DataflowPass {

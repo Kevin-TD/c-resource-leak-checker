@@ -1,14 +1,14 @@
-pass=MustCall function=main branch=entry var=str methods={free}
-pass=MustCall function=main branch=entry var=numbers methods={free}
-pass=MustCall function=main branch=entry var=n methods={}
-pass=MustCall function=main branch=entry var=pageSize methods={}
-pass=MustCall function=main branch=entry var=alignedMemory methods={free}
-pass=MustCall function=main branch=entry var=alignment methods={}
-pass=MustCall function=main branch=entry var=size methods={}
-pass=MustCall function=main branch=entry var=alignedBlock methods={free}
-pass=MustCall function=main branch=entry var=alignment methods={}
-pass=MustCall function=main branch=entry var=size methods={}
-pass=CalledMethods function=main branch=entry var=str methods={free}
-pass=CalledMethods function=main branch=entry var=numbers methods={free}
-pass=CalledMethods function=main branch=entry var=alignedMemory methods={free}
-pass=CalledMethods function=main branch=entry var=alignedBlock methods={free}
+pass=MustCall function=main var=str methods={free}
+pass=MustCall function=main var=numbers methods={free}
+pass=MustCall function=main var=n methods={}
+pass=MustCall function=main var=pageSize methods={}
+pass=MustCall function=main var=alignedMemory methods={free}
+pass=MustCall function=main var=alignment methods={}
+pass=MustCall function=main var=size methods={}
+pass=MustCall function=main var=alignedBlock methods={free}
+pass=MustCall function=main var=alignment methods={}
+pass=MustCall function=main var=size methods={}
+pass=CalledMethods function=main var=str methods={free}
+pass=CalledMethods function=main var=numbers methods={free}
+pass=CalledMethods function=main var=alignedMemory methods={free}
+pass=CalledMethods function=main var=alignedBlock methods={free}
