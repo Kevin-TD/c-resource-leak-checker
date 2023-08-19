@@ -22,15 +22,11 @@ private:
   // bool indicates whether the generated ProgramVariable is actually an
   // identifying variable in the program whose name in the IR begins with a % or
   // @ or not.
-  /* this is relevant in the following case:
-  in the IR the instruction 'store i32 0, i32* %retval align` the alias
-  reasoning previously assumed that whatever we were storing into %retval would
-  be a variable/identifier and that we should store the 0 as a ProgramVariable
-  that's aliased to %retval, but it not correct to store the number zero as a
-  variable. additionally, if there's also the `instruction %0 = load i8**, i8***
-  %p, align 8, !dbg !23`, we should be aliasing %0 with %p and their cleaned
-  names would be 0 and p, but the program had would think the %0 was referring
-  to the ProgramVariable 0, messing up the aliasing reasoning
+  /* without this, for instructions like `store i32 0, i32* %retval align`, the
+  program would think '0' refers to some variable in the program. This can be
+  problematic if there's an instruction like `instruction %0 = load i8**, i8***
+  %p, align 8, !dbg !23`, which could cause the alias reasoning to mess up and
+  mistake the variable %0 with some reference to the '0' program variable
   */
   bool varIsIdentifier;
 

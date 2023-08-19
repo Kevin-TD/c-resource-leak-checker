@@ -7,10 +7,7 @@ const char *WHITESPACES = " \t\n\r";
 namespace dataflow {
 
 /*
-This code previously could not handle IR vars that arose from being a parameter
-of a function. All the instructions that could be handled were in the form [var
-name] = [inst]. but for parameters, it is just [type] [name] (e.g., "i8* %s"
-instead of something like "%s = alloca i8*, align 8").
+Code handles IR vars coming from parameters and expliticly defined vars
 */
 std::string variable(const Value *Val) {
   std::string Code;
@@ -20,10 +17,11 @@ std::string variable(const Value *Val) {
   // checks if Code does not contain '=', in which case, treat it as a parameter
   // to a function
   /*
-  Typically, variables are always initialized by some alloca instruction. So int
+  Typically, variables are initialized by some alloca instruction. So int
   i; would look like %i = alloca i32. This is at least the case for when we
   define new variables inside the body of a function. The case where an '=' did
   not show up was in this IR snippet:
+  TODO: verify if all variable are initialized by some alloca instruction
 
   ; Function Attrs: noinline nounwind uwtable
   define dso_local void @does_free(i8* %s) #0 !dbg !10 {
