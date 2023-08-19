@@ -7,6 +7,7 @@ StructAnnotation::StructAnnotation(AnnotationType annotationType,
   this->annotationMethods = annotationMethods;
   this->targetName = targetName;
   this->field = field;
+  this->isVerified = false;
 }
 
 std::string StructAnnotation::generateStringRep() {
@@ -33,3 +34,13 @@ std::string StructAnnotation::generateStringRep() {
          " StructAnnotation Struct Name = " + this->targetName + " " +
          fieldString + " methods = " + annoMethodsString;
 }
+
+bool StructAnnotation::structNameEquals(const std::string &structName) {
+  return structName.compare(this->targetName) == 0;
+}
+
+bool StructAnnotation::fieldNameEquals(const std::string &fieldName) {
+  return fieldName.compare(this->field) == 0;
+}
+
+std::string StructAnnotation::getFieldName() { return this->field; }

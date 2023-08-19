@@ -1,4 +1,5 @@
 #include "Annotation.h"
+#include "AnnotationHandler.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "DataflowPass.h"
@@ -44,6 +45,7 @@ bool doAnnos = false;
 bool anyTestFailed = false;
 CalledMethods calledMethods;
 MustCall mustCall;
+AnnotationHandler annotationHandler;
 
 void loadFunctions() {
   // working directory is /build
@@ -222,6 +224,17 @@ void doAliasReasoning(Instruction *instruction,
     Value *receivingValue = store->getOperand(1);
 
     ProgramVariable varToStore = ProgramVariable(store->getOperand(0));
+
+    // necessary check since the value to store could just be a number, and we
+    // don't need to alias vars with nums. Also can cause name clashings; e.g.,
+    // if we have some "ret i32 0", we'll be adding program variable 0, but
+    // there may be in the IR something like "%0 = ...", and our code will
+    // interpret these as aliased
+
+    if (!varToStore.isIdentifier()) {
+      return;
+    }
+
     ProgramVariable receivingVar = ProgramVariable(store->getOperand(1));
 
     for (auto Inst : workSet) {
@@ -290,6 +303,33 @@ void doAliasReasoning(Instruction *instruction,
         }
       }
     }
+  } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
+    if (llvm::StructType *structType =
+            llvm::dyn_cast<llvm::StructType>(allocate->getAllocatedType())) {
+      /*
+      I cannot find documentation that states how struct names appear in the IR,
+      but it seems that they typically look like "struct.[C struct name]"
+      TODO: prove/disprove that struct names are formatted as "struct.[C struct
+      name]"
+      */
+      std::string structName = structType->getName();
+      structName = sliceString(structName, structName.find_last_of('.') + 1,
+                               structName.size() - 1);
+      int numFields = structType->getNumElements();
+      for (int i = 0; i < numFields; i++) {
+
+        Annotation *anno = annotationHandler.getStructAnnotation(
+            structName, std::to_string(i));
+        if (StructAnnotation *structAnno =
+                dynamic_cast<StructAnnotation *>(anno)) {
+          std::set<std::string> structMethods =
+              structAnno->getAnnotationMethods();
+          AnnotationType structAnnoType = structAnno->getAnnotationType();
+          ProgramVariable sourceVar = ProgramVariable(allocate, i);
+          programVariables.addVariable(sourceVar);
+        }
+      }
+    }
   }
 }
 
@@ -301,7 +341,8 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
   std::string testName = getTestName(optLoadFileName);
 
   bool functionIsKnown = false;
-  logout("fnname = " << fnName << " opt load file name = " << testName)
+  logout("Analyzing Function with Name = " << fnName << " opt load file name = "
+                                           << testName)
 
       if (!loadAndBuild) {
     loadFunctions();
@@ -309,6 +350,7 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
         TestRunner::buildExpectedResults(testName, calledMethods.passName));
     mustCall.setExpectedResult(
         TestRunner::buildExpectedResults(testName, mustCall.passName));
+    annotationHandler.addAnnotationsFromFile("../test/" + testName + ".ll");
     loadAndBuild = true;
   }
 
@@ -344,57 +386,6 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
     }
   }
 
-  if (!doAnnos) {
-    // annotation parsing is completed, next is the following TODO's
-
-    // TODO: move annotation reasoning to separate class
-    // TODO: change from using "doAnnos"; perhaps include in the loadAndBuild
-    // once more handling for annotations is built and we can call something
-    // like .generateAnnotations() annotation class should hold all the code's
-    // annotations and then you'd be able to do something like
-    // getAnnotation(struct name = ..., field = ...) and it would return the
-    // annotion type (MustCall/CalledMethods) and methods (free)
-
-    LLVMContext context;
-    SMDiagnostic error;
-
-    std::unique_ptr<Module> M =
-        parseIRFile("../test/" + testName + ".ll", error, context);
-
-    for (llvm::GlobalVariable &globalVar : M->globals()) {
-      if (globalVar.hasInitializer()) {
-        llvm::Constant *initializer = globalVar.getInitializer();
-        if (llvm::ConstantDataSequential *dataSeq =
-                llvm::dyn_cast<llvm::ConstantDataSequential>(initializer)) {
-          if (dataSeq->isString()) {
-            std::string stringValue = dataSeq->getAsString().str();
-            llvm::outs() << "String: " << stringValue << "\n";
-
-            Annotation *anno = generateAnnotation(stringValue);
-
-            if (StructAnnotation *sa = dynamic_cast<StructAnnotation *>(anno)) {
-              logout(sa->generateStringRep() << "\n")
-            } else if (FunctionAnnotation *sa =
-                           dynamic_cast<FunctionAnnotation *>(anno)) {
-              logout(sa->generateStringRep() << "\n")
-            } else if (ParameterAnnotation *sa =
-                           dynamic_cast<ParameterAnnotation *>(anno)) {
-              logout(sa->generateStringRep() << "\n")
-            } else if (ReturnAnnotation *sa =
-                           dynamic_cast<ReturnAnnotation *>(anno)) {
-              logout(sa->generateStringRep() << "\n")
-            } else if (ErrorAnnotation *sa =
-                           dynamic_cast<ErrorAnnotation *>(anno)) {
-              logout("undefined annotation\n")
-            }
-          }
-        }
-      }
-    }
-
-    doAnnos = true;
-  }
-
   ProgramVariablesHandler AliasedProgramVars;
   std::map<std::string, InstructionHolder> branchInstructionMap;
 
@@ -414,11 +405,13 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
   CFG TopCFG;
   buildCFG(TopCFG, realBranchOrder, branchInstructionMap);
 
-  calledMethods.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions);
+  calledMethods.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
+                             annotationHandler);
   calledMethods.setCFG(&TopCFG);
   calledMethods.setProgramVariables(AliasedProgramVars);
 
-  mustCall.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions);
+  mustCall.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
+                        annotationHandler);
   mustCall.setCFG(&TopCFG);
   mustCall.setProgramVariables(AliasedProgramVars);
 
@@ -436,11 +429,8 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
   logout("\n\nPOST CALLED METHODS") for (auto Pair1 : PostCalledMethods) {
     std::string branchName = Pair1.first;
     logout("branch = " << branchName) for (auto Pair2 : Pair1.second) {
-      std::string cm;
-      for (auto m : Pair2.second.methodsSet) {
-        cm += m + ", ";
-      }
-      logout(">> var name = " << Pair2.first << " cm = " << cm)
+      logout(">> var name = " << Pair2.first << " cm = "
+                              << dataflow::setToString(Pair2.second.methodsSet))
     }
   }
 
@@ -448,22 +438,24 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
     std::string branchName = Pair1.first;
     logout("branch = " << branchName) for (auto Pair2 : Pair1.second) {
       std::string mc;
-      for (auto m : Pair2.second.methodsSet) {
-        mc += m + ", ";
-      }
-      logout(">> var name = " << Pair2.first << " mc = " << mc)
+      logout(">> var name = " << Pair2.first << " mc = "
+                              << dataflow::setToString(Pair2.second.methodsSet))
     }
   }
 
   errs() << "\n\nRUNNING CALLED METHODS TESTS - "
          << " TEST NAME - " << testName << "\n\n";
+
+  std::string lastBranchName = realBranchOrder.back();
+
   bool calledMethodsResult = TestRunner::runTests(
-      calledMethods.getExpectedResult(), PostCalledMethods);
+      fnName, lastBranchName, calledMethods.getExpectedResult(),
+      PostCalledMethods);
 
   errs() << "\n\nRUNNING MUST CALL TESTS "
          << " TEST NAME - " << testName << "\n\n";
-  bool mustCallResult =
-      TestRunner::runTests(mustCall.getExpectedResult(), PostMustCalls);
+  bool mustCallResult = TestRunner::runTests(
+      fnName, lastBranchName, mustCall.getExpectedResult(), PostMustCalls);
 
   if (calledMethodsResult == EXIT_FAILURE || mustCallResult == EXIT_FAILURE) {
     anyTestFailed = true;

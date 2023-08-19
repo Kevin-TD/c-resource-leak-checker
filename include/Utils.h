@@ -32,6 +32,9 @@ bool isValidCVariableName(const std::string &str);
 
 bool hasOnlyOneBalancedParentheses(const std::string &str);
 
+// for debugging; just an easier way to get a string rep of a set
+std::string setToString(std::set<std::string> &setString);
+
 } // namespace dataflow
 
 #endif // UTILS_H

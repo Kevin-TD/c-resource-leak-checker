@@ -27,6 +27,10 @@ void ProgramVariablesHandler::addAlias(ProgramVariable receiving,
   this->programVariables.push_back(receiver);
 }
 
+void ProgramVariablesHandler::addVariable(ProgramVariable programVar) {
+  this->programVariables.push_back(programVar);
+}
+
 std::list<ProgramVariable> ProgramVariablesHandler::getProgramVariables() {
   return this->programVariables;
 }

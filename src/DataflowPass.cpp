@@ -6,13 +6,15 @@
 
 void DataflowPass::setFunctions(
     std::set<std::string> safeFunctions, std::set<std::string> reallocFunctions,
-    std::map<std::string, std::string> memoryFunctions) {
+    std::map<std::string, std::string> memoryFunctions,
+    AnnotationHandler annotations) {
   this->safeFunctions = safeFunctions;
   this->reallocFunctions = reallocFunctions;
   this->memoryFunctions = memoryFunctions;
+  this->annotations = annotations;
 }
 
-void DataflowPass::setExpectedResult(MappedMethods expectedResult) {
+void DataflowPass::setExpectedResult(FunctionMappedMethods expectedResult) {
   this->expectedResult = expectedResult;
 }
 
@@ -50,14 +52,17 @@ void DataflowPass::transfer(
           std::set<std::string> allAliases =
               this->programVariables.findVarAndNamedAliases(
                   assignedVar.getCleanedName());
-          for (auto a : allAliases) {
+          logout("test " << *Store->getOperand(1) << " and "
+                         << assignedVar.getCleanedName()) for (auto a :
+                                                               allAliases) {
             logout("store alias = " << a)
           }
 
           if (this->memoryFunctions[fnName].size() > 0) {
             for (std::string alias : allAliases) {
               logout("calling on alloc function for argname "
-                     << alias << " and fnname " << fnName) this
+                     << alias << " and fnname " << fnName
+                     << " fnname = " << fnName) this
                   ->onAllocationFunctionCall(inputMethodsSet[alias],
                                              this->memoryFunctions[fnName]);
             }
@@ -200,6 +205,46 @@ void DataflowPass::transfer(
         this->onUnknownFunctionCall(inputMethodsSet[aliasArg]);
       }
     }
+  } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
+
+    // searches for struct annotations
+    if (llvm::StructType *structType =
+            llvm::dyn_cast<llvm::StructType>(allocate->getAllocatedType())) {
+      std::string structName = structType->getName();
+      structName = dataflow::sliceString(
+          structName, structName.find_last_of('.') + 1, structName.size() - 1);
+      int numFields = structType->getNumElements();
+      for (int i = 0; i < numFields; i++) {
+        Annotation *anno = this->annotations.getStructAnnotation(
+            structName, std::to_string(i));
+        if (StructAnnotation *structAnno =
+                dynamic_cast<StructAnnotation *>(anno)) {
+          std::set<std::string> structMethods =
+              structAnno->getAnnotationMethods();
+          AnnotationType structAnnoType = structAnno->getAnnotationType();
+          ProgramVariable sourceVar = ProgramVariable(allocate, i);
+
+          std::set<std::string> aliases =
+              this->programVariables.findVarAndNamedAliases(
+                  sourceVar.getCleanedName());
+
+          logout("found annotation " << dataflow::setToString(structMethods)
+                                     << " "
+                                     << annotationTypeToString(structAnnoType)
+                                     << " for field index " << i << " var name "
+                                     << sourceVar.getRawName())
+
+              for (std::string alias : aliases) {
+            for (std::string methodName : structMethods) {
+              logout("alias = '"
+                     << alias << "' method name = '" << methodName
+                     << "'") this->onAnnotation(inputMethodsSet[alias],
+                                                methodName, structAnnoType);
+            }
+          }
+        }
+      }
+    }
   }
 }
 
@@ -338,4 +383,10 @@ void DataflowPass::setProgramVariables(
   this->programVariables = programVariables;
 }
 
-MappedMethods DataflowPass::getExpectedResult() { return this->expectedResult; }
+void DataflowPass::setAnnotations(AnnotationHandler annotations) {
+  this->annotations = annotations;
+}
+
+FunctionMappedMethods DataflowPass::getExpectedResult() {
+  return this->expectedResult;
+}

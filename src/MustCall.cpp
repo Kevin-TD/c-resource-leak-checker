@@ -26,3 +26,10 @@ void MustCall::leastUpperBound(MaybeUninitMethodsSet &preMethods,
                  curMethods.methodsSet.begin(), curMethods.methodsSet.end(),
                  std::inserter(result, result.begin()));
 }
+void MustCall::onAnnotation(MaybeUninitMethodsSet &input, std::string &fnName,
+                            AnnotationType annotationType) {
+  if (annotationType == AnnotationType::MustCallAnnotation) {
+    input.methodsSet.insert(fnName);
+    input.setInitialized = true;
+  }
+}

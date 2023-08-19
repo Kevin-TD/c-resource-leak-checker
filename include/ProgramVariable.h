@@ -17,6 +17,19 @@ private:
   // under-approximation of must-aliases
   std::list<ProgramVariable> aliases;
 
+  void fixNameAndIdentifier();
+
+  // bool indicates whether the generated ProgramVariable is actually an
+  // identifying variable in the program whose name in the IR begins with a % or
+  // @ or not.
+  /* without this, for instructions like `store i32 0, i32* %retval align`, the
+  program would think '0' refers to some variable in the program. This can be
+  problematic if there's an instruction like `instruction %0 = load i8**, i8***
+  %p, align 8, !dbg !23`, which could cause the alias reasoning to mess up and
+  mistake the variable %0 with some reference to the '0' program variable
+  */
+  bool varIsIdentifier;
+
 public:
   ProgramVariable(Value *value);
 
@@ -41,6 +54,8 @@ public:
   bool equalsRawName(std::string otherRawName);
 
   void addAlias(ProgramVariable pv);
+
+  bool isIdentifier();
 
   // returns aliases as their string representation only for aliases that are
   // given names in the LLVM IR. intermediate variables like %7, %8 are unnamed;

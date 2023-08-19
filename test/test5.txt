@@ -1,5 +1,4 @@
-CalledMethods if.end str1 {free}
-CalledMethods if.end16 a {}
-CalledMethods if.end16 retval {}
-CalledMethods if.end16 str {}
-CalledMethods if.end16 str1 {}
+pass=CalledMethods function=main branch=if.end var=str1 methods={free}
+pass=CalledMethods function=main var=a methods={}
+pass=CalledMethods function=main var=str methods={}
+pass=CalledMethods function=main var=str1 methods={}

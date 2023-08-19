@@ -1,1 +1,1 @@
-CalledMethods if.end18 str {free}
+pass=CalledMethods function=main var=str methods={free}

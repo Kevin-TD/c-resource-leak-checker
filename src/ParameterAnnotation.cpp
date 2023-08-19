@@ -7,7 +7,9 @@ ParameterAnnotation::ParameterAnnotation(
   this->annotationMethods = annotationMethods;
   this->targetName = targetName;
   this->field = field;
+  this->hasField = (field != "");
   this->nthParameter = nthParameter;
+  this->isVerified = false;
 }
 
 std::string ParameterAnnotation::generateStringRep() {
@@ -35,3 +37,21 @@ std::string ParameterAnnotation::generateStringRep() {
          " Parameter = #" + std::to_string(this->nthParameter) + " " +
          fieldString + " methods = " + annoMethodsString;
 }
+
+bool ParameterAnnotation::nthParameterEquals(int param) {
+  return this->nthParameter == param;
+}
+
+bool ParameterAnnotation::functionNameEquals(const std::string &functionName) {
+  return functionName.compare(this->targetName) == 0;
+}
+
+bool ParameterAnnotation::fieldNameEquals(const std::string &field) {
+  return field.compare(this->field) == 0;
+}
+
+bool ParameterAnnotation::paramHasField() { return this->hasField; }
+
+std::string ParameterAnnotation::getField() { return this->field; }
+
+int ParameterAnnotation::getNthParameter() { return this->nthParameter; }

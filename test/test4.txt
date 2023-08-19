@@ -1,1 +1,1 @@
-CalledMethods if.end16 str {}
+pass=CalledMethods function=main var=str methods={}

@@ -13,6 +13,7 @@ link_directories(${LLVM_LIBRARY_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
 
 
 add_llvm_library(CalledMethodsPass MODULE
+  src/AnnotationHandler.cpp
   src/ProgramVariable.cpp
   src/Annotation.cpp
   src/FunctionAnnotation.cpp
