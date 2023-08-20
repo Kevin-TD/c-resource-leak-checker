@@ -1,4 +1,4 @@
-#include "ReturnAnnotation.h"
+#include "Annotations/ReturnAnnotation.h"
 
 ReturnAnnotation::ReturnAnnotation(AnnotationType annotationType,
                                    std::set<std::string> annotationMethods,

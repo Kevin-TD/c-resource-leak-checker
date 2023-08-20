@@ -1,16 +1,16 @@
 #ifndef DATAFLOW_PASS_H
 #define DATAFLOW_PASS_H
 
-#include "Annotation.h"
-#include "AnnotationHandler.h"
+#include "Annotations/Annotation.h"
+#include "Annotations/AnnotationHandler.h"
+#include "Annotations/StructAnnotation.h"
+#include "Annotations/ErrorAnnotation.h"
+#include "Annotations/FunctionAnnotation.h"
+#include "Annotations/ParameterAnnotation.h"
+#include "Annotations/ReturnAnnotation.h"
 #include "CFG.h"
-#include "ErrorAnnotation.h"
-#include "FunctionAnnotation.h"
-#include "ParameterAnnotation.h"
 #include "ProgramVariablesHandler.h"
-#include "ReturnAnnotation.h"
 #include "RunAnalysis.h"
-#include "StructAnnotation.h"
 #include "Utils.h"
 
 #include <fstream>
@@ -28,7 +28,6 @@ typedef std::map<std::string, std::map<std::string, MaybeUninitMethodsSet>>
 
 // mapping between function name and a MappedMethods
 // TODO: just make this a class
-// TODO?: make all test run at the very end
 
 typedef std::map<std::string, MappedMethods> FunctionMappedMethods;
 

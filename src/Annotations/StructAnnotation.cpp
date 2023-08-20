@@ -1,4 +1,4 @@
-#include "StructAnnotation.h"
+#include "Annotations/StructAnnotation.h"
 
 StructAnnotation::StructAnnotation(AnnotationType annotationType,
                                    std::set<std::string> annotationMethods,

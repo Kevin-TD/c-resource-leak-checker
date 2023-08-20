@@ -3,6 +3,7 @@
 
 #include "RunAnalysis.h"
 #include "Utils.h"
+#include "ProgramRepresentation/MethodsSet.h"
 
 class ProgramVariable {
 private:
@@ -29,6 +30,9 @@ private:
   mistake the variable %0 with some reference to the '0' program variable
   */
   bool varIsIdentifier;
+
+  MethodsSet calledMethodsSet; 
+  MethodsSet mustCallSet;
 
 public:
   ProgramVariable(Value *value);
@@ -64,6 +68,8 @@ public:
 
   // returns both named and unnamed aliases
   std::set<std::string> getAllAliases(bool cleanNames);
+
+  
 };
 
 #endif
