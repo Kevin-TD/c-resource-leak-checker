@@ -4,10 +4,6 @@
 #include "RunAnalysis.h"
 #include "Utils.h"
 
-#include <list>
-#include <map>
-#include <set>
-
 class CFG {
 private:
   std::string branchName;

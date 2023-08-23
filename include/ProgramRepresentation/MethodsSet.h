@@ -13,10 +13,13 @@ public:
     
     void setMethods(std::set<std::string> methods); 
     void addMethod(std::string method); 
+    void clearMethods(); 
 
     bool isUninit(); 
 
     std::set<std::string> getMethods(); 
+
+    static MethodsSet copy(MethodsSet methods); 
 
 };
 

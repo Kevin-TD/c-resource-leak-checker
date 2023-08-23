@@ -20,8 +20,11 @@ add_llvm_library(CalledMethodsPass MODULE
   src/Annotations/StructAnnotation.cpp
   src/Annotations/ReturnAnnotation.cpp 
   src/Annotations/ErrorAnnotation.cpp
-  src/ProgramVariable.cpp
-  src/ProgramVariablesHandler.cpp
+  src/ProgramRepresentation/MethodsSet.cpp
+  src/ProgramRepresentation/ProgramVariable.cpp
+  src/ProgramRepresentation/ProgramPoint.cpp
+  src/ProgramRepresentation/ProgramFunction.cpp
+  src/ProgramRepresentation/FullProgram.cpp
   src/CFG.cpp
   src/CalledMethods.cpp
   src/MustCall.cpp

@@ -4,36 +4,39 @@
 
 CalledMethods::CalledMethods() { this->passName = CALLED_METHODS_PASS_NAME; }
 
-void CalledMethods::onAllocationFunctionCall(MaybeUninitMethodsSet &input,
+void CalledMethods::onAllocationFunctionCall(MethodsSet &input,
                                              std::string &fnName) {}
-void CalledMethods::onDeallocationFunctionCall(MaybeUninitMethodsSet &input,
+void CalledMethods::onDeallocationFunctionCall(MethodsSet &input,
                                                std::string &fnName) {
-  input.methodsSet.insert(fnName);
-  input.setInitialized = true;
+  input.addMethod(fnName);
 }
-void CalledMethods::onUnknownFunctionCall(MaybeUninitMethodsSet &input) {
-  input.methodsSet = {};
+void CalledMethods::onUnknownFunctionCall(MethodsSet &input) {
+  logout("pre clear")
+  input.clearMethods(); 
+  logout("post clear")
 }
-void CalledMethods::onReallocFunctionCall(MaybeUninitMethodsSet &input,
+void CalledMethods::onReallocFunctionCall(MethodsSet &input,
                                           std::string &fnName) {
-  input.methodsSet = {};
+  input.clearMethods(); 
 }
-void CalledMethods::onSafeFunctionCall(MaybeUninitMethodsSet &input,
+void CalledMethods::onSafeFunctionCall(MethodsSet &input,
                                        std::string &fnName) {}
-void CalledMethods::leastUpperBound(MaybeUninitMethodsSet &preMethods,
-                                    MaybeUninitMethodsSet &curMethods,
-                                    std::set<std::string> &result) {
-  std::set_intersection(
-      preMethods.methodsSet.begin(), preMethods.methodsSet.end(),
-      curMethods.methodsSet.begin(), curMethods.methodsSet.end(),
-      std::inserter(result, result.begin()));
+void CalledMethods::leastUpperBound(MethodsSet &preMethods,
+                                    MethodsSet &curMethods,
+                                    MethodsSet &result) {
+  std::set<std::string> res;
+
+  std::set_intersection(preMethods.getMethods().begin(), preMethods.getMethods().end(),
+                 curMethods.getMethods().begin(), curMethods.getMethods().end(),
+                 std::inserter(res, res.begin()));
+                 
+  result.setMethods(res);
 }
 
-void CalledMethods::onAnnotation(MaybeUninitMethodsSet &input,
+void CalledMethods::onAnnotation(MethodsSet &input,
                                  std::string &fnName,
                                  AnnotationType annotationType) {
   if (annotationType == AnnotationType::CallsAnnotation) {
-    input.methodsSet.insert(fnName);
-    input.setInitialized = true;
+    input.addMethod(fnName);
   }
 }

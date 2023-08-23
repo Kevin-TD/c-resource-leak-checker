@@ -1,4 +1,5 @@
 #include "./ProgramRepresentation/MethodsSet.h"
+#include "Debug.h"
 
 MethodsSet::MethodsSet() {
     this->setIsUninit = true; 
@@ -24,4 +25,19 @@ bool MethodsSet::isUninit() {
 void MethodsSet::addMethod(std::string method) {
     this->methods.insert(method); 
     this->setIsUninit = false; 
+}
+
+void MethodsSet::clearMethods() {
+    this->methods.clear();
+    this->setIsUninit = false; 
+}
+
+MethodsSet MethodsSet::copy(MethodsSet methods) {
+    if (methods.isUninit()) {
+        return MethodsSet(); 
+    }
+    
+    std::set<std::string> methodsCopy(methods.getMethods()); 
+
+    return MethodsSet(methodsCopy); 
 }

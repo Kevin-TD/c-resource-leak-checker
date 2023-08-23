@@ -4,51 +4,60 @@
 
 bool TestRunner::runTests(const std::string functionName,
                           const std::string lastBranchName,
-                          FunctionMappedMethods expectedResult,
-                          MappedMethods receivedResult) {
+                          FullProgram expectedResult,
+                          ProgramFunction receivedResult) {
   bool testPassed = EXIT_SUCCESS;
 
   logout("Function Name Test Running = "
-         << functionName) for (auto Pair1 : expectedResult[functionName]) {
-    std::string branchName = Pair1.first;
-    if (branchName == "") {
-      branchName = lastBranchName;
-    }
+         << functionName) 
 
+  ProgramFunction function = expectedResult.getProgramFunction(functionName); 
+  std::list<ProgramPoint> points = function.getProgramPoints();
+
+  for (ProgramPoint point : points) {
+    std::string branchName = point.getName();
+
+    if (branchName == "") {
+      branchName = lastBranchName; 
+    }
     logout("branch = " << branchName)
 
-        for (auto Pair2 : Pair1.second) {
-      std::string pass = dataflow::setToString(Pair2.second.methodsSet);
-      std::string varName = Pair2.first;
+    std::list<ProgramVariable> vars = point.getProgramVariables(); 
+    for (ProgramVariable var : vars) {
+      std::string varName = var.getCleanedName();
 
-      std::set<std::string> analysisPassSet =
-          receivedResult[branchName][varName].methodsSet;
-      std::set<std::string> expectedPassSet = Pair2.second.methodsSet;
+      MethodsSet expectedMethodsSet = var.getMethodsSet();
+      MethodsSet receivedMethodsSet = receivedResult.getProgramPoint(branchName).getProgramVariableByCleanedName(varName).getMethodsSet(); 
 
-      std::string analysisPass = dataflow::setToString(analysisPassSet);
+      std::set<std::string> expectedSet = expectedMethodsSet.getMethods(); 
+      std::string expectedSetString = dataflow::setToString(expectedSet);
+
+      std::set<std::string> receivedSet = receivedMethodsSet.getMethods(); 
+      std::string receivedSetString = dataflow::setToString(receivedSet);
 
       errs() << "Test for branch name = " << branchName
              << " var name = " << varName;
 
-      if (analysisPassSet == expectedPassSet) {
+      if (expectedSet == receivedSet) {
         errs() << " passed\n";
       } else {
         errs() << " **FAILED**\n";
         testPassed = EXIT_FAILURE;
       }
-      errs() << "EXPECTED " << pass << "\n";
-      errs() << "RECEIVED " << analysisPass << "\n\n";
+      errs() << "EXPECTED " << expectedSetString << "\n";
+      errs() << "RECEIVED " << receivedSetString << "\n\n";
+
     }
   }
 
   return testPassed;
 }
 
-FunctionMappedMethods TestRunner::buildExpectedResults(std::string testName,
+FullProgram TestRunner::buildExpectedResults(std::string testName,
                                                        std::string passName) {
   std::ifstream testFile("../test/" + testName + ".txt");
   std::string line;
-  FunctionMappedMethods expectedResult;
+  FullProgram expectedResult(testName);
 
   if (testFile.is_open()) {
     while (std::getline(testFile, line)) {
@@ -112,7 +121,8 @@ FunctionMappedMethods TestRunner::buildExpectedResults(std::string testName,
       }
 
       if (passName == inputPassName) {
-        expectedResult[functionName][branchName][varName] = {methodsSet, true};
+        expectedResult.getProgramFunction(functionName).getProgramPoint(branchName).getProgramVariableByCleanedName(varName).setMethodsSet(methodsSet);
+        
       }
     }
   }

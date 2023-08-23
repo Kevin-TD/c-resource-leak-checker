@@ -31,11 +31,13 @@ private:
   */
   bool varIsIdentifier;
 
-  MethodsSet calledMethodsSet; 
-  MethodsSet mustCallSet;
+  MethodsSet methods; 
 
 public:
+  ProgramVariable(); 
   ProgramVariable(Value *value);
+  ProgramVariable(Value *value, MethodsSet methods);
+  ProgramVariable(std::string cleanedName); 
 
   // for struct variables
   ProgramVariable(Value *value, int index);
@@ -69,7 +71,20 @@ public:
   // returns both named and unnamed aliases
   std::set<std::string> getAllAliases(bool cleanNames);
 
+  std::list<ProgramVariable> getPValiases(); 
+  std::list<ProgramVariable>* getPValiasesRef(); 
+
+  std::list<ProgramVariable*> generatePVptrAliases(); 
+
+
+  MethodsSet getMethodsSet();
+  MethodsSet* getMethodsSetRef();
   
+  void setMethodsSet(MethodsSet methods); 
+  
+  void setAliases(std::list<ProgramVariable> aliases);
+
+  static ProgramVariable copy(ProgramVariable programVariable);
 };
 
 #endif

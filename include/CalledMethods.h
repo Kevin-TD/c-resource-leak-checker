@@ -5,17 +5,17 @@
 
 class CalledMethods : public DataflowPass {
 protected:
-  void leastUpperBound(MaybeUninitMethodsSet &preMethods,
-                       MaybeUninitMethodsSet &curMethods,
-                       std::set<std::string> &result);
-  void onAllocationFunctionCall(MaybeUninitMethodsSet &input,
+  void leastUpperBound(MethodsSet &preMethods,
+                       MethodsSet &curMethods,
+                       MethodsSet &result);
+  void onAllocationFunctionCall(MethodsSet &input,
                                 std::string &fnName);
-  void onDeallocationFunctionCall(MaybeUninitMethodsSet &input,
+  void onDeallocationFunctionCall(MethodsSet &input,
                                   std::string &fnName);
-  void onUnknownFunctionCall(MaybeUninitMethodsSet &input);
-  void onReallocFunctionCall(MaybeUninitMethodsSet &input, std::string &fnName);
-  void onSafeFunctionCall(MaybeUninitMethodsSet &input, std::string &fnName);
-  void onAnnotation(MaybeUninitMethodsSet &input, std::string &fnName,
+  void onUnknownFunctionCall(MethodsSet &input);
+  void onReallocFunctionCall(MethodsSet &input, std::string &fnName);
+  void onSafeFunctionCall(MethodsSet &input, std::string &fnName);
+  void onAnnotation(MethodsSet &input, std::string &fnName,
                     AnnotationType annotationType);
 
 public:

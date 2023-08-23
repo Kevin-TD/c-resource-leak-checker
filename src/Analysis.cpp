@@ -5,12 +5,12 @@
 #include "Annotations/ParameterAnnotation.h"
 #include "Annotations/ReturnAnnotation.h"
 #include "Annotations/StructAnnotation.h"
+#include "ProgramRepresentation/FullProgram.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "DataflowPass.h"
 #include "Debug.h"
 #include "MustCall.h"
-#include "ProgramVariablesHandler.h"
 #include "RunAnalysis.h"
 #include "TestRunner.h"
 #include "Utils.h"
@@ -39,9 +39,7 @@ std::set<std::string> SafeFunctions;
 std::set<std::string> ReallocFunctions;
 std::map<std::string, std::string> MemoryFunctions;
 std::vector<std::string> realBranchOrder;
-MappedMethods ExpectedResult;
 bool loadAndBuild = false;
-bool doAnnos = false;
 bool anyTestFailed = false;
 CalledMethods calledMethods;
 MustCall mustCall;
@@ -196,7 +194,7 @@ std::vector<Instruction *> getSuccessors(Instruction *Inst) {
 
 void doAliasReasoning(Instruction *instruction,
                       SetVector<Instruction *> &workSet,
-                      ProgramVariablesHandler &programVariables) {
+                      ProgramFunction &programFunction) {
   bool includes = false;
   std::string branchName = instruction->getParent()->getName().str();
   for (auto branch : realBranchOrder) {
@@ -205,6 +203,9 @@ void doAliasReasoning(Instruction *instruction,
       break;
     }
   }
+
+  ProgramPoint* programPoint = programFunction.getProgramPointRef(branchName);
+
   if (!includes) {
     realBranchOrder.push_back(branchName);
   }
@@ -217,7 +218,7 @@ void doAliasReasoning(Instruction *instruction,
     ProgramVariable receivingVar = ProgramVariable(Load);
     ProgramVariable givingVar = ProgramVariable(Load->getPointerOperand());
 
-    programVariables.addAlias(receivingVar, givingVar);
+    programPoint->addAlias(receivingVar, givingVar);
 
   } else if (StoreInst *store = dyn_cast<StoreInst>(instruction)) {
     Value *valueToStore = store->getOperand(0);
@@ -245,13 +246,15 @@ void doAliasReasoning(Instruction *instruction,
       }
     }
 
-    programVariables.addAlias(varToStore, receivingVar);
+    programPoint->addAlias(varToStore, receivingVar);
+
 
   } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
     ProgramVariable sourceVar = ProgramVariable(bitcast);
     ProgramVariable destinationVar = ProgramVariable(bitcast->getOperand(0));
 
-    programVariables.addAlias(sourceVar, destinationVar);
+    programPoint->addAlias(sourceVar, destinationVar);
+
   } else if (GetElementPtrInst *gepInst =
                  dyn_cast<GetElementPtrInst>(instruction)) {
 
@@ -294,12 +297,12 @@ void doAliasReasoning(Instruction *instruction,
           if (BitCastInst *bitcast = dyn_cast<BitCastInst>(pointerOperand)) {
             ProgramVariable structVar =
                 ProgramVariable(bitcast->getOperand(0), index);
-            programVariables.addAlias(sourceVar, structVar);
+            programPoint->addAlias(sourceVar, structVar);
             return;
           }
 
           ProgramVariable structVar = ProgramVariable(pointerOperand, index);
-          programVariables.addAlias(sourceVar, structVar);
+          programPoint->addAlias(sourceVar, structVar);
         }
       }
     }
@@ -326,7 +329,7 @@ void doAliasReasoning(Instruction *instruction,
               structAnno->getAnnotationMethods();
           AnnotationType structAnnoType = structAnno->getAnnotationType();
           ProgramVariable sourceVar = ProgramVariable(allocate, i);
-          programVariables.addVariable(sourceVar);
+          programPoint->addVariable(sourceVar);
         }
       }
     }
@@ -386,14 +389,14 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
     }
   }
 
-  ProgramVariablesHandler AliasedProgramVars;
+  ProgramFunction programFunction(fnName);
   std::map<std::string, InstructionHolder> branchInstructionMap;
 
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     WorkSet.insert(&(*I));
 
     std::string branchName = I->getParent()->getName().str();
-    doAliasReasoning(&(*I), WorkSet, AliasedProgramVars);
+    doAliasReasoning(&(*I), WorkSet, programFunction);
 
     auto succs = getSuccessors(&(*I));
     branchInstructionMap[branchName].branch.insert(&(*I));
@@ -408,38 +411,50 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
   calledMethods.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
                              annotationHandler);
   calledMethods.setCFG(&TopCFG);
-  calledMethods.setProgramVariables(AliasedProgramVars);
+  calledMethods.setProgramFunction(programFunction);
 
   mustCall.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
                         annotationHandler);
   mustCall.setCFG(&TopCFG);
-  mustCall.setProgramVariables(AliasedProgramVars);
+  mustCall.setProgramFunction(programFunction);
 
-  MappedMethods PostCalledMethods = calledMethods.generatePassResults();
-  MappedMethods PostMustCalls = mustCall.generatePassResults();
+  ProgramFunction PostCalledMethods = calledMethods.generatePassResults();
+  ProgramFunction PostMustCalls = mustCall.generatePassResults();
 
-  logout("\n\nPROGRAM VARS") for (ProgramVariable pv :
-                                  AliasedProgramVars.getProgramVariables()) {
-    logout("var raw name = " << pv.getRawName()) for (auto s :
-                                                      pv.getAllAliases(false)) {
-      logout(">> alias raw name = " << s)
+  logout("\n\nPROGRAM FUNCTION for " << programFunction.getName())
+  for (auto point : programFunction.getProgramPoints()) {
+    logout("point name " << point.getName());
+    for (auto var : point.getProgramVariables()) {
+      logout("var name " << var.getCleanedName())
+      for (auto alias : var.getAllAliases(false)) {
+        logout(">>alias " << alias)
+      }
     }
   }
 
-  logout("\n\nPOST CALLED METHODS") for (auto Pair1 : PostCalledMethods) {
-    std::string branchName = Pair1.first;
-    logout("branch = " << branchName) for (auto Pair2 : Pair1.second) {
-      logout(">> var name = " << Pair2.first << " cm = "
-                              << dataflow::setToString(Pair2.second.methodsSet))
+  logout("\n\nPOST CALLED METHODS") 
+  for (auto point : PostCalledMethods.getProgramPoints()) {
+    logout("point name " << point.getName());
+    for (auto var : point.getProgramVariables()) {
+      logout("var name " << var.getCleanedName())
+      std::set<std::string> methods = var.getMethodsSet().getMethods(); 
+      logout("methods set " << setToString(methods))
+      for (auto alias : var.getAllAliases(false)) {
+        logout(">>alias " << alias)
+      }
     }
   }
 
-  logout("\n\nPOST MUST CALLS") for (auto Pair1 : PostMustCalls) {
-    std::string branchName = Pair1.first;
-    logout("branch = " << branchName) for (auto Pair2 : Pair1.second) {
-      std::string mc;
-      logout(">> var name = " << Pair2.first << " mc = "
-                              << dataflow::setToString(Pair2.second.methodsSet))
+  logout("\n\nPOST MUST CALLS") 
+  for (auto point : PostMustCalls.getProgramPoints()) {
+    logout("point name " << point.getName());
+    for (auto var : point.getProgramVariables()) {
+      logout("var name " << var.getCleanedName())
+      std::set<std::string> methods = var.getMethodsSet().getMethods(); 
+      logout("methods set " << setToString(methods))
+      for (auto alias : var.getAllAliases(false)) {
+        logout(">>alias " << alias)
+      }
     }
   }
 

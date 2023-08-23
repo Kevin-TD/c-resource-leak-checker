@@ -6,30 +6,32 @@ MustCall::MustCall() { this->passName = MUST_CALL_PASS_NAME; }
 
 // fnName refers to corresponding deallocation/free function instead of memory
 // allocating function
-void MustCall::onAllocationFunctionCall(MaybeUninitMethodsSet &input,
+void MustCall::onAllocationFunctionCall(MethodsSet &input,
                                         std::string &fnName) {
-  input.methodsSet.insert(fnName);
-  input.setInitialized = true;
+  input.addMethod(fnName);
 }
-void MustCall::onDeallocationFunctionCall(MaybeUninitMethodsSet &input,
+void MustCall::onDeallocationFunctionCall(MethodsSet &input,
                                           std::string &fnName) {}
-void MustCall::onUnknownFunctionCall(MaybeUninitMethodsSet &input) {}
-void MustCall::onReallocFunctionCall(MaybeUninitMethodsSet &input,
+void MustCall::onUnknownFunctionCall(MethodsSet &input) {}
+void MustCall::onReallocFunctionCall(MethodsSet &input,
                                      std::string &fnName) {}
-void MustCall::onSafeFunctionCall(MaybeUninitMethodsSet &input,
+void MustCall::onSafeFunctionCall(MethodsSet &input,
                                   std::string &fnName) {}
 
-void MustCall::leastUpperBound(MaybeUninitMethodsSet &preMethods,
-                               MaybeUninitMethodsSet &curMethods,
-                               std::set<std::string> &result) {
-  std::set_union(preMethods.methodsSet.begin(), preMethods.methodsSet.end(),
-                 curMethods.methodsSet.begin(), curMethods.methodsSet.end(),
-                 std::inserter(result, result.begin()));
+void MustCall::leastUpperBound(MethodsSet &preMethods,
+                               MethodsSet &curMethods,
+                               MethodsSet &result) {
+  std::set<std::string> res;
+
+  std::set_union(preMethods.getMethods().begin(), preMethods.getMethods().end(),
+                 curMethods.getMethods().begin(), curMethods.getMethods().end(),
+                 std::inserter(res, res.begin()));
+                 
+  result.setMethods(res);
 }
-void MustCall::onAnnotation(MaybeUninitMethodsSet &input, std::string &fnName,
+void MustCall::onAnnotation(MethodsSet &input, std::string &fnName,
                             AnnotationType annotationType) {
   if (annotationType == AnnotationType::MustCallAnnotation) {
-    input.methodsSet.insert(fnName);
-    input.setInitialized = true;
+    input.addMethod(fnName);
   }
 }
