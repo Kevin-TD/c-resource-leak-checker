@@ -5,9 +5,9 @@
 
 class MustCall : public DataflowPass {
 protected:
-  void leastUpperBound(MethodsSet &preMethods,
-                       MethodsSet &curMethods,
-                       MethodsSet &result);
+  void leastUpperBound(std::set<std::string> &preMethods,
+                       std::set<std::string> &curMethods,
+                       std::set<std::string> &result);
   void onAllocationFunctionCall(MethodsSet &input,
                                 std::string &fnName);
   void onDeallocationFunctionCall(MethodsSet &input,

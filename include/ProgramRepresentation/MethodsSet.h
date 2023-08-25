@@ -14,6 +14,8 @@ public:
     void setMethods(std::set<std::string> methods); 
     void addMethod(std::string method); 
     void clearMethods(); 
+    
+    bool equals(MethodsSet otherMethodsSet);
 
     bool isUninit(); 
 

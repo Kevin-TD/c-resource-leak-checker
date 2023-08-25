@@ -31,7 +31,6 @@ void DataflowPass::transfer(
                 ProgramPoint& inputProgramPoint) {
   
   std::string branchName = instruction->getParent()->getName().str();
-  ProgramPoint programPoint = this->programFunction.getProgramPoint(branchName);
 
   if (auto Store = dyn_cast<StoreInst>(instruction)) {
     Value *valueToStore = Store->getOperand(0);
@@ -52,25 +51,42 @@ void DataflowPass::transfer(
           std::string fnName = Call->getCalledFunction()->getName().str();
           ProgramVariable assignedVar = ProgramVariable(Store->getOperand(1));
           
-          std::set<std::string> allAliases =
-                programPoint.findVarAndNamedAliases(assignedVar.getCleanedName()); 
-          logout("test " << *Store->getOperand(1) << " and "
-                         << assignedVar.getCleanedName()) for (auto a :
-                                                               allAliases) {
-            logout("store alias = " << a)
-          }
-          
-          
-          if (this->memoryFunctions[fnName].size() > 0) {
-            for (std::string alias : allAliases) {
-              MethodsSet* methods = inputProgramPoint.getProgramVariableByCleanedNameRef(alias)->getMethodsSetRef();
+          if (this->memoryFunctions[fnName].size() > 0 && assignedVar.isIdentifier()) {
+            std::string arg = assignedVar.getCleanedName(); 
+            
 
-              logout("calling on alloc function for argname "
-                     << alias << " and fnname " << fnName
-                     << " fnname = " << fnName) this
-                  ->onAllocationFunctionCall(*methods,
-                                             this->memoryFunctions[fnName]);
+            logout("INPUT PROGRAM POINT:")
+            logout("inst = " << *instruction)
+            logout("**COMPARING point name " << inputProgramPoint.getName() << " branch name " << branchName);
+            for (auto var : inputProgramPoint.getProgramVariables()) {
+              logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
+              std::set<std::string> methods = var.getMethodsSet().getMethods(); 
+              logout("methods set " << dataflow::setToString(methods))
+
+              auto aliases = var.getAllAliases(false);
+              auto aliasesStr = dataflow::setToString(aliases);
+              logout(">>aliases " << aliasesStr)
             }
+
+            for (auto var : this->programFunction.getProgramPoint(branchName).getProgramVariables()) {
+              logout(">(REAL?) var name " << var.getRawName() << " | " << var.getCleanedName())
+              std::set<std::string> methods = var.getMethodsSet().getMethods(); 
+              logout("methods set " << dataflow::setToString(methods))
+
+              auto aliases = var.getAllAliases(false);
+              auto aliasesStr = dataflow::setToString(aliases);
+              logout(">>aliases " << aliasesStr)
+            }
+
+
+            MethodsSet* methods = inputProgramPoint.getOnlyMainProgramVariableByCleanedNameRef(arg)->getMethodsSetRef();
+
+            logout("calling on alloc function for argname "
+                    << arg << " and fnname " << fnName
+                    << " fnname = " << fnName) this
+                ->onAllocationFunctionCall(*methods,
+                                            this->memoryFunctions[fnName]);
+ 
           }
           break;
         } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(Inst)) {
@@ -88,22 +104,16 @@ void DataflowPass::transfer(
 
                 ProgramVariable bitcastVar =
                     ProgramVariable(Store->getOperand(1));
-            std::set<std::string> allAliases =
-                programPoint.findVarAndNamedAliases(
-                    bitcastVar.getCleanedName());
-            for (auto a : allAliases) {
-              logout("bitcast alias = " << a)
-            }
 
-            if (this->memoryFunctions[fnName].size() > 0) {
-              for (auto alias : allAliases) {
-                MethodsSet* methods = inputProgramPoint.getProgramVariableByCleanedNameRef(alias)->getMethodsSetRef();
+            if (this->memoryFunctions[fnName].size() > 0 && bitcastVar.isIdentifier()) {
+              std::string arg = bitcastVar.getCleanedName();
+              MethodsSet* methods = inputProgramPoint.getOnlyMainProgramVariableByCleanedNameRef(arg)->getMethodsSetRef();
+              logout("GETMAIN-1 ON '" << arg << "'")
+              this->onAllocationFunctionCall(*methods,
+                                              this->memoryFunctions[fnName]);
 
-                this->onAllocationFunctionCall(*methods,
-                                               this->memoryFunctions[fnName]);
-              }
+              break;
             }
-            break;
           }
         }
       }
@@ -121,12 +131,10 @@ void DataflowPass::transfer(
   } else if (auto Call = dyn_cast<CallInst>(instruction)) {
     for (unsigned i = 0; i < Call->getNumArgOperands(); ++i) {
       ProgramVariable argumentVar = ProgramVariable(Call->getArgOperand(i));
-      logout("cleaned name = " << argumentVar.getCleanedName())
-          std::set<std::string>
-              allAliases = programPoint.findVarAndNamedAliases(
-                  argumentVar.getCleanedName());
-      for (auto a : allAliases) {
-        logout("argumentVar alias = " << a)
+      std::string arg = argumentVar.getCleanedName(); 
+
+      if (!argumentVar.isIdentifier()) {
+        continue; 
       }
 
       /*
@@ -142,12 +150,11 @@ void DataflowPass::transfer(
 
         errs() << "WARNING: implicitly declared function call on " << location
                << "\n";
+        
 
-        for (std::string aliasArg : allAliases) {
-          MethodsSet* methods = inputProgramPoint.getProgramVariableByCleanedNameRef(aliasArg)->getMethodsSetRef();
-          this->onUnknownFunctionCall(*methods);
-        }
-
+        MethodsSet* methods = inputProgramPoint.getOnlyMainProgramVariableByCleanedNameRef(arg)->getMethodsSetRef();
+        logout("GETMAIN-2 ON '" << arg << "'")
+        this->onUnknownFunctionCall(*methods);
         continue;
       }
 
@@ -155,19 +162,18 @@ void DataflowPass::transfer(
 
       logout("call fnname = " << fnName)
 
-          if (this->reallocFunctions.count(fnName)) {
-        for (std::string aliasArg : allAliases) {
-          MethodsSet* methods = inputProgramPoint.getProgramVariableByCleanedNameRef(aliasArg)->getMethodsSetRef();
+        if (this->reallocFunctions.count(fnName)) {
+
+          MethodsSet* methods = inputProgramPoint.getOnlyMainProgramVariableByCleanedNameRef(arg)->getMethodsSetRef();
+          logout("GETMAIN-3 ON '" << arg << "'")
           this->onReallocFunctionCall(*methods, fnName);
-        }
         continue;
       }
 
       if (this->safeFunctions.count(fnName)) {
-        for (std::string aliasArg : allAliases) {
-          MethodsSet* methods = inputProgramPoint.getProgramVariableByCleanedNameRef(aliasArg)->getMethodsSetRef();
-          this->onSafeFunctionCall(*methods, fnName);
-        }
+        MethodsSet* methods = inputProgramPoint.getOnlyMainProgramVariableByCleanedNameRef(arg)->getMethodsSetRef();
+        logout("GETMAIN-4 ON '" << arg << "'")
+        this->onSafeFunctionCall(*methods, fnName);
         continue;
       }
 
@@ -186,16 +192,14 @@ void DataflowPass::transfer(
       bool loopBroken = false;
       for (auto Pair : this->memoryFunctions) {
         if (fnName == Pair.first) {
-          for (std::string aliasArg : allAliases) {
-            logout("not calling onalloc for "
-                   << aliasArg << " of fnName " << fnName << " and inst "
-                   << *instruction << " and just returning now") return;
-          }
+          logout("not calling onalloc for "
+                  << arg << " of fnName " << fnName << " and inst "
+                  << *instruction << " and just returning now") return;
+        
         } else if (fnName == Pair.second) {
-          for (std::string aliasArg : allAliases) {
-            MethodsSet* methods = inputProgramPoint.getProgramVariableByCleanedNameRef(aliasArg)->getMethodsSetRef();
-            this->onDeallocationFunctionCall(*methods, fnName);
-          }
+          MethodsSet* methods = inputProgramPoint.getOnlyMainProgramVariableByCleanedNameRef(arg)->getMethodsSetRef();
+          logout("GETMAIN-5 ON '" << arg << "'")
+          this->onDeallocationFunctionCall(*methods, fnName);
           loopBroken = true;
           break;
         }
@@ -205,20 +209,21 @@ void DataflowPass::transfer(
         continue;
       }
 
+      if (fnName == "llvm.dbg.declare") {
+        continue; 
+      }
+
       // only cases here are calls to functions not already seen before
 
-      logout("also unknown functionc call " << fnName)
+      logout("also unknown function call " << fnName)
 
-          // annotation reasoning goes here ...
+      // TODO: annotation reasoning goes here
 
-          // if no annotations, treat it as unknown function
-        for (std::string aliasArg : allAliases) {
-          logout("pre get " << aliasArg)
-          MethodsSet* methods = inputProgramPoint.getProgramVariableByCleanedNameRef(aliasArg)->getMethodsSetRef();
-          logout("post got")
-          this->onUnknownFunctionCall(*methods);
-          logout("post call")
-        }
+      // if no annotations, treat it as unknown function
+      MethodsSet* methods = inputProgramPoint.getOnlyMainProgramVariableByCleanedNameRef(arg)->getMethodsSetRef();
+      logout("GETMAIN-6 ON '" << arg << "'")
+      this->onUnknownFunctionCall(*methods);
+        
     }
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
 
@@ -239,9 +244,11 @@ void DataflowPass::transfer(
           AnnotationType structAnnoType = structAnno->getAnnotationType();
           ProgramVariable sourceVar = ProgramVariable(allocate, i);
 
-          std::set<std::string> aliases =
-              inputProgramPoint.findVarAndNamedAliases(
-                  sourceVar.getCleanedName());
+          std::string arg = sourceVar.getCleanedName();
+          if (!sourceVar.isIdentifier()) {
+            continue;
+          }
+
 
           logout("found annotation " << dataflow::setToString(structMethods)
                                      << " "
@@ -249,14 +256,14 @@ void DataflowPass::transfer(
                                      << " for field index " << i << " var name "
                                      << sourceVar.getRawName())
 
-              for (std::string alias : aliases) {
-            for (std::string methodName : structMethods) {
-              MethodsSet* methods = inputProgramPoint.getProgramVariableByCleanedNameRef(methodName)->getMethodsSetRef();
-              logout("alias = '"
-                     << alias << "' method name = '" << methodName
-                     << "'") this->onAnnotation(*methods,
-                                                methodName, structAnnoType);
-            }
+
+          for (std::string methodName : structMethods) {
+            MethodsSet* methods = inputProgramPoint.getOnlyMainProgramVariableByCleanedNameRef(arg)->getMethodsSetRef();
+            logout("GETMAIN-7 ON '" << arg << "'")
+            logout("var = '"
+                    << arg << "' method name = '" << methodName
+                    << "'") 
+            this->onAnnotation(*methods, methodName, structAnnoType);
           }
         }
       }
@@ -273,21 +280,13 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &PreProgramFunction,
     llvm::SetVector<Instruction *> instructions = cfg->getInstructions();
 
     
-    ProgramPoint postProgramPoint = PostProgramFunction.getProgramPoint(currentBranch); 
+    ProgramPoint postProgramPoint = this->programFunction.getProgramPoint(currentBranch);
 
     for (Instruction *instruction : instructions) {
       transfer(instruction, instructions, postProgramPoint);
     }
 
-    logout("@DFP point name " << postProgramPoint.getName());
-    for (auto var : postProgramPoint.getProgramVariables()) {
-      logout("var name " << var.getCleanedName())
-      std::set<std::string> methods = var.getMethodsSet().getMethods(); 
-      logout("methods set " << dataflow::setToString(methods))
-      for (auto alias : var.getAllAliases(false)) {
-        logout(">>alias " << alias)
-      }
-    }
+    PostProgramFunction.addProgramPoint(postProgramPoint);
 
     for (CFG *succ : cfg->getSuccessors()) {
       analyzeCFG(succ, PreProgramFunction, PostProgramFunction, currentBranch);
@@ -297,78 +296,126 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &PreProgramFunction,
 
   else {
 
-    ProgramPoint PriorPrePoint = PreProgramFunction.getProgramPoint(currentBranch);
-    ProgramPoint PriorPostPoint = PostProgramFunction.getProgramPoint(currentBranch);
+    ProgramPoint* PriorPrePoint = PreProgramFunction.getProgramPointRef(currentBranch);
+    ProgramPoint* PriorPostPoint = PostProgramFunction.getProgramPointRef(currentBranch);
 
+    PriorPostPoint->add(this->programFunction.getProgramPoint(currentBranch));
     
-    if (PriorPrePoint.getProgramVariables().size() > 0) {
+    if (PriorPrePoint->getProgramVariables().size() > 0) {
       logout("need to lub for " << currentBranch << " " << priorBranch)
 
-      ProgramPoint CurrentPrePoint = PostProgramFunction.getProgramPoint(priorBranch);
+      logout("\n\nPRIOR PRE POINT") 
+      logout("**point name " << PriorPrePoint->getName());
+      for (auto var : PriorPrePoint->getProgramVariables()) {
+        logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
+        std::set<std::string> methods = var.getMethodsSet().getMethods(); 
+        logout("methods set " << dataflow::setToString(methods))
+
+        auto aliases = var.getAllAliases(false);
+        auto aliasesStr = dataflow::setToString(aliases);
+        logout(">>aliases " << aliasesStr)
+      }
+  
+
+      logout("\n\nPRIOR POST POINT") 
+      logout("**point name " << PriorPostPoint->getName());
+      for (auto var : PriorPostPoint->getProgramVariables()) {
+        logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
+        std::set<std::string> methods = var.getMethodsSet().getMethods(); 
+        logout("methods set " << dataflow::setToString(methods))
+
+        auto aliases = var.getAllAliases(false);
+        auto aliasesStr = dataflow::setToString(aliases);
+        logout(">>aliases " << aliasesStr)
+      }
+  
+      
+
+      ProgramPoint* CurrentPrePoint = PostProgramFunction.getProgramPointRef(priorBranch);
 
       // check if inputs (pre) differ
-      if (CurrentPrePoint.equals(PriorPrePoint)) {
+      if (CurrentPrePoint->equals(*PriorPrePoint)) {
         return;
       }
 
       // lub PriorPreCM and CurrentPreCM
       ProgramPoint lub(currentBranch);
 
-      std::list<ProgramVariable> priorPreVars = PriorPrePoint.getProgramVariables();
+      std::list<ProgramVariable> priorPreVars = PriorPrePoint->getProgramVariables();
+
+      logout("P0")
+
       for (ProgramVariable pv : priorPreVars) {
-        MethodsSet lubSet;
-        Value* pvVal = pv.getValue(); 
+        auto s = pv.getAllAliases(true); 
+        logout("LOGGING " << pv.getCleanedName() << " " << dataflow::setToString(s))
+        std::set<std::string> lubSet;
 
-        MethodsSet priorPreMethodsSet = pv.getMethodsSet();
-        MethodsSet currentPreMethodsSet = CurrentPrePoint.getProgramVariableByValue(pvVal).getMethodsSet();
+        std::set<std::string> priorPreSet = pv.getMethodsSet().getMethods();
+        std::set<std::string> currentPreSet = CurrentPrePoint->getOnlyMainPVCleanNameGenericIfNotFound(pv.getCleanedName())->getMethodsSet().getMethods();
 
-        this->leastUpperBound(priorPreMethodsSet, currentPreMethodsSet, lubSet);
 
-        ProgramVariable lubPV = ProgramVariable(pvVal, lubSet);
-        lub.addVariable(lubPV);
+
+        this->leastUpperBound(priorPreSet, currentPreSet, lubSet);
+
+        MethodsSet lubMethodsSet = MethodsSet(lubSet);
+        pv.setMethodsSet(lubMethodsSet);
+
+        lub.addVariable(pv);
+
       }
+
+      logout("P1")
 
       // fill the lub with remaining facts from PriorPostPoint 
-      std::list<ProgramVariable> priorPostVars = PriorPostPoint.getProgramVariables();
-      for (ProgramVariable pv : priorPostVars) {
-        Value* pvVal = pv.getValue(); 
-        MethodsSet methods = pv.getMethodsSet();
-        if (lub.getProgramVariableByValue(pvVal).getMethodsSet().isUninit()) {
-          ProgramVariable priorPostVar = ProgramVariable(pvVal, methods);
-          lub.addVariable(priorPostVar);
-        }
-      }
+      lub.add(*PriorPostPoint);
+
+
+      logout("P2")
 
       PreProgramFunction.setProgramPoint(currentBranch, lub);
+
+      logout("P3")
 
       llvm::SetVector<Instruction *> instructions = cfg->getInstructions();
       for (Instruction *instruction : instructions) {
         transfer(instruction, instructions, lub);
       }
 
+      logout("P4")
+
+
       PostProgramFunction.setProgramPoint(currentBranch, lub); 
+
+      logout("P5")
+
 
       for (CFG *succ : cfg->getSuccessors()) {
         analyzeCFG(succ, PreProgramFunction, PostProgramFunction, currentBranch);
       }
 
+
     } else {
       logout("doing normal flow for " << currentBranch
                                       << " and prior = " << priorBranch)
-      
-      ProgramPoint priorPostPoint = PostProgramFunction.getProgramPoint(priorBranch);
 
-      PreProgramFunction.getProgramPoint(currentBranch).setProgramVariables(priorPostPoint.getProgramVariables());
+
+      
+      ProgramPoint* priorPostPoint = PostProgramFunction.getProgramPointRef(priorBranch);
+
+      PreProgramFunction.getProgramPointRef(currentBranch)->setProgramVariables(priorPostPoint->getProgramVariables());
 
       llvm::SetVector<Instruction *> instructions = cfg->getInstructions();
 
-      ProgramPoint flowInto = PostProgramFunction.getProgramPoint(priorBranch);
+      ProgramPoint flowInto = ProgramPoint(currentBranch);
+      flowInto.setProgramVariables(PostProgramFunction.getProgramPointRef(priorBranch)->getProgramVariables());
 
+      flowInto.add(this->programFunction.getProgramPoint(currentBranch));
+      
       for (Instruction *instruction : instructions) {
         transfer(instruction, instructions, flowInto);
       }
 
-      PostProgramFunction.getProgramPoint(currentBranch).setProgramVariables(flowInto.getProgramVariables());
+      PostProgramFunction.getProgramPointRef(currentBranch)->setProgramVariables(flowInto.getProgramVariables());
 
       for (CFG *succ : cfg->getSuccessors()) {
         analyzeCFG(succ, PreProgramFunction, PostProgramFunction, currentBranch);

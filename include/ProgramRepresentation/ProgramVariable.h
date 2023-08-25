@@ -59,6 +59,8 @@ public:
   // checks if value's name (maybe with % or @) equals other name
   bool equalsRawName(std::string otherRawName);
 
+  bool equals(ProgramVariable other); 
+
   void addAlias(ProgramVariable pv);
 
   bool isIdentifier();

@@ -28,11 +28,24 @@ public:
   ProgramVariable getProgramVariableByCleanedName(std::string cleanedName);
   ProgramVariable* getProgramVariableByCleanedNameRef(std::string cleanedName);
 
+  ProgramVariable* getOnlyMainProgramVariableByCleanedNameRef(std::string cleanedName);
+  ProgramVariable getOnlyMainProgramVariableByCleanedName(std::string cleanedName);
+
+  ProgramVariable* getOnlyMainPVCleanNameGenericIfNotFound(std::string cleanedName);
+
   std::set<std::string> findVarAndNamedAliases(std::string cleanedName);
 
   std::string getName(); 
 
   bool equals(ProgramPoint programPoint); 
+
+  void add(ProgramPoint otherPoint);
+
+  bool programVariableExistsByCleanedName(std::string cleanedName);
+
+  bool checkMainHeadExists(std::string cleanedName);
+
+  void fillAlias(std::string varNameCleaned, ProgramVariable variable);
 
   static ProgramPoint copy(ProgramPoint programPoint);
 };

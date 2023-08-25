@@ -21,7 +21,7 @@ ProgramVariable::ProgramVariable(Value *value, MethodsSet methods) {
   this->rawName = dataflow::variable(value);
   this->cleanedName = this->rawName;
   this->fixNameAndIdentifier();
-  this->methods = MethodsSet::copy(methods); 
+  this->methods = methods; 
 }
 
 
@@ -61,6 +61,18 @@ bool ProgramVariable::equalsCleanedName(std::string otherName) {
 
 bool ProgramVariable::equalsRawName(std::string otherRawName) {
   return this->rawName.compare(otherRawName) == 0;
+}
+
+bool ProgramVariable::equals(ProgramVariable other) {
+  if (this->getCleanedName() != other.getCleanedName()) {
+    return false; 
+  }
+
+  if (!this->getMethodsSet().equals(other.getMethodsSet())) {
+    return false; 
+  }
+
+  return true; 
 }
 
 void ProgramVariable::addAlias(ProgramVariable pv) {

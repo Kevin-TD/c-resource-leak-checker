@@ -11,9 +11,7 @@ void CalledMethods::onDeallocationFunctionCall(MethodsSet &input,
   input.addMethod(fnName);
 }
 void CalledMethods::onUnknownFunctionCall(MethodsSet &input) {
-  logout("pre clear")
   input.clearMethods(); 
-  logout("post clear")
 }
 void CalledMethods::onReallocFunctionCall(MethodsSet &input,
                                           std::string &fnName) {
@@ -21,16 +19,13 @@ void CalledMethods::onReallocFunctionCall(MethodsSet &input,
 }
 void CalledMethods::onSafeFunctionCall(MethodsSet &input,
                                        std::string &fnName) {}
-void CalledMethods::leastUpperBound(MethodsSet &preMethods,
-                                    MethodsSet &curMethods,
-                                    MethodsSet &result) {
-  std::set<std::string> res;
+void CalledMethods::leastUpperBound(std::set<std::string> &preMethods,
+                                    std::set<std::string> &curMethods,
+                                    std::set<std::string> &result) {
+  std::set_intersection(preMethods.begin(), preMethods.end(),
+                 curMethods.begin(), curMethods.end(),
+                 std::inserter(result, result.begin()));
 
-  std::set_intersection(preMethods.getMethods().begin(), preMethods.getMethods().end(),
-                 curMethods.getMethods().begin(), curMethods.getMethods().end(),
-                 std::inserter(res, res.begin()));
-                 
-  result.setMethods(res);
 }
 
 void CalledMethods::onAnnotation(MethodsSet &input,

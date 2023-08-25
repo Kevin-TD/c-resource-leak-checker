@@ -40,6 +40,29 @@ void ProgramPoint::addVariable(ProgramVariable programVar) {
   this->programVariables.push_back(programVar);
 }
 
+void ProgramPoint::fillAlias(std::string varNameCleaned, ProgramVariable variable) {
+  for (ProgramVariable& pv : this->programVariables) {
+    if (varNameCleaned != pv.getCleanedName()) {
+      continue;
+    }
+
+    bool add = true; 
+
+    for (std::string alias : pv.getAllAliases(true)) {
+      if (alias == variable.getCleanedName()) {
+        add = false; 
+      } 
+    }
+
+    if (add) {
+      logout("FILLING WITH ALIAS " << variable.getCleanedName() << " FOR HEAD VAR " << pv.getCleanedName() << " RAW NAME " << pv.getRawName())
+      pv.addAlias(variable);
+      return; 
+    }
+  }
+
+}
+
 std::list<ProgramVariable> ProgramPoint::getProgramVariables() {
   return this->programVariables;
 }
@@ -111,6 +134,7 @@ ProgramVariable ProgramPoint::getProgramVariableByCleanedName(std::string cleane
   }
   ProgramVariable newPV = ProgramVariable(cleanedName);
   this->programVariables.push_back(newPV); 
+  logout("3.MAKING NEW FOR " << cleanedName)
   return newPV; 
 }
 
@@ -128,7 +152,58 @@ ProgramVariable* ProgramPoint::getProgramVariableByCleanedNameRef(std::string cl
   }
   ProgramVariable newPV = ProgramVariable(cleanedName);
   this->addVariable(newPV); 
+  logout("2.MAKING NEW FOR " << cleanedName)
   return getProgramVariableByCleanedNameRef(cleanedName);
+}
+
+ProgramVariable* ProgramPoint::getOnlyMainProgramVariableByCleanedNameRef(std::string cleanedName) {
+  for (ProgramVariable& pv : this->programVariables) {
+    if (pv.getCleanedName() == cleanedName) {
+      return &pv;
+    }
+
+    for (ProgramVariable* alias : pv.generatePVptrAliases()) {
+      if (alias->getCleanedName() == cleanedName) {
+        return &pv;
+      }
+    }
+  }
+  ProgramVariable newPV = ProgramVariable(cleanedName);
+  this->addVariable(newPV); 
+  logout("1.MAKING NEW FOR " << cleanedName)
+  return getOnlyMainProgramVariableByCleanedNameRef(cleanedName);
+}
+
+ProgramVariable* ProgramPoint::getOnlyMainPVCleanNameGenericIfNotFound(std::string cleanedName) {
+  for (ProgramVariable& pv : this->programVariables) {
+    if (pv.getCleanedName() == cleanedName) {
+      return &pv;
+    }
+
+    for (ProgramVariable* alias : pv.generatePVptrAliases()) {
+      if (alias->getCleanedName() == cleanedName) {
+        return &pv;
+      }
+    }
+  }
+  return new ProgramVariable(); 
+}
+
+ProgramVariable ProgramPoint::getOnlyMainProgramVariableByCleanedName(std::string cleanedName) {
+  for (ProgramVariable pv : this->programVariables) {
+    if (pv.getCleanedName() == cleanedName) {
+      return pv;
+    }
+
+    for (ProgramVariable* alias : pv.generatePVptrAliases()) {
+      if (alias->getCleanedName() == cleanedName) {
+        return pv;
+      }
+    }
+  }
+  ProgramVariable newPV = ProgramVariable(cleanedName);
+  this->addVariable(newPV); 
+  return getOnlyMainProgramVariableByCleanedName(cleanedName);
 }
 
 bool ProgramPoint::equals(ProgramPoint programPoint) {
@@ -137,22 +212,50 @@ bool ProgramPoint::equals(ProgramPoint programPoint) {
   }
   
   for (ProgramVariable pv1 : this->programVariables) {
-    MethodsSet methods1 = pv1.getMethodsSet(); 
-    Value* value1 = pv1.getValue(); 
+    std::string cleanedName = pv1.getCleanedName();
+    ProgramVariable pv2 = programPoint.getOnlyMainProgramVariableByCleanedName(cleanedName);
 
-    for (ProgramVariable pv2 : programPoint.getProgramVariables()) {
-      Value* value2 = pv2.getValue(); 
-      MethodsSet methods2 = pv2.getMethodsSet(); 
+    if (!pv1.equals(pv2)) {
+      return false; 
+    }
+  }
 
-      if (value1 == value2 && methods1.getMethods() != methods2.getMethods()) {
-        return false; 
-      }
+  for (ProgramVariable pv2 : programPoint.getProgramVariables()) {
+    std::string cleanedName = pv2.getCleanedName();
+    ProgramVariable pv1 = this->getOnlyMainProgramVariableByCleanedName(cleanedName);
+
+    if (!pv2.equals(pv1)) {
+      return false; 
     }
   }
 
   return true; 
+}
 
+bool ProgramPoint::programVariableExistsByCleanedName(std::string cleanedName) {
+  for (ProgramVariable pv : this->programVariables) {
+    if (pv.getCleanedName() == cleanedName) {
+      return true;
+    }
 
+    for (ProgramVariable* alias : pv.generatePVptrAliases()) {
+      if (alias->getCleanedName() == cleanedName) {
+        return true;
+      }
+    }
+  }
+  
+  return false;
+}
+
+bool ProgramPoint::checkMainHeadExists(std::string cleanedName) {
+  for (ProgramVariable pv : this->programVariables) {
+    if (pv.getCleanedName() == cleanedName) {
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 void ProgramPoint::setProgramVariables(std::list<ProgramVariable> programVariables) {
@@ -169,4 +272,23 @@ ProgramPoint ProgramPoint::copy(ProgramPoint programPoint) {
   programPointClone.setProgramVariables(programVariablesClone);
   
   return programPointClone;
+}
+
+void ProgramPoint::add(ProgramPoint otherPoint) {
+  for (ProgramVariable pv : otherPoint.getProgramVariables()) {
+    std::string pvCleanedName = pv.getCleanedName();
+    
+    if (this->checkMainHeadExists(pvCleanedName)) {
+
+      for (ProgramVariable pvAlias : pv.getPValiases()) {
+        this->fillAlias(pvCleanedName, pvAlias);
+
+      }
+    } else {
+      logout("ADDING VAR " << pvCleanedName)
+      logout("raw name " << pv.getRawName())
+      this->addVariable(pv);
+    }
+
+  }
 }

@@ -11,6 +11,8 @@ bool TestRunner::runTests(const std::string functionName,
   logout("Function Name Test Running = "
          << functionName) 
 
+
+
   ProgramFunction function = expectedResult.getProgramFunction(functionName); 
   std::list<ProgramPoint> points = function.getProgramPoints();
 
@@ -20,6 +22,7 @@ bool TestRunner::runTests(const std::string functionName,
     if (branchName == "") {
       branchName = lastBranchName; 
     }
+
     logout("branch = " << branchName)
 
     std::list<ProgramVariable> vars = point.getProgramVariables(); 
@@ -27,7 +30,7 @@ bool TestRunner::runTests(const std::string functionName,
       std::string varName = var.getCleanedName();
 
       MethodsSet expectedMethodsSet = var.getMethodsSet();
-      MethodsSet receivedMethodsSet = receivedResult.getProgramPoint(branchName).getProgramVariableByCleanedName(varName).getMethodsSet(); 
+      MethodsSet receivedMethodsSet = receivedResult.getProgramPointRef(branchName)->getOnlyMainPVCleanNameGenericIfNotFound(varName)->getMethodsSet(); 
 
       std::set<std::string> expectedSet = expectedMethodsSet.getMethods(); 
       std::string expectedSetString = dataflow::setToString(expectedSet);
@@ -121,9 +124,9 @@ FullProgram TestRunner::buildExpectedResults(std::string testName,
       }
 
       if (passName == inputPassName) {
-        expectedResult.getProgramFunction(functionName).getProgramPoint(branchName).getProgramVariableByCleanedName(varName).setMethodsSet(methodsSet);
+        expectedResult.getProgramFunctionRef(functionName)->getProgramPointRef(branchName)->getProgramVariableByCleanedNameRef(varName)->setMethodsSet(methodsSet);
         
-      }
+      }   
     }
   }
 

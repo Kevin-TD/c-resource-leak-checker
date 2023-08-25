@@ -46,13 +46,6 @@ std::string ProgramFunction::getName() {
 }
 
 void ProgramFunction::setProgramPoint(std::string name, ProgramPoint programPoint) {
-    ProgramPoint* maybeDefinedPoint = this->getProgramPointRef(name); 
-
-    if (maybeDefinedPoint->getName().size() != 0) {
-       maybeDefinedPoint->setProgramVariables(
-            ProgramPoint::copy(programPoint).getProgramVariables()
-        ); 
-    } else {
-        this->programPoints.push_back(programPoint); 
-    }
+    ProgramPoint* programPointRef = this->getProgramPointRef(name); 
+    programPointRef->setProgramVariables(programPoint.getProgramVariables());
 }

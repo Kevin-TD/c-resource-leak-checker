@@ -10,6 +10,7 @@ MethodsSet::MethodsSet(std::set<std::string> methods) {
 }
 
 void MethodsSet::setMethods(std::set<std::string> methods) {
+    this->methods.clear();
     this->methods = methods; 
     this->setIsUninit = false; 
 }
@@ -20,6 +21,18 @@ std::set<std::string> MethodsSet::getMethods() {
 
 bool MethodsSet::isUninit() {
     return this->setIsUninit; 
+}
+
+bool MethodsSet::equals(MethodsSet otherMethodsSet) {
+    if (this->isUninit() != otherMethodsSet.isUninit()) {
+        return false;
+    }
+
+    if (this->getMethods() != otherMethodsSet.getMethods()) {
+        return false; 
+    }
+
+    return true; 
 }
 
 void MethodsSet::addMethod(std::string method) {

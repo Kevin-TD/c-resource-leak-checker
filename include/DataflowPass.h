@@ -23,9 +23,9 @@ protected:
 
   void analyzeCFG(CFG *cfg, ProgramFunction &PreProgramFunction,
                   ProgramFunction &PostProgramFunction, std::string priorBranch);
-  virtual void leastUpperBound(MethodsSet &preMethods,
-                               MethodsSet &curMethods,
-                               MethodsSet &result) = 0;
+  virtual void leastUpperBound(std::set<std::string> &preMethods,
+                               std::set<std::string> &curMethods,
+                               std::set<std::string> &result) = 0;
 
   void transfer(Instruction *instruction, SetVector<Instruction *> workSet,
                 ProgramPoint& inputProgramPoint);

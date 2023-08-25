@@ -18,16 +18,13 @@ void MustCall::onReallocFunctionCall(MethodsSet &input,
 void MustCall::onSafeFunctionCall(MethodsSet &input,
                                   std::string &fnName) {}
 
-void MustCall::leastUpperBound(MethodsSet &preMethods,
-                               MethodsSet &curMethods,
-                               MethodsSet &result) {
-  std::set<std::string> res;
-
-  std::set_union(preMethods.getMethods().begin(), preMethods.getMethods().end(),
-                 curMethods.getMethods().begin(), curMethods.getMethods().end(),
-                 std::inserter(res, res.begin()));
+void MustCall::leastUpperBound(std::set<std::string> &preMethods,
+                               std::set<std::string> &curMethods,
+                               std::set<std::string> &result) {
+  std::set_union(preMethods.begin(), preMethods.end(),
+                 curMethods.begin(), curMethods.end(),
+                 std::inserter(result, result.begin()));
                  
-  result.setMethods(res);
 }
 void MustCall::onAnnotation(MethodsSet &input, std::string &fnName,
                             AnnotationType annotationType) {
