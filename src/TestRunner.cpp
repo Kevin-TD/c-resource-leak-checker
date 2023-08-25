@@ -8,34 +8,36 @@ bool TestRunner::runTests(const std::string functionName,
                           ProgramFunction receivedResult) {
   bool testPassed = EXIT_SUCCESS;
 
-  logout("Function Name Test Running = "
-         << functionName) 
+  logout("Function Name Test Running = " << functionName)
 
-
-
-  ProgramFunction function = expectedResult.getProgramFunction(functionName); 
+      ProgramFunction function =
+          expectedResult.getProgramFunction(functionName);
   std::list<ProgramPoint> points = function.getProgramPoints();
 
   for (ProgramPoint point : points) {
     std::string branchName = point.getName();
 
     if (branchName == "") {
-      branchName = lastBranchName; 
+      branchName = lastBranchName;
     }
 
     logout("branch = " << branchName)
 
-    std::list<ProgramVariable> vars = point.getProgramVariables(); 
+        std::list<ProgramVariable>
+            vars = point.getProgramVariables();
     for (ProgramVariable var : vars) {
       std::string varName = var.getCleanedName();
 
       MethodsSet expectedMethodsSet = var.getMethodsSet();
-      MethodsSet receivedMethodsSet = receivedResult.getProgramPointRef(branchName)->getOnlyMainPVCleanNameGenericIfNotFound(varName)->getMethodsSet(); 
+      MethodsSet receivedMethodsSet =
+          receivedResult.getProgramPointRef(branchName, true)
+              ->getPVRef(varName, true)
+              ->getMethodsSet();
 
-      std::set<std::string> expectedSet = expectedMethodsSet.getMethods(); 
+      std::set<std::string> expectedSet = expectedMethodsSet.getMethods();
       std::string expectedSetString = dataflow::setToString(expectedSet);
 
-      std::set<std::string> receivedSet = receivedMethodsSet.getMethods(); 
+      std::set<std::string> receivedSet = receivedMethodsSet.getMethods();
       std::string receivedSetString = dataflow::setToString(receivedSet);
 
       errs() << "Test for branch name = " << branchName
@@ -49,7 +51,6 @@ bool TestRunner::runTests(const std::string functionName,
       }
       errs() << "EXPECTED " << expectedSetString << "\n";
       errs() << "RECEIVED " << receivedSetString << "\n\n";
-
     }
   }
 
@@ -57,7 +58,7 @@ bool TestRunner::runTests(const std::string functionName,
 }
 
 FullProgram TestRunner::buildExpectedResults(std::string testName,
-                                                       std::string passName) {
+                                             std::string passName) {
   std::ifstream testFile("../test/" + testName + ".txt");
   std::string line;
   FullProgram expectedResult(testName);
@@ -124,9 +125,11 @@ FullProgram TestRunner::buildExpectedResults(std::string testName,
       }
 
       if (passName == inputPassName) {
-        expectedResult.getProgramFunctionRef(functionName)->getProgramPointRef(branchName)->getProgramVariableByCleanedNameRef(varName)->setMethodsSet(methodsSet);
-        
-      }   
+        expectedResult.getProgramFunctionRef(functionName)
+            ->getProgramPointRef(branchName, true)
+            ->getPVRef(varName, true)
+            ->setMethodsSet(methodsSet);
+      }
     }
   }
 

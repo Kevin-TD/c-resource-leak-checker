@@ -5,12 +5,12 @@
 #include "Annotations/ParameterAnnotation.h"
 #include "Annotations/ReturnAnnotation.h"
 #include "Annotations/StructAnnotation.h"
-#include "ProgramRepresentation/FullProgram.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "DataflowPass.h"
 #include "Debug.h"
 #include "MustCall.h"
+#include "ProgramRepresentation/FullProgram.h"
 #include "RunAnalysis.h"
 #include "TestRunner.h"
 #include "Utils.h"
@@ -204,7 +204,8 @@ void doAliasReasoning(Instruction *instruction,
     }
   }
 
-  ProgramPoint* programPoint = programFunction.getProgramPointRef(branchName);
+  ProgramPoint *programPoint =
+      programFunction.getProgramPointRef(branchName, true);
 
   if (!includes) {
     realBranchOrder.push_back(branchName);
@@ -249,7 +250,6 @@ void doAliasReasoning(Instruction *instruction,
     }
 
     programPoint->addAlias(varToStore, receivingVar);
-
 
   } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
     ProgramVariable sourceVar = ProgramVariable(bitcast);
@@ -338,8 +338,7 @@ void doAliasReasoning(Instruction *instruction,
   }
 }
 
-void CalledMethodsAnalysis::doAnalysis(Function &F,
-                                       std::string optLoadFileName) {
+void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   SetVector<Instruction *> WorkSet;
   std::string fnName = F.getName().str();
 
@@ -423,47 +422,52 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
   ProgramFunction PostCalledMethods = calledMethods.generatePassResults();
   ProgramFunction PostMustCalls = mustCall.generatePassResults();
 
-  logout("\n\nPROGRAM FUNCTION for " << programFunction.getName())
-  for (auto point : programFunction.getProgramPoints()) {
-      logout("\n**point name " << point.getName());
-      for (auto var : point.getProgramVariables()) {
-        logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
-        std::set<std::string> methods = var.getMethodsSet().getMethods(); 
-        logout("methods set " << dataflow::setToString(methods))
+  logout(
+      "\n\nPROGRAM FUNCTION for "
+      << programFunction.getName()) for (auto point :
+                                         programFunction.getProgramPoints()) {
+    logout("\n**point name " << point.getName());
+    for (auto var : point.getProgramVariables()) {
+      logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
+          std::set<std::string>
+              methods = var.getMethodsSet().getMethods();
+      logout("methods set " << dataflow::setToString(methods))
 
-        auto aliases = var.getAllAliases(true);
-        auto aliasesStr = dataflow::setToString(aliases);
-        logout(">>aliases " << aliasesStr)
-      }
+          auto aliases = var.getAllAliases(true);
+      auto aliasesStr = dataflow::setToString(aliases);
+      logout(">>aliases " << aliasesStr)
+    }
   }
 
-  logout("\n\nCALLED METHODS RESULT") 
-  for (auto point : PostCalledMethods.getProgramPoints()) {
-      logout("\n**point name " << point.getName());
-      for (auto var : point.getProgramVariables()) {
-        logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
-        std::set<std::string> methods = var.getMethodsSet().getMethods(); 
-        logout("methods set " << dataflow::setToString(methods))
+  logout(
+      "\n\nCALLED METHODS RESULT") for (auto point :
+                                        PostCalledMethods.getProgramPoints()) {
+    logout("\n**point name " << point.getName());
+    for (auto var : point.getProgramVariables()) {
+      logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
+          std::set<std::string>
+              methods = var.getMethodsSet().getMethods();
+      logout("methods set " << dataflow::setToString(methods))
 
-        auto aliases = var.getAllAliases(true);
-        auto aliasesStr = dataflow::setToString(aliases);
-        logout(">>aliases " << aliasesStr)
-      }
+          auto aliases = var.getAllAliases(true);
+      auto aliasesStr = dataflow::setToString(aliases);
+      logout(">>aliases " << aliasesStr)
+    }
   }
-  
 
-      logout("\n\nMUST CALL RESULT") 
-      for (auto point : PostMustCalls.getProgramPoints()) {
-      logout("\n**point name " << point.getName());
-      for (auto var : point.getProgramVariables()) {
-        logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
-        std::set<std::string> methods = var.getMethodsSet().getMethods(); 
-        logout("methods set " << dataflow::setToString(methods))
+  logout("\n\nMUST CALL RESULT") for (auto point :
+                                      PostMustCalls.getProgramPoints()) {
+    logout("\n**point name " << point.getName());
+    for (auto var : point.getProgramVariables()) {
+      logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
+          std::set<std::string>
+              methods = var.getMethodsSet().getMethods();
+      logout("methods set " << dataflow::setToString(methods))
 
-        auto aliases = var.getAllAliases(true);
-        auto aliasesStr = dataflow::setToString(aliases);
-        logout(">>aliases " << aliasesStr)
-      }
+          auto aliases = var.getAllAliases(true);
+      auto aliasesStr = dataflow::setToString(aliases);
+      logout(">>aliases " << aliasesStr)
+    }
   }
 
   errs() << "\n\nRUNNING CALLED METHODS TESTS - "
@@ -485,7 +489,7 @@ void CalledMethodsAnalysis::doAnalysis(Function &F,
   }
 }
 
-void CalledMethodsAnalysis::onEnd() {
+void CodeAnalyzer::onEnd() {
   if (anyTestFailed) {
     std::exit(EXIT_FAILURE);
   } else {

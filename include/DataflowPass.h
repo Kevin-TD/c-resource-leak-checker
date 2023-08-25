@@ -3,13 +3,13 @@
 
 #include "Annotations/Annotation.h"
 #include "Annotations/AnnotationHandler.h"
-#include "Annotations/StructAnnotation.h"
 #include "Annotations/ErrorAnnotation.h"
 #include "Annotations/FunctionAnnotation.h"
 #include "Annotations/ParameterAnnotation.h"
 #include "Annotations/ReturnAnnotation.h"
-#include "ProgramRepresentation/FullProgram.h"
+#include "Annotations/StructAnnotation.h"
 #include "CFG.h"
+#include "ProgramRepresentation/FullProgram.h"
 #include "RunAnalysis.h"
 #include "Utils.h"
 
@@ -22,13 +22,14 @@ protected:
   FullProgram expectedResult;
 
   void analyzeCFG(CFG *cfg, ProgramFunction &PreProgramFunction,
-                  ProgramFunction &PostProgramFunction, std::string priorBranch);
+                  ProgramFunction &PostProgramFunction,
+                  std::string priorBranch);
   virtual void leastUpperBound(std::set<std::string> &preMethods,
                                std::set<std::string> &curMethods,
                                std::set<std::string> &result) = 0;
 
   void transfer(Instruction *instruction, SetVector<Instruction *> workSet,
-                ProgramPoint& inputProgramPoint);
+                ProgramPoint &inputProgramPoint);
   virtual void onAllocationFunctionCall(MethodsSet &input,
                                         std::string &fnName) = 0;
   virtual void onDeallocationFunctionCall(MethodsSet &input,
@@ -36,8 +37,7 @@ protected:
   virtual void onUnknownFunctionCall(MethodsSet &input) = 0;
   virtual void onReallocFunctionCall(MethodsSet &input,
                                      std::string &fnName) = 0;
-  virtual void onSafeFunctionCall(MethodsSet &input,
-                                  std::string &fnName) = 0;
+  virtual void onSafeFunctionCall(MethodsSet &input, std::string &fnName) = 0;
   virtual void onAnnotation(MethodsSet &input, std::string &fnName,
                             AnnotationType annotationType) = 0;
 

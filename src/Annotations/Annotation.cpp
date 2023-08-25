@@ -1,9 +1,9 @@
 #include "Annotations/Annotation.h"
-#include "Annotations/StructAnnotation.h"
 #include "Annotations/ErrorAnnotation.h"
 #include "Annotations/FunctionAnnotation.h"
 #include "Annotations/ParameterAnnotation.h"
 #include "Annotations/ReturnAnnotation.h"
+#include "Annotations/StructAnnotation.h"
 #include "Debug.h"
 #include "Utils.h"
 

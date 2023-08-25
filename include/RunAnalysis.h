@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <fstream>
 #include <iostream>
 #include <iterator>
 #include <list>
@@ -28,15 +29,14 @@
 #include <stack>
 #include <string>
 #include <vector>
-#include <fstream>
 
 using namespace llvm;
 
 namespace dataflow {
 
-struct CalledMethodsAnalysis : public FunctionPass {
+struct CodeAnalyzer : public FunctionPass {
   static char ID;
-  CalledMethodsAnalysis() : FunctionPass(ID) {}
+  CodeAnalyzer() : FunctionPass(ID) {}
 
   /**
    * This function is called for each function F in the input C program

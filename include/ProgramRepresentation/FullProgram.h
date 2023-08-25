@@ -3,6 +3,7 @@
 
 #include "ProgramRepresentation/ProgramFunction.h"
 
+// reflects a file. this class manages all the functions that make up a program.
 class FullProgram {
 private:
   std::list<ProgramFunction> programFunctions;
@@ -12,17 +13,16 @@ private:
 
 public:
   FullProgram();
-  FullProgram(std::string name); 
+  FullProgram(std::string name);
 
   void addProgramFunction(ProgramFunction programFunction);
 
   std::list<ProgramFunction> getProgramFunctions();
-  std::list<ProgramFunction>* getProgramFunctionsRef();
 
   ProgramFunction getProgramFunction(std::string name);
-  ProgramFunction* getProgramFunctionRef(std::string name);
+  ProgramFunction *getProgramFunctionRef(std::string name);
 
-  std::string getName(); 
+  std::string getName();
 };
 
 #endif

@@ -12,7 +12,7 @@ public:
                        FullProgram expectedResult,
                        ProgramFunction receivedResult);
   static FullProgram buildExpectedResults(std::string testName,
-                                                    std::string passName);
+                                          std::string passName);
 };
 
 #endif

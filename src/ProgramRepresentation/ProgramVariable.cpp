@@ -1,9 +1,7 @@
 #include "ProgramRepresentation/ProgramVariable.h"
 #include "Debug.h"
 
-ProgramVariable::ProgramVariable() {
-
-}
+ProgramVariable::ProgramVariable() {}
 
 ProgramVariable::ProgramVariable(std::string cleanedName) {
   this->cleanedName = cleanedName;
@@ -21,9 +19,8 @@ ProgramVariable::ProgramVariable(Value *value, MethodsSet methods) {
   this->rawName = dataflow::variable(value);
   this->cleanedName = this->rawName;
   this->fixNameAndIdentifier();
-  this->methods = methods; 
+  this->methods = methods;
 }
-
 
 ProgramVariable::ProgramVariable(Value *value, int index) {
   this->value = value;
@@ -33,7 +30,7 @@ ProgramVariable::ProgramVariable(Value *value, int index) {
 }
 
 void ProgramVariable::fixNameAndIdentifier() {
-  this->varIsIdentifier = true; 
+  this->varIsIdentifier = true;
   if (this->cleanedName[0] == '%' || this->cleanedName[0] == '@') {
     this->cleanedName.erase(0, 1);
   } else {
@@ -65,14 +62,14 @@ bool ProgramVariable::equalsRawName(std::string otherRawName) {
 
 bool ProgramVariable::equals(ProgramVariable other) {
   if (this->getCleanedName() != other.getCleanedName()) {
-    return false; 
+    return false;
   }
 
   if (!this->getMethodsSet().equals(other.getMethodsSet())) {
-    return false; 
+    return false;
   }
 
-  return true; 
+  return true;
 }
 
 void ProgramVariable::addAlias(ProgramVariable pv) {
@@ -121,42 +118,30 @@ std::set<std::string> ProgramVariable::getAllAliases(bool cleanNames) {
   return allAliases;
 }
 
-MethodsSet ProgramVariable::getMethodsSet() {
-  return this->methods;
-}
+MethodsSet ProgramVariable::getMethodsSet() { return this->methods; }
 
-MethodsSet* ProgramVariable::getMethodsSetRef() {
-  return &this->methods;
-}
+MethodsSet *ProgramVariable::getMethodsSetRef() { return &this->methods; }
 
 std::list<ProgramVariable> ProgramVariable::getPValiases() {
-  return this->aliases; 
+  return this->aliases;
 }
 
-std::list<ProgramVariable>* ProgramVariable::getPValiasesRef() {
-  return &this->aliases; 
+std::list<ProgramVariable> *ProgramVariable::getPValiasesRef() {
+  return &this->aliases;
 }
 
-std::list<ProgramVariable*> ProgramVariable::generatePVptrAliases() {
-  std::list<ProgramVariable*> result;
-  for (ProgramVariable& pv : this->aliases) {
+std::list<ProgramVariable *> ProgramVariable::generatePVptrAliases() {
+  std::list<ProgramVariable *> result;
+  for (ProgramVariable &pv : this->aliases) {
     result.push_back(&pv);
   }
-  return result; 
+  return result;
 }
 
 void ProgramVariable::setMethodsSet(MethodsSet methods) {
-  this->methods = methods; 
+  this->methods = methods;
 }
 
 void ProgramVariable::setAliases(std::list<ProgramVariable> aliases) {
-  this->aliases = aliases; 
-}
-
-ProgramVariable ProgramVariable::copy(ProgramVariable programVariable) {
-  std::list<ProgramVariable> aliasesClone(programVariable.getPValiases());
-  Value* valueClone = programVariable.getValue();
-  ProgramVariable pvClone = ProgramVariable(valueClone);
-  pvClone.setAliases(aliasesClone);
-  return pvClone;
+  this->aliases = aliases;
 }

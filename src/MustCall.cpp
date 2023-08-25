@@ -13,18 +13,14 @@ void MustCall::onAllocationFunctionCall(MethodsSet &input,
 void MustCall::onDeallocationFunctionCall(MethodsSet &input,
                                           std::string &fnName) {}
 void MustCall::onUnknownFunctionCall(MethodsSet &input) {}
-void MustCall::onReallocFunctionCall(MethodsSet &input,
-                                     std::string &fnName) {}
-void MustCall::onSafeFunctionCall(MethodsSet &input,
-                                  std::string &fnName) {}
+void MustCall::onReallocFunctionCall(MethodsSet &input, std::string &fnName) {}
+void MustCall::onSafeFunctionCall(MethodsSet &input, std::string &fnName) {}
 
 void MustCall::leastUpperBound(std::set<std::string> &preMethods,
                                std::set<std::string> &curMethods,
                                std::set<std::string> &result) {
-  std::set_union(preMethods.begin(), preMethods.end(),
-                 curMethods.begin(), curMethods.end(),
-                 std::inserter(result, result.begin()));
-                 
+  std::set_union(preMethods.begin(), preMethods.end(), curMethods.begin(),
+                 curMethods.end(), std::inserter(result, result.begin()));
 }
 void MustCall::onAnnotation(MethodsSet &input, std::string &fnName,
                             AnnotationType annotationType) {

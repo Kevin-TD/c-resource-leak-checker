@@ -3,6 +3,8 @@
 
 #include "ProgramRepresentation/ProgramPoint.h"
 
+// reflects a function from the C code. this class manages a set of points that
+// make up a function
 class ProgramFunction {
 private:
   std::list<ProgramPoint> programPoints;
@@ -11,8 +13,8 @@ private:
   std::string name;
 
 public:
-  ProgramFunction(); 
-  ProgramFunction(std::string name); 
+  ProgramFunction();
+  ProgramFunction(std::string name);
 
   void addProgramPoint(ProgramPoint programPoint);
 
@@ -20,10 +22,15 @@ public:
 
   std::list<ProgramPoint> getProgramPoints();
 
-  ProgramPoint getProgramPoint(std::string name); 
-  ProgramPoint* getProgramPointRef(std::string name); 
+  // returns a program point based off name and, if addNewIfNotFound is true,
+  // creates a new one if it was not found
+  ProgramPoint getProgramPoint(std::string name, bool addNewIfNotFound);
 
-  std::string getName(); 
+  // returns a program point ref based off name and, if addNewIfNotFound is
+  // true, creates a new one if it was nout
+  ProgramPoint *getProgramPointRef(std::string name, bool addNewIfNotFound);
+
+  std::string getName();
 };
 
 #endif

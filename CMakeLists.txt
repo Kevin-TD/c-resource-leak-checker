@@ -12,7 +12,7 @@ include_directories(${LLVM_INCLUDE_DIRS} include)
 link_directories(${LLVM_LIBRARY_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
 
 
-add_llvm_library(CalledMethodsPass MODULE
+add_llvm_library(CodeAnalyzer MODULE
   src/Annotations/AnnotationHandler.cpp
   src/Annotations/Annotation.cpp
   src/Annotations/FunctionAnnotation.cpp
@@ -35,4 +35,4 @@ add_llvm_library(CalledMethodsPass MODULE
   src/Utils.cpp
 )
 
-target_compile_options(CalledMethodsPass PRIVATE -frtti)
+target_compile_options(CodeAnalyzer PRIVATE -frtti)
