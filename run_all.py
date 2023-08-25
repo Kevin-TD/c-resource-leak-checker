@@ -29,7 +29,7 @@ for testFile in testFiles:
 
     if (fileExtension == "c"):
         if os.path.isfile(f"../test/{fileName}.txt"):
-            command = f"clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/{fileName}.c -o ../test/{fileName}.ll ; opt -load CalledMethodsPass.so -CalledMethodsPass ../test/{fileName}.ll"
+            command = f"clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/{fileName}.c -o ../test/{fileName}.ll ; opt -load CodeAnalyzer.so -CodeAnalyzer ../test/{fileName}.ll"
             print(f"running command {command}")
             exit_status = os.system(f"{command}")
             
