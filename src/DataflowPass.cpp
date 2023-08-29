@@ -13,15 +13,15 @@ void DataflowPass::setFunctions(
   this->annotations = annotations;
 }
 
-void DataflowPass::setExpectedResult(FullProgram expectedResult) {
+void DataflowPass::setExpectedResult(FullFile expectedResult) {
   this->expectedResult = expectedResult;
 }
 
 ProgramFunction DataflowPass::generatePassResults() {
-  ProgramFunction PreProgramFunction;
-  ProgramFunction PostProgramFunction;
-  this->analyzeCFG(this->cfg, PreProgramFunction, PostProgramFunction, "");
-  return PostProgramFunction;
+  ProgramFunction preProgramFunction;
+  ProgramFunction postProgramFunction;
+  this->analyzeCFG(this->cfg, preProgramFunction, postProgramFunction, "");
+  return postProgramFunction;
 }
 
 void DataflowPass::setCFG(CFG *cfg) { this->cfg = cfg; }
@@ -60,7 +60,7 @@ void DataflowPass::transfer(Instruction *instruction,
             logout("calling on alloc function for argname "
                    << arg << " and fnname " << fnName
                    << " fnname = " << fnName) this
-                ->onAllocationFunctionCall(*methods,
+                ->onAllocationFunctionCall(methods,
                                            this->memoryFunctions[fnName]);
           }
           break;
@@ -85,7 +85,7 @@ void DataflowPass::transfer(Instruction *instruction,
               std::string arg = bitcastVar.getCleanedName();
               MethodsSet *methods =
                   inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
-              this->onAllocationFunctionCall(*methods,
+              this->onAllocationFunctionCall(methods,
                                              this->memoryFunctions[fnName]);
 
               break;
@@ -129,7 +129,7 @@ void DataflowPass::transfer(Instruction *instruction,
 
         MethodsSet *methods =
             inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
-        this->onUnknownFunctionCall(*methods);
+        this->onUnknownFunctionCall(methods);
         continue;
       }
 
@@ -141,14 +141,14 @@ void DataflowPass::transfer(Instruction *instruction,
 
         MethodsSet *methods =
             inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
-        this->onReallocFunctionCall(*methods, fnName);
+        this->onReallocFunctionCall(methods, fnName);
         continue;
       }
 
       if (this->safeFunctions.count(fnName)) {
         MethodsSet *methods =
             inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
-        this->onSafeFunctionCall(*methods, fnName);
+        this->onSafeFunctionCall(methods, fnName);
         continue;
       }
 
@@ -176,7 +176,7 @@ void DataflowPass::transfer(Instruction *instruction,
               inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
           logout("GETMAIN-5 ON '"
                  << arg
-                 << "'") this->onDeallocationFunctionCall(*methods, fnName);
+                 << "'") this->onDeallocationFunctionCall(methods, fnName);
           loopBroken = true;
           break;
         }
@@ -200,7 +200,7 @@ void DataflowPass::transfer(Instruction *instruction,
           MethodsSet *methods =
               inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
       logout("GETMAIN-6 ON '" << arg
-                              << "'") this->onUnknownFunctionCall(*methods);
+                              << "'") this->onUnknownFunctionCall(methods);
     }
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
 
@@ -236,7 +236,7 @@ void DataflowPass::transfer(Instruction *instruction,
             MethodsSet *methods =
                 inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
             logout("var = '" << arg << "' method name = '" << methodName
-                             << "'") this->onAnnotation(*methods, methodName,
+                             << "'") this->onAnnotation(methods, methodName,
                                                         structAnnoType);
           }
         }
@@ -245,13 +245,13 @@ void DataflowPass::transfer(Instruction *instruction,
   }
 }
 
-void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &PreProgramFunction,
-                              ProgramFunction &PostProgramFunction,
+void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
+                              ProgramFunction &postProgramFunction,
                               std::string priorBranch) {
   std::string currentBranch = cfg->getBranchName();
 
   if (currentBranch == "entry") {
-    PreProgramFunction.addProgramPoint(ProgramPoint(currentBranch));
+    preProgramFunction.addProgramPoint(ProgramPoint(currentBranch));
     llvm::SetVector<Instruction *> instructions = cfg->getInstructions();
 
     ProgramPoint postProgramPoint =
@@ -261,10 +261,10 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &PreProgramFunction,
       transfer(instruction, instructions, postProgramPoint);
     }
 
-    PostProgramFunction.addProgramPoint(postProgramPoint);
+    postProgramFunction.addProgramPoint(postProgramPoint);
 
     for (CFG *succ : cfg->getSuccessors()) {
-      analyzeCFG(succ, PreProgramFunction, PostProgramFunction, currentBranch);
+      analyzeCFG(succ, preProgramFunction, postProgramFunction, currentBranch);
     }
 
   }
@@ -272,18 +272,18 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &PreProgramFunction,
   else {
 
     ProgramPoint *PriorPrePoint =
-        PreProgramFunction.getProgramPointRef(currentBranch, true);
+        preProgramFunction.getProgramPointRef(currentBranch, true);
     ProgramPoint *PriorPostPoint =
-        PostProgramFunction.getProgramPointRef(currentBranch, true);
+        postProgramFunction.getProgramPointRef(currentBranch, true);
 
     PriorPostPoint->add(
-        this->programFunction.getProgramPoint(currentBranch, true));
+        this->programFunction.getProgramPointRef(currentBranch, true));
 
     if (PriorPrePoint->getProgramVariables().size() > 0) {
       logout("need to lub for " << currentBranch << " " << priorBranch)
 
           ProgramPoint *CurrentPrePoint =
-              PostProgramFunction.getProgramPointRef(priorBranch, true);
+              postProgramFunction.getProgramPointRef(priorBranch, true);
 
       // check if inputs (pre) differ
       if (CurrentPrePoint->equals(PriorPrePoint)) {
@@ -297,36 +297,35 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &PreProgramFunction,
           PriorPrePoint->getProgramVariables();
 
       for (ProgramVariable pv : priorPreVars) {
-        std::set<std::string> lubSet;
+        MethodsSet lubMethodsSet;
 
-        std::set<std::string> priorPreSet = pv.getMethodsSet().getMethods();
-        std::set<std::string> currentPreSet =
+        MethodsSet priorPreMethodsSet = pv.getMethodsSet();
+        MethodsSet currentPreMethodsSet =
             CurrentPrePoint->getPVRef(pv.getCleanedName(), false)
-                ->getMethodsSet()
-                .getMethods();
+                ->getMethodsSet();
 
-        this->leastUpperBound(priorPreSet, currentPreSet, lubSet);
+        this->leastUpperBound(priorPreMethodsSet, currentPreMethodsSet,
+                              lubMethodsSet);
 
-        MethodsSet lubMethodsSet = MethodsSet(lubSet);
         pv.setMethodsSet(lubMethodsSet);
 
         lub.addVariable(pv);
       }
 
       // fill the lub with remaining facts from PriorPostPoint
-      lub.add(*PriorPostPoint);
+      lub.add(PriorPostPoint);
 
-      PreProgramFunction.setProgramPoint(currentBranch, lub);
+      preProgramFunction.setProgramPoint(currentBranch, lub);
 
       llvm::SetVector<Instruction *> instructions = cfg->getInstructions();
       for (Instruction *instruction : instructions) {
         transfer(instruction, instructions, lub);
       }
 
-      PostProgramFunction.setProgramPoint(currentBranch, lub);
+      postProgramFunction.setProgramPoint(currentBranch, lub);
 
       for (CFG *succ : cfg->getSuccessors()) {
-        analyzeCFG(succ, PreProgramFunction, PostProgramFunction,
+        analyzeCFG(succ, preProgramFunction, postProgramFunction,
                    currentBranch);
       }
 
@@ -335,28 +334,29 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &PreProgramFunction,
                                       << " and prior = " << priorBranch)
 
           ProgramPoint *priorPostPoint =
-              PostProgramFunction.getProgramPointRef(priorBranch, true);
+              postProgramFunction.getProgramPointRef(priorBranch, true);
 
-      PreProgramFunction.getProgramPointRef(currentBranch, true)
+      preProgramFunction.getProgramPointRef(currentBranch, true)
           ->setProgramVariables(priorPostPoint);
 
       llvm::SetVector<Instruction *> instructions = cfg->getInstructions();
 
       ProgramPoint flowInto = ProgramPoint(
           currentBranch,
-          PostProgramFunction.getProgramPointRef(priorBranch, true));
+          postProgramFunction.getProgramPointRef(priorBranch, true));
 
-      flowInto.add(this->programFunction.getProgramPoint(currentBranch, true));
+      flowInto.add(
+          this->programFunction.getProgramPointRef(currentBranch, true));
 
       for (Instruction *instruction : instructions) {
         transfer(instruction, instructions, flowInto);
       }
 
-      PostProgramFunction.getProgramPointRef(currentBranch, true)
+      postProgramFunction.getProgramPointRef(currentBranch, true)
           ->setProgramVariables(flowInto);
 
       for (CFG *succ : cfg->getSuccessors()) {
-        analyzeCFG(succ, PreProgramFunction, PostProgramFunction,
+        analyzeCFG(succ, preProgramFunction, postProgramFunction,
                    currentBranch);
       }
     }
@@ -367,7 +367,7 @@ void DataflowPass::setAnnotations(AnnotationHandler annotations) {
   this->annotations = annotations;
 }
 
-FullProgram DataflowPass::getExpectedResult() { return this->expectedResult; }
+FullFile DataflowPass::getExpectedResult() { return this->expectedResult; }
 
 void DataflowPass::setProgramFunction(ProgramFunction programFunction) {
   this->programFunction = programFunction;

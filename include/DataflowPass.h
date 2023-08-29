@@ -9,7 +9,7 @@
 #include "Annotations/ReturnAnnotation.h"
 #include "Annotations/StructAnnotation.h"
 #include "CFG.h"
-#include "ProgramRepresentation/FullProgram.h"
+#include "ProgramRepresentation/FullFile.h"
 #include "RunAnalysis.h"
 #include "Utils.h"
 
@@ -19,26 +19,25 @@ protected:
   AnnotationHandler annotations;
   std::string testName;
   CFG *cfg;
-  FullProgram expectedResult;
+  FullFile expectedResult;
 
-  void analyzeCFG(CFG *cfg, ProgramFunction &PreProgramFunction,
-                  ProgramFunction &PostProgramFunction,
+  void analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
+                  ProgramFunction &postProgramFunction,
                   std::string priorBranch);
-  virtual void leastUpperBound(std::set<std::string> &preMethods,
-                               std::set<std::string> &curMethods,
-                               std::set<std::string> &result) = 0;
+  virtual void leastUpperBound(MethodsSet &preMethods, MethodsSet &curMethods,
+                               MethodsSet &result) = 0;
 
   void transfer(Instruction *instruction, SetVector<Instruction *> workSet,
                 ProgramPoint &inputProgramPoint);
-  virtual void onAllocationFunctionCall(MethodsSet &input,
+  virtual void onAllocationFunctionCall(MethodsSet *input,
                                         std::string &fnName) = 0;
-  virtual void onDeallocationFunctionCall(MethodsSet &input,
+  virtual void onDeallocationFunctionCall(MethodsSet *input,
                                           std::string &fnName) = 0;
-  virtual void onUnknownFunctionCall(MethodsSet &input) = 0;
-  virtual void onReallocFunctionCall(MethodsSet &input,
+  virtual void onUnknownFunctionCall(MethodsSet *input) = 0;
+  virtual void onReallocFunctionCall(MethodsSet *input,
                                      std::string &fnName) = 0;
-  virtual void onSafeFunctionCall(MethodsSet &input, std::string &fnName) = 0;
-  virtual void onAnnotation(MethodsSet &input, std::string &fnName,
+  virtual void onSafeFunctionCall(MethodsSet *input, std::string &fnName) = 0;
+  virtual void onAnnotation(MethodsSet *input, std::string &fnName,
                             AnnotationType annotationType) = 0;
 
 public:
@@ -55,11 +54,11 @@ public:
   ProgramFunction generatePassResults();
 
   void setCFG(CFG *cfg);
-  void setExpectedResult(FullProgram expectedResult);
+  void setExpectedResult(FullFile expectedResult);
   void setProgramFunction(ProgramFunction programFunction);
   void setAnnotations(AnnotationHandler annotations);
 
-  FullProgram getExpectedResult();
+  FullFile getExpectedResult();
 };
 
 #endif
