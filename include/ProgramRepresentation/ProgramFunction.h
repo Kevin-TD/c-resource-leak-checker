@@ -23,12 +23,12 @@ public:
 
   // returns a program point based off pointName and, if addNewIfNotFound is
   // true, creates a new one if it was not found. if addNewIfNotFound is false
-  // and the point was not found, an empty ProgramPoint is returned
+  // and the point was not found, the program fails & exits
   ProgramPoint getProgramPoint(std::string pointName, bool addNewIfNotFound);
 
   // returns a program point ref based off name and, if addNewIfNotFound is
   // true, creates a new one if it was not. if addNewIfNotFound is false and the
-  // point was not found, a nullptr is returned
+  // point was not found, the program fails & exits
   ProgramPoint *getProgramPointRef(std::string pointName,
                                    bool addNewIfNotFound);
 

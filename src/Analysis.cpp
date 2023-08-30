@@ -15,9 +15,6 @@
 #include "TestRunner.h"
 #include "Utils.h"
 
-#include <fstream>
-#include <map>
-
 // to run: cd build   then
 // sh ../run_test.sh <test_num>
 // or to run all tests: sh ../run_all.sh

@@ -271,22 +271,22 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
 
   else {
 
-    ProgramPoint *PriorPrePoint =
+    ProgramPoint *priorPrePoint =
         preProgramFunction.getProgramPointRef(currentBranch, true);
-    ProgramPoint *PriorPostPoint =
+    ProgramPoint *priorPostPoint =
         postProgramFunction.getProgramPointRef(currentBranch, true);
 
-    PriorPostPoint->add(
+    priorPostPoint->add(
         this->programFunction.getProgramPointRef(currentBranch, true));
 
-    if (PriorPrePoint->getProgramVariables().size() > 0) {
+    if (priorPrePoint->getProgramVariables().size() > 0) {
       logout("need to lub for " << currentBranch << " " << priorBranch)
 
-          ProgramPoint *CurrentPrePoint =
+          ProgramPoint *currentPrePoint =
               postProgramFunction.getProgramPointRef(priorBranch, true);
 
       // check if inputs (pre) differ
-      if (CurrentPrePoint->equals(PriorPrePoint)) {
+      if (currentPrePoint->equals(priorPrePoint)) {
         return;
       }
 
@@ -294,15 +294,20 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
       ProgramPoint lub(currentBranch);
 
       std::list<ProgramVariable> priorPreVars =
-          PriorPrePoint->getProgramVariables();
+          priorPrePoint->getProgramVariables();
 
       for (ProgramVariable pv : priorPreVars) {
         MethodsSet lubMethodsSet;
 
         MethodsSet priorPreMethodsSet = pv.getMethodsSet();
-        MethodsSet currentPreMethodsSet =
-            CurrentPrePoint->getPVRef(pv.getCleanedName(), false)
-                ->getMethodsSet();
+
+        MethodsSet currentPreMethodsSet;
+        if (currentPrePoint->varExists(pv.getCleanedName())) {
+          currentPreMethodsSet.setMethods(
+              currentPrePoint->getPVRef(pv.getCleanedName(), false)
+                  ->getMethodsSet()
+                  .getMethods());
+        }
 
         this->leastUpperBound(priorPreMethodsSet, currentPreMethodsSet,
                               lubMethodsSet);
@@ -312,8 +317,8 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         lub.addVariable(pv);
       }
 
-      // fill the lub with remaining facts from PriorPostPoint
-      lub.add(PriorPostPoint);
+      // fill the lub with remaining facts from priorPostPoint
+      lub.add(priorPostPoint);
 
       preProgramFunction.setProgramPoint(currentBranch, lub);
 

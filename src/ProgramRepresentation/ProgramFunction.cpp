@@ -30,8 +30,9 @@ ProgramPoint *ProgramFunction::getProgramPointRef(std::string pointName,
     return &this->programPoints.back();
   }
 
-  // TODO: program should error and halt if this case happens
-  return NULL;
+  errs() << "Error at getProgramPointRef: Program point not found and new "
+            "program point not added\n";
+  std::exit(EXIT_FAILURE);
 }
 
 ProgramPoint ProgramFunction::getProgramPoint(std::string pointName,
@@ -48,8 +49,9 @@ ProgramPoint ProgramFunction::getProgramPoint(std::string pointName,
     return this->programPoints.back();
   }
 
-  // TODO: program should error and halt if this case happens
-  return ProgramPoint();
+  errs() << "Error at getProgramPoint: Program point not found and new program "
+            "point not added\n";
+  std::exit(EXIT_FAILURE);
 }
 
 std::string ProgramFunction::getFunctionName() { return this->functionName; }

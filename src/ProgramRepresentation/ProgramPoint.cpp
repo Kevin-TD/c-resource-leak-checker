@@ -89,7 +89,9 @@ ProgramVariable *ProgramPoint::getPVRef(std::string cleanedName,
     return &this->programVariables.back();
   }
 
-  return new ProgramVariable();
+  errs() << "Error at getPVRef: Program var not found and new program var not "
+            "added\n";
+  std::exit(EXIT_FAILURE);
 }
 
 ProgramVariable ProgramPoint::getPV(std::string cleanedName,
@@ -112,7 +114,9 @@ ProgramVariable ProgramPoint::getPV(std::string cleanedName,
     return this->programVariables.back();
   }
 
-  return ProgramVariable();
+  errs() << "Error at getPV: Program var not found and new program var not "
+            "added\n";
+  std::exit(EXIT_FAILURE);
 }
 
 bool ProgramPoint::equals(ProgramPoint programPoint) {

@@ -16,10 +16,6 @@ private:
   // PV
   void fillAlias(std::string varNameCleaned, ProgramVariable variable);
 
-  // searches to see if there is a "main" program variable with cleanedName,
-  // "main" meaning that we are not checking some PV's alias' name
-  bool varExists(std::string cleanedName);
-
 public:
   ProgramPoint();
   ProgramPoint(std::string pointName);
@@ -38,13 +34,13 @@ public:
   // returns a pointer to program variable based on the cleanedName. if
   // addNewIfNotFound is true, if we do not find the variable, we will add a
   // program variable that just has the cleanedName to our program variables. if
-  // addNewIfNotFound is false, an empty ProgramVariable is returned.
+  // addNewIfNotFound is false, the program fails & exits
   ProgramVariable *getPVRef(std::string cleanedName, bool addNewIfNotFound);
 
   // returns a program variable based on the cleanedName. if addNewIfNotFound is
   // true, if we do not find the variable, we will add a program variable that
   // just has the cleanedName to our program variables. if addNewIfNotFound is
-  // false, an empty ProgramVariable is returned.
+  // false, the program fails & exits
   ProgramVariable getPV(std::string cleanedName, bool addNewIfNotFound);
 
   std::string getPointName();
@@ -64,6 +60,10 @@ public:
   // self. aliases as well are added, which is crucial to ensuring accurate
   // alias reasoning
   void add(ProgramPoint *otherPoint);
+
+  // searches to see if there is a "main" program variable with cleanedName,
+  // "main" meaning that we are not checking some PV's alias' name
+  bool varExists(std::string cleanedName);
 };
 
 #endif

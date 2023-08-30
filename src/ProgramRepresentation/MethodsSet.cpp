@@ -9,13 +9,11 @@ MethodsSet::MethodsSet(std::set<std::string> methods) {
 
 void MethodsSet::setMethods(std::set<std::string> methods) {
   this->methods.clear();
-  this->methods = std::set<std::string>(methods);
+  this->methods = methods;
   this->setIsUninit = false;
 }
 
-std::set<std::string> MethodsSet::getMethods() {
-  return std::set<std::string>(this->methods);
-}
+std::set<std::string> MethodsSet::getMethods() { return this->methods; }
 
 bool MethodsSet::isUninit() { return this->setIsUninit; }
 

@@ -21,13 +21,13 @@ public:
 
   // returns a program function based functionName and, if addNewIfNotFound is
   // true, creates a new one if it was not. if addNewIfNotFound is false and the
-  // function was not found, an empty ProgramFunction is returned
+  // function was not found, the program fails & exits
   ProgramFunction getProgramFunction(std::string functionName,
                                      bool addNewIfNotFound);
 
   // returns a program function ref based functionName and, if addNewIfNotFound
   // is true, creates a new one if it was not. if addNewIfNotFound is false and
-  // the function was not found, a nullptr is returned
+  // the function was not found, the program fails & exits
   ProgramFunction *getProgramFunctionRef(std::string functionName,
                                          bool addNewIfNotFound);
 

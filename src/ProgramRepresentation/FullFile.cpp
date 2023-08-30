@@ -28,8 +28,9 @@ ProgramFunction FullFile::getProgramFunction(std::string functionName,
     return newProgramFunction;
   }
 
-  // TODO: should error here instead
-  return ProgramFunction();
+  errs() << "Error at getProgramFunction: Program function not found and new "
+            "program point not added\n";
+  std::exit(EXIT_FAILURE);
 }
 
 ProgramFunction *FullFile::getProgramFunctionRef(std::string functionName,
@@ -46,6 +47,7 @@ ProgramFunction *FullFile::getProgramFunctionRef(std::string functionName,
     return &this->programFunctions.back();
   }
 
-  // TODO: should error here instead
-  return NULL;
+  errs() << "Error at getProgramFunctionRef: Program function not found and "
+            "new program point not added\n";
+  std::exit(EXIT_FAILURE);
 }
