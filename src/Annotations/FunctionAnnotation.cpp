@@ -1,4 +1,4 @@
-#include "FunctionAnnotation.h"
+#include "Annotations/FunctionAnnotation.h"
 
 FunctionAnnotation::FunctionAnnotation(AnnotationType annotationType,
                                        std::set<std::string> annotationMethods,

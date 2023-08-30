@@ -1,4 +1,4 @@
-#include "ParameterAnnotation.h"
+#include "Annotations/ParameterAnnotation.h"
 
 ParameterAnnotation::ParameterAnnotation(
     AnnotationType annotationType, std::set<std::string> annotationMethods,

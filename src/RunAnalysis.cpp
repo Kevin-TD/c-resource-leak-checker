@@ -2,18 +2,18 @@
 
 namespace dataflow {
 
-bool CalledMethodsAnalysis::runOnFunction(Function &F) {
+bool CodeAnalyzer::runOnFunction(Function &F) {
   doAnalysis(F, F.getParent()->getSourceFileName());
 
   return false;
 }
 
-bool CalledMethodsAnalysis::doFinalization(Module &M) {
+bool CodeAnalyzer::doFinalization(Module &M) {
   onEnd();
   return false;
 }
 
-char CalledMethodsAnalysis::ID = 1;
-static RegisterPass<CalledMethodsAnalysis>
-    X("CalledMethodsPass", "Called methods analysis", false, false);
+char CodeAnalyzer::ID = 1;
+static RegisterPass<CodeAnalyzer> X("CodeAnalyzer", "Code analyzer", false,
+                                    false);
 } // namespace dataflow

@@ -1,63 +1,43 @@
 #ifndef DATAFLOW_PASS_H
 #define DATAFLOW_PASS_H
 
-#include "Annotation.h"
-#include "AnnotationHandler.h"
+#include "Annotations/Annotation.h"
+#include "Annotations/AnnotationHandler.h"
+#include "Annotations/ErrorAnnotation.h"
+#include "Annotations/FunctionAnnotation.h"
+#include "Annotations/ParameterAnnotation.h"
+#include "Annotations/ReturnAnnotation.h"
+#include "Annotations/StructAnnotation.h"
 #include "CFG.h"
-#include "ErrorAnnotation.h"
-#include "FunctionAnnotation.h"
-#include "ParameterAnnotation.h"
-#include "ProgramVariablesHandler.h"
-#include "ReturnAnnotation.h"
+#include "ProgramRepresentation/FullFile.h"
 #include "RunAnalysis.h"
-#include "StructAnnotation.h"
 #include "Utils.h"
-
-#include <fstream>
-#include <set>
-
-struct MaybeUninitMethodsSet {
-  std::set<std::string> methodsSet;
-  bool setInitialized;
-};
-
-// mapping for an entire program; first string is branch name, second string is
-// var name
-typedef std::map<std::string, std::map<std::string, MaybeUninitMethodsSet>>
-    MappedMethods;
-
-// mapping between function name and a MappedMethods
-// TODO: just make this a class
-// TODO?: make all test run at the very end
-
-typedef std::map<std::string, MappedMethods> FunctionMappedMethods;
 
 class DataflowPass {
 protected:
-  ProgramVariablesHandler programVariables;
+  ProgramFunction programFunction;
   AnnotationHandler annotations;
   std::string testName;
   CFG *cfg;
-  FunctionMappedMethods expectedResult;
+  FullFile expectedResult;
 
-  void analyzeCFG(CFG *cfg, MappedMethods &PreMappedMethods,
-                  MappedMethods &PostMappedMethods, std::string priorBranch);
-  virtual void leastUpperBound(MaybeUninitMethodsSet &preMethods,
-                               MaybeUninitMethodsSet &curMethods,
-                               std::set<std::string> &result) = 0;
+  void analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
+                  ProgramFunction &postProgramFunction,
+                  std::string priorBranch);
+  virtual void leastUpperBound(MethodsSet &preMethods, MethodsSet &curMethods,
+                               MethodsSet &result) = 0;
 
   void transfer(Instruction *instruction, SetVector<Instruction *> workSet,
-                std::map<std::string, MaybeUninitMethodsSet> &inputMethodsSet);
-  virtual void onAllocationFunctionCall(MaybeUninitMethodsSet &input,
+                ProgramPoint &inputProgramPoint);
+  virtual void onAllocationFunctionCall(MethodsSet *input,
                                         std::string &fnName) = 0;
-  virtual void onDeallocationFunctionCall(MaybeUninitMethodsSet &input,
+  virtual void onDeallocationFunctionCall(MethodsSet *input,
                                           std::string &fnName) = 0;
-  virtual void onUnknownFunctionCall(MaybeUninitMethodsSet &input) = 0;
-  virtual void onReallocFunctionCall(MaybeUninitMethodsSet &input,
+  virtual void onUnknownFunctionCall(MethodsSet *input) = 0;
+  virtual void onReallocFunctionCall(MethodsSet *input,
                                      std::string &fnName) = 0;
-  virtual void onSafeFunctionCall(MaybeUninitMethodsSet &input,
-                                  std::string &fnName) = 0;
-  virtual void onAnnotation(MaybeUninitMethodsSet &input, std::string &fnName,
+  virtual void onSafeFunctionCall(MethodsSet *input, std::string &fnName) = 0;
+  virtual void onAnnotation(MethodsSet *input, std::string &fnName,
                             AnnotationType annotationType) = 0;
 
 public:
@@ -71,14 +51,14 @@ public:
   std::map<std::string, std::string> memoryFunctions;
   std::string passName;
 
-  MappedMethods generatePassResults();
+  ProgramFunction generatePassResults();
 
   void setCFG(CFG *cfg);
-  void setExpectedResult(FunctionMappedMethods expectedResult);
-  void setProgramVariables(ProgramVariablesHandler programVariables);
+  void setExpectedResult(FullFile expectedResult);
+  void setProgramFunction(ProgramFunction programFunction);
   void setAnnotations(AnnotationHandler annotations);
 
-  FunctionMappedMethods getExpectedResult();
+  FullFile getExpectedResult();
 };
 
 #endif

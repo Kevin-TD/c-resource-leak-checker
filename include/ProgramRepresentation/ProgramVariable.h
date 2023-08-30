@@ -1,9 +1,11 @@
 #ifndef PROGRAM_VARIABLE_H
 #define PROGRAM_VARIABLE_H
 
+#include "ProgramRepresentation/MethodsSet.h"
 #include "RunAnalysis.h"
 #include "Utils.h"
 
+// reflects a variable visible in the C program and/or IR
 class ProgramVariable {
 private:
   Value *value;
@@ -30,8 +32,13 @@ private:
   */
   bool varIsIdentifier;
 
+  MethodsSet methods;
+
 public:
+  ProgramVariable();
   ProgramVariable(Value *value);
+  ProgramVariable(Value *value, MethodsSet methods);
+  ProgramVariable(std::string cleanedName);
 
   // for struct variables
   ProgramVariable(Value *value, int index);
@@ -53,6 +60,8 @@ public:
   // checks if value's name (maybe with % or @) equals other name
   bool equalsRawName(std::string otherRawName);
 
+  bool equals(ProgramVariable other);
+
   void addAlias(ProgramVariable pv);
 
   bool isIdentifier();
@@ -64,6 +73,18 @@ public:
 
   // returns both named and unnamed aliases
   std::set<std::string> getAllAliases(bool cleanNames);
+
+  std::list<ProgramVariable> getPValiases();
+  std::list<ProgramVariable> *getPValiasesRef();
+
+  std::list<ProgramVariable *> generatePVptrAliases();
+
+  MethodsSet getMethodsSet();
+  MethodsSet *getMethodsSetRef();
+
+  void setMethodsSet(MethodsSet methods);
+
+  void setAliases(std::list<ProgramVariable> aliases);
 };
 
 #endif

@@ -9,10 +9,9 @@ public:
   // lastBranchName
   static bool runTests(const std::string functionName,
                        const std::string lastBranchName,
-                       FunctionMappedMethods expectedResult,
-                       MappedMethods receivedResult);
-  static FunctionMappedMethods buildExpectedResults(std::string testName,
-                                                    std::string passName);
+                       FullFile expectedResult, ProgramFunction receivedResult);
+  static FullFile buildExpectedResults(std::string testName,
+                                       std::string passName);
 };
 
 #endif

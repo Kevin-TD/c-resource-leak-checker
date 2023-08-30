@@ -1,10 +1,10 @@
-#include "Annotation.h"
+#include "Annotations/Annotation.h"
+#include "Annotations/ErrorAnnotation.h"
+#include "Annotations/FunctionAnnotation.h"
+#include "Annotations/ParameterAnnotation.h"
+#include "Annotations/ReturnAnnotation.h"
+#include "Annotations/StructAnnotation.h"
 #include "Debug.h"
-#include "ErrorAnnotation.h"
-#include "FunctionAnnotation.h"
-#include "ParameterAnnotation.h"
-#include "ReturnAnnotation.h"
-#include "StructAnnotation.h"
 #include "Utils.h"
 
 bool Annotation::annotationIsVerified() { return this->isVerified; }
