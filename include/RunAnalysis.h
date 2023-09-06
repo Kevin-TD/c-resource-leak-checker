@@ -48,6 +48,7 @@ struct CodeAnalyzer : public FunctionPass {
   bool doFinalization(Module &M) override;
 
 protected:
+  void buildAST(std::string optLoadFileName);
   void doAnalysis(Function &F, std::string optLoadFileName);
   void onEnd();
 
