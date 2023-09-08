@@ -337,8 +337,6 @@ void doAliasReasoning(Instruction *instruction,
 }
 
 void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
-  logout("DO ANALYSIS NOT RUNNING")
-  return; 
 
   SetVector<Instruction *> WorkSet;
   std::string fnName = F.getName().str();
@@ -490,33 +488,6 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   }
 }
 
-using namespace clang;
-using namespace clang::ast_matchers;
-using namespace clang::tooling;
-
-class MyASTConsumer : public ASTConsumer {
-public:
-    MyASTConsumer() {}
-
-    void HandleTranslationUnit(ASTContext &Context) override {
-        // Define an ASTMatcher to match specific comments or annotations.
-        StatementMatcher CommentMatcher = commentStmt().bind("annotation");
-
-        // Create an ASTMatchFinder and add the CommentMatcher to it.
-        MatchFinder Finder;
-        Finder.addMatcher(CommentMatcher, this);
-
-        // Perform the AST traversal and match comments.
-        Finder.matchAST(Context);
-    }
-
-    void run(const MatchFinder::MatchResult &Result) override {
-        if (const Stmt *S = Result.Nodes.getNodeAs<Stmt>("annotation")) {
-            llvm::outs() << "Annotation: " << S->getStmtClassName() << "\n";
-        }
-    }
-};
-
 void CodeAnalyzer::buildAST(std::string optLoadFileName) {
   // std::string testName = getTestName(optLoadFileName);
   // TODO: update getTestName. on something like "../test/test23/test24.ll", it'll error 
@@ -526,17 +497,6 @@ void CodeAnalyzer::buildAST(std::string optLoadFileName) {
   // make ; clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test23/test24.c -o ../test/test23/test24.ll ; opt -load CodeAnalyzer.so -CodeAnalyzer ../test/test23/test24.ll
 
   // clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics ../test/test23/test24.c > ../test/test23/test24_ast.txt
-
-  // clang -Xclang -ast-print -fsyntax-only -fno-color-diagnostics ../test/test23/test24.c > ../test/test23/test24_ast.txt
-
-   std::ifstream sourceFile(optLoadFileName);
-
-   std::string sourceCode((std::istreambuf_iterator<char>(sourceFile)), std::istreambuf_iterator<char>());
-
-    ClangTool Tool;
-    Tool.buildASTs();
-    Tool.run(newFrontendActionFactory<MyASTConsumer>().get(), optLoadFileName);
-
 
 }
 

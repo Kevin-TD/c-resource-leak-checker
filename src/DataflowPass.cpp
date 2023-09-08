@@ -116,11 +116,13 @@ void DataflowPass::transfer(Instruction *instruction,
       /*
       handles the case where function being called is "an indirect function
       invocation", meaning its target is determined at runtime. we are not
-      running the original code, so we will treat it as an unkown function Docs:
+      running the original code, so we will treat it as an unknown function 
+      Docs:
       https://www.few.vu.nl/~lsc300/LLVM/doxygen/classllvm_1_1CallInst.html#a0bcd4131e1a1d92215f5385b4e16cd2e
       */
       if (Call->getCalledFunction() == NULL) {
         const DebugLoc &debugLoc = instruction->getDebugLoc();
+
         std::string location = "Line " + std::to_string(debugLoc.getLine()) +
                                ", Col " + std::to_string(debugLoc.getCol());
 
@@ -136,7 +138,6 @@ void DataflowPass::transfer(Instruction *instruction,
       std::string fnName = Call->getCalledFunction()->getName().str();
 
       logout("call fnname = " << fnName)
-
           if (this->reallocFunctions.count(fnName)) {
 
         MethodsSet *methods =

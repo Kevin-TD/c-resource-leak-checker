@@ -7,7 +7,7 @@ const char *WHITESPACES = " \t\n\r";
 namespace dataflow {
 
 /*
-Code handles IR vars coming from parameters and expliticly defined vars
+Code handles IR vars coming from parameters and explicitly defined vars
 */
 std::string variable(const Value *Val) {
   std::string Code;
@@ -34,7 +34,7 @@ std::string variable(const Value *Val) {
   variable.
   */
   if (Code.find_first_of('=') == std::string::npos) {
-    logout("0.FOR VAL " << *Val << " RETURNING "
+    variable_logout("0.FOR VAL " << *Val << " RETURNING "
                         << sliceString(
                                Code, Code.find(' ') + 1,
                                Code.size() -
@@ -47,12 +47,12 @@ std::string variable(const Value *Val) {
   std::string RetVal = Code.substr(0, Code.find_first_of(WHITESPACES));
 
   if (RetVal == "ret" || RetVal == "br" || RetVal == "store") {
-    logout("1.FOR VAL " << *Val << " RETURNING " << Code) return Code;
+    variable_logout("1.FOR VAL " << *Val << " RETURNING " << Code) return Code;
   }
   if (RetVal == "i1" || RetVal == "i8" || RetVal == "i32" || RetVal == "i64") {
     RetVal = Code;
   }
-  logout("2.FOR VAL " << *Val << " RETURNING " << RetVal) return RetVal;
+  variable_logout("2.FOR VAL " << *Val << " RETURNING " << RetVal) return RetVal;
 }
 
 bool isNumber(const std::string &s) {
