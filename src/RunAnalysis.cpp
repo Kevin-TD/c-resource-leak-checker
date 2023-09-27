@@ -3,7 +3,6 @@
 namespace dataflow {
 
 bool CodeAnalyzer::runOnFunction(Function &F) {
-  buildAST(F.getParent()->getSourceFileName());
   doAnalysis(F, F.getParent()->getSourceFileName());
 
   return false;

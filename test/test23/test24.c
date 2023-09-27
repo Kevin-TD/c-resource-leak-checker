@@ -9,7 +9,7 @@
 // the include files are also loaded in again so we can also choose to read
 // either from the .h declaration or the .c impl. 
 
-void does_free(char* s) { 
+void does_free(char* s MustCall("free")) { 
     free(s); 
 }
 

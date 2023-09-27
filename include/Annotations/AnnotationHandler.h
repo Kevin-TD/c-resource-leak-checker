@@ -14,12 +14,11 @@
 class AnnotationHandler {
 private:
   std::list<Annotation *> annotations;
+  void addAnnotation(const std::string &rawAnnotationString);
 
 public:
   AnnotationHandler();
-  AnnotationHandler(const std::string &fileName);
-  void addAnnotation(const std::string &rawAnnotationString);
-  void addAnnotationsFromFile(const std::string &fileName);
+  void addAnnotations(std::vector<std::string> rawAnnotationStrings); 
 
   // returns Annotation* instead of more specific type (in this case,
   // FunctionAnnotation*) since we may not find the annotation and will want to

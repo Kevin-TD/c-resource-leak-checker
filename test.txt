@@ -1,0 +1,12 @@
+TOOL_CHECKER MustCall target = STRUCT(my_struct).FIELD(x) methods = free
+TOOL_CHECKER MustCall target = STRUCT(my_struct).FIELD(y) methods = free
+TOOL_CHECKER MustCall target = STRUCT(struct_2).FIELD(x) methods = free
+TOOL_CHECKER MustCall target = STRUCT(struct_2).FIELD(y) methods = free
+TOOL_CHECKER MustCall target = STRUCT(my_struct_3).FIELD(x) methods = free
+TOOL_CHECKER MustCall target = STRUCT(my_struct_3).FIELD(y) methods = free
+TOOL_CHECKER MustCall target = FUNCTION(does_free).PARAM(0) methods = free
+TOOL_CHECKER Calls target = FUNCTION(creates_obligation).PARAM(0) methods = free
+TOOL_CHECKER Calls target = FUNCTION(creates_obligation).PARAM(1).FIELD(x) methods = free
+TOOL_CHECKER MustCall target = FUNCTION(creates_obligation) methods = free
+TOOL_CHECKER Calls target = FUNCTION(does_something).PARAM(0).FIELD(x) methods = free
+TOOL_CHECKER Calls target = FUNCTION(does_something).FIELD(x) methods = free

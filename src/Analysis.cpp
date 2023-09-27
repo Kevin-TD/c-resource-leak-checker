@@ -6,6 +6,7 @@
 #include "Annotations/ReturnAnnotation.h"
 #include "Annotations/StructAnnotation.h"
 #include "CFG.h"
+#include "Constants.h"
 #include "CalledMethods.h"
 #include "DataflowPass.h"
 #include "Debug.h"
@@ -88,25 +89,25 @@ void loadFunctions() {
   reallocFunctionsFile.close();
 }
 
+// for some file name .../test{num}.ll, "test{num}" is returned
 std::string getTestName(std::string optLoadFileName) {
-  int slashCount = 0;
-  std::string testName;
-  // assuming that format of optLoadFileName is ../test/test{num}.c, returns
-  // test{num}
-  for (char c : optLoadFileName) {
-    if (c == '/') {
-      slashCount++;
-      continue;
-    }
+  auto fileNameChunks = dataflow::splitString(optLoadFileName, '/'); 
+  std::string lastChunk = fileNameChunks[fileNameChunks.size() - 1]; 
+  return dataflow::splitString(lastChunk, '.')[0]; 
+}
 
-    if (slashCount == 2) {
-      if (c == '.')
-        break;
-
-      testName += c;
-    }
+// for some file name .../a/b/file, .../a/b is returned 
+std::string getParentName(std::string optLoadFileName) {
+  int firstSlashIndex = optLoadFileName.find('/');
+  int lastSlashIndex = optLoadFileName.rfind('/');
+  
+  if (firstSlashIndex == std::string::npos) {
+    return optLoadFileName; 
   }
-  return testName;
+
+  return dataflow::sliceString(optLoadFileName, 0, lastSlashIndex - 1); 
+  
+  
 }
 
 void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
@@ -136,6 +137,56 @@ void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
       cfgMap[succName] = cfg->addSuccessor(succName);
     }
   }
+}
+
+
+std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
+  std::string testName = getTestName(optLoadFileName);
+  std::string parentName = getParentName(optLoadFileName);
+  std::string optLoadAsC =  parentName + "/" + testName + ".c"; 
+  std::string astFileName = testName + "_AST" +  ".txt"; 
+  std::string astFileNameAndPath = GENERATED_DIR_NAME + "/" + astFileName;
+
+  // TODO: use #include <cstdio> tmpfile instead 
+  // TODO: remove "GENERATED_DIR_NAME"
+
+  // struct stat sb;
+  // if (stat(GENERATED_DIR_NAME.c_str(), &sb) == 0) {
+  //   errs() << "Error at getAnnotationStrings; directory name " + GENERATED_DIR_NAME + " already exists\n"; 
+  //   std::exit(EXIT_FAILURE);
+  // }
+
+  logout("test name = " << testName)
+  logout("parent name = " << parentName)
+  
+  std::string dumpASTCommand = "clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics " + optLoadAsC + "> " + astFileNameAndPath;
+  system(("mkdir " + GENERATED_DIR_NAME).c_str());
+  system(dumpASTCommand.c_str());
+
+
+  std::string outputFileName = GENERATED_DIR_NAME + "/" + testName + "_ANNOTATIONS" + ".txt"; 
+  std::string readASTCommand = "python3 ../Annotations/annoGen.py " + astFileNameAndPath + " " + outputFileName; 
+
+  system(readASTCommand.c_str());
+
+  logout("dump command " << dumpASTCommand)
+  logout("to py run " << readASTCommand)
+
+  std::ifstream annotationFile(outputFileName);
+  std::vector<std::string> annotations; 
+
+  std::string line;
+  if (annotationFile.is_open()) {
+    while (std::getline(annotationFile, line)) {
+      annotations.push_back(line); 
+    }
+  }
+
+  // system(("rm -rf " + GENERATED_DIR_NAME).c_str()); 
+
+  return annotations; 
+
+
 }
 
 /**
@@ -337,6 +388,7 @@ void doAliasReasoning(Instruction *instruction,
 }
 
 void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
+  
 
   SetVector<Instruction *> WorkSet;
   std::string fnName = F.getName().str();
@@ -347,15 +399,18 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   logout("Analyzing Function with Name = " << fnName << " opt load file name = "
                                            << testName)
 
-      if (!loadAndBuild) {
+  if (!loadAndBuild) {
     loadFunctions();
+    auto annotations = getAnnotationStrings(optLoadFileName);
+
     calledMethods.setExpectedResult(
         TestRunner::buildExpectedResults(testName, calledMethods.passName));
     mustCall.setExpectedResult(
         TestRunner::buildExpectedResults(testName, mustCall.passName));
-    annotationHandler.addAnnotationsFromFile("../test/" + testName + ".ll");
+    annotationHandler.addAnnotations(annotations);
     loadAndBuild = true;
   }
+
 
   // check if code re-defines a pre-defined function
   if (SafeFunctions.count(fnName)) {
@@ -486,18 +541,6 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   if (calledMethodsResult == EXIT_FAILURE || mustCallResult == EXIT_FAILURE) {
     anyTestFailed = true;
   }
-}
-
-void CodeAnalyzer::buildAST(std::string optLoadFileName) {
-  // std::string testName = getTestName(optLoadFileName);
-  // TODO: update getTestName. on something like "../test/test23/test24.ll", it'll error 
-
-    logout("file name = " << optLoadFileName)
-
-  // make ; clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c ../test/test23/test24.c -o ../test/test23/test24.ll ; opt -load CodeAnalyzer.so -CodeAnalyzer ../test/test23/test24.ll
-
-  // clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics ../test/test23/test24.c > ../test/test23/test24_ast.txt
-
 }
 
 void CodeAnalyzer::onEnd() {

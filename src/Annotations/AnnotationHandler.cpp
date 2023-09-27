@@ -2,10 +2,6 @@
 
 AnnotationHandler::AnnotationHandler() {}
 
-AnnotationHandler::AnnotationHandler(const std::string &fileName) {
-  this->addAnnotationsFromFile(fileName);
-}
-
 void AnnotationHandler::addAnnotation(const std::string &rawAnnotationString) {
   Annotation *anno = generateAnnotation(rawAnnotationString);
 
@@ -23,23 +19,9 @@ void AnnotationHandler::addAnnotation(const std::string &rawAnnotationString) {
   }
 }
 
-void AnnotationHandler::addAnnotationsFromFile(const std::string &fileName) {
-  LLVMContext context;
-  SMDiagnostic error;
-
-  std::unique_ptr<Module> M = parseIRFile(fileName, error, context);
-
-  for (llvm::GlobalVariable &globalVar : M->globals()) {
-    if (globalVar.hasInitializer()) {
-      llvm::Constant *initializer = globalVar.getInitializer();
-      if (llvm::ConstantDataSequential *dataSeq =
-              llvm::dyn_cast<llvm::ConstantDataSequential>(initializer)) {
-        if (dataSeq->isString()) {
-          std::string stringValue = dataSeq->getAsString().str();
-          this->addAnnotation(stringValue);
-        }
-      }
-    }
+void AnnotationHandler::addAnnotations(std::vector<std::string> rawAnnotationStrings) {
+  for (auto annoString : rawAnnotationStrings) {
+    this->addAnnotation(annoString); 
   }
 }
 

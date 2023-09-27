@@ -18,7 +18,6 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 
-
 #include <algorithm>
 #include <cctype>
 #include <fstream>
@@ -31,6 +30,7 @@
 #include <stack>
 #include <string>
 #include <vector>
+#include <sys/stat.h>
 
 using namespace llvm;
 
