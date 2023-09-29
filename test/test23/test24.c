@@ -10,7 +10,7 @@
 // either from the .h declaration or the .c impl. 
 
 void does_free(char* s MustCall("free")) { 
-    free(s); 
+    free(s);
 }
 
 char* creates_obligation(char* s, struct my_struct X) {    

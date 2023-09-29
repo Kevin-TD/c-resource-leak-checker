@@ -31,6 +31,7 @@
 #include <string>
 #include <vector>
 #include <sys/stat.h>
+#include <cstdio>
 
 using namespace llvm;
 

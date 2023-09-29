@@ -147,7 +147,6 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
   std::string astFileName = testName + "_AST" +  ".txt"; 
   std::string astFileNameAndPath = GENERATED_DIR_NAME + "/" + astFileName;
 
-  // TODO: use #include <cstdio> tmpfile instead 
   // TODO: remove "GENERATED_DIR_NAME"
 
   // struct stat sb;
@@ -158,6 +157,15 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
 
   logout("test name = " << testName)
   logout("parent name = " << parentName)
+
+  char buffer[mkstemp]; // Buffer to store the temporary file name
+  if (tmpnam(buffer) != nullptr) {
+      std::cout << "Temporary file name: " << buffer << std::endl;
+  } else {
+      std::cerr << "Error generating a temporary file name." << std::endl;
+  }
+
+  FILE* astTextTempFile = std::tmpfile();
   
   std::string dumpASTCommand = "clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics " + optLoadAsC + "> " + astFileNameAndPath;
   system(("mkdir " + GENERATED_DIR_NAME).c_str());
@@ -165,7 +173,7 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
 
 
   std::string outputFileName = GENERATED_DIR_NAME + "/" + testName + "_ANNOTATIONS" + ".txt"; 
-  std::string readASTCommand = "python3 ../Annotations/annoGen.py " + astFileNameAndPath + " " + outputFileName; 
+  std::string readASTCommand = "python3 ../Annotations/annotation_generator.py " + astFileNameAndPath + " " + outputFileName; 
 
   system(readASTCommand.c_str());
 
