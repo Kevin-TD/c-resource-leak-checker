@@ -4,18 +4,18 @@
 
 bool TestRunner::runTests(const std::string functionName,
                           const std::string lastBranchName,
-                          FullProgram expectedResult,
+                          FullFile expectedResult,
                           ProgramFunction receivedResult) {
   bool testPassed = EXIT_SUCCESS;
 
   logout("Function Name Test Running = " << functionName)
 
       ProgramFunction function =
-          expectedResult.getProgramFunction(functionName);
+          expectedResult.getProgramFunction(functionName, true);
   std::list<ProgramPoint> points = function.getProgramPoints();
 
   for (ProgramPoint point : points) {
-    std::string branchName = point.getName();
+    std::string branchName = point.getPointName();
 
     if (branchName == "") {
       branchName = lastBranchName;
@@ -57,11 +57,11 @@ bool TestRunner::runTests(const std::string functionName,
   return testPassed;
 }
 
-FullProgram TestRunner::buildExpectedResults(std::string testName,
-                                             std::string passName) {
+FullFile TestRunner::buildExpectedResults(std::string testName,
+                                          std::string passName) {
   std::ifstream testFile("../test/" + testName + ".txt");
   std::string line;
-  FullProgram expectedResult(testName);
+  FullFile expectedResult(testName);
 
   if (testFile.is_open()) {
     while (std::getline(testFile, line)) {
@@ -125,7 +125,7 @@ FullProgram TestRunner::buildExpectedResults(std::string testName,
       }
 
       if (passName == inputPassName) {
-        expectedResult.getProgramFunctionRef(functionName)
+        expectedResult.getProgramFunctionRef(functionName, true)
             ->getProgramPointRef(branchName, true)
             ->getPVRef(varName, true)
             ->setMethodsSet(methodsSet);

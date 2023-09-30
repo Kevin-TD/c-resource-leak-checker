@@ -11,7 +11,7 @@
 #include "DataflowPass.h"
 #include "Debug.h"
 #include "MustCall.h"
-#include "ProgramRepresentation/FullProgram.h"
+#include "ProgramRepresentation/FullFile.h"
 #include "RunAnalysis.h"
 #include "TestRunner.h"
 #include "Utils.h"
@@ -475,11 +475,11 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   ProgramFunction PostCalledMethods = calledMethods.generatePassResults();
   ProgramFunction PostMustCalls = mustCall.generatePassResults();
 
-  logout(
-      "\n\nPROGRAM FUNCTION for "
-      << programFunction.getName()) for (auto point :
-                                         programFunction.getProgramPoints()) {
-    logout("\n**point name " << point.getName());
+  logout("\n\nPROGRAM FUNCTION for "
+         << programFunction.getFunctionName()) for (auto point :
+                                                    programFunction
+                                                        .getProgramPoints()) {
+    logout("\n**point name " << point.getPointName());
     for (auto var : point.getProgramVariables()) {
       logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
           std::set<std::string>
@@ -495,7 +495,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   logout(
       "\n\nCALLED METHODS RESULT") for (auto point :
                                         PostCalledMethods.getProgramPoints()) {
-    logout("\n**point name " << point.getName());
+    logout("\n**point name " << point.getPointName());
     for (auto var : point.getProgramVariables()) {
       logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
           std::set<std::string>
@@ -510,7 +510,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
   logout("\n\nMUST CALL RESULT") for (auto point :
                                       PostMustCalls.getProgramPoints()) {
-    logout("\n**point name " << point.getName());
+    logout("\n**point name " << point.getPointName());
     for (auto var : point.getProgramVariables()) {
       logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
           std::set<std::string>

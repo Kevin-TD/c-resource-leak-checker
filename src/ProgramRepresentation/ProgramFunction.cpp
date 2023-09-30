@@ -2,7 +2,9 @@
 #include "Debug.h"
 #include "ProgramRepresentation/ProgramVariable.h"
 
-ProgramFunction::ProgramFunction(std::string name) { this->name = name; }
+ProgramFunction::ProgramFunction(std::string functionName) {
+  this->functionName = functionName;
+}
 
 ProgramFunction::ProgramFunction() {}
 
@@ -14,41 +16,45 @@ std::list<ProgramPoint> ProgramFunction::getProgramPoints() {
   return this->programPoints;
 }
 
-ProgramPoint *ProgramFunction::getProgramPointRef(std::string name,
+ProgramPoint *ProgramFunction::getProgramPointRef(std::string pointName,
                                                   bool addNewIfNotFound) {
   for (ProgramPoint &programPoint : this->programPoints) {
-    if (programPoint.getName() == name) {
+    if (programPoint.getPointName() == pointName) {
       return &programPoint;
     }
   }
 
   if (addNewIfNotFound) {
-    ProgramPoint newProgramPoint = ProgramPoint(name);
+    ProgramPoint newProgramPoint = ProgramPoint(pointName);
     this->addProgramPoint(newProgramPoint);
     return &this->programPoints.back();
   }
 
-  return new ProgramPoint();
+  errs() << "Error at getProgramPointRef: Program point not found and new "
+            "program point not added\n";
+  std::exit(EXIT_FAILURE);
 }
 
-ProgramPoint ProgramFunction::getProgramPoint(std::string name,
+ProgramPoint ProgramFunction::getProgramPoint(std::string pointName,
                                               bool addNewIfNotFound) {
   for (ProgramPoint &programPoint : this->programPoints) {
-    if (programPoint.getName() == name) {
+    if (programPoint.getPointName() == pointName) {
       return programPoint;
     }
   }
 
   if (addNewIfNotFound) {
-    ProgramPoint newProgramPoint = ProgramPoint(name);
+    ProgramPoint newProgramPoint = ProgramPoint(pointName);
     this->addProgramPoint(newProgramPoint);
     return this->programPoints.back();
   }
 
-  return ProgramPoint();
+  errs() << "Error at getProgramPoint: Program point not found and new program "
+            "point not added\n";
+  std::exit(EXIT_FAILURE);
 }
 
-std::string ProgramFunction::getName() { return this->name; }
+std::string ProgramFunction::getFunctionName() { return this->functionName; }
 
 void ProgramFunction::setProgramPoint(std::string name,
                                       ProgramPoint programPoint) {
