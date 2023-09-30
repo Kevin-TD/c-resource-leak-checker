@@ -2,7 +2,7 @@
 
 StructAnnotation::StructAnnotation(AnnotationType annotationType,
                                    std::set<std::string> annotationMethods,
-                                   std::string targetName, std::string field) {
+                                   std::string targetName, int field) {
   this->annotationType = annotationType;
   this->annotationMethods = annotationMethods;
   this->targetName = targetName;
@@ -25,10 +25,7 @@ std::string StructAnnotation::generateStringRep() {
   }
   annoMethodsString += "}";
 
-  std::string fieldString;
-  if (this->field.size() > 0) {
-    fieldString = "Field = " + this->field;
-  }
+  std::string fieldString = "Field = " + this->field;
 
   return "@" + annoTypeString +
          " StructAnnotation Struct Name = " + this->targetName + " " +
@@ -39,8 +36,8 @@ bool StructAnnotation::structNameEquals(const std::string &structName) {
   return structName.compare(this->targetName) == 0;
 }
 
-bool StructAnnotation::fieldNameEquals(const std::string &fieldName) {
-  return fieldName.compare(this->field) == 0;
+bool StructAnnotation::fieldNameEquals(int fieldName) {
+  return fieldName == this->field;
 }
 
-std::string StructAnnotation::getFieldName() { return this->field; }
+int StructAnnotation::getFieldName() { return this->field; }

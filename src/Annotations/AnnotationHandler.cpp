@@ -19,9 +19,10 @@ void AnnotationHandler::addAnnotation(const std::string &rawAnnotationString) {
   }
 }
 
-void AnnotationHandler::addAnnotations(std::vector<std::string> rawAnnotationStrings) {
+void AnnotationHandler::addAnnotations(
+    std::vector<std::string> rawAnnotationStrings) {
   for (auto annoString : rawAnnotationStrings) {
-    this->addAnnotation(annoString); 
+    this->addAnnotation(annoString);
   }
 }
 
@@ -100,7 +101,7 @@ AnnotationHandler::getReturnAnnotation(const std::string &functionName,
 
 Annotation *
 AnnotationHandler::getStructAnnotation(const std::string &structName,
-                                       const std::string &field) {
+                                       int field) {
   for (Annotation *anno : this->annotations) {
     if (StructAnnotation *structAnno = dynamic_cast<StructAnnotation *>(anno)) {
       if (structAnno->structNameEquals(structName) &&

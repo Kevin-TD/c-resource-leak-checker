@@ -1,36 +1,37 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../Annotations/Annotations.h"
 
-void* malloc0(size_t __size) {
+void* MustCall("free") malloc0(size_t __size) {
     return malloc(__size);
 }
 
-void* malloc1(size_t __size) {
+void* MustCall("free") malloc1(size_t __size) {
     return malloc(__size);
 }
 
-void* malloc2(size_t __size) {
+void* MustCall("free") malloc2(size_t __size) {
     return malloc(__size);
 }
 
-void* malloc3(size_t __size) {
+void* MustCall("free") malloc3(size_t __size) {
     return malloc(__size);
 }
 
-void free0(void* p) {
+void free0(void* p Calls("free")) {
     free(p);
 }
 
-void free1(void* p) {
+void free1(void* p Calls("free")) {
     free(p);
 }
 
-void free2(void* p) {
+void free2(void* p Calls("free")) {
     free(p);
 }
 
-void free3(void* p) {
+void free3(void* p Calls("free")) {
     free(p);
 }
 

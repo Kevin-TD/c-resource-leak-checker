@@ -116,7 +116,7 @@ void DataflowPass::transfer(Instruction *instruction,
       /*
       handles the case where function being called is "an indirect function
       invocation", meaning its target is determined at runtime. we are not
-      running the original code, so we will treat it as an unknown function 
+      running the original code, so we will treat it as an unknown function
       Docs:
       https://www.few.vu.nl/~lsc300/LLVM/doxygen/classllvm_1_1CallInst.html#a0bcd4131e1a1d92215f5385b4e16cd2e
       */
@@ -137,8 +137,8 @@ void DataflowPass::transfer(Instruction *instruction,
 
       std::string fnName = Call->getCalledFunction()->getName().str();
 
-      logout("call fnname = " << fnName)
-          if (this->reallocFunctions.count(fnName)) {
+      logout("call fnname = "
+             << fnName) if (this->reallocFunctions.count(fnName)) {
 
         MethodsSet *methods =
             inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
@@ -213,8 +213,8 @@ void DataflowPass::transfer(Instruction *instruction,
           structName, structName.find_last_of('.') + 1, structName.size() - 1);
       int numFields = structType->getNumElements();
       for (int i = 0; i < numFields; i++) {
-        Annotation *anno = this->annotations.getStructAnnotation(
-            structName, std::to_string(i));
+
+        Annotation *anno = this->annotations.getStructAnnotation(structName, i);
         if (StructAnnotation *structAnno =
                 dynamic_cast<StructAnnotation *>(anno)) {
           std::set<std::string> structMethods =
@@ -227,11 +227,11 @@ void DataflowPass::transfer(Instruction *instruction,
             continue;
           }
 
-          logout("found annotation " << dataflow::setToString(structMethods)
-                                     << " "
-                                     << annotationTypeToString(structAnnoType)
-                                     << " for field index " << i << " var name "
-                                     << sourceVar.getRawName())
+          logout("found annotation "
+                 << dataflow::setToString(structMethods) << " "
+                 << annotationTypeToString(structAnnoType)
+                 << " for field index " << std::to_string(i) << " var name "
+                 << sourceVar.getRawName())
 
               for (std::string methodName : structMethods) {
             MethodsSet *methods =

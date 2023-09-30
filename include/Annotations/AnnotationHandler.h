@@ -18,7 +18,7 @@ private:
 
 public:
   AnnotationHandler();
-  void addAnnotations(std::vector<std::string> rawAnnotationStrings); 
+  void addAnnotations(std::vector<std::string> rawAnnotationStrings);
 
   // returns Annotation* instead of more specific type (in this case,
   // FunctionAnnotation*) since we may not find the annotation and will want to
@@ -50,8 +50,7 @@ ErrorAnno        FunctionAnno
   Annotation *getReturnAnnotation(const std::string &functionName,
                                   const std::string &field);
 
-  Annotation *getStructAnnotation(const std::string &structName,
-                                  const std::string &field);
+  Annotation *getStructAnnotation(const std::string &structName, int field);
 };
 
 #endif

@@ -6,13 +6,13 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueMap.h"
-#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/SourceMgr.h"
@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -28,10 +29,12 @@
 #include <set>
 #include <sstream>
 #include <stack>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string>
-#include <vector>
 #include <sys/stat.h>
-#include <cstdio>
+#include <unistd.h>
+#include <vector>
 
 using namespace llvm;
 
@@ -51,7 +54,6 @@ struct CodeAnalyzer : public FunctionPass {
   bool doFinalization(Module &M) override;
 
 protected:
-  void buildAST(std::string optLoadFileName);
   void doAnalysis(Function &F, std::string optLoadFileName);
   void onEnd();
 

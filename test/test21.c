@@ -4,12 +4,10 @@
 #include "../Annotations/Annotations.h"
 
 
-void does_free(char* s) {
+void does_free(char* s Calls("free")) {
     free(s); 
 }
 
-
-Calls(FUNCTION("does_free") AT_PARAMETER("0"), METHODS("free"))
 int main() {   
     char* s = (char*)malloc(15); 
     does_free(s); 

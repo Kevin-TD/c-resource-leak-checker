@@ -6,8 +6,8 @@
 #include "Annotations/ReturnAnnotation.h"
 #include "Annotations/StructAnnotation.h"
 #include "CFG.h"
-#include "Constants.h"
 #include "CalledMethods.h"
+#include "Constants.h"
 #include "DataflowPass.h"
 #include "Debug.h"
 #include "MustCall.h"
@@ -15,7 +15,6 @@
 #include "RunAnalysis.h"
 #include "TestRunner.h"
 #include "Utils.h"
-
 
 // to run: cd build   then
 // sh ../run_test.sh <test_num>
@@ -91,23 +90,21 @@ void loadFunctions() {
 
 // for some file name .../test{num}.ll, "test{num}" is returned
 std::string getTestName(std::string optLoadFileName) {
-  auto fileNameChunks = dataflow::splitString(optLoadFileName, '/'); 
-  std::string lastChunk = fileNameChunks[fileNameChunks.size() - 1]; 
-  return dataflow::splitString(lastChunk, '.')[0]; 
+  auto fileNameChunks = dataflow::splitString(optLoadFileName, '/');
+  std::string lastChunk = fileNameChunks[fileNameChunks.size() - 1];
+  return dataflow::splitString(lastChunk, '.')[0];
 }
 
-// for some file name .../a/b/file, .../a/b is returned 
+// for some file name .../a/b/file, .../a/b is returned
 std::string getParentName(std::string optLoadFileName) {
   int firstSlashIndex = optLoadFileName.find('/');
   int lastSlashIndex = optLoadFileName.rfind('/');
-  
+
   if (firstSlashIndex == std::string::npos) {
-    return optLoadFileName; 
+    return optLoadFileName;
   }
 
-  return dataflow::sliceString(optLoadFileName, 0, lastSlashIndex - 1); 
-  
-  
+  return dataflow::sliceString(optLoadFileName, 0, lastSlashIndex - 1);
 }
 
 void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
@@ -139,62 +136,59 @@ void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
   }
 }
 
-
 std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
   std::string testName = getTestName(optLoadFileName);
   std::string parentName = getParentName(optLoadFileName);
-  std::string optLoadAsC =  parentName + "/" + testName + ".c"; 
-  std::string astFileName = testName + "_AST" +  ".txt"; 
-  std::string astFileNameAndPath = GENERATED_DIR_NAME + "/" + astFileName;
+  std::string optLoadAsC = parentName + "/" + testName + ".c";
 
-  // TODO: remove "GENERATED_DIR_NAME"
+  logout("test name = " << testName) logout("parent name = " << parentName)
 
-  // struct stat sb;
-  // if (stat(GENERATED_DIR_NAME.c_str(), &sb) == 0) {
-  //   errs() << "Error at getAnnotationStrings; directory name " + GENERATED_DIR_NAME + " already exists\n"; 
-  //   std::exit(EXIT_FAILURE);
-  // }
+      char astTempTextFile[] = "/tmp/astTempTextFileXXXXXX";
+  int astFD = mkstemp(astTempTextFile);
 
-  logout("test name = " << testName)
-  logout("parent name = " << parentName)
-
-  char buffer[mkstemp]; // Buffer to store the temporary file name
-  if (tmpnam(buffer) != nullptr) {
-      std::cout << "Temporary file name: " << buffer << std::endl;
-  } else {
-      std::cerr << "Error generating a temporary file name." << std::endl;
+  if (astFD == -1) {
+    logout("failed to create temp ast text file") perror("mkstemp");
+    exit(1);
   }
 
-  FILE* astTextTempFile = std::tmpfile();
-  
-  std::string dumpASTCommand = "clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics " + optLoadAsC + "> " + astFileNameAndPath;
-  system(("mkdir " + GENERATED_DIR_NAME).c_str());
+  std::string dumpASTCommand =
+      "clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics " +
+      optLoadAsC + "> " + astTempTextFile;
   system(dumpASTCommand.c_str());
 
+  char annotationsTempTextFile[] = "/tmp/annotationsFileXXXXXX";
+  int annotationsFD = mkstemp(annotationsTempTextFile);
 
-  std::string outputFileName = GENERATED_DIR_NAME + "/" + testName + "_ANNOTATIONS" + ".txt"; 
-  std::string readASTCommand = "python3 ../Annotations/annotation_generator.py " + astFileNameAndPath + " " + outputFileName; 
+  if (annotationsFD == -1) {
+    logout("failed to create temp annotations text file") perror("mkstemp");
+    exit(1);
+  }
+
+  std::string readASTCommand =
+      "python3 ../Annotations/annotation_generator.py " +
+      std::string(astTempTextFile) + " " + std::string(annotationsTempTextFile);
 
   system(readASTCommand.c_str());
 
   logout("dump command " << dumpASTCommand)
-  logout("to py run " << readASTCommand)
+      logout("to py run " << readASTCommand)
 
-  std::ifstream annotationFile(outputFileName);
-  std::vector<std::string> annotations; 
+          std::ifstream annotationFile(annotationsTempTextFile);
+  std::vector<std::string> annotations;
 
   std::string line;
   if (annotationFile.is_open()) {
     while (std::getline(annotationFile, line)) {
-      annotations.push_back(line); 
+      logout("got anno: " << line) annotations.push_back(line);
     }
   }
 
-  // system(("rm -rf " + GENERATED_DIR_NAME).c_str()); 
+  close(astFD);
+  close(annotationsFD);
+  unlink(astTempTextFile);
+  unlink(annotationsTempTextFile);
 
-  return annotations; 
-
-
+  return annotations;
 }
 
 /**
@@ -380,8 +374,7 @@ void doAliasReasoning(Instruction *instruction,
       int numFields = structType->getNumElements();
       for (int i = 0; i < numFields; i++) {
 
-        Annotation *anno = annotationHandler.getStructAnnotation(
-            structName, std::to_string(i));
+        Annotation *anno = annotationHandler.getStructAnnotation(structName, i);
         if (StructAnnotation *structAnno =
                 dynamic_cast<StructAnnotation *>(anno)) {
           std::set<std::string> structMethods =
@@ -396,7 +389,6 @@ void doAliasReasoning(Instruction *instruction,
 }
 
 void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
-  
 
   SetVector<Instruction *> WorkSet;
   std::string fnName = F.getName().str();
@@ -407,7 +399,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   logout("Analyzing Function with Name = " << fnName << " opt load file name = "
                                            << testName)
 
-  if (!loadAndBuild) {
+      if (!loadAndBuild) {
     loadFunctions();
     auto annotations = getAnnotationStrings(optLoadFileName);
 
@@ -418,7 +410,6 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     annotationHandler.addAnnotations(annotations);
     loadAndBuild = true;
   }
-
 
   // check if code re-defines a pre-defined function
   if (SafeFunctions.count(fnName)) {

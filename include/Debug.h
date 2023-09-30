@@ -1,8 +1,7 @@
 #include "RunAnalysis.h"
 
-
 #define DEBUG true
-#define UTIL_VARIABLE_FUNC_DEBUG false 
+#define UTIL_VARIABLE_FUNC_DEBUG false
 
 #if DEBUG
 #define logout(x) errs() << x << "\n";
