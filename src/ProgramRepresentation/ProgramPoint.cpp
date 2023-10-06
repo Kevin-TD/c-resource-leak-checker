@@ -89,9 +89,7 @@ ProgramVariable *ProgramPoint::getPVRef(std::string cleanedName,
     return &this->programVariables.back();
   }
 
-  errs() << "Error at getPVRef: Program var not found and new program var not "
-            "added\n";
-  std::exit(EXIT_FAILURE);
+  return NULL;
 }
 
 ProgramVariable ProgramPoint::getPV(std::string cleanedName,
@@ -115,7 +113,8 @@ ProgramVariable ProgramPoint::getPV(std::string cleanedName,
   }
 
   errs() << "Error at getPV: Program var not found and new program var not "
-            "added\n";
+            "added for var '"
+         << cleanedName << "'\n";
   std::exit(EXIT_FAILURE);
 }
 
@@ -148,18 +147,18 @@ bool ProgramPoint::equals(ProgramPoint programPoint) {
 bool ProgramPoint::equals(ProgramPoint *programPoint) {
   for (ProgramVariable pv1 : this->programVariables) {
     std::string cleanedName = pv1.getCleanedName();
-    ProgramVariable pv2 = programPoint->getPV(cleanedName, false);
+    ProgramVariable *pv2 = programPoint->getPVRef(cleanedName, false);
 
-    if (!pv1.equals(pv2)) {
+    if (!pv2 || !pv1.equals(*pv2)) {
       return false;
     }
   }
 
   for (ProgramVariable pv2 : programPoint->getProgramVariables()) {
     std::string cleanedName = pv2.getCleanedName();
-    ProgramVariable pv1 = this->getPV(cleanedName, false);
+    ProgramVariable *pv1 = this->getPVRef(cleanedName, false);
 
-    if (!pv2.equals(pv1)) {
+    if (!pv1 || !pv2.equals(*pv1)) {
       return false;
     }
   }
