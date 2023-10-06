@@ -7,6 +7,7 @@
 #include "Annotations/StructAnnotation.h"
 #include "CFG.h"
 #include "CalledMethods.h"
+#include "Constants.h"
 #include "DataflowPass.h"
 #include "Debug.h"
 #include "MustCall.h"
@@ -87,25 +88,18 @@ void loadFunctions() {
   reallocFunctionsFile.close();
 }
 
+// for some .c file ../test/<dir>/<file_name>.c, <dir>/<file_name> is returned.
+// e.g., ../test/simple_layer_test/layer/test1_again.c ->
+// simple_layer_test/layer/test1_again
 std::string getTestName(std::string optLoadFileName) {
-  int slashCount = 0;
-  std::string testName;
-  // assuming that format of optLoadFileName is ../test/test{num}.c, returns
-  // test{num}
-  for (char c : optLoadFileName) {
-    if (c == '/') {
-      slashCount++;
-      continue;
-    }
+  std::string startsWith = "../test";
+  std::string endsWith = ".c";
+  optLoadFileName.replace(0, startsWith.length() + 1, "");
+  optLoadFileName.erase(optLoadFileName.length() - 2);
 
-    if (slashCount == 2) {
-      if (c == '.')
-        break;
+  logout("RES = " << optLoadFileName)
 
-      testName += c;
-    }
-  }
-  return testName;
+      return optLoadFileName;
 }
 
 void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
@@ -135,6 +129,55 @@ void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
       cfgMap[succName] = cfg->addSuccessor(succName);
     }
   }
+}
+
+std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
+  char astTempTextFile[] = "/tmp/astTempTextFileXXXXXX";
+  int astFD = mkstemp(astTempTextFile);
+
+  if (astFD == -1) {
+    logout("failed to create temp ast text file") perror("mkstemp");
+    exit(1);
+  }
+
+  std::string dumpASTCommand =
+      "clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics " +
+      optLoadFileName + "> " + astTempTextFile;
+  system(dumpASTCommand.c_str());
+
+  char annotationsTempTextFile[] = "/tmp/annotationsFileXXXXXX";
+  int annotationsFD = mkstemp(annotationsTempTextFile);
+
+  if (annotationsFD == -1) {
+    logout("failed to create temp annotations text file") perror("mkstemp");
+    exit(1);
+  }
+
+  std::string readASTCommand =
+      "python3 ../Annotations/annotation_generator.py " +
+      std::string(astTempTextFile) + " " + std::string(annotationsTempTextFile);
+
+  system(readASTCommand.c_str());
+
+  logout("dump command " << dumpASTCommand)
+      logout("to py run " << readASTCommand)
+
+          std::ifstream annotationFile(annotationsTempTextFile);
+  std::vector<std::string> annotations;
+
+  std::string line;
+  if (annotationFile.is_open()) {
+    while (std::getline(annotationFile, line)) {
+      logout("got anno: " << line) annotations.push_back(line);
+    }
+  }
+
+  close(astFD);
+  close(annotationsFD);
+  unlink(astTempTextFile);
+  unlink(annotationsTempTextFile);
+
+  return annotations;
 }
 
 /**
@@ -320,8 +363,7 @@ void doAliasReasoning(Instruction *instruction,
       int numFields = structType->getNumElements();
       for (int i = 0; i < numFields; i++) {
 
-        Annotation *anno = annotationHandler.getStructAnnotation(
-            structName, std::to_string(i));
+        Annotation *anno = annotationHandler.getStructAnnotation(structName, i);
         if (StructAnnotation *structAnno =
                 dynamic_cast<StructAnnotation *>(anno)) {
           std::set<std::string> structMethods =
@@ -336,22 +378,26 @@ void doAliasReasoning(Instruction *instruction,
 }
 
 void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
+
   SetVector<Instruction *> WorkSet;
   std::string fnName = F.getName().str();
 
   std::string testName = getTestName(optLoadFileName);
 
   bool functionIsKnown = false;
-  logout("Analyzing Function with Name = " << fnName << " opt load file name = "
-                                           << testName)
+  logout("opt load file name = " << optLoadFileName)
+      logout("Analyzing Function with Name = " << fnName
+                                               << " test_name = " << testName)
 
-      if (!loadAndBuild) {
+          if (!loadAndBuild) {
     loadFunctions();
+    auto annotations = getAnnotationStrings(optLoadFileName);
+
     calledMethods.setExpectedResult(
         TestRunner::buildExpectedResults(testName, calledMethods.passName));
     mustCall.setExpectedResult(
         TestRunner::buildExpectedResults(testName, mustCall.passName));
-    annotationHandler.addAnnotationsFromFile("../test/" + testName + ".ll");
+    annotationHandler.addAnnotations(annotations);
     loadAndBuild = true;
   }
 

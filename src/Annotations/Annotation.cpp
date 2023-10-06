@@ -85,42 +85,54 @@ bool methodsArgumentIsCorrectlyFormatted(const std::string &rawMethodsString) {
 }
 
 // a raw correct annotation looks like:
-// TOOL_CHECKER (Calls || MustCall) target = {FUNCTION ||
-// STRUCT}(name).?PARAM(int).?FIELD(str) methods = str examples:
+// (Calls || MustCall) target = {FUNCTION ||
+// STRUCT}(name).?PARAM(int).?FIELD(int) methods = str
+
+// FIELD argument refers to the index that belongs to some struct
+// e.g., struct S = {x, y}, S.x is index 0, and S.y is index 1.
+// the AST pass converts names to indicies.
+
+// examples:
 /*
-TOOL_CHECKER Calls target = FUNCTION(does_free) methods = free
+Calls target = FUNCTION(does_free) methods = free
 -- FunctionAnnotation; not anticipated that we'll be needing it but some
 handling for it is here just in case
 
-TOOL_CHECKER Calls target = FUNCTION(does_free).PARAM(1) methods = free
+Calls target = FUNCTION(does_free).PARAM(1) methods = free
 -- ParameterAnnotation
 
-TOOL_CHECKER Calls target = FUNCTION(creates_obligation).PARAM(2).FIELD(x)
+Calls target = FUNCTION(creates_obligation).PARAM(2).FIELD(0)
 methods = free
 -- ParameterAnnotation with field
 
-TOOL_CHECKER MustCall target = FUNCTION(creates_obligation).RETURN methods =
+MustCall target = FUNCTION(creates_obligation).RETURN methods =
 free
 -- ReturnAnnotation
 
-TOOL_CHECKER Calls target = FUNCTION(does_something).RETURN.FIELD(x) methods =
+Calls target = FUNCTION(does_something).RETURN.FIELD(0) methods =
 free
 -- ReturnAnnotation with field
 
-TOOL_CHECKER MustCall target = STRUCT(my_struct).FIELD(x) methods = free
+MustCall target = STRUCT(my_struct).FIELD(0) methods = free
 -- StructAnnotation; always has FIELD specifier
 
 Example for chunks:
 
-TOOL_CHECKER Calls target = FUNCTION(creates_obligation).PARAM(2).FIELD(x)
-methods = free1, free2 chunks = ['TOOL_CHECKER', 'Calls', 'target', '=',
+Calls target = FUNCTION(creates_obligation).PARAM(2).FIELD(0)
+methods = free1, free2
+
+chunks = ['Calls', 'target', '=',
 'FUNCTION(creates_obligation).PARAM(2).FIELD(x)', 'methods', '=', 'free1,',
-'free2'] chunks[0] should be TOOL_CHECKER to help verify it's one of our own
-annotations and not an unrelated string chunks[1] is annotation type
-(Calls/MustCall) chunks[2] is "target" keyword, chunks[3] is "=" chunks[4] is
-the target itself (FUNCTION/STRUCT potentially with sensible PARAM and FIELD
-specifiers) chunks[5] is "methods" keyword, chunks[6] is "=" chunks[7..end]
-are all the methods
+'free2']
+
+chunks[0] is annotation type (Calls/MustCall)
+chunks[1] is "target" keyword
+chunks[2] is "="
+chunks[3] is the target itself (FUNCTION/STRUCT potentially
+with valid PARAM and FIELD specifiers)
+chunks[4] is "methods" keyword
+chunks[5] is "="
+chunks[6..end] are all the methods
 */
 
 // TODO: make method more generic and write automated testing for that
@@ -128,50 +140,40 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
   std::vector<std::string> chunks =
       dataflow::splitString(rawAnnotationString, ' ');
 
-  if (chunks.size() < 8) {
+  if (chunks.size() < 7) {
     logout("Annotation String Error 0: malformed string '"
            << rawAnnotationString
            << "' potentially missing argument or string is not annotation "
               "related at all") return false;
   }
-  // chunks.size() >= 8
+  // chunks.size() >= 7
 
-  if (chunks[0] != "TOOL_CHECKER") {
-    logout("Annotation String Error 1: invalid annotation '"
-           << rawAnnotationString
-           << "' does not start with 'TOOL_CHECKER' but starts with '"
-           << chunks[0]
-           << "'; string may not be a relevant annotation of the "
-              "analysis") return false;
-  }
-  // chunks[0] == "TOOL_CHECKER"
-
-  if (chunks[1] != "Calls" && chunks[1] != "MustCall") {
+  if (chunks[0] != "Calls" && chunks[0] != "MustCall") {
     logout("Annotation String Error 2: invalid annotation '"
            << rawAnnotationString << "' annotation type '" << chunks[1]
            << "' is unknown; expected Calls or MustCall") return false;
   }
-  // chunks[1] == "Calls" or chunks[1] == "MustCall"
+  // chunks[0] == "Calls" or chunks[0] == "MustCall"
 
-  if (chunks[2] != "target") {
+  if (chunks[1] != "target") {
     logout("Annotation String Error 3: invalid annotation '"
            << rawAnnotationString
            << "' 'target' keyword missing or inappropriately placed; '"
-           << chunks[2] << "' found") return false;
+           << chunks[1] << "' found") return false;
   }
-  // chunks[2] == "target"
+  // chunks[1] == "target"
 
-  if (chunks[3] != "=") {
+  if (chunks[2] != "=") {
     logout("Annotation String Error 4: invalid annotation '"
            << rawAnnotationString
            << "' keyword '=' after keyword 'target' is missing or "
               "inappropriately placed; '"
-           << chunks[3] << "' found") return false;
+           << chunks[2] << "' found") return false;
   }
-  // chunks[3] == "="
+  // chunks[2] == "="
 
-  //* --- chunks[4] checker section ---
-  std::vector<std::string> targetChunks = dataflow::splitString(chunks[4], '.');
+  //* --- chunks[3] checker section ---
+  std::vector<std::string> targetChunks = dataflow::splitString(chunks[3], '.');
   // {FUNCTION || STRUCT}(name).?PARAM(int).?FIELD(str) ->
   // ["FUNCTION(name)" or "STRUCT(name)", optional "PARAM(int)", optional
   // "FIELD(str)"] required: 1 <= targetChunks.size() <= 3
@@ -215,7 +217,7 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
            << rawAnnotationString << "' invalid target name; target name '"
            << name << "' is not valid C variable name") return false;
   }
-  // targetChunks[0] starts with "FUNCTION(valid_text" or "STRUCT(valid_text"
+  // targetChunks[0] starts with "FUNCTION(valid_text" or "STRUCT(int"
 
   // checks if last character does not equal ")" (it should)
   if (targetChunks[0].find(')') != targetChunks[0].size() - 1) {
@@ -231,9 +233,9 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
     // targetChunks looks like one of the following:
     // ["FUNCTION(name)"] or
     // ["FUNCTION(name)", "PARAM(int)"] or
-    // ["FUNCTION(name)", "PARAM(int)", "FIELD(str)"]
+    // ["FUNCTION(name)", "PARAM(int)", "FIELD(int)"]
     // ["FUNCTION(name)", "RETURN"] or
-    // ["FUNCTION(name)", "RETURN", "FIELD(str)"]
+    // ["FUNCTION(name)", "RETURN", "FIELD(int)"]
 
     // targetChunkSize of 1 does not need to be checked; it is valid at this
     // point
@@ -281,7 +283,7 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
       }
 
       if (targetChunksSize == 3) {
-        // targetChunks[2] must be FIELD(str)
+        // targetChunks[2] must be FIELD(int)
         if (!dataflow::hasOnlyOneBalancedParentheses(targetChunks[2])) {
           logout("Annotation String Error 14: invalid annotation '"
                  << rawAnnotationString
@@ -303,12 +305,12 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
         std::string fieldName = dataflow::sliceString(
             targetChunks[2], targetChunks[2].find('(') + 1,
             targetChunks[2].find(')') - 1);
-        if (!dataflow::isValidCVariableName(fieldName)) {
+        if (!dataflow::isNumber(fieldName)) {
           logout("Annotation String Error 16: invalid annotation '"
                  << rawAnnotationString << "' FIELD argument of '" << fieldName
-                 << "'is not valid C variable name") return false;
+                 << "'is not a number") return false;
         }
-        // targetChunks[2] is "FIELD(str"
+        // targetChunks[2] is "FIELD(int"
 
         if (targetChunks[2].find(')') != targetChunks[2].size() - 1) {
           logout("Annotation String Error 17: invalid annotation '"
@@ -316,7 +318,7 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
                  << "' target is malformed; last char of '" << targetChunks[2]
                  << "' should be ')'") return false;
         }
-        // targetChunks[2] is "FIELD(str)"
+        // targetChunks[2] is "FIELD(int)"
       }
     }
   } else if (targetType == "STRUCT") {
@@ -326,7 +328,7 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
              << "' target is malformed; STRUCT may be missing FIELD specifier "
                 "or specifier is malformed") return false;
     }
-    // targetChunks looks ["STRUCT(name)", "FIELD(str)"]
+    // targetChunks looks ["STRUCT(name)", "FIELD(int)"]
     if (!dataflow::hasOnlyOneBalancedParentheses(targetChunks[1])) {
       logout("Annotation String Error 18: invalid annotation '"
              << rawAnnotationString
@@ -351,7 +353,7 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
              << rawAnnotationString << "' FIELD argument '" << fieldName
              << "' is not a number") return false;
     }
-    // targetChunks[1] is "FIELD(str"
+    // targetChunks[1] is "FIELD(int"
 
     if (targetChunks[1].find(')') != targetChunks[1].size() - 1) {
       logout("Annotation String Error 21: invalid annotation '"
@@ -359,33 +361,26 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
              << "' target is malformed; last character of '" << targetChunks[1]
              << "' was not ')'") return false;
     }
-    // targetChunks[1] is "FIELD(str)"
+    // targetChunks[1] is "FIELD(int)"
   }
-  //* --- chunks[4] checker section close ---
-  if (chunks[5] != "methods") {
+  //* --- chunks[3] checker section close ---
+  if (chunks[4] != "methods") {
     logout("Annotation String Error 22: invalid annotation '"
            << rawAnnotationString
            << "' missing keyword 'methods'/malformed methods "
               "argument") return false;
   }
 
-  if (chunks[6] != "=") {
+  if (chunks[5] != "=") {
     logout("Annotation String Error 23: invalid annotation '"
            << rawAnnotationString
            << "' malformed methods argument") return false;
   }
 
-  // chunk[7..end] should just be method args
+  // chunk[6..end] should just be method args
 
   std::string methodsString;
-  for (int i = 7; i < chunks.size(); i++) {
-
-    // removing potential "\0"'s in the string
-    // LLVM IR automatically adds "\00" to the end of every string so they must
-    // be filtered out
-    chunks[i].erase(std::remove(chunks[i].begin(), chunks[i].end(), '\0'),
-                    chunks[i].end());
-
+  for (int i = 6; i < chunks.size(); i++) {
     methodsString += chunks[i];
 
     if (i != chunks.size() - 1) {
@@ -424,17 +419,15 @@ Annotation *generateAnnotation(const std::string &rawAnnotationString) {
     return new ErrorAnnotation();
   }
 
-  // TODO: issue an error if annotation is being re-defined
-
   // we can assume string is correctly formatted
 
   AnnotationType annoType;
   std::vector<std::string> chunks =
       dataflow::splitString(rawAnnotationString, ' ');
 
-  if (chunks[1] == "Calls") {
+  if (chunks[0] == "Calls") {
     annoType = AnnotationType::CallsAnnotation;
-  } else if (chunks[1] == "MustCall") {
+  } else if (chunks[0] == "MustCall") {
     annoType = AnnotationType::MustCallAnnotation;
   }
 
@@ -442,7 +435,7 @@ Annotation *generateAnnotation(const std::string &rawAnnotationString) {
 
   // the remaining string is the methods argument
   // e.g., "x", "x, y, z", "x,y", "x, y,z"
-  for (int i = 7; i < chunks.size(); i++) {
+  for (int i = 6; i < chunks.size(); i++) {
     methodsString += chunks[i];
   }
   dataflow::removeWhitespace(methodsString);
@@ -452,7 +445,7 @@ Annotation *generateAnnotation(const std::string &rawAnnotationString) {
   std::set<std::string> methodsSet(methodsVector.begin(), methodsVector.end());
 
   std::vector<std::string> targetChunks =
-      dataflow::splitString(chunks[4], '.'); // target = ... section
+      dataflow::splitString(chunks[3], '.'); // target = ... section
   int targetChunksSize = targetChunks.size();
 
   std::string targetType = targetChunks[0].substr(
@@ -467,9 +460,9 @@ Annotation *generateAnnotation(const std::string &rawAnnotationString) {
 
   // all structs targets specify a field
   if (targetChunksSize == 2 && targetType == "STRUCT") {
-    std::string field =
-        dataflow::sliceString(targetChunks[1], targetChunks[1].find('(') + 1,
-                              targetChunks[1].find(')') - 1);
+    int field = std::stoi(dataflow::sliceString(targetChunks[1],
+                                                targetChunks[1].find('(') + 1,
+                                                targetChunks[1].find(')') - 1));
     return new StructAnnotation(annoType, methodsSet, name, field);
   }
 

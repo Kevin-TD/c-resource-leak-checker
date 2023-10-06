@@ -5,17 +5,17 @@
 
 class StructAnnotation : public Annotation {
 private:
-  std::string field;
+  int field;
 
 public:
   StructAnnotation(AnnotationType annotationType,
                    std::set<std::string> annotationMethods,
-                   std::string targetName, std::string field);
+                   std::string targetName, int field);
   std::string generateStringRep();
   bool structNameEquals(const std::string &structName);
-  bool fieldNameEquals(const std::string &fieldName);
+  bool fieldNameEquals(int fieldName);
 
-  std::string getFieldName();
+  int getFieldName();
 };
 
 #endif

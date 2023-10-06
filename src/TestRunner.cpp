@@ -59,7 +59,8 @@ bool TestRunner::runTests(const std::string functionName,
 
 FullFile TestRunner::buildExpectedResults(std::string testName,
                                           std::string passName) {
-  std::ifstream testFile("../test/" + testName + ".txt");
+
+  std::ifstream testFile("../Testers/Passes/" + testName + ".txt");
   std::string line;
   FullFile expectedResult(testName);
 

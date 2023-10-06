@@ -34,7 +34,7 @@ public:
   // returns a pointer to program variable based on the cleanedName. if
   // addNewIfNotFound is true, if we do not find the variable, we will add a
   // program variable that just has the cleanedName to our program variables. if
-  // addNewIfNotFound is false, the program fails & exits
+  // addNewIfNotFound is false, NULL is returned
   ProgramVariable *getPVRef(std::string cleanedName, bool addNewIfNotFound);
 
   // returns a program variable based on the cleanedName. if addNewIfNotFound is
