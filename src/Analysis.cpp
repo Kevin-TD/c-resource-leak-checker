@@ -88,23 +88,18 @@ void loadFunctions() {
   reallocFunctionsFile.close();
 }
 
-// for some file name .../test{num}.ll, "test{num}" is returned
+// for some .c file ../test/<dir>/<file_name>.c, <dir>/<file_name> is returned.
+// e.g., ../test/simple_layer_test/layer/test1_again.c ->
+// simple_layer_test/layer/test1_again
 std::string getTestName(std::string optLoadFileName) {
-  auto fileNameChunks = dataflow::splitString(optLoadFileName, '/');
-  std::string lastChunk = fileNameChunks[fileNameChunks.size() - 1];
-  return dataflow::splitString(lastChunk, '.')[0];
-}
+  std::string startsWith = "../test";
+  std::string endsWith = ".c";
+  optLoadFileName.replace(0, startsWith.length() + 1, "");
+  optLoadFileName.erase(optLoadFileName.length() - 2);
 
-// for some file name .../a/b/file, .../a/b is returned
-std::string getParentName(std::string optLoadFileName) {
-  int firstSlashIndex = optLoadFileName.find('/');
-  int lastSlashIndex = optLoadFileName.rfind('/');
+  logout("RES = " << optLoadFileName)
 
-  if (firstSlashIndex == std::string::npos) {
-    return optLoadFileName;
-  }
-
-  return dataflow::sliceString(optLoadFileName, 0, lastSlashIndex - 1);
+      return optLoadFileName;
 }
 
 void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
@@ -137,13 +132,7 @@ void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
 }
 
 std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
-  std::string testName = getTestName(optLoadFileName);
-  std::string parentName = getParentName(optLoadFileName);
-  std::string optLoadAsC = parentName + "/" + testName + ".c";
-
-  logout("test name = " << testName) logout("parent name = " << parentName)
-
-      char astTempTextFile[] = "/tmp/astTempTextFileXXXXXX";
+  char astTempTextFile[] = "/tmp/astTempTextFileXXXXXX";
   int astFD = mkstemp(astTempTextFile);
 
   if (astFD == -1) {
@@ -153,7 +142,7 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
 
   std::string dumpASTCommand =
       "clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics " +
-      optLoadAsC + "> " + astTempTextFile;
+      optLoadFileName + "> " + astTempTextFile;
   system(dumpASTCommand.c_str());
 
   char annotationsTempTextFile[] = "/tmp/annotationsFileXXXXXX";
@@ -396,10 +385,11 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   std::string testName = getTestName(optLoadFileName);
 
   bool functionIsKnown = false;
-  logout("Analyzing Function with Name = " << fnName << " opt load file name = "
-                                           << testName)
+  logout("opt load file name = " << optLoadFileName)
+      logout("Analyzing Function with Name = " << fnName
+                                               << " test_name = " << testName)
 
-      if (!loadAndBuild) {
+          if (!loadAndBuild) {
     loadFunctions();
     auto annotations = getAnnotationStrings(optLoadFileName);
 

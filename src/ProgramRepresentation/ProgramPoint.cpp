@@ -140,10 +140,6 @@ bool ProgramPoint::equals(ProgramPoint programPoint) {
 }
 
 bool ProgramPoint::equals(ProgramPoint *programPoint) {
-  if (this->name != programPoint->getName()) {
-    return false;
-  }
-
   for (ProgramVariable pv1 : this->programVariables) {
     std::string cleanedName = pv1.getCleanedName();
     ProgramVariable pv2 = programPoint->getPV(cleanedName, false);
