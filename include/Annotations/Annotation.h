@@ -2,6 +2,7 @@
 #define ANNOTATION_H
 
 #include "RunAnalysis.h"
+#include "Utils.h"
 
 enum AnnotationType {
   MustCallAnnotation,

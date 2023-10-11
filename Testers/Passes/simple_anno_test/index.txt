@@ -1,0 +1,2 @@
+pass=CalledMethods function=main var=str methods={free}
+pass=MustCall function=main var=str methods={free}

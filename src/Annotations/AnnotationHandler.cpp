@@ -4,6 +4,7 @@ AnnotationHandler::AnnotationHandler() {}
 
 void AnnotationHandler::addAnnotation(const std::string &rawAnnotationString) {
   Annotation *anno = generateAnnotation(rawAnnotationString);
+  logout("anno string rep: " << anno->generateStringRep());
 
   if (StructAnnotation *structAnno = dynamic_cast<StructAnnotation *>(anno)) {
     this->annotations.push_back(structAnno);

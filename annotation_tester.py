@@ -76,7 +76,9 @@ for result in results:
     print(result)
 
 
-print("---------DID NOT RUN---------")
+if (len(tests_that_did_not_run) > 0):
+    print("---------DID NOT RUN---------")
+    
 for test in tests_that_did_not_run:
     print(test)
 

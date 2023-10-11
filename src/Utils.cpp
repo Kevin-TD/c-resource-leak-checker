@@ -36,24 +36,22 @@ std::string variable(const Value *Val) {
   if (Code.find_first_of('=') == std::string::npos) {
     variable_logout("0.FOR VAL "
                     << *Val << " RETURNING "
-                    << sliceString(
-                           Code, Code.find(' ') + 1,
-                           Code.size() -
-                               1)) return sliceString(Code, Code.find(' ') + 1,
-                                                      Code.size() - 1);
+                    << sliceString(Code, Code.find(' ') + 1, Code.size() - 1));
+    return sliceString(Code, Code.find(' ') + 1, Code.size() - 1);
   }
 
   Code.erase(0, Code.find_first_not_of(WHITESPACES));
   std::string RetVal = Code.substr(0, Code.find_first_of(WHITESPACES));
 
   if (RetVal == "ret" || RetVal == "br" || RetVal == "store") {
-    variable_logout("1.FOR VAL " << *Val << " RETURNING " << Code) return Code;
+    variable_logout("1.FOR VAL " << *Val << " RETURNING " << Code);
+    return Code;
   }
   if (RetVal == "i1" || RetVal == "i8" || RetVal == "i32" || RetVal == "i64") {
     RetVal = Code;
   }
-  variable_logout("2.FOR VAL " << *Val << " RETURNING "
-                               << RetVal) return RetVal;
+  variable_logout("2.FOR VAL " << *Val << " RETURNING " << RetVal);
+  return RetVal;
 }
 
 bool isNumber(const std::string &s) {

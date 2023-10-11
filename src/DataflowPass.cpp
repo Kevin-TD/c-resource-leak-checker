@@ -36,49 +36,62 @@ void DataflowPass::transfer(Instruction *instruction,
     Value *valueToStore = Store->getOperand(0);
     Value *receivingValue = Store->getOperand(1);
 
-    logout("\nvalue to store = " << *valueToStore)
-        logout("receiving value = " << *receivingValue)
+    logout("\nvalue to store = " << *valueToStore);
+    logout("receiving value = " << *receivingValue);
 
-            for (auto Inst : workSet) {
+    for (auto Inst : workSet) {
       if (valueToStore == Inst) {
         if (auto Call = dyn_cast<CallInst>(Inst)) {
           /*
             For some x = malloc(params ...), we are only considering tracking x
             (argName)
-            TODO: rename "argName" to "assignedVarName"
           */
 
           std::string fnName = Call->getCalledFunction()->getName().str();
           ProgramVariable assignedVar = ProgramVariable(Store->getOperand(1));
+          std::string arg = assignedVar.getCleanedName();
+          MethodsSet *methods =
+              inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
 
           if (this->memoryFunctions[fnName].size() > 0 &&
               assignedVar.isIdentifier()) {
-            std::string arg = assignedVar.getCleanedName();
-            MethodsSet *methods =
-                inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
 
             logout("calling on alloc function for argname "
                    << arg << " and fnname " << fnName
-                   << " fnname = " << fnName) this
-                ->onAllocationFunctionCall(methods,
+                   << " fnname = " << fnName);
+            this->onAllocationFunctionCall(methods,
                                            this->memoryFunctions[fnName]);
+          } else if (ReturnAnnotation *returnAnno =
+                         dynamic_cast<ReturnAnnotation *>(
+                             this->annotations.getReturnAnnotation(fnName))) {
+            logout("found return annnotation "
+                   << returnAnno->generateStringRep());
+            AnnotationType annoType = returnAnno->getAnnotationType();
+            std::set<std::string> annoMethods =
+                returnAnno->getAnnotationMethods();
+            MethodsSet *argMethods =
+                inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
+
+            for (std::string annoMethod : annoMethods) {
+              this->onAnnotation(argMethods, annoMethod, annoType);
+            }
           }
+
           break;
         } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(Inst)) {
           std::string argName = dataflow::variable(Store->getOperand(1));
-          logout("arg name store inst bitcast = " << argName)
+          logout("arg name store inst bitcast = " << argName);
 
-              if (argName[0] == '@') {
+          if (argName[0] == '@') {
             argName[0] = '%';
           }
 
           if (CallInst *call = dyn_cast<CallInst>(bitcast->getOperand(0))) {
             std::string fnName = call->getCalledFunction()->getName().str();
 
-            logout("fnname store inst bitcast = " << fnName)
+            logout("fnname store inst bitcast = " << fnName);
 
-                ProgramVariable bitcastVar =
-                    ProgramVariable(Store->getOperand(1));
+            ProgramVariable bitcastVar = ProgramVariable(Store->getOperand(1));
 
             if (this->memoryFunctions[fnName].size() > 0 &&
                 bitcastVar.isIdentifier()) {
@@ -137,8 +150,8 @@ void DataflowPass::transfer(Instruction *instruction,
 
       std::string fnName = Call->getCalledFunction()->getName().str();
 
-      logout("call fnname = "
-             << fnName) if (this->reallocFunctions.count(fnName)) {
+      logout("call fnname = " << fnName);
+      if (this->reallocFunctions.count(fnName)) {
 
         MethodsSet *methods =
             inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
@@ -168,16 +181,16 @@ void DataflowPass::transfer(Instruction *instruction,
       bool loopBroken = false;
       for (auto Pair : this->memoryFunctions) {
         if (fnName == Pair.first) {
-          logout("not calling onalloc for "
-                 << arg << " of fnName " << fnName << " and inst "
-                 << *instruction << " and just returning now") return;
+          logout("not calling onalloc for " << arg << " of fnName " << fnName
+                                            << " and inst " << *instruction
+                                            << " and just returning now");
+          return;
 
         } else if (fnName == Pair.second) {
           MethodsSet *methods =
               inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
-          logout("GETMAIN-5 ON '"
-                 << arg
-                 << "'") this->onDeallocationFunctionCall(methods, fnName);
+          logout("GETMAIN-5 ON '" << arg << "'");
+          this->onDeallocationFunctionCall(methods, fnName);
           loopBroken = true;
           break;
         }
@@ -191,17 +204,35 @@ void DataflowPass::transfer(Instruction *instruction,
         continue;
       }
 
-      // only cases here are calls to functions not already seen before
+      // finds annotations
+      logout("finding annotations for " << fnName);
 
-      logout("also unknown function call " << fnName)
+      logout("arg " << arg << " index " << i);
 
-          // TODO: annotation reasoning goes here
+      Annotation *mayParameterAnnotation =
+          this->annotations.getParameterAnnotation(fnName, i);
+      if (ParameterAnnotation *paramAnno =
+              dynamic_cast<ParameterAnnotation *>(mayParameterAnnotation)) {
+        logout("found param annnotation " << paramAnno->generateStringRep());
 
-          // if no annotations, treat it as unknown function
-          MethodsSet *methods =
-              inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
-      logout("GETMAIN-6 ON '" << arg
-                              << "'") this->onUnknownFunctionCall(methods);
+        AnnotationType annoType = paramAnno->getAnnotationType();
+        std::set<std::string> annoMethods = paramAnno->getAnnotationMethods();
+
+        MethodsSet *argMethods =
+            inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
+
+        for (std::string annoMethod : annoMethods) {
+          this->onAnnotation(argMethods, annoMethod, annoType);
+        }
+
+        continue;
+      }
+
+      // no annotations found, treat function call as unknown function
+      logout("no annotations found for " << fnName);
+      MethodsSet *methods =
+          inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
+      this->onUnknownFunctionCall(methods);
     }
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
 
@@ -231,14 +262,14 @@ void DataflowPass::transfer(Instruction *instruction,
                  << dataflow::setToString(structMethods) << " "
                  << annotationTypeToString(structAnnoType)
                  << " for field index " << std::to_string(i) << " var name "
-                 << sourceVar.getRawName())
+                 << sourceVar.getRawName());
 
-              for (std::string methodName : structMethods) {
-            MethodsSet *methods =
-                inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
+          MethodsSet *methods =
+              inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
+          for (std::string methodName : structMethods) {
             logout("var = '" << arg << "' method name = '" << methodName
-                             << "'") this->onAnnotation(methods, methodName,
-                                                        structAnnoType);
+                             << "'");
+            this->onAnnotation(methods, methodName, structAnnoType);
           }
         }
       }
@@ -281,10 +312,10 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         this->programFunction.getProgramPointRef(currentBranch, true));
 
     if (priorPrePoint->getProgramVariables().size() > 0) {
-      logout("need to lub for " << currentBranch << " " << priorBranch)
+      logout("need to lub for " << currentBranch << " " << priorBranch);
 
-          ProgramPoint *currentPrePoint =
-              postProgramFunction.getProgramPointRef(priorBranch, true);
+      ProgramPoint *currentPrePoint =
+          postProgramFunction.getProgramPointRef(priorBranch, true);
 
       // check if inputs (pre) differ
       if (currentPrePoint->equals(priorPrePoint)) {
@@ -337,10 +368,10 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
 
     } else {
       logout("doing normal flow for " << currentBranch
-                                      << " and prior = " << priorBranch)
+                                      << " and prior = " << priorBranch);
 
-          ProgramPoint *priorPostPoint =
-              postProgramFunction.getProgramPointRef(priorBranch, true);
+      ProgramPoint *priorPostPoint =
+          postProgramFunction.getProgramPointRef(priorBranch, true);
 
       preProgramFunction.getProgramPointRef(currentBranch, true)
           ->setProgramVariables(priorPostPoint);

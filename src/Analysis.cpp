@@ -97,9 +97,9 @@ std::string getTestName(std::string optLoadFileName) {
   optLoadFileName.replace(0, startsWith.length() + 1, "");
   optLoadFileName.erase(optLoadFileName.length() - 2);
 
-  logout("RES = " << optLoadFileName)
+  logout("RES = " << optLoadFileName);
 
-      return optLoadFileName;
+  return optLoadFileName;
 }
 
 void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
@@ -136,7 +136,8 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
   int astFD = mkstemp(astTempTextFile);
 
   if (astFD == -1) {
-    logout("failed to create temp ast text file") perror("mkstemp");
+    logout("failed to create temp ast text file");
+    perror("mkstemp");
     exit(1);
   }
 
@@ -149,7 +150,8 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
   int annotationsFD = mkstemp(annotationsTempTextFile);
 
   if (annotationsFD == -1) {
-    logout("failed to create temp annotations text file") perror("mkstemp");
+    logout("failed to create temp annotations text file");
+    perror("mkstemp");
     exit(1);
   }
 
@@ -159,16 +161,17 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
 
   system(readASTCommand.c_str());
 
-  logout("dump command " << dumpASTCommand)
-      logout("to py run " << readASTCommand)
+  logout("dump command " << dumpASTCommand);
+  logout("to py run " << readASTCommand);
 
-          std::ifstream annotationFile(annotationsTempTextFile);
+  std::ifstream annotationFile(annotationsTempTextFile);
   std::vector<std::string> annotations;
 
   std::string line;
   if (annotationFile.is_open()) {
     while (std::getline(annotationFile, line)) {
-      logout("got anno: " << line) annotations.push_back(line);
+      logout("got anno: " << line);
+      annotations.push_back(line);
     }
   }
 
@@ -253,8 +256,8 @@ void doAliasReasoning(Instruction *instruction,
 
   if (LoadInst *Load = dyn_cast<LoadInst>(instruction)) {
     logout("(load) name is " << variable(Load) << " for "
-                             << variable(Load->getPointerOperand()))
-        std::string varName = variable(Load->getPointerOperand());
+                             << variable(Load->getPointerOperand()));
+    std::string varName = variable(Load->getPointerOperand());
 
     ProgramVariable receivingVar = ProgramVariable(Load);
     ProgramVariable givingVar = ProgramVariable(Load->getPointerOperand());
@@ -385,11 +388,11 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   std::string testName = getTestName(optLoadFileName);
 
   bool functionIsKnown = false;
-  logout("opt load file name = " << optLoadFileName)
-      logout("Analyzing Function with Name = " << fnName
-                                               << " test_name = " << testName)
+  logout("opt load file name = " << optLoadFileName);
+  logout("Analyzing Function with Name = " << fnName
+                                           << " test_name = " << testName);
 
-          if (!loadAndBuild) {
+  if (!loadAndBuild) {
     loadFunctions();
     auto annotations = getAnnotationStrings(optLoadFileName);
 
@@ -465,51 +468,45 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   ProgramFunction PostCalledMethods = calledMethods.generatePassResults();
   ProgramFunction PostMustCalls = mustCall.generatePassResults();
 
-  logout("\n\nPROGRAM FUNCTION for "
-         << programFunction.getFunctionName()) for (auto point :
-                                                    programFunction
-                                                        .getProgramPoints()) {
+  logout("\n\nPROGRAM FUNCTION for " << programFunction.getFunctionName());
+  for (auto point : programFunction.getProgramPoints()) {
     logout("\n**point name " << point.getPointName());
     for (auto var : point.getProgramVariables()) {
-      logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
-          std::set<std::string>
-              methods = var.getMethodsSet().getMethods();
-      logout("methods set " << dataflow::setToString(methods))
+      logout(">var name " << var.getRawName() << " | " << var.getCleanedName());
+      std::set<std::string> methods = var.getMethodsSet().getMethods();
+      logout("methods set " << dataflow::setToString(methods));
 
-          auto aliases = var.getAllAliases(true);
+      auto aliases = var.getAllAliases(true);
       auto aliasesStr = dataflow::setToString(aliases);
-      logout(">>aliases " << aliasesStr)
+      logout(">>aliases " << aliasesStr);
     }
   }
 
-  logout(
-      "\n\nCALLED METHODS RESULT") for (auto point :
-                                        PostCalledMethods.getProgramPoints()) {
+  logout("\n\nCALLED METHODS RESULT");
+  for (auto point : PostCalledMethods.getProgramPoints()) {
     logout("\n**point name " << point.getPointName());
     for (auto var : point.getProgramVariables()) {
-      logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
-          std::set<std::string>
-              methods = var.getMethodsSet().getMethods();
-      logout("methods set " << dataflow::setToString(methods))
+      logout(">var name " << var.getRawName() << " | " << var.getCleanedName());
+      std::set<std::string> methods = var.getMethodsSet().getMethods();
+      logout("methods set " << dataflow::setToString(methods));
 
-          auto aliases = var.getAllAliases(true);
+      auto aliases = var.getAllAliases(true);
       auto aliasesStr = dataflow::setToString(aliases);
-      logout(">>aliases " << aliasesStr)
+      logout(">>aliases " << aliasesStr);
     }
   }
 
-  logout("\n\nMUST CALL RESULT") for (auto point :
-                                      PostMustCalls.getProgramPoints()) {
+  logout("\n\nMUST CALL RESULT");
+  for (auto point : PostMustCalls.getProgramPoints()) {
     logout("\n**point name " << point.getPointName());
     for (auto var : point.getProgramVariables()) {
-      logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
-          std::set<std::string>
-              methods = var.getMethodsSet().getMethods();
-      logout("methods set " << dataflow::setToString(methods))
+      logout(">var name " << var.getRawName() << " | " << var.getCleanedName());
+      std::set<std::string> methods = var.getMethodsSet().getMethods();
+      logout("methods set " << dataflow::setToString(methods));
 
-          auto aliases = var.getAllAliases(true);
+      auto aliases = var.getAllAliases(true);
       auto aliasesStr = dataflow::setToString(aliases);
-      logout(">>aliases " << aliasesStr)
+      logout(">>aliases " << aliasesStr);
     }
   }
 

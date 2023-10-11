@@ -1,2 +1,0 @@
-ALLOW_REDEFINE true
-CalledMethods for.end %str {free0,free1}

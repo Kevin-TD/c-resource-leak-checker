@@ -32,10 +32,27 @@ c_files = get_all_c_files(f"../test/{test_folder_name}")
 
 print("Making analysis")
 os.system("make")
+commands_did_not_fail = True
+commands = []
+
 
 for c_file in c_files:
     c_file_as_ll = c_file.replace(".c", ".ll")
     command = f"clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c {c_file} -o {c_file_as_ll} ; opt -load CodeAnalyzer.so -CodeAnalyzer {c_file_as_ll}"
     print(f"Running command: {command}")
-    os.system(command)
+    exit_status = os.system(command)
 
+    if exit_status != 0:
+        commands_did_not_fail = False
+        commands.append(f"'{command}' failed")
+    else:
+        commands.append(f"'{command}' did not fail")
+
+print("---------RUN RESULTS---------")
+for result in commands:
+    print(result)
+
+if commands_did_not_fail:
+    sys.exit(0)
+else:
+    sys.exit(1)

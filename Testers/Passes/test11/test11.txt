@@ -1,0 +1,1 @@
+pass=CalledMethods branch=while.end var=str function=main methods={free0,free2}

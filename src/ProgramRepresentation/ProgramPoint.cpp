@@ -202,8 +202,9 @@ void ProgramPoint::add(ProgramPoint *otherPoint) {
         this->fillAlias(pvCleanedName, pvAlias);
       }
     } else {
-      logout("ADDING VAR " << pvCleanedName)
-          logout("raw name " << pv.getRawName()) this->addVariable(pv);
+      logout("ADDING VAR " << pvCleanedName);
+      logout("raw name " << pv.getRawName());
+      this->addVariable(pv);
     }
   }
 }
