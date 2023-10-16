@@ -15,7 +15,7 @@ typedef struct struct_2 {
     char* y MustCall("free");
 } my_struct_2;
 
-void does_free(char* s MustCall("free")) { 
+void does_free(char* s Calls("free")) { 
     free(s); 
 }
 
@@ -29,8 +29,13 @@ char* MustCall("free") creates_obligation(char* s Calls("free"), struct my_struc
 
 
 
-struct my_struct Calls("free", "x") does_something(struct my_struct S Calls("free", "x")) {
+struct my_struct Calls("free", "x") does_something(struct my_struct S) {
     free(S.x); 
+    return S; 
+}
+
+char* Calls("free") does_something_simpler(char* S) {
+    free(S); 
     return S; 
 }
 
@@ -41,26 +46,30 @@ int main() {
         char* y MustCall("free");
     };
 
-    struct my_struct k; 
+    struct my_struct var_k; 
     my_struct_2 m;
     struct my_struct_3 km; 
 
-    k.x = (char*)malloc(15); 
-    k.y = (char*)malloc(15); 
-    // obligations to free k.x and k.y created 
+    var_k.x = (char*)malloc(15); 
+    var_k.y = (char*)malloc(15); 
 
     m.y = (char*)malloc(15); 
     km.x = (char*)malloc(15); 
 
     char* s = (char*)malloc(15);  
-    char* y = creates_obligation(s, k);  // creates obligation to free y; the method itself also calls free on k.x 
+    char* new_y = creates_obligation(s, var_k); 
 
-    free(y); // y, k.x freed. now to free k.y 
-    does_free(k.y); // k.y freed 
+    free(new_y); 
+    does_free(var_k.y);
 
     does_free(m.y);
     does_free(km.x);
-    
-    // all obligations satisfied 
+
+    struct my_struct m_var_1; 
+    m_var_1.x = (char*)malloc(15); 
+    struct my_struct m_var_2 = does_something(m_var_1); 
+
+    char* simpler = (char*)malloc(15); 
+    does_something_simpler(simpler); 
 
 }

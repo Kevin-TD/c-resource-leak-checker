@@ -15,7 +15,7 @@ std::string StructAnnotation::generateStringRep() {
   std::string annoMethodsString =
       dataflow::setToString(this->annotationMethods);
 
-  std::string fieldString = "Field = " + this->field;
+  std::string fieldString = "Field = " + std::to_string(this->field);
 
   return "@" + annoTypeString +
          " StructAnnotation Struct Name = " + this->targetName + " " +

@@ -2,12 +2,12 @@
 
 ReturnAnnotation::ReturnAnnotation(AnnotationType annotationType,
                                    std::set<std::string> annotationMethods,
-                                   std::string targetName, std::string field) {
+                                   std::string targetName, int field) {
   this->annotationType = annotationType;
   this->annotationMethods = annotationMethods;
   this->targetName = targetName;
   this->field = field;
-  this->hasField = (field != "");
+  this->hasField = (field != -1);
   this->isVerified = false;
 }
 
@@ -17,8 +17,8 @@ std::string ReturnAnnotation::generateStringRep() {
       dataflow::setToString(this->annotationMethods);
 
   std::string fieldString;
-  if (this->field.size() > 0) {
-    fieldString = "Field = " + this->field;
+  if (this->field != -1) {
+    fieldString = "Field = " + std::to_string(this->field);
   }
 
   return "@" + annoTypeString +
@@ -26,8 +26,8 @@ std::string ReturnAnnotation::generateStringRep() {
          fieldString + " methods = " + annoMethodsString;
 }
 
-bool ReturnAnnotation::fieldNameEquals(const std::string &field) {
-  return field.compare(this->field) == 0;
+bool ReturnAnnotation::fieldNameEquals(int field) {
+  return field == this->field;
 }
 
 bool ReturnAnnotation::returnHasField() { return this->hasField; }
@@ -36,4 +36,4 @@ bool ReturnAnnotation::functionNameEquals(const std::string &functionName) {
   return functionName.compare(this->targetName) == 0;
 }
 
-std::string ReturnAnnotation::getField() { return this->field; }
+int ReturnAnnotation::getField() { return this->field; }

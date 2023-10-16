@@ -34,6 +34,10 @@ private:
 
   MethodsSet methods;
 
+  // if program var is referring to a struct's field, it has an index. 
+  // otherwise, it is null (equal to -1)
+  int index; 
+
 public:
   ProgramVariable();
   ProgramVariable(Value *value);
@@ -46,6 +50,10 @@ public:
   std::string getRawName();
   std::string getCleanedName();
   Value *getValue();
+  int getIndex(); 
+
+  // checks if index is non null 
+  bool hasIndex(); 
 
   // IR names like %7 are considered unnamed and program names like %str are
   // named

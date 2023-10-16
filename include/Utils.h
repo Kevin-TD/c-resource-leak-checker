@@ -32,6 +32,8 @@ bool isValidCVariableName(const std::string &str);
 
 bool hasOnlyOneBalancedParentheses(const std::string &str);
 
+bool startsWith(std::string str, std::string starts); 
+
 // for debugging; just an easier way to get a string rep of a set
 std::string setToString(std::set<std::string> &setString);
 

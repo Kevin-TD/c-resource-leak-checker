@@ -5,12 +5,14 @@ ProgramVariable::ProgramVariable() {}
 
 ProgramVariable::ProgramVariable(std::string cleanedName) {
   this->cleanedName = cleanedName;
+  this->index = -1; 
 }
 
 ProgramVariable::ProgramVariable(Value *value) {
   this->value = value;
   this->rawName = dataflow::variable(value);
   this->cleanedName = this->rawName;
+  this->index = -1; 
   this->fixNameAndIdentifier();
 }
 
@@ -20,11 +22,13 @@ ProgramVariable::ProgramVariable(Value *value, MethodsSet methods) {
   this->cleanedName = this->rawName;
   this->fixNameAndIdentifier();
   this->methods = methods;
+  this->index = -1; 
 }
 
 ProgramVariable::ProgramVariable(Value *value, int index) {
   this->value = value;
   this->rawName = dataflow::variable(value) + "." + std::to_string(index);
+  this->index = index; 
   this->cleanedName = this->rawName;
   this->fixNameAndIdentifier();
 }
@@ -45,6 +49,10 @@ std::string ProgramVariable::getCleanedName() { return this->cleanedName; }
 Value *ProgramVariable::getValue() { return this->value; }
 
 bool ProgramVariable::hasProgramName() { return this->value->hasName(); }
+
+bool ProgramVariable::hasIndex() { return this->index != -1; }
+
+int ProgramVariable::getIndex() { return this->index; }
 
 bool ProgramVariable::isIdentifier() { return this->varIsIdentifier; }
 

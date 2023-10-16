@@ -44,11 +44,11 @@ ErrorAnno        FunctionAnno
                                      int nthParameter);
   Annotation *getParameterAnnotation(const std::string &functionName,
                                      int nthParameter,
-                                     const std::string &field);
+                                     int field);
 
   Annotation *getReturnAnnotation(const std::string &functionName);
   Annotation *getReturnAnnotation(const std::string &functionName,
-                                  const std::string &field);
+                                  int field);
 
   Annotation *getStructAnnotation(const std::string &structName, int field);
 };

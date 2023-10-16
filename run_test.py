@@ -31,7 +31,11 @@ def get_all_c_files(folder_path: str, collected_files = []):
 c_files = get_all_c_files(f"../test/{test_folder_name}")
 
 print("Making analysis")
-os.system("make")
+make_status = os.system("make")
+
+if make_status != 0:
+    sys.exit(make_status)
+
 commands_did_not_fail = True
 commands = []
 

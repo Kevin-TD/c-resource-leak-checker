@@ -134,4 +134,8 @@ std::string setToString(std::set<std::string> &setString) {
   return result;
 }
 
+bool startsWith(std::string str, std::string starts) {
+  return str.rfind(starts, 0) == 0;
+}
+
 } // namespace dataflow

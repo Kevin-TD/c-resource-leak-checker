@@ -2,12 +2,12 @@
 
 ParameterAnnotation::ParameterAnnotation(
     AnnotationType annotationType, std::set<std::string> annotationMethods,
-    std::string targetName, std::string field, int nthParameter) {
+    std::string targetName, int field, int nthParameter) {
   this->annotationType = annotationType;
   this->annotationMethods = annotationMethods;
   this->targetName = targetName;
   this->field = field;
-  this->hasField = (field != "");
+  this->hasField = (field != -1);
   this->nthParameter = nthParameter;
   this->isVerified = false;
 }
@@ -18,8 +18,8 @@ std::string ParameterAnnotation::generateStringRep() {
       dataflow::setToString(this->annotationMethods);
 
   std::string fieldString;
-  if (this->field.size() > 0) {
-    fieldString = "Field = " + this->field;
+  if (this->hasField) {
+    fieldString = "Field = " + std::to_string(this->field);
   }
 
   return "@" + annoTypeString +
@@ -36,12 +36,12 @@ bool ParameterAnnotation::functionNameEquals(const std::string &functionName) {
   return functionName.compare(this->targetName) == 0;
 }
 
-bool ParameterAnnotation::fieldNameEquals(const std::string &field) {
-  return field.compare(this->field) == 0;
+bool ParameterAnnotation::fieldNameEquals(int field) {
+  return field == this->field; 
 }
 
 bool ParameterAnnotation::paramHasField() { return this->hasField; }
 
-std::string ParameterAnnotation::getField() { return this->field; }
+int ParameterAnnotation::getField() { return this->field; }
 
 int ParameterAnnotation::getNthParameter() { return this->nthParameter; }

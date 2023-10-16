@@ -351,6 +351,14 @@ void doAliasReasoning(Instruction *instruction,
         }
       }
     }
+  } else if (ExtractValueInst* extractValue = dyn_cast<ExtractValueInst>(instruction))  {
+    /*
+    notes
+    attempting to get that last 2 test cases working for test16. i think we 
+    may need to eval extravalue instructions, but idk, this is alittle
+    quirky.
+    */
+
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
     if (llvm::StructType *structType =
             llvm::dyn_cast<llvm::StructType>(allocate->getAllocatedType())) {
@@ -377,6 +385,40 @@ void doAliasReasoning(Instruction *instruction,
         }
       }
     }
+  } else if (CallInst* call = dyn_cast<CallInst>(instruction)) {
+    std::string fnName = call->getCalledFunction()->getName().str();
+    /*
+    there are 2 llvm annotations to consider: 
+    - llvm.ptr.annotation.* 
+     - https://llvm.org/docs/LangRef.html#llvm-ptr-annotation-intrinsic
+     - the * "specifies an address space for the pointer"
+     - "the first argument is a pointer to an integer value of arbitrary bitwidth (result of some expression), 
+     the second is a pointer to a global string, 
+     the third is a pointer to a global string which is the source file name, 
+     and the last argument is the line number."
+    - llvm.var.annotation
+     - https://llvm.org/docs/LangRef.html#llvm-var-annotation-intrinsic
+     - "the first argument is a pointer to a value,
+     the second is a pointer to a global string,
+      the third is a pointer to a global string which is the source file name, 
+      and the last argument is the line number."
+
+    
+    there is also llvm.codeview.annotation 
+    (https://llvm.org/docs/LangRef.html#llvm-codeview-annotation-intrinsic)
+    and llvm.annotation.*
+    (https://llvm.org/docs/LangRef.html#llvm-annotation-intrinsic)
+    but we wont need to worry about them; they hold no aliasing information 
+    */
+   
+   if (dataflow::startsWith(fnName, LLVM_PTR_ANNOTATION) || dataflow::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
+    ProgramVariable sourceVar = ProgramVariable(call);
+    ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
+    programPoint->addAlias(sourceVar, destinationVar);
+
+   }
+
+    
   }
 }
 
@@ -472,13 +514,11 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   for (auto point : programFunction.getProgramPoints()) {
     logout("\n**point name " << point.getPointName());
     for (auto var : point.getProgramVariables()) {
-      logout(">var name " << var.getRawName() << " | " << var.getCleanedName());
-      std::set<std::string> methods = var.getMethodsSet().getMethods();
-      logout("methods set " << dataflow::setToString(methods));
-
-      auto aliases = var.getAllAliases(true);
+      logout("> var name " << var.getRawName());
+      auto aliases = var.getAllAliases(false);
       auto aliasesStr = dataflow::setToString(aliases);
-      logout(">>aliases " << aliasesStr);
+      logout("--> aliases " << aliasesStr);
+
     }
   }
 
@@ -486,13 +526,13 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   for (auto point : PostCalledMethods.getProgramPoints()) {
     logout("\n**point name " << point.getPointName());
     for (auto var : point.getProgramVariables()) {
-      logout(">var name " << var.getRawName() << " | " << var.getCleanedName());
+      logout("> var name " << var.getRawName());
       std::set<std::string> methods = var.getMethodsSet().getMethods();
-      logout("methods set " << dataflow::setToString(methods));
-
-      auto aliases = var.getAllAliases(true);
+      auto aliases = var.getAllAliases(false);
       auto aliasesStr = dataflow::setToString(aliases);
-      logout(">>aliases " << aliasesStr);
+      logout("--> aliases " << aliasesStr);
+      logout("--> " << dataflow::setToString(methods));
+
     }
   }
 
@@ -500,13 +540,13 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   for (auto point : PostMustCalls.getProgramPoints()) {
     logout("\n**point name " << point.getPointName());
     for (auto var : point.getProgramVariables()) {
-      logout(">var name " << var.getRawName() << " | " << var.getCleanedName());
+      logout("> var name " << var.getRawName());
       std::set<std::string> methods = var.getMethodsSet().getMethods();
-      logout("methods set " << dataflow::setToString(methods));
-
-      auto aliases = var.getAllAliases(true);
+      auto aliases = var.getAllAliases(false);
       auto aliasesStr = dataflow::setToString(aliases);
-      logout(">>aliases " << aliasesStr);
+      logout("--> aliases " << aliasesStr);
+      logout("--> " << dataflow::setToString(methods));
+
     }
   }
 

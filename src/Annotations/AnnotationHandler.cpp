@@ -59,7 +59,7 @@ AnnotationHandler::getParameterAnnotation(const std::string &functionName,
 Annotation *
 AnnotationHandler::getParameterAnnotation(const std::string &functionName,
                                           int nthParameter,
-                                          const std::string &field) {
+                                          int field) {
   for (Annotation *anno : this->annotations) {
     if (ParameterAnnotation *paramAnno =
             dynamic_cast<ParameterAnnotation *>(anno)) {
@@ -88,7 +88,7 @@ AnnotationHandler::getReturnAnnotation(const std::string &functionName) {
 
 Annotation *
 AnnotationHandler::getReturnAnnotation(const std::string &functionName,
-                                       const std::string &field) {
+                                       int field) {
   for (Annotation *anno : this->annotations) {
     if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(anno)) {
       if (returnAnno->functionNameEquals(functionName) &&

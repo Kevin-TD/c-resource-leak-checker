@@ -5,22 +5,26 @@
 
 class ParameterAnnotation : public Annotation {
 private:
-  std::string field;
+  // equals -1 if not defined 
+  int field;
+
   int nthParameter;
+
+  // returns true iff field does not equal -1
   bool hasField;
 
 public:
   ParameterAnnotation(AnnotationType annotationType,
                       std::set<std::string> annotationMethods,
-                      std::string targetName, std::string field,
+                      std::string targetName, int field,
                       int nthParameter);
   std::string generateStringRep();
   bool nthParameterEquals(int param);
   bool functionNameEquals(const std::string &functionName);
-  bool fieldNameEquals(const std::string &field);
+  bool fieldNameEquals(int field);
   bool paramHasField();
 
-  std::string getField();
+  int getField();
   int getNthParameter();
 };
 
