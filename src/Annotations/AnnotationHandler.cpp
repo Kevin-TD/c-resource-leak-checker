@@ -73,6 +73,36 @@ AnnotationHandler::getParameterAnnotation(const std::string &functionName,
   return new ErrorAnnotation();
 }
 
+std::vector<Annotation*> AnnotationHandler::getAllParameterAnnotationsWithFields(const std::string &functionName) {
+  std::vector<Annotation*> annotationsWithFields; 
+  for (Annotation *anno : this->annotations) {
+    if (ParameterAnnotation *paramAnno =
+            dynamic_cast<ParameterAnnotation *>(anno)) {
+      if (paramAnno->functionNameEquals(functionName) &&
+          paramAnno->paramHasField()) {
+        annotationsWithFields.push_back(paramAnno);
+      }
+    }
+  }
+
+  return annotationsWithFields; 
+}
+
+std::vector<Annotation*> AnnotationHandler::getAllParameterAnnotationsWithoutFields(const std::string &functionName) {
+  std::vector<Annotation*> annotationsWithFields; 
+  for (Annotation *anno : this->annotations) {
+    if (ParameterAnnotation *paramAnno =
+            dynamic_cast<ParameterAnnotation *>(anno)) {
+      if (paramAnno->functionNameEquals(functionName) &&
+          !paramAnno->paramHasField()) {
+        annotationsWithFields.push_back(paramAnno);
+      }
+    }
+  }
+
+  return annotationsWithFields; 
+}
+
 Annotation *
 AnnotationHandler::getReturnAnnotation(const std::string &functionName) {
   for (Annotation *anno : this->annotations) {

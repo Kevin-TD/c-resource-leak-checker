@@ -239,7 +239,7 @@ def parse_anno(anno: str, spec: Specifier, annotation_manager: AnnotationManager
     anno = anno[start_anno_index + 1 : end_anno_index]
 
     anno_type = anno[
-        anno.find(" ") + 1 : find_second_index(anno, " ")
+        0 : anno.find(" ")
     ]
 
     anno_methods = anno[anno.rfind("methods = ") + len("methods = ")::]  
@@ -248,7 +248,7 @@ def parse_anno(anno: str, spec: Specifier, annotation_manager: AnnotationManager
     known_target = ""
 
     anno_unfilled_target = ""
-    anno_unfilled_target_index = find_second_index(anno, "_")
+    anno_unfilled_target_index = anno.find("_")
 
     while (anno[anno_unfilled_target_index] != " "):
         anno_unfilled_target += anno[anno_unfilled_target_index]
@@ -279,7 +279,9 @@ def parse_anno(anno: str, spec: Specifier, annotation_manager: AnnotationManager
             if type(spec) is Function:
                 if param_index is None:
                     logout(f"ret type is '{spec.return_type}'")
-                    # Assumption: spec.return_type looks like 'struct <struct_name> '
+                    # Assumption: spec.return_type looks like 'struct <struct_name> ' or '<struct_name> ' 
+                    # note: it'll look like '<struct_name> ' if a typedef is used 
+
                     # we can make this assumption because: 
                     # 1. param_index is none, which means we are making an 
                     # annotation for the function itself, and (for now) we assume
@@ -301,8 +303,12 @@ def parse_anno(anno: str, spec: Specifier, annotation_manager: AnnotationManager
                     # void Calls("free", "x") example(int S Calls("free", "x")) { ... }
                     #                                 ^^^                 ^^^ implying "int" has field "x"
                     # we'll throw "ValueError: Did not find field 'x' for struct 'int', anno Calls target = _.FIELD(x) methods = free"
-
-                    return_struct_name = spec.return_type.split(" ")[1]
+                    
+                    return_type_split = spec.return_type.split(" ")
+                    if return_type_split[1] != "":
+                        return_struct_name = return_type_split[1]
+                    else:
+                        return_struct_name = return_type_split[0]
                     struct = specifier_manager.get_struct(return_struct_name)
 
                     for field in struct.fields:

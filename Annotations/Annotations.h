@@ -1,8 +1,8 @@
 #define CALLS_1_ARG(methods)                                                   \
-  __attribute__((annotate("TOOL_CHECKER Calls target = _ methods "             \
+  __attribute__((annotate("Calls target = _ methods "             \
                           "= " methods)))
 #define CALLS_2_ARG(methods, field)                                            \
-  __attribute__((annotate("TOOL_CHECKER Calls target = _.FIELD(" field         \
+  __attribute__((annotate("Calls target = _.FIELD(" field         \
                           ") methods = " methods)))
 
 #define GET_3RD_ARG(arg1, arg2, arg3, ...) arg3
@@ -12,9 +12,9 @@
 
 #define MUST_CALL_1_ARG(methods)                                               \
   __attribute__((                                                              \
-      annotate("TOOL_CHECKER MustCall target = _ methods = " methods)))
+      annotate("MustCall target = _ methods = " methods)))
 #define MUST_CALL_2_ARG(methods, field)                                        \
-  __attribute__((annotate("TOOL_CHECKER MustCall target = _.FIELD(" field      \
+  __attribute__((annotate("MustCall target = _.FIELD(" field      \
                           ") methods = " methods)))
 
 #define MUST_CALL_CHOOSER(...)                                                 \

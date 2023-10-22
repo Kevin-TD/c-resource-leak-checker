@@ -29,12 +29,12 @@ char* MustCall("free") creates_obligation(char* s Calls("free"), struct my_struc
 
 
 
-struct my_struct Calls("free", "x") does_something(struct my_struct S) {
+struct my_struct Calls("free", "x") does_something(struct my_struct S Calls("free", "x")) {
     free(S.x); 
     return S; 
 }
 
-char* Calls("free") does_something_simpler(char* S) {
+char* Calls("free") does_something_simpler(char* S Calls("free")) {
     free(S); 
     return S; 
 }

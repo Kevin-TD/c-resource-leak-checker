@@ -39,6 +39,7 @@ protected:
   virtual void onSafeFunctionCall(MethodsSet *input, std::string &fnName) = 0;
   virtual void onAnnotation(MethodsSet *input, std::string &fnName,
                             AnnotationType annotationType) = 0;
+  void insertAnnotation(Annotation* annotation, ProgramVariable* pv); 
 
 public:
   void setFunctions(std::set<std::string> safeFunctions,

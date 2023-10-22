@@ -8,6 +8,12 @@ import tempfile
 results = []
 tests_that_did_not_run = []
 
+DEBUG = True 
+
+def logout(x: str):
+    if (DEBUG):
+        print(x)
+
 # checks if cwd is build
 if os.path.split(os.getcwd())[1] != "build":
     print(f"WARNING: not in build dir; cwd is {os.getcwd()}")
@@ -54,6 +60,9 @@ with os.scandir("../test") as entries:
                     diff_command = f"diff {test_file} {annotations_output_name}"
                     print(f"Running diff command: {diff_command}")
                     diff_status = os.system(diff_command)
+
+                    with open(annotations_output_name, "r") as f:
+                        out = f.read()
                     
                     os.remove(ast_input_name)
                     os.remove(annotations_output_name)
@@ -62,6 +71,7 @@ with os.scandir("../test") as entries:
                         tests_passed = False
                         results.append(f"{test_file} failed - annotation build error")
                     elif diff_status != 0:
+                        logout(f"DIFF ANNOTATION RECEIVED:\n{out}")
                         tests_passed = False 
                         results.append(f"{test_file} failed - diff annotation")
                     else:

@@ -351,14 +351,6 @@ void doAliasReasoning(Instruction *instruction,
         }
       }
     }
-  } else if (ExtractValueInst* extractValue = dyn_cast<ExtractValueInst>(instruction))  {
-    /*
-    notes
-    attempting to get that last 2 test cases working for test16. i think we 
-    may need to eval extravalue instructions, but idk, this is alittle
-    quirky.
-    */
-
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
     if (llvm::StructType *structType =
             llvm::dyn_cast<llvm::StructType>(allocate->getAllocatedType())) {

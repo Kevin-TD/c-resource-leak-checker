@@ -27,7 +27,10 @@ def get_all_c_files(folder_path: str, collected_files = []):
 
 print("---------BEGINNING CODE TEST---------")
 print("Making analysis")
-os.system("make")
+make_status = os.system("make")
+
+if make_status != 0:
+    sys.exit(make_status)
 
 tests_passed = True
 
