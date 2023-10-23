@@ -25,7 +25,7 @@
 // annotations can be in either .c or .h. if it's in both, check if they're the same
 
 
-void does_free(char* s MustCall("free")) { 
+void does_free(char* s Calls("free")) { 
     free(s); 
 }
 
@@ -58,9 +58,9 @@ int main() {
     km.x = (char*)malloc(15); 
 
     char* s = (char*)malloc(15);  
-    char* y = creates_obligation(s, k);  // creates obligation to free y; the method itself also calls free on k.x 
+    char* random_var = creates_obligation(s, k);  // creates obligation to free random_var; the method itself also calls free on k.x 
 
-    free(y); // y, k.x freed. now to free k.y 
+    free(random_var); // random_var, k.x freed. now to free k.y 
     does_free(k.y); // k.y freed 
 
     does_free(m.y);

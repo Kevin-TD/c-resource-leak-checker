@@ -303,11 +303,13 @@ void doAliasReasoning(Instruction *instruction,
   } else if (GetElementPtrInst *gepInst =
                  dyn_cast<GetElementPtrInst>(instruction)) {
 
-    // for some struct k { int x; int y }, here are two example getInst:
+    // for some struct k { int x; int y }, here'a an example getptr inst: 
     // %y = getelementptr inbounds %struct.my_struct, %struct.my_struct* %k, i32
-    // 0, i32 1, !dbg !57 %x = getelementptr inbounds %struct.my_struct,
-    // %struct.my_struct* %k, i32 0, i32 0, !dbg !54 last argument on RHS is the
-    // index of the struct
+    // 0, i32 1, !dbg !57 
+
+    // %x = getelementptr inbounds %struct.my_struct,
+    // %struct.my_struct* %k, i32 0, i32 0, !dbg !54 
+    // last argument on RHS is the index of the struct
     /*
     LLVM removes field names and just makes them indices
     example:
@@ -345,8 +347,10 @@ void doAliasReasoning(Instruction *instruction,
             programPoint->addAlias(sourceVar, structVar);
             return;
           }
-
+          
           ProgramVariable structVar = ProgramVariable(pointerOperand, index);
+          logout("specifying index for " << structVar.getCleanedName()); 
+          // TODO!: look at other tests to see why it didnt generate something like "6.0" (look at simple_ptr_test)
           programPoint->addAlias(sourceVar, structVar);
         }
       }

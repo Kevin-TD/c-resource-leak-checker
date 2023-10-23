@@ -18,7 +18,7 @@ typedef struct my_struct_3 {
   char *y MustCall("free");
 } my_struct_3;
 
-void does_free(char *s MustCall("free"));
+void does_free(char *s Calls("free"));
 
 char *MustCall("free")
     creates_obligation(char *s Calls("free"),

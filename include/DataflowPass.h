@@ -14,6 +14,15 @@
 #include "Utils.h"
 
 class DataflowPass {
+private:
+  void analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
+                  ProgramFunction &postProgramFunction,
+                  std::string priorBranch);
+  void transfer(Instruction *instruction, SetVector<Instruction *> workSet,
+                ProgramPoint &inputProgramPoint);
+  void insertAnnotation(Annotation* annotation, ProgramVariable* pv); 
+  void handleSretCall(CallInst* call, const std::string& fnName, const std::string& argName, ProgramPoint& programPoint);
+
 protected:
   ProgramFunction programFunction;
   AnnotationHandler annotations;
@@ -21,14 +30,9 @@ protected:
   CFG *cfg;
   FullFile expectedResult;
 
-  void analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
-                  ProgramFunction &postProgramFunction,
-                  std::string priorBranch);
   virtual void leastUpperBound(MethodsSet &preMethods, MethodsSet &curMethods,
                                MethodsSet &result) = 0;
 
-  void transfer(Instruction *instruction, SetVector<Instruction *> workSet,
-                ProgramPoint &inputProgramPoint);
   virtual void onAllocationFunctionCall(MethodsSet *input,
                                         std::string &fnName) = 0;
   virtual void onDeallocationFunctionCall(MethodsSet *input,
@@ -39,7 +43,7 @@ protected:
   virtual void onSafeFunctionCall(MethodsSet *input, std::string &fnName) = 0;
   virtual void onAnnotation(MethodsSet *input, std::string &fnName,
                             AnnotationType annotationType) = 0;
-  void insertAnnotation(Annotation* annotation, ProgramVariable* pv); 
+  
 
 public:
   void setFunctions(std::set<std::string> safeFunctions,
