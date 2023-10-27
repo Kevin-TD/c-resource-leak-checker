@@ -28,4 +28,6 @@ int main() {
     M_ptr->x = (char*)malloc(15); 
     free(M_ptr->x); 
 
+    struct my_struct** M_ptr_ptr = &M_ptr; 
+
 }

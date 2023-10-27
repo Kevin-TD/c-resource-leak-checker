@@ -235,8 +235,38 @@ std::vector<Instruction *> getSuccessors(Instruction *Inst) {
   return Ret;
 }
 
+
+// unwraps a PointerType until there is a StructType. if there is no 
+// StructType, NULL is returned. 
+StructType* unwrapValuePointerToStruct(Value* value) {
+  PointerType* valuePointer = dyn_cast<PointerType>(value->getType());
+    while (valuePointer) {
+      if (StructType* structType = dyn_cast<StructType>(valuePointer->getElementType())) {
+        return structType; 
+      }
+      
+      valuePointer = dyn_cast<PointerType>(valuePointer->getElementType()); 
+    }
+    return NULL; 
+}
+
+// unwraps a AllocaInst pointer until there is a StructType. if there is no
+// StructType, NULL is returned. a separate function is created 
+// for this because we need to call getAllocatedType instead of 
+// getType. 
+StructType* unwrapAllocatePointerToStruct(AllocaInst* allocate) {
+  PointerType* allocatePointer = dyn_cast<PointerType>(allocate->getType());
+    while (allocatePointer) {
+      if (StructType* structType = dyn_cast<StructType>(allocatePointer->getElementType())) {
+        return structType; 
+      }
+      
+      allocatePointer = dyn_cast<PointerType>(allocatePointer->getElementType()); 
+    }
+    return NULL; 
+}
+
 void doAliasReasoning(Instruction *instruction,
-                      SetVector<Instruction *> &workSet,
                       ProgramFunction &programFunction) {
   bool includes = false;
   std::string branchName = instruction->getParent()->getName().str();
@@ -282,14 +312,50 @@ void doAliasReasoning(Instruction *instruction,
 
     ProgramVariable receivingVar = ProgramVariable(store->getOperand(1));
 
-    for (auto Inst : workSet) {
-      if (valueToStore == Inst) {
-        if (CallInst *call = dyn_cast<CallInst>(Inst)) {
-          ProgramVariable callVar = ProgramVariable(call);
-          programPoint->addAlias(callVar, receivingVar);
-          return;
+    if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
+      ProgramVariable callVar = ProgramVariable(call);
+      programPoint->addAlias(callVar, receivingVar);
+      return;
+    }
+
+    // check if two structs are being aliased
+    if (valueToStore->getType()->isPointerTy() && receivingValue->getType()->isPointerTy()) {
+      StructType* valueStruct = unwrapValuePointerToStruct(valueToStore);
+      StructType* receivingStruct = unwrapValuePointerToStruct(receivingValue);
+      
+      if (valueStruct && receivingStruct) {
+        logout("two structs to alias " << *store); 
+        int numFields = valueStruct->getNumElements();
+
+        // ASSUMPTION: both structs are referring to the same struct (or the structs
+        // have the same fields). note that i do not have strong 
+        // reason to believe that they could be different, as the instruction is
+        // storing one struct into another. 
+        if (valueStruct->getNumElements() != receivingStruct->getNumElements()) {
+          logout("WARNING: diff number of elements. early returning");
+          return; 
         }
+
+
+        for (int i = 0; i < numFields; i++) {
+          // the M.0, M.1, M_ptr.0, M_ptr.1 should already exist. just need to alias them
+
+          ProgramVariable valueStructVar = ProgramVariable(valueToStore, i);
+          ProgramVariable receivingStructVar = ProgramVariable(receivingValue, i);
+
+          ProgramVariable* originalValueRef = programPoint->getPVRef(valueStructVar.getCleanedName(), false); 
+          ProgramVariable* originalReceivingRef = programPoint->getPVRef(receivingStructVar.getCleanedName(), false); 
+          
+          logout("found: " << originalValueRef->getRawName() << " " << originalReceivingRef->getRawName() << " now aliased ");
+
+          programPoint->addAlias(*originalReceivingRef, *originalValueRef);
+
+
+        }
+
+        return; 
       }
+
     }
 
     programPoint->addAlias(varToStore, receivingVar);
@@ -348,39 +414,56 @@ void doAliasReasoning(Instruction *instruction,
             return;
           }
           
-          ProgramVariable structVar = ProgramVariable(pointerOperand, index);
+          // ProgramVariable structVar = ProgramVariable(pointerOperand, index);
+
+          // ProgramVariable test_if_ref = ProgramVariable(pointerOperand);
+          // ProgramVariable* k = programPoint->getPVRef(test_if_ref.getCleanedName(), false);
+          // if (k != NULL && k->getCleanedName() != test_if_ref.getCleanedName()) {
+          //   logout("a unique way to see things ? OG is " << k->getCleanedName() << " which differes from " << test_if_ref.getCleanedName());
+          //   structVar = ProgramVariable(k->getValue(), index); 
+          // }
+          
+          ProgramVariable structPV = ProgramVariable(pointerOperand);
+          ProgramVariable* originalStructPVRef = programPoint->getPVRef(structPV.getCleanedName(), false); 
+          ProgramVariable structVar = ProgramVariable(originalStructPVRef->getValue(), index); 
+
+        
+          logout("spec index inst = " << *gepInst);
           logout("specifying index for " << structVar.getCleanedName()); 
-          // TODO!: look at other tests to see why it didnt generate something like "6.0" (look at simple_ptr_test)
+
           programPoint->addAlias(sourceVar, structVar);
         }
       }
     }
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
-    if (llvm::StructType *structType =
-            llvm::dyn_cast<llvm::StructType>(allocate->getAllocatedType())) {
-      /*
-      I cannot find documentation that states how struct names appear in the IR,
-      but it seems that they typically look like "struct.[C struct name]"
-      TODO: prove/disprove that struct names are formatted as "struct.[C struct
-      name]"
-      */
-      std::string structName = structType->getName();
-      structName = sliceString(structName, structName.find_last_of('.') + 1,
-                               structName.size() - 1);
-      int numFields = structType->getNumElements();
-      for (int i = 0; i < numFields; i++) {
+    logout("alloca inst = " << *allocate);
 
-        Annotation *anno = annotationHandler.getStructAnnotation(structName, i);
-        if (StructAnnotation *structAnno =
-                dynamic_cast<StructAnnotation *>(anno)) {
-          std::set<std::string> structMethods =
-              structAnno->getAnnotationMethods();
-          AnnotationType structAnnoType = structAnno->getAnnotationType();
-          ProgramVariable sourceVar = ProgramVariable(allocate, i);
-          programPoint->addVariable(sourceVar);
-        }
+    StructType* structType = llvm::dyn_cast<llvm::StructType>(allocate->getAllocatedType()); 
+
+    if (!structType && allocate->getAllocatedType()->isPointerTy()) {
+      structType = unwrapAllocatePointerToStruct(allocate); 
+
+      if (!structType) {
+        return; 
       }
     }
+
+    /*
+    I cannot find documentation that states how struct names appear in the IR,
+    but it seems that they typically look like "struct.[C struct name]"
+    TODO: prove/disprove that struct names are formatted as "struct.[C struct
+    name]"
+    */
+    std::string structName = structType->getName();
+    structName = sliceString(structName, structName.find_last_of('.') + 1,
+                            structName.size() - 1);
+    logout("struct name found = " << structName);
+    int numFields = structType->getNumElements();
+    for (int i = 0; i < numFields; i++) {
+      ProgramVariable sourceVar = ProgramVariable(allocate, i);
+      programPoint->addVariable(sourceVar);
+    }
+      
   } else if (CallInst* call = dyn_cast<CallInst>(instruction)) {
     std::string fnName = call->getCalledFunction()->getName().str();
     /*
@@ -481,7 +564,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     WorkSet.insert(&(*I));
 
     std::string branchName = I->getParent()->getName().str();
-    doAliasReasoning(&(*I), WorkSet, programFunction);
+    doAliasReasoning(&(*I), programFunction);
 
     auto succs = getSuccessors(&(*I));
     branchInstructionMap[branchName].branch.insert(&(*I));

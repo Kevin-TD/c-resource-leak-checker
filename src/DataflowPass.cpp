@@ -314,43 +314,50 @@ void DataflowPass::transfer(Instruction *instruction,
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
 
     // searches for struct annotations
-    if (llvm::StructType *structType =
-            llvm::dyn_cast<llvm::StructType>(allocate->getAllocatedType())) {
-      std::string structName = structType->getName();
-      structName = dataflow::sliceString(
-          structName, structName.find_last_of('.') + 1, structName.size() - 1);
-      int numFields = structType->getNumElements();
-      for (int i = 0; i < numFields; i++) {
+    StructType* structType = llvm::dyn_cast<llvm::StructType>(allocate->getAllocatedType()); 
 
-        Annotation *anno = this->annotations.getStructAnnotation(structName, i);
-        if (StructAnnotation *structAnno =
-                dynamic_cast<StructAnnotation *>(anno)) {
-          std::set<std::string> structMethods =
-              structAnno->getAnnotationMethods();
-          AnnotationType structAnnoType = structAnno->getAnnotationType();
-          ProgramVariable sourceVar = ProgramVariable(allocate, i);
-
-          std::string arg = sourceVar.getCleanedName();
-          if (!sourceVar.isIdentifier()) {
-            continue;
-          }
-
-          logout("found annotation "
-                 << dataflow::setToString(structMethods) << " "
-                 << annotationTypeToString(structAnnoType)
-                 << " for field index " << std::to_string(i) << " var name "
-                 << sourceVar.getRawName());
-
-          MethodsSet *methods =
-              inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
-          for (std::string methodName : structMethods) {
-            logout("var = '" << arg << "' method name = '" << methodName
-                             << "'");
-            this->onAnnotation(methods, methodName, structAnnoType);
-          }
-        }
+    if (!structType && allocate->getAllocatedType()->isPointerTy()) {
+      Type *pointerType = allocate->getAllocatedType()->getPointerElementType();
+      if (pointerType->isStructTy()) { 
+        structType = cast<StructType>(pointerType);
+      } else {
+        return; 
       }
     }
+
+    std::string structName = structType->getName();
+    structName = dataflow::sliceString(
+        structName, structName.find_last_of('.') + 1, structName.size() - 1);
+    int numFields = structType->getNumElements();
+    for (int i = 0; i < numFields; i++) {
+
+      Annotation *anno = this->annotations.getStructAnnotation(structName, i);
+      if (StructAnnotation *structAnno =
+              dynamic_cast<StructAnnotation *>(anno)) {
+        ProgramVariable sourceVar = ProgramVariable(allocate, i);
+
+        if (!sourceVar.isIdentifier()) {
+          continue;
+        }
+
+        logout("found annotation for struct " << structAnno->generateStringRep()); 
+
+        std::string arg = sourceVar.getCleanedName();
+        ProgramVariable* pv = inputProgramPoint.getPVRef(arg, false); 
+        this->insertAnnotation(structAnno, pv); 
+
+        // ProgramVariable structPV = ProgramVariable(allocate);
+        // ProgramVariable* originalStructPVRef = inputProgramPoint.getPVRef(structPV.getCleanedName(), false); 
+        // if (originalStructPVRef) {
+        //   ProgramVariable structVar = ProgramVariable(originalStructPVRef->getValue(), i); 
+        //   logout("(alloca inst) specifying index for " << structVar.getCleanedName()); 
+        //   logout("original is " << sourceVar.getCleanedName());
+        // }
+
+
+      }
+    }
+  
   }
 }
 
