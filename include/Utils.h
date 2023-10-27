@@ -32,10 +32,14 @@ bool isValidCVariableName(const std::string &str);
 
 bool hasOnlyOneBalancedParentheses(const std::string &str);
 
-bool startsWith(std::string str, std::string starts); 
+bool startsWith(std::string str, std::string starts);
 
 // for debugging; just an easier way to get a string rep of a set
 std::string setToString(std::set<std::string> &setString);
+
+// unwraps a PointerType until there is a StructType. if there is no
+// StructType, NULL is returned.
+StructType *unwrapValuePointerToStruct(Value *value);
 
 } // namespace dataflow
 

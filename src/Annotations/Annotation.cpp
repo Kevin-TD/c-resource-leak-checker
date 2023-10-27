@@ -509,13 +509,13 @@ Annotation *generateAnnotation(const std::string &rawAnnotationString) {
                                             targetChunks[2].find('(') + 1,
                                             targetChunks[2].find(')') - 1);
       }
-      
-      int returnFieldInt; 
+
+      int returnFieldInt;
 
       if (returnField.compare("") == 0) {
-        returnFieldInt = -1; 
+        returnFieldInt = -1;
       } else {
-        returnFieldInt = std::stoi(returnField); 
+        returnFieldInt = std::stoi(returnField);
       }
 
       return new ReturnAnnotation(annoType, methodsSet, name, returnFieldInt);
@@ -533,16 +533,16 @@ Annotation *generateAnnotation(const std::string &rawAnnotationString) {
                                 targetChunks[2].find(')') - 1);
     }
 
-    int parameterFieldInt; 
+    int parameterFieldInt;
 
     if (parameterField.compare("") == 0) {
-      parameterFieldInt = -1; 
+      parameterFieldInt = -1;
     } else {
-      parameterFieldInt = std::stoi(parameterField); 
+      parameterFieldInt = std::stoi(parameterField);
     }
 
-    return new ParameterAnnotation(annoType, methodsSet, name, parameterFieldInt,
-                                   nthParameter);
+    return new ParameterAnnotation(annoType, methodsSet, name,
+                                   parameterFieldInt, nthParameter);
   }
 
   return new ErrorAnnotation();

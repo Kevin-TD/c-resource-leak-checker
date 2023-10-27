@@ -20,8 +20,9 @@ private:
                   std::string priorBranch);
   void transfer(Instruction *instruction, SetVector<Instruction *> workSet,
                 ProgramPoint &inputProgramPoint);
-  void insertAnnotation(Annotation* annotation, ProgramVariable* pv); 
-  void handleSretCall(CallInst* call, const std::string& fnName, const std::string& argName, ProgramPoint& programPoint);
+  void insertAnnotation(Annotation *annotation, ProgramVariable *pv);
+  void handleSretCall(CallInst *call, const std::string &fnName,
+                      const std::string &argName, ProgramPoint &programPoint);
 
 protected:
   ProgramFunction programFunction;
@@ -43,7 +44,6 @@ protected:
   virtual void onSafeFunctionCall(MethodsSet *input, std::string &fnName) = 0;
   virtual void onAnnotation(MethodsSet *input, std::string &fnName,
                             AnnotationType annotationType) = 0;
-  
 
 public:
   void setFunctions(std::set<std::string> safeFunctions,

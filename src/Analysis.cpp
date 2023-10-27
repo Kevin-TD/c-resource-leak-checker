@@ -235,37 +235,6 @@ std::vector<Instruction *> getSuccessors(Instruction *Inst) {
   return Ret;
 }
 
-
-// unwraps a PointerType until there is a StructType. if there is no 
-// StructType, NULL is returned. 
-StructType* unwrapValuePointerToStruct(Value* value) {
-  PointerType* valuePointer = dyn_cast<PointerType>(value->getType());
-    while (valuePointer) {
-      if (StructType* structType = dyn_cast<StructType>(valuePointer->getElementType())) {
-        return structType; 
-      }
-      
-      valuePointer = dyn_cast<PointerType>(valuePointer->getElementType()); 
-    }
-    return NULL; 
-}
-
-// unwraps a AllocaInst pointer until there is a StructType. if there is no
-// StructType, NULL is returned. a separate function is created 
-// for this because we need to call getAllocatedType instead of 
-// getType. 
-StructType* unwrapAllocatePointerToStruct(AllocaInst* allocate) {
-  PointerType* allocatePointer = dyn_cast<PointerType>(allocate->getType());
-    while (allocatePointer) {
-      if (StructType* structType = dyn_cast<StructType>(allocatePointer->getElementType())) {
-        return structType; 
-      }
-      
-      allocatePointer = dyn_cast<PointerType>(allocatePointer->getElementType()); 
-    }
-    return NULL; 
-}
-
 void doAliasReasoning(Instruction *instruction,
                       ProgramFunction &programFunction) {
   bool includes = false;
@@ -319,43 +288,42 @@ void doAliasReasoning(Instruction *instruction,
     }
 
     // check if two structs are being aliased
-    if (valueToStore->getType()->isPointerTy() && receivingValue->getType()->isPointerTy()) {
-      StructType* valueStruct = unwrapValuePointerToStruct(valueToStore);
-      StructType* receivingStruct = unwrapValuePointerToStruct(receivingValue);
-      
+    if (valueToStore->getType()->isPointerTy() &&
+        receivingValue->getType()->isPointerTy()) {
+      StructType *valueStruct =
+          dataflow::unwrapValuePointerToStruct(valueToStore);
+      StructType *receivingStruct =
+          dataflow::unwrapValuePointerToStruct(receivingValue);
+
       if (valueStruct && receivingStruct) {
-        logout("two structs to alias " << *store); 
+        logout("two structs to alias " << *store);
         int numFields = valueStruct->getNumElements();
 
-        // ASSUMPTION: both structs are referring to the same struct (or the structs
-        // have the same fields). note that i do not have strong 
-        // reason to believe that they could be different, as the instruction is
-        // storing one struct into another. 
-        if (valueStruct->getNumElements() != receivingStruct->getNumElements()) {
+        // ASSUMPTION: both structs are referring to the same struct (or the
+        // structs have the same fields). note that i do not have strong reason
+        // to believe that they could be different, as the instruction is
+        // storing one struct into another.
+        if (valueStruct->getNumElements() !=
+            receivingStruct->getNumElements()) {
           logout("WARNING: diff number of elements. early returning");
-          return; 
+          return;
         }
-
 
         for (int i = 0; i < numFields; i++) {
-          // the M.0, M.1, M_ptr.0, M_ptr.1 should already exist. just need to alias them
-
           ProgramVariable valueStructVar = ProgramVariable(valueToStore, i);
-          ProgramVariable receivingStructVar = ProgramVariable(receivingValue, i);
+          ProgramVariable receivingStructVar =
+              ProgramVariable(receivingValue, i);
 
-          ProgramVariable* originalValueRef = programPoint->getPVRef(valueStructVar.getCleanedName(), false); 
-          ProgramVariable* originalReceivingRef = programPoint->getPVRef(receivingStructVar.getCleanedName(), false); 
-          
-          logout("found: " << originalValueRef->getRawName() << " " << originalReceivingRef->getRawName() << " now aliased ");
+          ProgramVariable originalValue =
+              programPoint->getPV(valueStructVar.getCleanedName(), false);
+          ProgramVariable originalReceiving =
+              programPoint->getPV(receivingStructVar.getCleanedName(), false);
 
-          programPoint->addAlias(*originalReceivingRef, *originalValueRef);
-
-
+          programPoint->addAlias(originalReceiving, originalValue);
         }
 
-        return; 
+        return;
       }
-
     }
 
     programPoint->addAlias(varToStore, receivingVar);
@@ -369,12 +337,12 @@ void doAliasReasoning(Instruction *instruction,
   } else if (GetElementPtrInst *gepInst =
                  dyn_cast<GetElementPtrInst>(instruction)) {
 
-    // for some struct k { int x; int y }, here'a an example getptr inst: 
+    // for some struct k { int x; int y }, here'a an example getptr inst:
     // %y = getelementptr inbounds %struct.my_struct, %struct.my_struct* %k, i32
-    // 0, i32 1, !dbg !57 
+    // 0, i32 1, !dbg !57
 
     // %x = getelementptr inbounds %struct.my_struct,
-    // %struct.my_struct* %k, i32 0, i32 0, !dbg !54 
+    // %struct.my_struct* %k, i32 0, i32 0, !dbg !54
     // last argument on RHS is the index of the struct
     /*
     LLVM removes field names and just makes them indices
@@ -413,23 +381,16 @@ void doAliasReasoning(Instruction *instruction,
             programPoint->addAlias(sourceVar, structVar);
             return;
           }
-          
-          // ProgramVariable structVar = ProgramVariable(pointerOperand, index);
 
-          // ProgramVariable test_if_ref = ProgramVariable(pointerOperand);
-          // ProgramVariable* k = programPoint->getPVRef(test_if_ref.getCleanedName(), false);
-          // if (k != NULL && k->getCleanedName() != test_if_ref.getCleanedName()) {
-          //   logout("a unique way to see things ? OG is " << k->getCleanedName() << " which differes from " << test_if_ref.getCleanedName());
-          //   structVar = ProgramVariable(k->getValue(), index); 
-          // }
-          
           ProgramVariable structPV = ProgramVariable(pointerOperand);
-          ProgramVariable* originalStructPVRef = programPoint->getPVRef(structPV.getCleanedName(), false); 
-          ProgramVariable structVar = ProgramVariable(originalStructPVRef->getValue(), index); 
 
-        
+          ProgramVariable *originalStructPVRef =
+              programPoint->getPVRef(structPV.getCleanedName(), false);
+          ProgramVariable structVar =
+              ProgramVariable(originalStructPVRef->getValue(), index);
+
           logout("spec index inst = " << *gepInst);
-          logout("specifying index for " << structVar.getCleanedName()); 
+          logout("specifying index for " << structVar.getCleanedName());
 
           programPoint->addAlias(sourceVar, structVar);
         }
@@ -438,15 +399,18 @@ void doAliasReasoning(Instruction *instruction,
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
     logout("alloca inst = " << *allocate);
 
-    StructType* structType = llvm::dyn_cast<llvm::StructType>(allocate->getAllocatedType()); 
+    StructType *structType =
+        llvm::dyn_cast<llvm::StructType>(allocate->getAllocatedType());
 
     if (!structType && allocate->getAllocatedType()->isPointerTy()) {
-      structType = unwrapAllocatePointerToStruct(allocate); 
-
-      if (!structType) {
-        return; 
-      }
+      structType = dataflow::unwrapValuePointerToStruct(allocate);
     }
+
+    if (!structType) {
+      return;
+    }
+
+    programPoint->addVariable(ProgramVariable(allocate));
 
     /*
     I cannot find documentation that states how struct names appear in the IR,
@@ -456,48 +420,46 @@ void doAliasReasoning(Instruction *instruction,
     */
     std::string structName = structType->getName();
     structName = sliceString(structName, structName.find_last_of('.') + 1,
-                            structName.size() - 1);
+                             structName.size() - 1);
     logout("struct name found = " << structName);
     int numFields = structType->getNumElements();
     for (int i = 0; i < numFields; i++) {
       ProgramVariable sourceVar = ProgramVariable(allocate, i);
       programPoint->addVariable(sourceVar);
     }
-      
-  } else if (CallInst* call = dyn_cast<CallInst>(instruction)) {
+
+  } else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
     std::string fnName = call->getCalledFunction()->getName().str();
     /*
-    there are 2 llvm annotations to consider: 
-    - llvm.ptr.annotation.* 
+    there are 2 llvm annotations to consider:
+    - llvm.ptr.annotation.*
      - https://llvm.org/docs/LangRef.html#llvm-ptr-annotation-intrinsic
      - the * "specifies an address space for the pointer"
-     - "the first argument is a pointer to an integer value of arbitrary bitwidth (result of some expression), 
-     the second is a pointer to a global string, 
-     the third is a pointer to a global string which is the source file name, 
-     and the last argument is the line number."
+     - "the first argument is a pointer to an integer value of arbitrary
+    bitwidth (result of some expression), the second is a pointer to a global
+    string, the third is a pointer to a global string which is the source file
+    name, and the last argument is the line number."
     - llvm.var.annotation
      - https://llvm.org/docs/LangRef.html#llvm-var-annotation-intrinsic
      - "the first argument is a pointer to a value,
      the second is a pointer to a global string,
-      the third is a pointer to a global string which is the source file name, 
+      the third is a pointer to a global string which is the source file name,
       and the last argument is the line number."
 
-    
-    there is also llvm.codeview.annotation 
+
+    there is also llvm.codeview.annotation
     (https://llvm.org/docs/LangRef.html#llvm-codeview-annotation-intrinsic)
     and llvm.annotation.*
     (https://llvm.org/docs/LangRef.html#llvm-annotation-intrinsic)
-    but we wont need to worry about them; they hold no aliasing information 
+    but we wont need to worry about them; they hold no aliasing information
     */
-   
-   if (dataflow::startsWith(fnName, LLVM_PTR_ANNOTATION) || dataflow::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
-    ProgramVariable sourceVar = ProgramVariable(call);
-    ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
-    programPoint->addAlias(sourceVar, destinationVar);
 
-   }
-
-    
+    if (dataflow::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
+        dataflow::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
+      ProgramVariable sourceVar = ProgramVariable(call);
+      ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
+      programPoint->addAlias(sourceVar, destinationVar);
+    }
   }
 }
 
@@ -597,7 +559,6 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
       auto aliases = var.getAllAliases(false);
       auto aliasesStr = dataflow::setToString(aliases);
       logout("--> aliases " << aliasesStr);
-
     }
   }
 
@@ -611,7 +572,6 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
       auto aliasesStr = dataflow::setToString(aliases);
       logout("--> aliases " << aliasesStr);
       logout("--> " << dataflow::setToString(methods));
-
     }
   }
 
@@ -625,7 +585,6 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
       auto aliasesStr = dataflow::setToString(aliases);
       logout("--> aliases " << aliasesStr);
       logout("--> " << dataflow::setToString(methods));
-
     }
   }
 

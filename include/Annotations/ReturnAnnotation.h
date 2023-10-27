@@ -5,7 +5,7 @@
 
 class ReturnAnnotation : public Annotation {
 private:
-  // equals -1 if not defined 
+  // equals -1 if not defined
   int field;
 
   // returns true iff field does not equal -1

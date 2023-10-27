@@ -58,8 +58,7 @@ AnnotationHandler::getParameterAnnotation(const std::string &functionName,
 
 Annotation *
 AnnotationHandler::getParameterAnnotation(const std::string &functionName,
-                                          int nthParameter,
-                                          int field) {
+                                          int nthParameter, int field) {
   for (Annotation *anno : this->annotations) {
     if (ParameterAnnotation *paramAnno =
             dynamic_cast<ParameterAnnotation *>(anno)) {
@@ -73,8 +72,10 @@ AnnotationHandler::getParameterAnnotation(const std::string &functionName,
   return new ErrorAnnotation();
 }
 
-std::vector<Annotation*> AnnotationHandler::getAllParameterAnnotationsWithFields(const std::string &functionName) {
-  std::vector<Annotation*> annotationsWithFields; 
+std::vector<Annotation *>
+AnnotationHandler::getAllParameterAnnotationsWithFields(
+    const std::string &functionName) {
+  std::vector<Annotation *> annotationsWithFields;
   for (Annotation *anno : this->annotations) {
     if (ParameterAnnotation *paramAnno =
             dynamic_cast<ParameterAnnotation *>(anno)) {
@@ -85,11 +86,13 @@ std::vector<Annotation*> AnnotationHandler::getAllParameterAnnotationsWithFields
     }
   }
 
-  return annotationsWithFields; 
+  return annotationsWithFields;
 }
 
-std::vector<Annotation*> AnnotationHandler::getAllParameterAnnotationsWithoutFields(const std::string &functionName) {
-  std::vector<Annotation*> annotationsWithFields; 
+std::vector<Annotation *>
+AnnotationHandler::getAllParameterAnnotationsWithoutFields(
+    const std::string &functionName) {
+  std::vector<Annotation *> annotationsWithFields;
   for (Annotation *anno : this->annotations) {
     if (ParameterAnnotation *paramAnno =
             dynamic_cast<ParameterAnnotation *>(anno)) {
@@ -100,7 +103,7 @@ std::vector<Annotation*> AnnotationHandler::getAllParameterAnnotationsWithoutFie
     }
   }
 
-  return annotationsWithFields; 
+  return annotationsWithFields;
 }
 
 Annotation *

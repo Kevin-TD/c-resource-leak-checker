@@ -10,7 +10,7 @@ enum AnnotationType {
 };
 
 // TODO: add virtual method verifyAnnotation and implement for the superclasses
-// TODO: consider putting helper functions into separate namespace 
+// TODO: consider putting helper functions into separate namespace
 
 class Annotation {
 protected:

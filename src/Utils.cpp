@@ -138,4 +138,17 @@ bool startsWith(std::string str, std::string starts) {
   return str.rfind(starts, 0) == 0;
 }
 
+StructType *unwrapValuePointerToStruct(Value *value) {
+  PointerType *valuePointer = dyn_cast<PointerType>(value->getType());
+  while (valuePointer) {
+    if (StructType *structType =
+            dyn_cast<StructType>(valuePointer->getElementType())) {
+      return structType;
+    }
+
+    valuePointer = dyn_cast<PointerType>(valuePointer->getElementType());
+  }
+  return NULL;
+}
+
 } // namespace dataflow

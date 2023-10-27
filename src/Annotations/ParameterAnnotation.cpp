@@ -37,7 +37,7 @@ bool ParameterAnnotation::functionNameEquals(const std::string &functionName) {
 }
 
 bool ParameterAnnotation::fieldNameEquals(int field) {
-  return field == this->field; 
+  return field == this->field;
 }
 
 bool ParameterAnnotation::paramHasField() { return this->hasField; }

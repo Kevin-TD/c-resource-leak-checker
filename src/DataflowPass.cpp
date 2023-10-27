@@ -29,7 +29,7 @@ void DataflowPass::setCFG(CFG *cfg) { this->cfg = cfg; }
 void DataflowPass::transfer(Instruction *instruction,
                             SetVector<Instruction *> workSet,
                             ProgramPoint &inputProgramPoint) {
-                              // TODO: remove workset from arg list
+  // TODO: remove workset from arg list
   std::string branchName = instruction->getParent()->getName().str();
 
   if (auto Store = dyn_cast<StoreInst>(instruction)) {
@@ -49,29 +49,26 @@ void DataflowPass::transfer(Instruction *instruction,
       std::string fnName = Call->getCalledFunction()->getName().str();
       ProgramVariable assignedVar = ProgramVariable(Store->getOperand(1));
       std::string arg = assignedVar.getCleanedName();
-      ProgramVariable* pv = inputProgramPoint.getPVRef(arg, false); 
-      MethodsSet *methods =
-          pv->getMethodsSetRef();
-      
+      ProgramVariable *pv = inputProgramPoint.getPVRef(arg, false);
+      MethodsSet *methods = pv->getMethodsSetRef();
 
       if (this->memoryFunctions[fnName].size() > 0 &&
           assignedVar.isIdentifier()) {
 
         logout("calling on alloc function for argname "
-                << arg << " and fnname " << fnName
-                << " fnname = " << fnName);
-        this->onAllocationFunctionCall(methods,
-                                        this->memoryFunctions[fnName]);
+               << arg << " and fnname " << fnName << " fnname = " << fnName);
+        this->onAllocationFunctionCall(methods, this->memoryFunctions[fnName]);
       } else if (ReturnAnnotation *returnAnno =
-                      dynamic_cast<ReturnAnnotation *>(
-                          this->annotations.getReturnAnnotation(fnName))) {
-        logout("found return annotation "
-                << returnAnno->generateStringRep());
+                     dynamic_cast<ReturnAnnotation *>(
+                         this->annotations.getReturnAnnotation(fnName))) {
+        logout("found return annotation " << returnAnno->generateStringRep());
         this->insertAnnotation(returnAnno, pv);
-      }  else if (pv->hasIndex()) {
-          if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(this->annotations.getReturnAnnotation(fnName, pv->getIndex()))) {
-            this->insertAnnotation(returnAnno, pv);
-          }
+      } else if (pv->hasIndex()) {
+        if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(
+                this->annotations.getReturnAnnotation(fnName,
+                                                      pv->getIndex()))) {
+          this->insertAnnotation(returnAnno, pv);
+        }
       }
 
     } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(valueToStore)) {
@@ -95,47 +92,47 @@ void DataflowPass::transfer(Instruction *instruction,
           MethodsSet *methods =
               inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
           this->onAllocationFunctionCall(methods,
-                                          this->memoryFunctions[fnName]);
-
+                                         this->memoryFunctions[fnName]);
         }
       }
-    } else if (ExtractValueInst* extractValue = dyn_cast<ExtractValueInst>(valueToStore)) {
+    } else if (ExtractValueInst *extractValue =
+                   dyn_cast<ExtractValueInst>(valueToStore)) {
       /*
       extractvalue instructions specifies a field member. We check to see if
-      the value it's extracting from is a function. 
+      the value it's extracting from is a function.
 
       Docs: https://llvm.org/docs/LangRef.html#extractvalue-instruction
       */
       ProgramVariable assignedVar = ProgramVariable(extractValue);
       std::string arg = assignedVar.getCleanedName();
-      ProgramVariable* pv = inputProgramPoint.getPVRef(arg, false); 
+      ProgramVariable *pv = inputProgramPoint.getPVRef(arg, false);
 
       if (!pv->hasIndex()) {
-        return; 
+        return;
       }
 
-      logout("found pv " << pv->getCleanedName() << " with index " << pv->getIndex());
-      
-      if (CallInst* call = dyn_cast<CallInst>(extractValue->getOperand(0))) {
+      logout("found pv " << pv->getCleanedName() << " with index "
+                         << pv->getIndex());
+
+      if (CallInst *call = dyn_cast<CallInst>(extractValue->getOperand(0))) {
         std::string fnName = call->getCalledFunction()->getName().str();
-        int fieldIndex = extractValue->getIndices()[0]; 
+        int fieldIndex = extractValue->getIndices()[0];
 
         logout("traced back extract value to " << fnName);
-        logout("index specified = " << fieldIndex); 
+        logout("index specified = " << fieldIndex);
 
         if (fieldIndex != pv->getIndex()) {
-          return; 
+          return;
         }
 
-        if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(this->annotations.getReturnAnnotation(fnName, fieldIndex))) {
-          logout("found annotation from extract value " << returnAnno->generateStringRep());
+        if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(
+                this->annotations.getReturnAnnotation(fnName, fieldIndex))) {
+          logout("found annotation from extract value "
+                 << returnAnno->generateStringRep());
           this->insertAnnotation(returnAnno, pv);
         }
       }
-
-    
     }
-
 
     /*
     LLVM identifiers either start with @ (global identifier) or % (local
@@ -150,7 +147,7 @@ void DataflowPass::transfer(Instruction *instruction,
     for (unsigned i = 0; i < Call->getNumArgOperands(); ++i) {
       ProgramVariable argumentVar = ProgramVariable(Call->getArgOperand(i));
       std::string arg = argumentVar.getCleanedName();
-      ProgramVariable* pv = inputProgramPoint.getPVRef(arg, false); 
+      ProgramVariable *pv = inputProgramPoint.getPVRef(arg, false);
 
       if (!argumentVar.isIdentifier()) {
         continue;
@@ -172,8 +169,7 @@ void DataflowPass::transfer(Instruction *instruction,
         errs() << "WARNING: implicitly declared function call on " << location
                << "\n";
 
-        MethodsSet *methods =
-            pv->getMethodsSetRef();
+        MethodsSet *methods = pv->getMethodsSetRef();
         this->onUnknownFunctionCall(methods);
         continue;
       }
@@ -183,15 +179,13 @@ void DataflowPass::transfer(Instruction *instruction,
       logout("call fnname = " << fnName);
       if (this->reallocFunctions.count(fnName)) {
 
-        MethodsSet *methods =
-            pv->getMethodsSetRef();
+        MethodsSet *methods = pv->getMethodsSetRef();
         this->onReallocFunctionCall(methods, fnName);
         continue;
       }
 
       if (this->safeFunctions.count(fnName)) {
-        MethodsSet *methods =
-            pv->getMethodsSetRef();
+        MethodsSet *methods = pv->getMethodsSetRef();
         this->onSafeFunctionCall(methods, fnName);
         continue;
       }
@@ -217,8 +211,7 @@ void DataflowPass::transfer(Instruction *instruction,
           return;
 
         } else if (fnName == Pair.second) {
-          MethodsSet *methods =
-              pv->getMethodsSetRef();
+          MethodsSet *methods = pv->getMethodsSetRef();
           logout("GETMAIN-5 ON '" << arg << "'");
           this->onDeallocationFunctionCall(methods, fnName);
           loopBroken = true;
@@ -230,62 +223,51 @@ void DataflowPass::transfer(Instruction *instruction,
         continue;
       }
 
-
       // finds annotations
       logout("finding annotations for " << fnName);
 
-      if (pv == NULL) {
-        /*
-        LLVM uses sret attributes as an optimization if the return type is large. a struct with more than 2 fields can trigger this optimization. 
+      /*
+        LLVM uses sret attributes as an optimization if the return type is
+        large. a struct with more than 2 fields can trigger this optimization.
 
-        docs: https://llvm.org/docs/LangRef.html#parameter-attributes 
-        less credible forum post: https://discourse.llvm.org/t/optimizing-sret-on-caller-side/60660 
-      
-        our instructions end up looking like this: 
-        call void @does_something_a(%struct.my_struct* sret %A1, %struct.my_struct* byval align 8 %A), !dbg !58
+        docs: https://llvm.org/docs/LangRef.html#parameter-attributes
+        less credible forum post:
+        https://discourse.llvm.org/t/optimizing-sret-on-caller-side/60660
 
-        pv ends up being null for the following reason: 
-          lets say we have struct A with fields x, y, z.
-          when the struct is initialized, we store A.0, A.1, 
-          and A.2 as local program variables, but not A itself. 
-          so, when we get to this function call, it's looking for 
-          the variable A, but it does not exist.
+        our instructions end up looking like this:
+        call void @does_something_a(%struct.my_struct* sret %A1,
+        %struct.my_struct* byval align 8 %A), !dbg !58
 
-          if LLVM does not use sret, this issue would not occur. 
-          this is because there would be getelementptr instructions
-          that would break apart our struct's fields into IR variables, so 
-          when we call does_something_a, it would pass in variables 
-          A.0 or A.1 instead of just A. 
+        here's how we will handle these types of instructions:
 
-        here's how we will handle these types of instructions 
+        say we have the instruction
+        call void @does_something_a(%struct.my_struct* sret %A1,
+        %struct.my_struct* byval align 8 %A), !dbg !58
 
-        say we have the instruction 
-        call void @does_something_a(%struct.my_struct* sret %A1, %struct.my_struct* byval align 8 %A), !dbg !58
-        
-        this is from C code 
-        my_struct A1 = does_something_a(A); 
+        (this is from C code
+        my_struct A1 = does_something_a(A);)
 
-        *we assume LHS is always a struct and first argument always has sret attribute
+        *we assume LHS is always a struct and first argument always has sret
+        attribute
 
-        we will: 
+        we will:
         -destructure A1 into its fields (A1.0, A1.1, ...)
-        -determine A1's MustCall/CalledMethods from annotations on return on does_something_a
-        -destructure A into its fields (A.0, A.1, ...)
-        -determine A's MustCall/CalledMethods from annotations on params on does_something a
-        past the first argument, it could be struct or non-struct. non-structs will have their MustCall/CalledMethods determined, but without the destructuring
+        -determine A1's MustCall/CalledMethods from annotations on return on
+        does_something_a -destructure A into its fields (A.0, A.1, ...)
+        -determine A's MustCall/CalledMethods from annotations on params on
+        does_something a past the first argument, it could be struct or
+        non-struct. non-structs will have their MustCall/CalledMethods
+        determined, but without the destructuring
         */
-
-        logout("arg " << arg << " index " << i << " null. assuming it's a special case with sret");
-
-        if (Call->getCalledFunction()->hasStructRetAttr() && i == 0) {
-          logout("func has sret"); 
-          this->handleSretCall(Call, fnName, arg, inputProgramPoint); 
-          return; 
-        }
+      if (Call->getCalledFunction()->hasStructRetAttr() && i == 0) {
+        logout("func has sret");
+        logout("arg " << arg << " index " << i << " there is sret call");
+        this->handleSretCall(Call, fnName, arg, inputProgramPoint);
+        return;
       }
 
       logout("arg " << arg << " index " << i << " " << pv->getCleanedName());
-      
+
       // checks for parameter annotations (no field specified)
       Annotation *mayParameterAnnotation =
           this->annotations.getParameterAnnotation(fnName, i);
@@ -295,17 +277,20 @@ void DataflowPass::transfer(Instruction *instruction,
         this->insertAnnotation(paramAnno, pv);
         continue;
       }
-      
+
       // checks for parameter annotations (field specified)
       if (pv->hasIndex()) {
-        Annotation* mayParamAnnoWithField = this->annotations.getParameterAnnotation(fnName, i, pv->getIndex()); 
-        if (ParameterAnnotation *paramAnno = dynamic_cast<ParameterAnnotation *>(mayParamAnnoWithField)) {
-          logout("found param struct annotation " << paramAnno->generateStringRep());
+        Annotation *mayParamAnnoWithField =
+            this->annotations.getParameterAnnotation(fnName, i, pv->getIndex());
+        if (ParameterAnnotation *paramAnno =
+                dynamic_cast<ParameterAnnotation *>(mayParamAnnoWithField)) {
+          logout("found param struct annotation "
+                 << paramAnno->generateStringRep());
           this->insertAnnotation(paramAnno, pv);
-          continue;   
+          continue;
         }
       }
-  
+
       // no annotations found, treat function call as unknown function
       logout("no annotations found for " << fnName);
       MethodsSet *methods = pv->getMethodsSetRef();
@@ -314,15 +299,15 @@ void DataflowPass::transfer(Instruction *instruction,
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
 
     // searches for struct annotations
-    StructType* structType = llvm::dyn_cast<llvm::StructType>(allocate->getAllocatedType()); 
+    StructType *structType =
+        llvm::dyn_cast<llvm::StructType>(allocate->getAllocatedType());
 
     if (!structType && allocate->getAllocatedType()->isPointerTy()) {
-      Type *pointerType = allocate->getAllocatedType()->getPointerElementType();
-      if (pointerType->isStructTy()) { 
-        structType = cast<StructType>(pointerType);
-      } else {
-        return; 
-      }
+      structType = dataflow::unwrapValuePointerToStruct(allocate);
+    }
+
+    if (!structType) {
+      return;
     }
 
     std::string structName = structType->getName();
@@ -340,24 +325,14 @@ void DataflowPass::transfer(Instruction *instruction,
           continue;
         }
 
-        logout("found annotation for struct " << structAnno->generateStringRep()); 
+        logout("found annotation for struct "
+               << structAnno->generateStringRep());
 
         std::string arg = sourceVar.getCleanedName();
-        ProgramVariable* pv = inputProgramPoint.getPVRef(arg, false); 
-        this->insertAnnotation(structAnno, pv); 
-
-        // ProgramVariable structPV = ProgramVariable(allocate);
-        // ProgramVariable* originalStructPVRef = inputProgramPoint.getPVRef(structPV.getCleanedName(), false); 
-        // if (originalStructPVRef) {
-        //   ProgramVariable structVar = ProgramVariable(originalStructPVRef->getValue(), i); 
-        //   logout("(alloca inst) specifying index for " << structVar.getCleanedName()); 
-        //   logout("original is " << sourceVar.getCleanedName());
-        // }
-
-
+        ProgramVariable *pv = inputProgramPoint.getPVRef(arg, false);
+        this->insertAnnotation(structAnno, pv);
       }
     }
-  
   }
 }
 
@@ -484,83 +459,95 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
   }
 }
 
-void DataflowPass::insertAnnotation(Annotation* anno, ProgramVariable* pv) {
+void DataflowPass::insertAnnotation(Annotation *anno, ProgramVariable *pv) {
   AnnotationType annoType = anno->getAnnotationType();
-  std::set<std::string> annoMethods =
-      anno->getAnnotationMethods();
-  MethodsSet *argMethods =
-      pv->getMethodsSetRef();
+  std::set<std::string> annoMethods = anno->getAnnotationMethods();
+  MethodsSet *argMethods = pv->getMethodsSetRef();
 
   for (std::string annoMethod : annoMethods) {
     this->onAnnotation(argMethods, annoMethod, annoType);
   }
 }
 
-void DataflowPass::handleSretCall(CallInst* call, const std::string& fnName, const std::string& argName, ProgramPoint& programPoint) {
-   if (call->getArgOperand(0)->getType()->isPointerTy()) {
-    Type *pointerType = call->getArgOperand(0)->getType()->getPointerElementType();
+void DataflowPass::handleSretCall(CallInst *call, const std::string &fnName,
+                                  const std::string &argName,
+                                  ProgramPoint &programPoint) {
+  if (call->getArgOperand(0)->getType()->isPointerTy()) {
+    Type *pointerType =
+        call->getArgOperand(0)->getType()->getPointerElementType();
     if (pointerType->isStructTy()) {
       StructType *structType = cast<StructType>(pointerType);
-    
+
       int numFields = structType->getNumElements();
 
       for (int fieldIndex = 0; fieldIndex < numFields; fieldIndex++) {
         std::string fieldArg = argName + "." + std::to_string(fieldIndex);
-        ProgramVariable* pvField = programPoint.getPVRef(fieldArg, false); 
+        ProgramVariable *pvField = programPoint.getPVRef(fieldArg, false);
 
         logout("found field " << pvField->getCleanedName());
 
-        if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(this->annotations.getReturnAnnotation(fnName, fieldIndex))) {
-          logout("found annotation from sret " << returnAnno->generateStringRep()); 
+        if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(
+                this->annotations.getReturnAnnotation(fnName, fieldIndex))) {
+          logout("found annotation from sret "
+                 << returnAnno->generateStringRep());
           this->insertAnnotation(returnAnno, pvField);
         }
       }
-    } 
+    }
   }
 
-  for (int j = 1; j < call->getNumArgOperands(); j++) { 
+  for (int j = 1; j < call->getNumArgOperands(); j++) {
     auto nextCallArg = call->getArgOperand(j);
     ProgramVariable nextArgVar = ProgramVariable(nextCallArg);
     std::string nextArg = nextArgVar.getCleanedName();
-    
+
     if (nextCallArg->getType()->isPointerTy()) {
       Type *pointerType = nextCallArg->getType()->getPointerElementType();
       if (pointerType->isStructTy()) {
         StructType *structType = cast<StructType>(pointerType);
-      
+
         int numFields = structType->getNumElements();
 
         for (int fieldIndex = 0; fieldIndex < numFields; fieldIndex++) {
           std::string fieldArg = nextArg + "." + std::to_string(fieldIndex);
-          ProgramVariable* pvField = programPoint.getPVRef(fieldArg, false); 
+          ProgramVariable *pvField = programPoint.getPVRef(fieldArg, false);
 
-          logout("found next arg fields " << pvField->getCleanedName() << " for j = " << j);
+          logout("found next arg fields " << pvField->getCleanedName()
+                                          << " for j = " << j);
 
-          auto allAnnotationsWithFields = this->annotations.getAllParameterAnnotationsWithFields(fnName); 
-          for (Annotation* anno : allAnnotationsWithFields) {
-            if (ParameterAnnotation *paramAnno = dynamic_cast<ParameterAnnotation *>(anno)) {
+          auto allAnnotationsWithFields =
+              this->annotations.getAllParameterAnnotationsWithFields(fnName);
+          for (Annotation *anno : allAnnotationsWithFields) {
+            if (ParameterAnnotation *paramAnno =
+                    dynamic_cast<ParameterAnnotation *>(anno)) {
               if (paramAnno->getField() == fieldIndex) {
-                logout("found param annotation " << paramAnno->generateStringRep());
+                logout("found param annotation "
+                       << paramAnno->generateStringRep());
                 this->insertAnnotation(paramAnno, pvField);
               }
             }
-          }                
+          }
         }
       } else {
         // arg is not a struct type
-        auto allAnnotationsWithoutFields = this->annotations.getAllParameterAnnotationsWithoutFields(fnName); 
-        for (Annotation* anno : allAnnotationsWithoutFields) {
-          if (ParameterAnnotation *paramAnno = dynamic_cast<ParameterAnnotation *>(anno)) {
-            // j - 1 because the 0th argument of the IR function call is not a part of
-            // the actual function. the rest of the arguments are the ones a part of the call. 
+        auto allAnnotationsWithoutFields =
+            this->annotations.getAllParameterAnnotationsWithoutFields(fnName);
+        for (Annotation *anno : allAnnotationsWithoutFields) {
+          if (ParameterAnnotation *paramAnno =
+                  dynamic_cast<ParameterAnnotation *>(anno)) {
+            // j - 1 because the 0th argument of the IR function call is not a
+            // part of the actual function. the rest of the arguments are the
+            // ones a part of the call.
 
             if (paramAnno->getNthParameter() == j - 1) {
-              ProgramVariable* argVar = programPoint.getPVRef(nextArg, false); 
-              logout("found j param annotation " << paramAnno->generateStringRep() << " for j = " << j << " and var " << argVar->getCleanedName());
+              ProgramVariable *argVar = programPoint.getPVRef(nextArg, false);
+              logout("found j param annotation "
+                     << paramAnno->generateStringRep() << " for j = " << j
+                     << " and var " << argVar->getCleanedName());
               this->insertAnnotation(paramAnno, argVar);
             }
           }
-        }      
+        }
       }
     }
   }
