@@ -8,11 +8,6 @@ struct my_struct {
     char* y MustCall("free");
 };
 
-struct my_struct2 {
-    char* y MustCall("free");
-    char* x MustCall("free"); 
-};
-
 int main() {   
     char* var1 = (char*)malloc(15);
     char** var2 = &var1;
@@ -36,7 +31,6 @@ int main() {
 
     struct my_struct K = {(char*)malloc(15), (char*)malloc(15)}; 
     struct my_struct* K1 = &K; 
-    struct my_struct2* K12 = &K; 
     struct my_struct** K2 = &K1; 
     struct my_struct*** K3 = &K2; 
     struct my_struct**** K4 = &K3; 

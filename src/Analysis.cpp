@@ -287,22 +287,27 @@ void doAliasReasoning(Instruction *instruction,
       return;
     }
 
-    // %32 = bitcast %struct.my_struct* %K to %struct.my_struct2*, !dbg !81
-    // store %struct.my_struct2* %32, %struct.my_struct2** %K12, align 8, !dbg !80
-    // TODO: ensure these types of struct casting are simply ignored and dont cause an error
-
-    // check if two structs are being aliased. the structs must refer 
-    // to the same type
+    // check if two structs are being aliased
     if (valueToStore->getType()->isPointerTy() &&
         receivingValue->getType()->isPointerTy()) {
       StructType *valueStruct =
           dataflow::unwrapValuePointerToStruct(valueToStore);
       StructType *receivingStruct =
           dataflow::unwrapValuePointerToStruct(receivingValue);
-      
-      if (valueStruct && receivingStruct && valueStruct == receivingStruct) {
+
+      if (valueStruct && receivingStruct) {
         logout("two structs to alias " << *store);
         int numFields = valueStruct->getNumElements();
+
+        // ASSUMPTION: both structs are referring to the same struct (or the
+        // structs have the same fields). note that i do not have strong reason
+        // to believe that they could be different, as the instruction is
+        // storing one struct into another.
+        if (valueStruct->getNumElements() !=
+            receivingStruct->getNumElements()) {
+          logout("WARNING: diff number of elements. early returning");
+          return;
+        }
 
         for (int i = 0; i < numFields; i++) {
           ProgramVariable valueStructVar = ProgramVariable(valueToStore, i);
