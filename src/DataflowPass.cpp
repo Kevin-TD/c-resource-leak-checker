@@ -27,9 +27,7 @@ ProgramFunction DataflowPass::generatePassResults() {
 void DataflowPass::setCFG(CFG *cfg) { this->cfg = cfg; }
 
 void DataflowPass::transfer(Instruction *instruction,
-                            SetVector<Instruction *> workSet,
                             ProgramPoint &inputProgramPoint) {
-  // TODO: remove workset from arg list
   std::string branchName = instruction->getParent()->getName().str();
 
   if (auto Store = dyn_cast<StoreInst>(instruction)) {
@@ -153,142 +151,18 @@ void DataflowPass::transfer(Instruction *instruction,
         continue;
       }
 
-      /*
-      handles the case where function being called is "an indirect function
-      invocation", meaning its target is determined at runtime. we are not
-      running the original code, so we will treat it as an unknown function
-      Docs:
-      https://www.few.vu.nl/~lsc300/LLVM/doxygen/classllvm_1_1CallInst.html#a0bcd4131e1a1d92215f5385b4e16cd2e
-      */
-      if (Call->getCalledFunction() == NULL) {
-        const DebugLoc &debugLoc = instruction->getDebugLoc();
-
-        std::string location = "Line " + std::to_string(debugLoc.getLine()) +
-                               ", Col " + std::to_string(debugLoc.getCol());
-
-        errs() << "WARNING: implicitly declared function call on " << location
-               << "\n";
-
-        MethodsSet *methods = pv->getMethodsSetRef();
-        this->onUnknownFunctionCall(methods);
+      if (handleIfKnownFunctionForCallInsts(Call, pv)) {
         continue;
       }
 
       std::string fnName = Call->getCalledFunction()->getName().str();
 
-      logout("call fnname = " << fnName);
-      if (this->reallocFunctions.count(fnName)) {
-
-        MethodsSet *methods = pv->getMethodsSetRef();
-        this->onReallocFunctionCall(methods, fnName);
-        continue;
-      }
-
-      if (this->safeFunctions.count(fnName)) {
-        MethodsSet *methods = pv->getMethodsSetRef();
-        this->onSafeFunctionCall(methods, fnName);
-        continue;
-      }
-
-      // call void @free(i8* %7) #2, !dbg !291   <- args matter
-      // %call5 = call noalias i8* @aligned_alloc(i64 %4, i64 %5) #2, !dbg !287
-      // <- args do not matter
-      /*
-        we are making the following assumption:
-        for deallocation functions, the arguments matter since they will contain
-        the pointers/var names to memory for allocation functions, the arguments
-        do not matter since they are typically numbers. the variable that is
-        receiving the memory is handled elswhere (in the handling of store
-        insts)
-      */
-
-      bool loopBroken = false;
-      for (auto Pair : this->memoryFunctions) {
-        if (fnName == Pair.first) {
-          logout("not calling onalloc for " << arg << " of fnName " << fnName
-                                            << " and inst " << *instruction
-                                            << " and just returning now");
-          return;
-
-        } else if (fnName == Pair.second) {
-          MethodsSet *methods = pv->getMethodsSetRef();
-          logout("GETMAIN-5 ON '" << arg << "'");
-          this->onDeallocationFunctionCall(methods, fnName);
-          loopBroken = true;
-          break;
-        }
-      }
-
-      if (loopBroken || fnName == "llvm.dbg.declare") {
-        continue;
-      }
-
-      // finds annotations
-      logout("finding annotations for " << fnName);
-
-      /*
-        LLVM uses sret attributes as an optimization if the return type is
-        large. a struct with more than 2 fields can trigger this optimization.
-
-        docs: https://llvm.org/docs/LangRef.html#parameter-attributes
-        less credible forum post:
-        https://discourse.llvm.org/t/optimizing-sret-on-caller-side/60660
-
-        our instructions end up looking like this:
-        call void @does_something_a(%struct.my_struct* sret %A1,
-        %struct.my_struct* byval align 8 %A), !dbg !58
-
-        here's how we will handle these types of instructions:
-
-        say we have the instruction
-        call void @does_something_a(%struct.my_struct* sret %A1,
-        %struct.my_struct* byval align 8 %A), !dbg !58
-
-        (this is from C code
-        my_struct A1 = does_something_a(A);)
-
-        *we assume LHS is always a struct and first argument always has sret
-        attribute
-
-        we will:
-        -destructure A1 into its fields (A1.0, A1.1, ...)
-        -determine A1's MustCall/CalledMethods from annotations on return on
-        does_something_a -destructure A into its fields (A.0, A.1, ...)
-        -determine A's MustCall/CalledMethods from annotations on params on
-        does_something a past the first argument, it could be struct or
-        non-struct. non-structs will have their MustCall/CalledMethods
-        determined, but without the destructuring
-        */
-      if (Call->getCalledFunction()->hasStructRetAttr() && i == 0) {
-        logout("func has sret");
-        logout("arg " << arg << " index " << i << " there is sret call");
-        this->handleSretCall(Call, fnName, arg, inputProgramPoint);
+      if (handleSretCallForCallInsts(Call, i, fnName, arg, inputProgramPoint)) {
         return;
       }
 
-      logout("arg " << arg << " index " << i << " " << pv->getCleanedName());
-
-      // checks for parameter annotations (no field specified)
-      Annotation *mayParameterAnnotation =
-          this->annotations.getParameterAnnotation(fnName, i);
-      if (ParameterAnnotation *paramAnno =
-              dynamic_cast<ParameterAnnotation *>(mayParameterAnnotation)) {
-        logout("found param annotation " << paramAnno->generateStringRep());
-        this->insertAnnotation(paramAnno, pv);
+      if (handleIfAnnotationExistsForCallInsts(fnName, i, pv)) {
         continue;
-      }
-
-      // checks for parameter annotations (field specified)
-      if (pv->hasIndex()) {
-        Annotation *mayParamAnnoWithField =
-            this->annotations.getParameterAnnotation(fnName, i, pv->getIndex());
-        if (ParameterAnnotation *paramAnno =
-                dynamic_cast<ParameterAnnotation *>(mayParamAnnoWithField)) {
-          logout("found param struct annotation "
-                 << paramAnno->generateStringRep());
-          this->insertAnnotation(paramAnno, pv);
-          continue;
-        }
       }
 
       // no annotations found, treat function call as unknown function
@@ -299,12 +173,7 @@ void DataflowPass::transfer(Instruction *instruction,
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
 
     // searches for struct annotations
-    StructType *structType =
-        llvm::dyn_cast<llvm::StructType>(allocate->getAllocatedType());
-
-    if (!structType && allocate->getAllocatedType()->isPointerTy()) {
-      structType = dataflow::unwrapValuePointerToStruct(allocate);
-    }
+    StructType *structType = dataflow::unwrapValuePointerToStruct(allocate);
 
     if (!structType) {
       return;
@@ -315,6 +184,10 @@ void DataflowPass::transfer(Instruction *instruction,
         structName, structName.find_last_of('.') + 1, structName.size() - 1);
     int numFields = structType->getNumElements();
     for (int i = 0; i < numFields; i++) {
+
+      // TODO: remove this section of finding annotations
+      // (making it a TODO because removing will require some of
+      // the tests to change too so i'll address it in a diff pr)
 
       Annotation *anno = this->annotations.getStructAnnotation(structName, i);
       if (StructAnnotation *structAnno =
@@ -349,7 +222,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         this->programFunction.getProgramPoint(currentBranch, true);
 
     for (Instruction *instruction : instructions) {
-      transfer(instruction, instructions, postProgramPoint);
+      transfer(instruction, postProgramPoint);
     }
 
     postProgramFunction.addProgramPoint(postProgramPoint);
@@ -415,7 +288,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
 
       llvm::SetVector<Instruction *> instructions = cfg->getInstructions();
       for (Instruction *instruction : instructions) {
-        transfer(instruction, instructions, lub);
+        transfer(instruction, lub);
       }
 
       postProgramFunction.setProgramPoint(currentBranch, lub);
@@ -445,7 +318,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
           this->programFunction.getProgramPointRef(currentBranch, true));
 
       for (Instruction *instruction : instructions) {
-        transfer(instruction, instructions, flowInto);
+        transfer(instruction, flowInto);
       }
 
       postProgramFunction.getProgramPointRef(currentBranch, true)
@@ -469,9 +342,16 @@ void DataflowPass::insertAnnotation(Annotation *anno, ProgramVariable *pv) {
   }
 }
 
-void DataflowPass::handleSretCall(CallInst *call, const std::string &fnName,
-                                  const std::string &argName,
-                                  ProgramPoint &programPoint) {
+bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
+                                              const std::string &fnName,
+                                              const std::string &argName,
+                                              ProgramPoint &programPoint) {
+  if (argIndex != 0 || !call->getCalledFunction()->hasStructRetAttr()) {
+    return false;
+  }
+
+  logout("func has sret");
+
   if (call->getArgOperand(0)->getType()->isPointerTy()) {
     Type *pointerType =
         call->getArgOperand(0)->getType()->getPointerElementType();
@@ -551,6 +431,108 @@ void DataflowPass::handleSretCall(CallInst *call, const std::string &fnName,
       }
     }
   }
+
+  return true;
+}
+
+bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
+                                                     ProgramVariable *pv) {
+  /*
+  handles the case where function being called is "an indirect function
+  invocation", meaning its target is determined at runtime. we are not
+  running the original code, so we will treat it as an unknown function
+  Docs:
+  https://www.few.vu.nl/~lsc300/LLVM/doxygen/classllvm_1_1CallInst.html#a0bcd4131e1a1d92215f5385b4e16cd2e
+  */
+  if (call->getCalledFunction() == NULL) {
+    const DebugLoc &debugLoc = call->getDebugLoc();
+
+    std::string location = "Line " + std::to_string(debugLoc.getLine()) +
+                           ", Col " + std::to_string(debugLoc.getCol());
+
+    errs() << "WARNING: implicitly declared function call on " << location
+           << "\n";
+
+    MethodsSet *methods = pv->getMethodsSetRef();
+    this->onUnknownFunctionCall(methods);
+    return true;
+  }
+
+  std::string fnName = call->getCalledFunction()->getName().str();
+
+  logout("call fnname = " << fnName);
+  if (this->reallocFunctions.count(fnName)) {
+
+    MethodsSet *methods = pv->getMethodsSetRef();
+    this->onReallocFunctionCall(methods, fnName);
+    return true;
+  }
+
+  if (this->safeFunctions.count(fnName)) {
+    MethodsSet *methods = pv->getMethodsSetRef();
+    this->onSafeFunctionCall(methods, fnName);
+    return true;
+  }
+
+  // call void @free(i8* %7) #2, !dbg !291   <- args matter
+  // %call5 = call noalias i8* @aligned_alloc(i64 %4, i64 %5) #2, !dbg !287
+  // <- args do not matter
+  /*
+    we are making the following assumption:
+    for deallocation functions, the arguments matter since they will contain
+    the pointers/var names to memory. for allocation functions, the arguments
+    do not matter since they are typically numbers. the variable that is
+    receiving the memory is handled elswhere (in the handling of store
+    insts)
+  */
+
+  for (auto Pair : this->memoryFunctions) {
+    if (fnName == Pair.first) {
+      return true;
+    } else if (fnName == Pair.second) {
+      MethodsSet *methods = pv->getMethodsSetRef();
+      this->onDeallocationFunctionCall(methods, fnName);
+      return true;
+    }
+  }
+
+  // llvm.dbg.declare are function calls made by the IR to set debug
+  // information. this function does not have annotations, as it's a function
+  // by the IR, not the C code. thus, we do not check it for annotations.
+  if (fnName == "llvm.dbg.declare") {
+    return true;
+  }
+
+  return false;
+}
+
+bool DataflowPass::handleIfAnnotationExistsForCallInsts(
+    const std::string &fnName, int argIndex, ProgramVariable *pv) {
+  // checks for parameter annotations (no field specified)
+  Annotation *mayParameterAnnotation =
+      this->annotations.getParameterAnnotation(fnName, argIndex);
+  if (ParameterAnnotation *paramAnno =
+          dynamic_cast<ParameterAnnotation *>(mayParameterAnnotation)) {
+    logout("found param annotation " << paramAnno->generateStringRep());
+    this->insertAnnotation(paramAnno, pv);
+    return true;
+  }
+
+  // checks for parameter annotations (field specified)
+  if (pv->hasIndex()) {
+    Annotation *mayParamAnnoWithField =
+        this->annotations.getParameterAnnotation(fnName, argIndex,
+                                                 pv->getIndex());
+    if (ParameterAnnotation *paramAnno =
+            dynamic_cast<ParameterAnnotation *>(mayParamAnnoWithField)) {
+      logout("found param struct annotation "
+             << paramAnno->generateStringRep());
+      this->insertAnnotation(paramAnno, pv);
+      return true;
+    }
+  }
+
+  return false;
 }
 
 void DataflowPass::setAnnotations(AnnotationHandler annotations) {

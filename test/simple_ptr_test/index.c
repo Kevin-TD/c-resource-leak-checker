@@ -37,6 +37,10 @@ int main() {
     struct my_struct K = {(char*)malloc(15), (char*)malloc(15)}; 
     struct my_struct* K1 = &K; 
     struct my_struct2* K12 = &K; 
+
+    free(K12->x); 
+    K12->x = (char*)malloc(15); 
+
     struct my_struct** K2 = &K1; 
     struct my_struct*** K3 = &K2; 
     struct my_struct**** K4 = &K3; 

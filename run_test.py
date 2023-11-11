@@ -13,6 +13,8 @@ if os.path.split(os.getcwd())[1] != "build":
     print(f"WARNING: not in build dir; cwd is {os.getcwd()}")
     sys.exit(1)
 
+# TODO: add command line arg support to specify if we dont want to 
+# call make or  re-make IR 
 
 test_folder_name = sys.argv[1]
 

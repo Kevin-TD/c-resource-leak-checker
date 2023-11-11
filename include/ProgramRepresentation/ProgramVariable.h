@@ -35,7 +35,7 @@ private:
   MethodsSet methods;
 
   // if program var is referring to a struct's field, it has an index.
-  // otherwise, it is null (equal to -1)
+  // otherwise, it is equal to -1
   int index;
 
 public:
@@ -52,7 +52,8 @@ public:
   Value *getValue();
   int getIndex();
 
-  // checks if index is non null
+  // returns true iff index does not equal -1, meaning the program var
+  // refers to a struct's field
   bool hasIndex();
 
   // IR names like %7 are considered unnamed and program names like %str are

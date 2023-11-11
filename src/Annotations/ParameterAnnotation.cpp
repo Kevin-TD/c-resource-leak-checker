@@ -7,7 +7,6 @@ ParameterAnnotation::ParameterAnnotation(
   this->annotationMethods = annotationMethods;
   this->targetName = targetName;
   this->field = field;
-  this->hasField = (field != -1);
   this->nthParameter = nthParameter;
   this->isVerified = false;
 }
@@ -18,7 +17,7 @@ std::string ParameterAnnotation::generateStringRep() {
       dataflow::setToString(this->annotationMethods);
 
   std::string fieldString;
-  if (this->hasField) {
+  if (this->hasField()) {
     fieldString = "Field = " + std::to_string(this->field);
   }
 
@@ -40,7 +39,7 @@ bool ParameterAnnotation::fieldNameEquals(int field) {
   return field == this->field;
 }
 
-bool ParameterAnnotation::paramHasField() { return this->hasField; }
+bool ParameterAnnotation::hasField() { return this->field != -1; }
 
 int ParameterAnnotation::getField() { return this->field; }
 

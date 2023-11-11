@@ -48,7 +48,7 @@ AnnotationHandler::getParameterAnnotation(const std::string &functionName,
             dynamic_cast<ParameterAnnotation *>(anno)) {
       if (paramAnno->functionNameEquals(functionName) &&
           paramAnno->nthParameterEquals(nthParameter) &&
-          !paramAnno->paramHasField()) {
+          !paramAnno->hasField()) {
         return paramAnno;
       }
     }
@@ -80,7 +80,7 @@ AnnotationHandler::getAllParameterAnnotationsWithFields(
     if (ParameterAnnotation *paramAnno =
             dynamic_cast<ParameterAnnotation *>(anno)) {
       if (paramAnno->functionNameEquals(functionName) &&
-          paramAnno->paramHasField()) {
+          paramAnno->hasField()) {
         annotationsWithFields.push_back(paramAnno);
       }
     }
@@ -97,7 +97,7 @@ AnnotationHandler::getAllParameterAnnotationsWithoutFields(
     if (ParameterAnnotation *paramAnno =
             dynamic_cast<ParameterAnnotation *>(anno)) {
       if (paramAnno->functionNameEquals(functionName) &&
-          !paramAnno->paramHasField()) {
+          !paramAnno->hasField()) {
         annotationsWithFields.push_back(paramAnno);
       }
     }
@@ -111,7 +111,7 @@ AnnotationHandler::getReturnAnnotation(const std::string &functionName) {
   for (Annotation *anno : this->annotations) {
     if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(anno)) {
       if (returnAnno->functionNameEquals(functionName) &&
-          !returnAnno->returnHasField()) {
+          !returnAnno->hasField()) {
         return returnAnno;
       }
     }
@@ -125,7 +125,7 @@ AnnotationHandler::getReturnAnnotation(const std::string &functionName,
   for (Annotation *anno : this->annotations) {
     if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(anno)) {
       if (returnAnno->functionNameEquals(functionName) &&
-          returnAnno->fieldNameEquals(field)) {
+          returnAnno->fieldEquals(field)) {
         return returnAnno;
       }
     }

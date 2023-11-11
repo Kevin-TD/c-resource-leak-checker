@@ -5,11 +5,9 @@
 
 class ReturnAnnotation : public Annotation {
 private:
-  // equals -1 if not defined
+  // if return is a struct type, this refers to its index.
+  // otherwise, this equals -1.
   int field;
-
-  // returns true iff field does not equal -1
-  bool hasField;
 
 public:
   ReturnAnnotation(AnnotationType annotationType,
@@ -17,8 +15,8 @@ public:
                    std::string targetName, int field);
   std::string generateStringRep();
   bool functionNameEquals(const std::string &functionName);
-  bool fieldNameEquals(int field);
-  bool returnHasField();
+  bool fieldEquals(int field);
+  bool hasField();
 
   int getField();
 };

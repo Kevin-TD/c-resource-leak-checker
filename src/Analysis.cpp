@@ -236,7 +236,8 @@ std::vector<Instruction *> getSuccessors(Instruction *Inst) {
 }
 
 void doAliasReasoning(Instruction *instruction,
-                      ProgramFunction &programFunction) {
+                      ProgramFunction &programFunction,
+                      std::string optLoadFileName) {
   bool includes = false;
   std::string branchName = instruction->getParent()->getName().str();
   for (auto branch : realBranchOrder) {
@@ -270,7 +271,7 @@ void doAliasReasoning(Instruction *instruction,
     ProgramVariable varToStore = ProgramVariable(store->getOperand(0));
 
     // necessary check since the value to store could just be a number, and we
-    // don't need to alias vars with nums. Also can cause name clashings; e.g.,
+    // don't need to alias vars with nums. Also can cause name clashes; e.g.,
     // if we have some "ret i32 0", we'll be adding program variable 0, but
     // there may be in the IR something like "%0 = ...", and our code will
     // interpret these as aliased
@@ -287,11 +288,7 @@ void doAliasReasoning(Instruction *instruction,
       return;
     }
 
-    // %32 = bitcast %struct.my_struct* %K to %struct.my_struct2*, !dbg !81
-    // store %struct.my_struct2* %32, %struct.my_struct2** %K12, align 8, !dbg !80
-    // TODO: ensure these types of struct casting are simply ignored and dont cause an error
-
-    // check if two structs are being aliased. the structs must refer 
+    // check if two structs are being aliased. the structs must refer
     // to the same type
     if (valueToStore->getType()->isPointerTy() &&
         receivingValue->getType()->isPointerTy()) {
@@ -299,7 +296,7 @@ void doAliasReasoning(Instruction *instruction,
           dataflow::unwrapValuePointerToStruct(valueToStore);
       StructType *receivingStruct =
           dataflow::unwrapValuePointerToStruct(receivingValue);
-      
+
       if (valueStruct && receivingStruct && valueStruct == receivingStruct) {
         logout("two structs to alias " << *store);
         int numFields = valueStruct->getNumElements();
@@ -326,6 +323,30 @@ void doAliasReasoning(Instruction *instruction,
   } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
     ProgramVariable sourceVar = ProgramVariable(bitcast);
     ProgramVariable destinationVar = ProgramVariable(bitcast->getOperand(0));
+
+    StructType *sourceType = dataflow::unwrapValuePointerToStruct(bitcast);
+    StructType *destType =
+        dataflow::unwrapValuePointerToStruct(bitcast->getOperand(0));
+
+    if (sourceType && destType && sourceType->hasName() &&
+        destType->hasName()) {
+      if (sourceType->getName() != destType->getName()) {
+        errs() << "WARNING: Struct type conversions/bitcasting ('"
+               << destType->getName() << "' to '" << sourceType->getName()
+               << "') not supported. Related variables will not be considered "
+                  "aliased, potentially causing false positives.\n";
+
+        programPoint->addVariable(bitcast);
+
+        int numFields = sourceType->getNumElements();
+        for (int i = 0; i < numFields; i++) {
+          ProgramVariable sourceVar = ProgramVariable(bitcast, i);
+          programPoint->addVariable(sourceVar);
+        }
+
+        return;
+      }
+    }
 
     programPoint->addAlias(sourceVar, destinationVar);
 
@@ -394,12 +415,7 @@ void doAliasReasoning(Instruction *instruction,
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
     logout("alloca inst = " << *allocate);
 
-    StructType *structType =
-        llvm::dyn_cast<llvm::StructType>(allocate->getAllocatedType());
-
-    if (!structType && allocate->getAllocatedType()->isPointerTy()) {
-      structType = dataflow::unwrapValuePointerToStruct(allocate);
-    }
+    StructType *structType = dataflow::unwrapValuePointerToStruct(allocate);
 
     if (!structType) {
       return;
@@ -407,16 +423,18 @@ void doAliasReasoning(Instruction *instruction,
 
     programPoint->addVariable(ProgramVariable(allocate));
 
-    /*
-    I cannot find documentation that states how struct names appear in the IR,
-    but it seems that they typically look like "struct.[C struct name]"
-    TODO: prove/disprove that struct names are formatted as "struct.[C struct
-    name]"
-    */
     std::string structName = structType->getName();
+
     structName = sliceString(structName, structName.find_last_of('.') + 1,
                              structName.size() - 1);
-    logout("struct name found = " << structName);
+    logout("struct name in IR = " << structName);
+
+    if (!dataflow::IRstructNameEqualsCstructName(structName, optLoadFileName)) {
+      errs() << "Error: Did not find struct name '" << structName
+             << "' in debug info\n";
+      exit(1);
+    }
+
     int numFields = structType->getNumElements();
     for (int i = 0; i < numFields; i++) {
       ProgramVariable sourceVar = ProgramVariable(allocate, i);
@@ -521,7 +539,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     WorkSet.insert(&(*I));
 
     std::string branchName = I->getParent()->getName().str();
-    doAliasReasoning(&(*I), programFunction);
+    doAliasReasoning(&(*I), programFunction, optLoadFileName);
 
     auto succs = getSuccessors(&(*I));
     branchInstructionMap[branchName].branch.insert(&(*I));

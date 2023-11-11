@@ -54,6 +54,34 @@ std::string variable(const Value *Val) {
   return RetVal;
 }
 
+bool IRstructNameEqualsCstructName(std::string &structName,
+                                   std::string &optLoadFileName) {
+  LLVMContext context;
+  SMDiagnostic error;
+
+  std::string IRFileName =
+      dataflow::sliceString(optLoadFileName, 0, optLoadFileName.size() - 3) +
+      ".ll";
+
+  std::unique_ptr<Module> module = parseIRFile(IRFileName, error, context);
+  if (!module) {
+    errs() << "Error: IR file '" + IRFileName + "' not found\n";
+    exit(1);
+  }
+
+  DebugInfoFinder debugInfoFinder;
+  debugInfoFinder.processModule(*module);
+
+  for (auto &DICompositeType : debugInfoFinder.types()) {
+    if (DICompositeType->getTag() == dwarf::DW_TAG_structure_type &&
+        DICompositeType->getName() == structName) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool isNumber(const std::string &s) {
   char *endPtr;
   std::strtol(s.c_str(), &endPtr, 10);

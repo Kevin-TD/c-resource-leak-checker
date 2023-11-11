@@ -7,7 +7,6 @@ ReturnAnnotation::ReturnAnnotation(AnnotationType annotationType,
   this->annotationMethods = annotationMethods;
   this->targetName = targetName;
   this->field = field;
-  this->hasField = (field != -1);
   this->isVerified = false;
 }
 
@@ -26,11 +25,9 @@ std::string ReturnAnnotation::generateStringRep() {
          fieldString + " methods = " + annoMethodsString;
 }
 
-bool ReturnAnnotation::fieldNameEquals(int field) {
-  return field == this->field;
-}
+bool ReturnAnnotation::fieldEquals(int field) { return field == this->field; }
 
-bool ReturnAnnotation::returnHasField() { return this->hasField; }
+bool ReturnAnnotation::hasField() { return this->field != -1; }
 
 bool ReturnAnnotation::functionNameEquals(const std::string &functionName) {
   return functionName.compare(this->targetName) == 0;

@@ -5,13 +5,17 @@
 
 class ParameterAnnotation : public Annotation {
 private:
-  // equals -1 if not defined
+  // iff the parameter is a struct, this refers to the
+  // index of that struct. e.g., for a
+  // struct my_struct { int x, y; }
+  // and function
+  // int foo(my_struct m Calls("free", "x"))
+  // the field would be 0 for the 1st argument.
+  // if it were Calls("free", "y"), the field would be 1.
+  // if there was no struct, this would equal -1.
   int field;
 
   int nthParameter;
-
-  // returns true iff field does not equal -1
-  bool hasField;
 
 public:
   ParameterAnnotation(AnnotationType annotationType,
@@ -21,7 +25,7 @@ public:
   bool nthParameterEquals(int param);
   bool functionNameEquals(const std::string &functionName);
   bool fieldNameEquals(int field);
-  bool paramHasField();
+  bool hasField();
 
   int getField();
   int getNthParameter();
