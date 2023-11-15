@@ -5,10 +5,7 @@
 
 extern const char *WHITESPACES;
 
-// TODO: make a 'Utils' namespace. dataflow namespace
-// should just have functions `variable` and `unwrapValuePointerToStruct`
-
-namespace dataflow {
+namespace Dataflow {
 
 /**
  * @brief Get a human-readable string name for an llvm Value
@@ -30,6 +27,10 @@ StructType *unwrapValuePointerToStruct(Value *value);
 // look like struct.[C struct name]).
 bool IRstructNameEqualsCstructName(std::string &structName,
                                    std::string &optLoadFileName);
+
+} // namespace Dataflow
+
+namespace Util {
 
 bool isNumber(const std::string &s);
 
@@ -53,6 +54,6 @@ bool startsWith(std::string str, std::string starts);
 // for debugging; just an easier way to get a string rep of a set
 std::string setToString(std::set<std::string> &setString);
 
-} // namespace dataflow
+} // namespace Util
 
 #endif // UTILS_H

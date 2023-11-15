@@ -39,7 +39,7 @@
 
 using namespace llvm;
 
-namespace dataflow {
+namespace Dataflow {
 
 struct CodeAnalyzer : public FunctionPass {
   static char ID;
@@ -60,6 +60,6 @@ protected:
 
   std::string getAnalysisName() { return "CalledMethodsPass"; }
 };
-} // namespace dataflow
+} // namespace Dataflow
 
 #endif // RUN_ANALYSIS_H

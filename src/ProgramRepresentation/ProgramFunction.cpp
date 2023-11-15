@@ -61,3 +61,15 @@ void ProgramFunction::setProgramPoint(std::string name,
   ProgramPoint *programPointRef = this->getProgramPointRef(name, true);
   programPointRef->setProgramVariables(programPoint.getProgramVariables());
 }
+
+void ProgramFunction::logoutPF(ProgramFunction &pf) {
+  for (auto point : pf.getProgramPoints()) {
+    logout("\n**point name " << point.getPointName());
+    for (auto var : point.getProgramVariables()) {
+      logout("> var name " << var.getRawName());
+      auto aliases = var.getAllAliases(false);
+      auto aliasesStr = Util::setToString(aliases);
+      logout("--> aliases " << aliasesStr);
+    }
+  }
+}

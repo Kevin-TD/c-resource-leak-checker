@@ -31,7 +31,7 @@ struct InstructionHolder {
   SetVector<Instruction *> successors;
 };
 
-namespace dataflow {
+namespace Dataflow {
 
 std::set<std::string> SafeFunctions;
 std::set<std::string> ReallocFunctions;
@@ -104,9 +104,9 @@ std::string getTestName(std::string optLoadFileName) {
 
 void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
               std::map<std::string, InstructionHolder> branchInstMap) {
-  topCFG = CFG("entry");
+  topCFG = CFG(FIRST_BRANCH_NAME);
   std::map<std::string, CFG *> cfgMap;
-  cfgMap["entry"] = &topCFG;
+  cfgMap[FIRST_BRANCH_NAME] = &topCFG;
 
   for (auto branchName : branchOrder) {
     auto succs = branchInstMap[branchName].successors;
@@ -118,10 +118,11 @@ void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
     for (auto succ : succs) {
       std::string succName = succ->getParent()->getName().str();
 
-      if (succName == branchName)
+      if (succName == branchName) {
         continue;
+      }
 
-      if (cfgMap.count(succName) > 0) {
+      if (cfgMap.count(succName)) {
         cfg->addSuccessor(cfgMap[succName]);
         continue;
       }
@@ -254,13 +255,13 @@ void doAliasReasoning(Instruction *instruction,
     realBranchOrder.push_back(branchName);
   }
 
-  if (LoadInst *Load = dyn_cast<LoadInst>(instruction)) {
-    logout("(load) name is " << variable(Load) << " for "
-                             << variable(Load->getPointerOperand()));
-    std::string varName = variable(Load->getPointerOperand());
+  if (LoadInst *load = dyn_cast<LoadInst>(instruction)) {
+    logout("(load) name is " << variable(load) << " for "
+                             << variable(load->getPointerOperand()));
+    std::string varName = variable(load->getPointerOperand());
 
-    ProgramVariable receivingVar = ProgramVariable(Load);
-    ProgramVariable givingVar = ProgramVariable(Load->getPointerOperand());
+    ProgramVariable receivingVar = ProgramVariable(load);
+    ProgramVariable givingVar = ProgramVariable(load->getPointerOperand());
 
     programPoint->addAlias(receivingVar, givingVar);
 
@@ -293,9 +294,9 @@ void doAliasReasoning(Instruction *instruction,
     if (valueToStore->getType()->isPointerTy() &&
         receivingValue->getType()->isPointerTy()) {
       StructType *valueStruct =
-          dataflow::unwrapValuePointerToStruct(valueToStore);
+          Dataflow::unwrapValuePointerToStruct(valueToStore);
       StructType *receivingStruct =
-          dataflow::unwrapValuePointerToStruct(receivingValue);
+          Dataflow::unwrapValuePointerToStruct(receivingValue);
 
       if (valueStruct && receivingStruct && valueStruct == receivingStruct) {
         logout("two structs to alias " << *store);
@@ -324,9 +325,9 @@ void doAliasReasoning(Instruction *instruction,
     ProgramVariable sourceVar = ProgramVariable(bitcast);
     ProgramVariable destinationVar = ProgramVariable(bitcast->getOperand(0));
 
-    StructType *sourceType = dataflow::unwrapValuePointerToStruct(bitcast);
+    StructType *sourceType = Dataflow::unwrapValuePointerToStruct(bitcast);
     StructType *destType =
-        dataflow::unwrapValuePointerToStruct(bitcast->getOperand(0));
+        Dataflow::unwrapValuePointerToStruct(bitcast->getOperand(0));
 
     if (sourceType && destType && sourceType->hasName() &&
         destType->hasName()) {
@@ -415,7 +416,7 @@ void doAliasReasoning(Instruction *instruction,
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
     logout("alloca inst = " << *allocate);
 
-    StructType *structType = dataflow::unwrapValuePointerToStruct(allocate);
+    StructType *structType = Dataflow::unwrapValuePointerToStruct(allocate);
 
     if (!structType) {
       return;
@@ -425,11 +426,11 @@ void doAliasReasoning(Instruction *instruction,
 
     std::string structName = structType->getName();
 
-    structName = sliceString(structName, structName.find_last_of('.') + 1,
-                             structName.size() - 1);
+    structName = Util::sliceString(structName, structName.find_last_of('.') + 1,
+                                   structName.size() - 1);
     logout("struct name in IR = " << structName);
 
-    if (!dataflow::IRstructNameEqualsCstructName(structName, optLoadFileName)) {
+    if (!Dataflow::IRstructNameEqualsCstructName(structName, optLoadFileName)) {
       errs() << "Error: Did not find struct name '" << structName
              << "' in debug info\n";
       exit(1);
@@ -467,8 +468,8 @@ void doAliasReasoning(Instruction *instruction,
     but we wont need to worry about them; they hold no aliasing information
     */
 
-    if (dataflow::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
-        dataflow::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
+    if (Util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
+        Util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
       ProgramVariable sourceVar = ProgramVariable(call);
       ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
       programPoint->addAlias(sourceVar, destinationVar);
@@ -477,8 +478,6 @@ void doAliasReasoning(Instruction *instruction,
 }
 
 void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
-
-  SetVector<Instruction *> WorkSet;
   std::string fnName = F.getName().str();
 
   std::string testName = getTestName(optLoadFileName);
@@ -514,8 +513,11 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     ReallocFunctions.erase(fnName);
   }
 
-  for (auto Pair : MemoryFunctions) {
-    if (fnName == Pair.first) {
+  for (auto allocDeallocPair : MemoryFunctions) {
+    std::string allocationFunction = allocDeallocPair.first;
+    std::string deallocationFunction = allocDeallocPair.second;
+
+    if (fnName == allocationFunction) {
       errs() << "**ANALYSIS-WARNING**: Re-definition of allocation function '"
              << fnName
              << "' identified. Function's alloc and dealloc functions erased "
@@ -523,7 +525,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
       MemoryFunctions.erase(fnName);
     }
 
-    if (fnName == Pair.second) {
+    if (fnName == deallocationFunction) {
       errs() << "**ANALYSIS-WARNING**: Re-definition of deallocation function '"
              << fnName
              << "' identified. Function's alloc and dealloc functions erased "
@@ -536,8 +538,6 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   std::map<std::string, InstructionHolder> branchInstructionMap;
 
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
-    WorkSet.insert(&(*I));
-
     std::string branchName = I->getParent()->getName().str();
     doAliasReasoning(&(*I), programFunction, optLoadFileName);
 
@@ -548,58 +548,30 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     }
   }
 
-  CFG TopCFG;
-  buildCFG(TopCFG, realBranchOrder, branchInstructionMap);
+  CFG cfg;
+  buildCFG(cfg, realBranchOrder, branchInstructionMap);
 
   calledMethods.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
                              annotationHandler);
-  calledMethods.setCFG(&TopCFG);
+  calledMethods.setCFG(&cfg);
   calledMethods.setProgramFunction(programFunction);
 
   mustCall.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
                         annotationHandler);
-  mustCall.setCFG(&TopCFG);
+  mustCall.setCFG(&cfg);
   mustCall.setProgramFunction(programFunction);
 
   ProgramFunction PostCalledMethods = calledMethods.generatePassResults();
   ProgramFunction PostMustCalls = mustCall.generatePassResults();
 
   logout("\n\nPROGRAM FUNCTION for " << programFunction.getFunctionName());
-  for (auto point : programFunction.getProgramPoints()) {
-    logout("\n**point name " << point.getPointName());
-    for (auto var : point.getProgramVariables()) {
-      logout("> var name " << var.getRawName());
-      auto aliases = var.getAllAliases(false);
-      auto aliasesStr = dataflow::setToString(aliases);
-      logout("--> aliases " << aliasesStr);
-    }
-  }
+  ProgramFunction::logoutPF(programFunction);
 
   logout("\n\nCALLED METHODS RESULT");
-  for (auto point : PostCalledMethods.getProgramPoints()) {
-    logout("\n**point name " << point.getPointName());
-    for (auto var : point.getProgramVariables()) {
-      logout("> var name " << var.getRawName());
-      std::set<std::string> methods = var.getMethodsSet().getMethods();
-      auto aliases = var.getAllAliases(false);
-      auto aliasesStr = dataflow::setToString(aliases);
-      logout("--> aliases " << aliasesStr);
-      logout("--> " << dataflow::setToString(methods));
-    }
-  }
+  ProgramFunction::logoutPF(PostCalledMethods);
 
   logout("\n\nMUST CALL RESULT");
-  for (auto point : PostMustCalls.getProgramPoints()) {
-    logout("\n**point name " << point.getPointName());
-    for (auto var : point.getProgramVariables()) {
-      logout("> var name " << var.getRawName());
-      std::set<std::string> methods = var.getMethodsSet().getMethods();
-      auto aliases = var.getAllAliases(false);
-      auto aliasesStr = dataflow::setToString(aliases);
-      logout("--> aliases " << aliasesStr);
-      logout("--> " << dataflow::setToString(methods));
-    }
-  }
+  ProgramFunction::logoutPF(PostMustCalls);
 
   errs() << "\n\nRUNNING CALLED METHODS TESTS - "
          << " TEST NAME - " << testName << "\n\n";
@@ -628,4 +600,4 @@ void CodeAnalyzer::onEnd() {
   }
 }
 
-} // namespace dataflow
+} // namespace Dataflow

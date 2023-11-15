@@ -10,9 +10,9 @@ FunctionAnnotation::FunctionAnnotation(AnnotationType annotationType,
 }
 
 std::string FunctionAnnotation::generateStringRep() {
-  std::string annoTypeString = annotationTypeToString(this->annotationType);
-  std::string annoMethodsString =
-      dataflow::setToString(this->annotationMethods);
+  std::string annoTypeString =
+      AnnotationUtil::annotationTypeToString(this->annotationType);
+  std::string annoMethodsString = Util::setToString(this->annotationMethods);
 
   return "@" + annoTypeString + " FunctionAnnotation Name = " + targetName +
          " methods = " + annoMethodsString;

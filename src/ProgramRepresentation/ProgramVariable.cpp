@@ -10,7 +10,7 @@ ProgramVariable::ProgramVariable(std::string cleanedName) {
 
 ProgramVariable::ProgramVariable(Value *value) {
   this->value = value;
-  this->rawName = dataflow::variable(value);
+  this->rawName = Dataflow::variable(value);
   this->cleanedName = this->rawName;
   this->index = -1;
   this->fixNameAndIdentifier();
@@ -18,7 +18,7 @@ ProgramVariable::ProgramVariable(Value *value) {
 
 ProgramVariable::ProgramVariable(Value *value, MethodsSet methods) {
   this->value = value;
-  this->rawName = dataflow::variable(value);
+  this->rawName = Dataflow::variable(value);
   this->cleanedName = this->rawName;
   this->fixNameAndIdentifier();
   this->methods = methods;
@@ -27,7 +27,7 @@ ProgramVariable::ProgramVariable(Value *value, MethodsSet methods) {
 
 ProgramVariable::ProgramVariable(Value *value, int index) {
   this->value = value;
-  this->rawName = dataflow::variable(value) + "." + std::to_string(index);
+  this->rawName = Dataflow::variable(value) + "." + std::to_string(index);
   this->index = index;
   this->cleanedName = this->rawName;
   this->fixNameAndIdentifier();
@@ -147,9 +147,11 @@ std::list<ProgramVariable *> ProgramVariable::generatePVptrAliases() {
 }
 
 void ProgramVariable::setMethodsSet(MethodsSet methods) {
+  this->methods.clearMethods();
   this->methods = methods;
 }
 
 void ProgramVariable::setAliases(std::list<ProgramVariable> aliases) {
+  this->aliases.clear();
   this->aliases = aliases;
 }
