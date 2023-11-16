@@ -289,7 +289,9 @@ void doAliasReasoning(Instruction *instruction,
     }
 
     // check if two structs are being aliased. the structs must refer
-    // to the same type
+    // to the same type. if they do not, they are not aliased;
+    // it is safe to do this because worst case scenario,
+    // it yields a false positive.
     if (valueToStore->getType()->isPointerTy() &&
         receivingValue->getType()->isPointerTy()) {
       StructType *valueStruct =

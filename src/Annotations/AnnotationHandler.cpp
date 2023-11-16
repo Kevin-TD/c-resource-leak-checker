@@ -92,18 +92,18 @@ AnnotationHandler::getAllParameterAnnotationsWithFields(
 std::vector<Annotation *>
 AnnotationHandler::getAllParameterAnnotationsWithoutFields(
     const std::string &functionName) {
-  std::vector<Annotation *> annotationsWithFields;
+  std::vector<Annotation *> annotationsWithoutFields;
   for (Annotation *anno : this->annotations) {
     if (ParameterAnnotation *paramAnno =
             dynamic_cast<ParameterAnnotation *>(anno)) {
       if (paramAnno->functionNameEquals(functionName) &&
           !paramAnno->hasField()) {
-        annotationsWithFields.push_back(paramAnno);
+        annotationsWithoutFields.push_back(paramAnno);
       }
     }
   }
 
-  return annotationsWithFields;
+  return annotationsWithoutFields;
 }
 
 Annotation *
