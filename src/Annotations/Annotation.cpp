@@ -46,14 +46,16 @@ bool methodsArgumentIsCorrectlyFormatted(const std::string &rawMethodsString) {
   int rawMethodsStringSize = rawMethodsString.size();
 
   if (rawMethodsStringSize == 0) {
-    logout("Method Args Error 0 on '"
-           << rawMethodsString << "': string must not be empty") return false;
+    logout("Method Args Error 0 on '" << rawMethodsString
+                                      << "': string must not be empty");
+    return false;
   }
 
   if (!std::isalnum(rawMethodsString[0])) {
     logout("Method Args Error 1 on '"
            << rawMethodsString
-           << "': first character of string must be alphanumeric") return false;
+           << "': first character of string must be alphanumeric");
+    return false;
   }
 
   for (int i = 0; i < rawMethodsStringSize; i++) {
@@ -62,7 +64,8 @@ bool methodsArgumentIsCorrectlyFormatted(const std::string &rawMethodsString) {
         logout("Method Args Error 2 on '"
                << rawMethodsString
                << "': comma must not be last character and a comma cannot "
-                  "follow a comma") return false;
+                  "follow a comma");
+        return false;
       }
     } else if (rawMethodsString[i] == ' ') {
       if ((i == rawMethodsStringSize - 1) || rawMethodsString[i + 1] == ' ' ||
@@ -70,14 +73,15 @@ bool methodsArgumentIsCorrectlyFormatted(const std::string &rawMethodsString) {
         logout("Method Args Error 3 on '"
                << rawMethodsString
                << "': space must be followed by alnum and cannot be last char, "
-                  "another space, or a comma") return false;
+                  "another space, or a comma");
+        return false;
       }
     } else if (std::isalnum(rawMethodsString[i])) {
       if ((i != rawMethodsStringSize - 1) && rawMethodsString[i + 1] == ' ') {
-        logout(
-            "Method Args Error 4 on '"
-            << rawMethodsString
-            << "': alnum character cannot be followed by space") return false;
+        logout("Method Args Error 4 on '"
+               << rawMethodsString
+               << "': alnum character cannot be followed by space");
+        return false;
       }
     }
   }
@@ -144,14 +148,16 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
     logout("Annotation String Error 0: malformed string '"
            << rawAnnotationString
            << "' potentially missing argument or string is not annotation "
-              "related at all") return false;
+              "related at all");
+    return false;
   }
   // chunks.size() >= 7
 
   if (chunks[0] != "Calls" && chunks[0] != "MustCall") {
     logout("Annotation String Error 2: invalid annotation '"
            << rawAnnotationString << "' annotation type '" << chunks[1]
-           << "' is unknown; expected Calls or MustCall") return false;
+           << "' is unknown; expected Calls or MustCall");
+    return false;
   }
   // chunks[0] == "Calls" or chunks[0] == "MustCall"
 
@@ -159,7 +165,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
     logout("Annotation String Error 3: invalid annotation '"
            << rawAnnotationString
            << "' 'target' keyword missing or inappropriately placed; '"
-           << chunks[1] << "' found") return false;
+           << chunks[1] << "' found");
+    return false;
   }
   // chunks[1] == "target"
 
@@ -168,7 +175,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
            << rawAnnotationString
            << "' keyword '=' after keyword 'target' is missing or "
               "inappropriately placed; '"
-           << chunks[2] << "' found") return false;
+           << chunks[2] << "' found");
+    return false;
   }
   // chunks[2] == "="
 
@@ -184,7 +192,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
            << rawAnnotationString
            << "' target is malformed; too few or too many '.'s, causing "
               "unexpected target chunk size of "
-           << targetChunksSize) return false;
+           << targetChunksSize);
+    return false;
   }
   // 1 <= targetChunks.size() <= 3
 
@@ -195,7 +204,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
            << rawAnnotationString << "' type FUNCTION or STRUCT specification '"
            << targetChunks[0]
            << "' is malformed; # of balanced parentheses does not equal "
-              "one") return false;
+              "one");
+    return false;
   }
 
   // targetChunks[0] has '(' and ')'
@@ -205,7 +215,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
     logout("Annotation String Error 7: invalid annotation '"
            << rawAnnotationString
            << "' type FUNCTION or STRUCT specification not found; found '"
-           << targetType << "'") return false;
+           << targetType << "'");
+    return false;
   }
   // targetChunks[0] starts with "FUNCTION(" or "STRUCT("
 
@@ -215,7 +226,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
   if (!dataflow::isValidCVariableName(name)) {
     logout("Annotation String Error 8: invalid annotation '"
            << rawAnnotationString << "' invalid target name; target name '"
-           << name << "' is not valid C variable name") return false;
+           << name << "' is not valid C variable name");
+    return false;
   }
   // targetChunks[0] starts with "FUNCTION(valid_text" or "STRUCT(int"
 
@@ -224,8 +236,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
     logout("Annotation String Error 9: invalid annotation '"
            << rawAnnotationString
            << "' target is malformed; last character should be ')' but '"
-           << targetChunks[0][targetChunks[0].size() - 1]
-           << "' found") return false;
+           << targetChunks[0][targetChunks[0].size() - 1] << "' found");
+    return false;
   }
   // targetChunks[0] is "FUNCTION/STRUCT(valid_text)"
 
@@ -247,7 +259,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
         logout("Annotation String Error 10: invalid annotation '"
                << rawAnnotationString
                << "' target is malformed; # of balanced parentheses does not "
-                  "equal one on a non-return target") return false;
+                  "equal one on a non-return target");
+        return false;
       }
 
       std::string paramSpecifier =
@@ -256,7 +269,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
         logout("Annotation String Error 11: invalid annotation '"
                << rawAnnotationString
                << "' 'PARAM' keyword missing/malformed on non-return target; '"
-               << paramSpecifier << "' found") return false;
+               << paramSpecifier << "' found");
+        return false;
       }
       // targetChunk[1] is "PARAM(" or "RETURN"
 
@@ -267,7 +281,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
         if (!dataflow::isNumber(nthParameter)) {
           logout("Annotation String Error 12: invalid annotation '"
                  << rawAnnotationString << "' PARAM argument is not a number; '"
-                 << nthParameter << "' found") return false;
+                 << nthParameter << "' found");
+          return false;
         }
         // targetChunks[1] is "PARAM(int"
 
@@ -276,8 +291,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
                  << rawAnnotationString
                  << "' target argument is malformed; last character should be "
                     "')' but '"
-                 << targetChunks[1][targetChunks[1].size() - 1]
-                 << "' found") return false;
+                 << targetChunks[1][targetChunks[1].size() - 1] << "' found");
+          return false;
         }
         // targetChunks[1] is "PARAM(int)"
       }
@@ -289,7 +304,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
                  << rawAnnotationString
                  << "' target is malformed; # of balanced parentheses does not "
                     "equal one on '"
-                 << targetChunks[2] << "'") return false;
+                 << targetChunks[2] << "'");
+          return false;
         }
 
         std::string fieldSpecifier =
@@ -298,7 +314,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
           logout("Annotation String Error 15: invalid annotation '"
                  << rawAnnotationString
                  << "' keyword 'FIELD' missing/malformed; '" << fieldSpecifier
-                 << "' found") return false;
+                 << "' found");
+          return false;
         }
         // targetChunk[2] is "FIELD("
 
@@ -308,7 +325,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
         if (!dataflow::isNumber(fieldName)) {
           logout("Annotation String Error 16: invalid annotation '"
                  << rawAnnotationString << "' FIELD argument of '" << fieldName
-                 << "'is not a number") return false;
+                 << "'is not a number");
+          return false;
         }
         // targetChunks[2] is "FIELD(int"
 
@@ -316,7 +334,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
           logout("Annotation String Error 17: invalid annotation '"
                  << rawAnnotationString
                  << "' target is malformed; last char of '" << targetChunks[2]
-                 << "' should be ')'") return false;
+                 << "' should be ')'");
+          return false;
         }
         // targetChunks[2] is "FIELD(int)"
       }
@@ -326,14 +345,16 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
       logout("Annotation String Error 25: invalid annotation '"
              << rawAnnotationString
              << "' target is malformed; STRUCT may be missing FIELD specifier "
-                "or specifier is malformed") return false;
+                "or specifier is malformed");
+      return false;
     }
     // targetChunks looks ["STRUCT(name)", "FIELD(int)"]
     if (!dataflow::hasOnlyOneBalancedParentheses(targetChunks[1])) {
       logout("Annotation String Error 18: invalid annotation '"
              << rawAnnotationString
              << "' target is malformed; number of balanced parentheses on '"
-             << targetChunks[1] << "' does not equal one") return false;
+             << targetChunks[1] << "' does not equal one");
+      return false;
     }
 
     std::string fieldSpecifier =
@@ -341,7 +362,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
     if (fieldSpecifier != "FIELD") {
       logout("Annotation String Error 19: invalid annotation '"
              << rawAnnotationString << "' keyword 'FIELD' missing/malformed, '"
-             << fieldSpecifier << "' found") return false;
+             << fieldSpecifier << "' found");
+      return false;
     }
     // targetChunk[1] is "FIELD("
 
@@ -351,7 +373,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
     if (!dataflow::isNumber(fieldName)) {
       logout("Annotation String Error 20: invalid annotation '"
              << rawAnnotationString << "' FIELD argument '" << fieldName
-             << "' is not a number") return false;
+             << "' is not a number");
+      return false;
     }
     // targetChunks[1] is "FIELD(int"
 
@@ -359,7 +382,8 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
       logout("Annotation String Error 21: invalid annotation '"
              << rawAnnotationString
              << "' target is malformed; last character of '" << targetChunks[1]
-             << "' was not ')'") return false;
+             << "' was not ')'");
+      return false;
     }
     // targetChunks[1] is "FIELD(int)"
   }
@@ -368,13 +392,14 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
     logout("Annotation String Error 22: invalid annotation '"
            << rawAnnotationString
            << "' missing keyword 'methods'/malformed methods "
-              "argument") return false;
+              "argument");
+    return false;
   }
 
   if (chunks[5] != "=") {
     logout("Annotation String Error 23: invalid annotation '"
-           << rawAnnotationString
-           << "' malformed methods argument") return false;
+           << rawAnnotationString << "' malformed methods argument");
+    return false;
   }
 
   // chunk[6..end] should just be method args
@@ -402,13 +427,15 @@ bool rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
 
       logout("Annotation String Error 24: invalid annotation '"
              << rawAnnotationString << "' method argument '" << method
-             << "' is not valid C string variable name") return false;
+             << "' is not valid C string variable name");
+      return false;
     }
   }
 
   if (methodsVector.size() == 0) {
     logout("Annotation String Error 26: invalid annotation '"
-           << rawAnnotationString << "' method argument empty") return false;
+           << rawAnnotationString << "' method argument empty");
+    return false;
   }
 
   return true;
@@ -483,7 +510,15 @@ Annotation *generateAnnotation(const std::string &rawAnnotationString) {
                                             targetChunks[2].find(')') - 1);
       }
 
-      return new ReturnAnnotation(annoType, methodsSet, name, returnField);
+      int returnFieldInt;
+
+      if (returnField.compare("") == 0) {
+        returnFieldInt = -1;
+      } else {
+        returnFieldInt = std::stoi(returnField);
+      }
+
+      return new ReturnAnnotation(annoType, methodsSet, name, returnFieldInt);
     }
 
     // targetField is PARAM(int)
@@ -498,8 +533,16 @@ Annotation *generateAnnotation(const std::string &rawAnnotationString) {
                                 targetChunks[2].find(')') - 1);
     }
 
-    return new ParameterAnnotation(annoType, methodsSet, name, parameterField,
-                                   nthParameter);
+    int parameterFieldInt;
+
+    if (parameterField.compare("") == 0) {
+      parameterFieldInt = -1;
+    } else {
+      parameterFieldInt = std::stoi(parameterField);
+    }
+
+    return new ParameterAnnotation(annoType, methodsSet, name,
+                                   parameterFieldInt, nthParameter);
   }
 
   return new ErrorAnnotation();

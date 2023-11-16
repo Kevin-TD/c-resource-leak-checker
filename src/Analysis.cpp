@@ -97,9 +97,9 @@ std::string getTestName(std::string optLoadFileName) {
   optLoadFileName.replace(0, startsWith.length() + 1, "");
   optLoadFileName.erase(optLoadFileName.length() - 2);
 
-  logout("RES = " << optLoadFileName)
+  logout("RES = " << optLoadFileName);
 
-      return optLoadFileName;
+  return optLoadFileName;
 }
 
 void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
@@ -136,7 +136,8 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
   int astFD = mkstemp(astTempTextFile);
 
   if (astFD == -1) {
-    logout("failed to create temp ast text file") perror("mkstemp");
+    logout("failed to create temp ast text file");
+    perror("mkstemp");
     exit(1);
   }
 
@@ -149,7 +150,8 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
   int annotationsFD = mkstemp(annotationsTempTextFile);
 
   if (annotationsFD == -1) {
-    logout("failed to create temp annotations text file") perror("mkstemp");
+    logout("failed to create temp annotations text file");
+    perror("mkstemp");
     exit(1);
   }
 
@@ -159,16 +161,17 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
 
   system(readASTCommand.c_str());
 
-  logout("dump command " << dumpASTCommand)
-      logout("to py run " << readASTCommand)
+  logout("dump command " << dumpASTCommand);
+  logout("to py run " << readASTCommand);
 
-          std::ifstream annotationFile(annotationsTempTextFile);
+  std::ifstream annotationFile(annotationsTempTextFile);
   std::vector<std::string> annotations;
 
   std::string line;
   if (annotationFile.is_open()) {
     while (std::getline(annotationFile, line)) {
-      logout("got anno: " << line) annotations.push_back(line);
+      logout("got anno: " << line);
+      annotations.push_back(line);
     }
   }
 
@@ -233,8 +236,8 @@ std::vector<Instruction *> getSuccessors(Instruction *Inst) {
 }
 
 void doAliasReasoning(Instruction *instruction,
-                      SetVector<Instruction *> &workSet,
-                      ProgramFunction &programFunction) {
+                      ProgramFunction &programFunction,
+                      std::string optLoadFileName) {
   bool includes = false;
   std::string branchName = instruction->getParent()->getName().str();
   for (auto branch : realBranchOrder) {
@@ -253,8 +256,8 @@ void doAliasReasoning(Instruction *instruction,
 
   if (LoadInst *Load = dyn_cast<LoadInst>(instruction)) {
     logout("(load) name is " << variable(Load) << " for "
-                             << variable(Load->getPointerOperand()))
-        std::string varName = variable(Load->getPointerOperand());
+                             << variable(Load->getPointerOperand()));
+    std::string varName = variable(Load->getPointerOperand());
 
     ProgramVariable receivingVar = ProgramVariable(Load);
     ProgramVariable givingVar = ProgramVariable(Load->getPointerOperand());
@@ -268,7 +271,7 @@ void doAliasReasoning(Instruction *instruction,
     ProgramVariable varToStore = ProgramVariable(store->getOperand(0));
 
     // necessary check since the value to store could just be a number, and we
-    // don't need to alias vars with nums. Also can cause name clashings; e.g.,
+    // don't need to alias vars with nums. Also can cause name clashes; e.g.,
     // if we have some "ret i32 0", we'll be adding program variable 0, but
     // there may be in the IR something like "%0 = ...", and our code will
     // interpret these as aliased
@@ -279,13 +282,41 @@ void doAliasReasoning(Instruction *instruction,
 
     ProgramVariable receivingVar = ProgramVariable(store->getOperand(1));
 
-    for (auto Inst : workSet) {
-      if (valueToStore == Inst) {
-        if (CallInst *call = dyn_cast<CallInst>(Inst)) {
-          ProgramVariable callVar = ProgramVariable(call);
-          programPoint->addAlias(callVar, receivingVar);
-          return;
+    if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
+      ProgramVariable callVar = ProgramVariable(call);
+      programPoint->addAlias(callVar, receivingVar);
+      return;
+    }
+
+    // check if two structs are being aliased. the structs must refer
+    // to the same type. if they do not, they are not aliased;
+    // it is safe to do this because worst case scenario,
+    // it yields a false positive.
+    if (valueToStore->getType()->isPointerTy() &&
+        receivingValue->getType()->isPointerTy()) {
+      StructType *valueStruct =
+          dataflow::unwrapValuePointerToStruct(valueToStore);
+      StructType *receivingStruct =
+          dataflow::unwrapValuePointerToStruct(receivingValue);
+
+      if (valueStruct && receivingStruct && valueStruct == receivingStruct) {
+        logout("two structs to alias " << *store);
+        int numFields = valueStruct->getNumElements();
+
+        for (int i = 0; i < numFields; i++) {
+          ProgramVariable valueStructVar = ProgramVariable(valueToStore, i);
+          ProgramVariable receivingStructVar =
+              ProgramVariable(receivingValue, i);
+
+          ProgramVariable originalValue =
+              programPoint->getPV(valueStructVar.getCleanedName(), false);
+          ProgramVariable originalReceiving =
+              programPoint->getPV(receivingStructVar.getCleanedName(), false);
+
+          programPoint->addAlias(originalReceiving, originalValue);
         }
+
+        return;
       }
     }
 
@@ -295,16 +326,42 @@ void doAliasReasoning(Instruction *instruction,
     ProgramVariable sourceVar = ProgramVariable(bitcast);
     ProgramVariable destinationVar = ProgramVariable(bitcast->getOperand(0));
 
+    StructType *sourceType = dataflow::unwrapValuePointerToStruct(bitcast);
+    StructType *destType =
+        dataflow::unwrapValuePointerToStruct(bitcast->getOperand(0));
+
+    if (sourceType && destType && sourceType->hasName() &&
+        destType->hasName()) {
+      if (sourceType->getName() != destType->getName()) {
+        errs() << "WARNING: Struct type conversions/bitcasting ('"
+               << destType->getName() << "' to '" << sourceType->getName()
+               << "') not supported. Related variables will not be considered "
+                  "aliased, potentially causing false positives.\n";
+
+        programPoint->addVariable(bitcast);
+
+        int numFields = sourceType->getNumElements();
+        for (int i = 0; i < numFields; i++) {
+          ProgramVariable sourceVar = ProgramVariable(bitcast, i);
+          programPoint->addVariable(sourceVar);
+        }
+
+        return;
+      }
+    }
+
     programPoint->addAlias(sourceVar, destinationVar);
 
   } else if (GetElementPtrInst *gepInst =
                  dyn_cast<GetElementPtrInst>(instruction)) {
 
-    // for some struct k { int x; int y }, here are two example getInst:
+    // for some struct k { int x; int y }, here'a an example getptr inst:
     // %y = getelementptr inbounds %struct.my_struct, %struct.my_struct* %k, i32
-    // 0, i32 1, !dbg !57 %x = getelementptr inbounds %struct.my_struct,
-    // %struct.my_struct* %k, i32 0, i32 0, !dbg !54 last argument on RHS is the
-    // index of the struct
+    // 0, i32 1, !dbg !57
+
+    // %x = getelementptr inbounds %struct.my_struct,
+    // %struct.my_struct* %k, i32 0, i32 0, !dbg !54
+    // last argument on RHS is the index of the struct
     /*
     LLVM removes field names and just makes them indices
     example:
@@ -343,36 +400,80 @@ void doAliasReasoning(Instruction *instruction,
             return;
           }
 
-          ProgramVariable structVar = ProgramVariable(pointerOperand, index);
+          ProgramVariable structPV = ProgramVariable(pointerOperand);
+
+          ProgramVariable *originalStructPVRef =
+              programPoint->getPVRef(structPV.getCleanedName(), false);
+          ProgramVariable structVar =
+              ProgramVariable(originalStructPVRef->getValue(), index);
+
+          logout("spec index inst = " << *gepInst);
+          logout("specifying index for " << structVar.getCleanedName());
+
           programPoint->addAlias(sourceVar, structVar);
         }
       }
     }
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
-    if (llvm::StructType *structType =
-            llvm::dyn_cast<llvm::StructType>(allocate->getAllocatedType())) {
-      /*
-      I cannot find documentation that states how struct names appear in the IR,
-      but it seems that they typically look like "struct.[C struct name]"
-      TODO: prove/disprove that struct names are formatted as "struct.[C struct
-      name]"
-      */
-      std::string structName = structType->getName();
-      structName = sliceString(structName, structName.find_last_of('.') + 1,
-                               structName.size() - 1);
-      int numFields = structType->getNumElements();
-      for (int i = 0; i < numFields; i++) {
+    logout("alloca inst = " << *allocate);
 
-        Annotation *anno = annotationHandler.getStructAnnotation(structName, i);
-        if (StructAnnotation *structAnno =
-                dynamic_cast<StructAnnotation *>(anno)) {
-          std::set<std::string> structMethods =
-              structAnno->getAnnotationMethods();
-          AnnotationType structAnnoType = structAnno->getAnnotationType();
-          ProgramVariable sourceVar = ProgramVariable(allocate, i);
-          programPoint->addVariable(sourceVar);
-        }
-      }
+    StructType *structType = dataflow::unwrapValuePointerToStruct(allocate);
+
+    if (!structType) {
+      return;
+    }
+
+    programPoint->addVariable(ProgramVariable(allocate));
+
+    std::string structName = structType->getName();
+
+    structName = sliceString(structName, structName.find_last_of('.') + 1,
+                             structName.size() - 1);
+    logout("struct name in IR = " << structName);
+
+    if (!dataflow::IRstructNameEqualsCstructName(structName, optLoadFileName)) {
+      errs() << "Error: Did not find struct name '" << structName
+             << "' in debug info\n";
+      exit(1);
+    }
+
+    int numFields = structType->getNumElements();
+    for (int i = 0; i < numFields; i++) {
+      ProgramVariable sourceVar = ProgramVariable(allocate, i);
+      programPoint->addVariable(sourceVar);
+    }
+
+  } else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
+    std::string fnName = call->getCalledFunction()->getName().str();
+    /*
+    there are 2 llvm annotations to consider:
+    - llvm.ptr.annotation.*
+     - https://llvm.org/docs/LangRef.html#llvm-ptr-annotation-intrinsic
+     - the * "specifies an address space for the pointer"
+     - "the first argument is a pointer to an integer value of arbitrary
+    bitwidth (result of some expression), the second is a pointer to a global
+    string, the third is a pointer to a global string which is the source file
+    name, and the last argument is the line number."
+    - llvm.var.annotation
+     - https://llvm.org/docs/LangRef.html#llvm-var-annotation-intrinsic
+     - "the first argument is a pointer to a value,
+     the second is a pointer to a global string,
+      the third is a pointer to a global string which is the source file name,
+      and the last argument is the line number."
+
+
+    there is also llvm.codeview.annotation
+    (https://llvm.org/docs/LangRef.html#llvm-codeview-annotation-intrinsic)
+    and llvm.annotation.*
+    (https://llvm.org/docs/LangRef.html#llvm-annotation-intrinsic)
+    but we wont need to worry about them; they hold no aliasing information
+    */
+
+    if (dataflow::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
+        dataflow::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
+      ProgramVariable sourceVar = ProgramVariable(call);
+      ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
+      programPoint->addAlias(sourceVar, destinationVar);
     }
   }
 }
@@ -385,11 +486,11 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   std::string testName = getTestName(optLoadFileName);
 
   bool functionIsKnown = false;
-  logout("opt load file name = " << optLoadFileName)
-      logout("Analyzing Function with Name = " << fnName
-                                               << " test_name = " << testName)
+  logout("opt load file name = " << optLoadFileName);
+  logout("Analyzing Function with Name = " << fnName
+                                           << " test_name = " << testName);
 
-          if (!loadAndBuild) {
+  if (!loadAndBuild) {
     loadFunctions();
     auto annotations = getAnnotationStrings(optLoadFileName);
 
@@ -440,7 +541,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     WorkSet.insert(&(*I));
 
     std::string branchName = I->getParent()->getName().str();
-    doAliasReasoning(&(*I), WorkSet, programFunction);
+    doAliasReasoning(&(*I), programFunction, optLoadFileName);
 
     auto succs = getSuccessors(&(*I));
     branchInstructionMap[branchName].branch.insert(&(*I));
@@ -465,51 +566,40 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   ProgramFunction PostCalledMethods = calledMethods.generatePassResults();
   ProgramFunction PostMustCalls = mustCall.generatePassResults();
 
-  logout("\n\nPROGRAM FUNCTION for "
-         << programFunction.getFunctionName()) for (auto point :
-                                                    programFunction
-                                                        .getProgramPoints()) {
+  logout("\n\nPROGRAM FUNCTION for " << programFunction.getFunctionName());
+  for (auto point : programFunction.getProgramPoints()) {
     logout("\n**point name " << point.getPointName());
     for (auto var : point.getProgramVariables()) {
-      logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
-          std::set<std::string>
-              methods = var.getMethodsSet().getMethods();
-      logout("methods set " << dataflow::setToString(methods))
-
-          auto aliases = var.getAllAliases(true);
+      logout("> var name " << var.getRawName());
+      auto aliases = var.getAllAliases(false);
       auto aliasesStr = dataflow::setToString(aliases);
-      logout(">>aliases " << aliasesStr)
+      logout("--> aliases " << aliasesStr);
     }
   }
 
-  logout(
-      "\n\nCALLED METHODS RESULT") for (auto point :
-                                        PostCalledMethods.getProgramPoints()) {
+  logout("\n\nCALLED METHODS RESULT");
+  for (auto point : PostCalledMethods.getProgramPoints()) {
     logout("\n**point name " << point.getPointName());
     for (auto var : point.getProgramVariables()) {
-      logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
-          std::set<std::string>
-              methods = var.getMethodsSet().getMethods();
-      logout("methods set " << dataflow::setToString(methods))
-
-          auto aliases = var.getAllAliases(true);
+      logout("> var name " << var.getRawName());
+      std::set<std::string> methods = var.getMethodsSet().getMethods();
+      auto aliases = var.getAllAliases(false);
       auto aliasesStr = dataflow::setToString(aliases);
-      logout(">>aliases " << aliasesStr)
+      logout("--> aliases " << aliasesStr);
+      logout("--> " << dataflow::setToString(methods));
     }
   }
 
-  logout("\n\nMUST CALL RESULT") for (auto point :
-                                      PostMustCalls.getProgramPoints()) {
+  logout("\n\nMUST CALL RESULT");
+  for (auto point : PostMustCalls.getProgramPoints()) {
     logout("\n**point name " << point.getPointName());
     for (auto var : point.getProgramVariables()) {
-      logout(">var name " << var.getRawName() << " | " << var.getCleanedName())
-          std::set<std::string>
-              methods = var.getMethodsSet().getMethods();
-      logout("methods set " << dataflow::setToString(methods))
-
-          auto aliases = var.getAllAliases(true);
+      logout("> var name " << var.getRawName());
+      std::set<std::string> methods = var.getMethodsSet().getMethods();
+      auto aliases = var.getAllAliases(false);
       auto aliasesStr = dataflow::setToString(aliases);
-      logout(">>aliases " << aliasesStr)
+      logout("--> aliases " << aliasesStr);
+      logout("--> " << dataflow::setToString(methods));
     }
   }
 

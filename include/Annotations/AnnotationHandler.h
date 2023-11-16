@@ -43,13 +43,13 @@ ErrorAnno        FunctionAnno
   Annotation *getParameterAnnotation(const std::string &functionName,
                                      int nthParameter);
   Annotation *getParameterAnnotation(const std::string &functionName,
-                                     int nthParameter,
-                                     const std::string &field);
-
+                                     int nthParameter, int field);
+  std::vector<Annotation *>
+  getAllParameterAnnotationsWithFields(const std::string &functionName);
+  std::vector<Annotation *>
+  getAllParameterAnnotationsWithoutFields(const std::string &functionName);
   Annotation *getReturnAnnotation(const std::string &functionName);
-  Annotation *getReturnAnnotation(const std::string &functionName,
-                                  const std::string &field);
-
+  Annotation *getReturnAnnotation(const std::string &functionName, int field);
   Annotation *getStructAnnotation(const std::string &structName, int field);
 };
 

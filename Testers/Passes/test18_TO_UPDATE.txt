@@ -1,2 +1,0 @@
-CalledMethods if.end7 str {}
-MustCall if.end7 str {free}

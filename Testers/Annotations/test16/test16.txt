@@ -2,11 +2,13 @@ MustCall target = STRUCT(my_struct).FIELD(0) methods = free
 MustCall target = STRUCT(my_struct).FIELD(1) methods = free
 MustCall target = STRUCT(struct_2).FIELD(0) methods = free
 MustCall target = STRUCT(struct_2).FIELD(1) methods = free
-MustCall target = FUNCTION(does_free).PARAM(0) methods = free
+Calls target = FUNCTION(does_free).PARAM(0) methods = free
 Calls target = FUNCTION(creates_obligation).PARAM(0) methods = free
 Calls target = FUNCTION(creates_obligation).PARAM(1).FIELD(0) methods = free
 MustCall target = FUNCTION(creates_obligation).RETURN methods = free
 Calls target = FUNCTION(does_something).PARAM(0).FIELD(0) methods = free
 Calls target = FUNCTION(does_something).RETURN.FIELD(0) methods = free
+Calls target = FUNCTION(does_something_simpler).PARAM(0) methods = free
+Calls target = FUNCTION(does_something_simpler).RETURN methods = free
 MustCall target = STRUCT(my_struct_3).FIELD(0) methods = free
 MustCall target = STRUCT(my_struct_3).FIELD(1) methods = free

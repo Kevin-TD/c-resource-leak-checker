@@ -2,6 +2,7 @@
 #define ANNOTATION_H
 
 #include "RunAnalysis.h"
+#include "Utils.h"
 
 enum AnnotationType {
   MustCallAnnotation,
@@ -9,6 +10,7 @@ enum AnnotationType {
 };
 
 // TODO: add virtual method verifyAnnotation and implement for the superclasses
+// TODO: consider putting helper functions into separate namespace
 
 class Annotation {
 protected:

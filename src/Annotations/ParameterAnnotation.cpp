@@ -2,34 +2,23 @@
 
 ParameterAnnotation::ParameterAnnotation(
     AnnotationType annotationType, std::set<std::string> annotationMethods,
-    std::string targetName, std::string field, int nthParameter) {
+    std::string targetName, int field, int nthParameter) {
   this->annotationType = annotationType;
   this->annotationMethods = annotationMethods;
   this->targetName = targetName;
   this->field = field;
-  this->hasField = (field != "");
   this->nthParameter = nthParameter;
   this->isVerified = false;
 }
 
 std::string ParameterAnnotation::generateStringRep() {
-  std::string annoTypeString;
-  std::string annoMethodsString = "{";
-
-  if (annotationType == AnnotationType::CallsAnnotation) {
-    annoTypeString = "Calls";
-  } else if (annotationType == AnnotationType::MustCallAnnotation) {
-    annoTypeString = "MustCall";
-  }
-
-  for (std::string method : this->annotationMethods) {
-    annoMethodsString += method + ", ";
-  }
-  annoMethodsString += "}";
+  std::string annoTypeString = annotationTypeToString(this->annotationType);
+  std::string annoMethodsString =
+      dataflow::setToString(this->annotationMethods);
 
   std::string fieldString;
-  if (this->field.size() > 0) {
-    fieldString = "Field = " + this->field;
+  if (this->hasField()) {
+    fieldString = "Field = " + std::to_string(this->field);
   }
 
   return "@" + annoTypeString +
@@ -46,12 +35,12 @@ bool ParameterAnnotation::functionNameEquals(const std::string &functionName) {
   return functionName.compare(this->targetName) == 0;
 }
 
-bool ParameterAnnotation::fieldNameEquals(const std::string &field) {
-  return field.compare(this->field) == 0;
+bool ParameterAnnotation::fieldNameEquals(int field) {
+  return field == this->field;
 }
 
-bool ParameterAnnotation::paramHasField() { return this->hasField; }
+bool ParameterAnnotation::hasField() { return this->field != -1; }
 
-std::string ParameterAnnotation::getField() { return this->field; }
+int ParameterAnnotation::getField() { return this->field; }
 
 int ParameterAnnotation::getNthParameter() { return this->nthParameter; }

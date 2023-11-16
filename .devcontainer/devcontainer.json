@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.224.2/containers/cpp
 {
-	"name": "Must Call Estimates Container",
+	"name": "C Resource Leak Checker Container",
 	"image": "cis547/cis547-base:latest",
 	"runArgs": [
 		"--cap-add=SYS_PTRACE",

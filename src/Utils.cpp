@@ -36,24 +36,50 @@ std::string variable(const Value *Val) {
   if (Code.find_first_of('=') == std::string::npos) {
     variable_logout("0.FOR VAL "
                     << *Val << " RETURNING "
-                    << sliceString(
-                           Code, Code.find(' ') + 1,
-                           Code.size() -
-                               1)) return sliceString(Code, Code.find(' ') + 1,
-                                                      Code.size() - 1);
+                    << sliceString(Code, Code.find(' ') + 1, Code.size() - 1));
+    return sliceString(Code, Code.find(' ') + 1, Code.size() - 1);
   }
 
   Code.erase(0, Code.find_first_not_of(WHITESPACES));
   std::string RetVal = Code.substr(0, Code.find_first_of(WHITESPACES));
 
   if (RetVal == "ret" || RetVal == "br" || RetVal == "store") {
-    variable_logout("1.FOR VAL " << *Val << " RETURNING " << Code) return Code;
+    variable_logout("1.FOR VAL " << *Val << " RETURNING " << Code);
+    return Code;
   }
   if (RetVal == "i1" || RetVal == "i8" || RetVal == "i32" || RetVal == "i64") {
     RetVal = Code;
   }
-  variable_logout("2.FOR VAL " << *Val << " RETURNING "
-                               << RetVal) return RetVal;
+  variable_logout("2.FOR VAL " << *Val << " RETURNING " << RetVal);
+  return RetVal;
+}
+
+bool IRstructNameEqualsCstructName(std::string &structName,
+                                   std::string &optLoadFileName) {
+  LLVMContext context;
+  SMDiagnostic error;
+
+  std::string IRFileName =
+      dataflow::sliceString(optLoadFileName, 0, optLoadFileName.size() - 3) +
+      ".ll";
+
+  std::unique_ptr<Module> module = parseIRFile(IRFileName, error, context);
+  if (!module) {
+    errs() << "Error: IR file '" + IRFileName + "' not found\n";
+    exit(1);
+  }
+
+  DebugInfoFinder debugInfoFinder;
+  debugInfoFinder.processModule(*module);
+
+  for (auto &DICompositeType : debugInfoFinder.types()) {
+    if (DICompositeType->getTag() == dwarf::DW_TAG_structure_type &&
+        DICompositeType->getName() == structName) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 bool isNumber(const std::string &s) {
@@ -134,6 +160,23 @@ std::string setToString(std::set<std::string> &setString) {
   }
   result += "}";
   return result;
+}
+
+bool startsWith(std::string str, std::string starts) {
+  return str.rfind(starts, 0) == 0;
+}
+
+StructType *unwrapValuePointerToStruct(Value *value) {
+  PointerType *valuePointer = dyn_cast<PointerType>(value->getType());
+  while (valuePointer) {
+    if (StructType *structType =
+            dyn_cast<StructType>(valuePointer->getElementType())) {
+      return structType;
+    }
+
+    valuePointer = dyn_cast<PointerType>(valuePointer->getElementType());
+  }
+  return NULL;
 }
 
 } // namespace dataflow

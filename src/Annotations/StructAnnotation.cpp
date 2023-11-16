@@ -11,21 +11,11 @@ StructAnnotation::StructAnnotation(AnnotationType annotationType,
 }
 
 std::string StructAnnotation::generateStringRep() {
-  std::string annoTypeString;
-  std::string annoMethodsString = "{";
+  std::string annoTypeString = annotationTypeToString(this->annotationType);
+  std::string annoMethodsString =
+      dataflow::setToString(this->annotationMethods);
 
-  if (annotationType == AnnotationType::CallsAnnotation) {
-    annoTypeString = "Calls";
-  } else if (annotationType == AnnotationType::MustCallAnnotation) {
-    annoTypeString = "MustCall";
-  }
-
-  for (std::string method : this->annotationMethods) {
-    annoMethodsString += method + ", ";
-  }
-  annoMethodsString += "}";
-
-  std::string fieldString = "Field = " + this->field;
+  std::string fieldString = "Field = " + std::to_string(this->field);
 
   return "@" + annoTypeString +
          " StructAnnotation Struct Name = " + this->targetName + " " +

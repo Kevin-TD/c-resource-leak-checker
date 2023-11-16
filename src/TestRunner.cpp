@@ -8,10 +8,10 @@ bool TestRunner::runTests(const std::string functionName,
                           ProgramFunction receivedResult) {
   bool testPassed = EXIT_SUCCESS;
 
-  logout("Function Name Test Running = " << functionName)
+  logout("Function Name Test Running = " << functionName);
 
-      ProgramFunction function =
-          expectedResult.getProgramFunction(functionName, true);
+  ProgramFunction function =
+      expectedResult.getProgramFunction(functionName, true);
   std::list<ProgramPoint> points = function.getProgramPoints();
 
   for (ProgramPoint point : points) {
@@ -21,10 +21,9 @@ bool TestRunner::runTests(const std::string functionName,
       branchName = lastBranchName;
     }
 
-    logout("branch = " << branchName)
+    logout("branch = " << branchName);
 
-        std::list<ProgramVariable>
-            vars = point.getProgramVariables();
+    std::list<ProgramVariable> vars = point.getProgramVariables();
     for (ProgramVariable var : vars) {
       std::string varName = var.getCleanedName();
 
@@ -86,8 +85,8 @@ FullFile TestRunner::buildExpectedResults(std::string testName,
           logout("**TEST RUNNER ERROR: Too few or too many spaces in argument '"
                  << arg << "' on line '" << line
                  << "'. Make sure methods arg contains no spaces (e.g., {x, y} "
-                    "is wrong, {x,y} is correct) Returning result "
-                    "early.") return expectedResult;
+                    "is wrong, {x,y} is correct).");
+          std::exit(EXIT_FAILURE);
         }
 
         std::string type = argChunks[0];
@@ -110,19 +109,21 @@ FullFile TestRunner::buildExpectedResults(std::string testName,
               std::set<std::string>(methodsSetVec.begin(), methodsSetVec.end());
         } else {
           logout("**TEST RUNNER ERROR: Unrecognized argument '"
-                 << type << "' on line '" << line
-                 << "'. Returning early") return expectedResult;
+                 << type << "' on line '" << line << "'");
+          std::exit(EXIT_FAILURE);
         }
       }
 
       if (functionName == "") {
         logout("**TEST RUNNER ERROR: Function name argument missing on line '"
-               << line << "'. Returning early") return expectedResult;
+               << line << "'");
+        std::exit(EXIT_FAILURE);
       }
 
       if (varName == "") {
         logout("**TEST RUNNER ERROR: Variable name argument missing on line '"
-               << line << "'. Returning early") return expectedResult;
+               << line << "'");
+        std::exit(EXIT_FAILURE);
       }
 
       if (passName == inputPassName) {
