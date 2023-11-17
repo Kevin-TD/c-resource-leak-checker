@@ -12,6 +12,7 @@ private:
   std::string functionName;
 
 public:
+  static void logoutPF(ProgramFunction &pf);
   ProgramFunction();
   ProgramFunction(std::string functionName);
 

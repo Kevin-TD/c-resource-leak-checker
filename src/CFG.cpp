@@ -11,33 +11,33 @@ CFG::CFG(std::string branchName, llvm::SetVector<Instruction *> instructions) {
 
 void CFG::addSuccessor(std::string branchName,
                        llvm::SetVector<Instruction *> instructions) {
-  this->successors.insert(new CFG(branchName, instructions));
+  this->successors.push_back(new CFG(branchName, instructions));
 }
 
 CFG *CFG::addSuccessor(std::string branchName) {
   CFG *cfg = new CFG(branchName);
-  this->successors.insert(cfg);
+  this->successors.push_back(cfg);
   return cfg;
 }
 
-void CFG::addSuccessor(CFG *tree) { this->successors.insert(tree); }
+void CFG::addSuccessor(CFG *tree) { this->successors.push_back(tree); }
 
 void CFG::addPredecessor(std::string branchName,
                          llvm::SetVector<Instruction *> instructions) {
-  this->predecessors.insert(new CFG(branchName, instructions));
+  this->predecessors.push_back(new CFG(branchName, instructions));
 }
 
 void CFG::addPredecessor(std::string branchName) {
-  this->predecessors.insert(new CFG(branchName));
+  this->predecessors.push_back(new CFG(branchName));
 }
 
-void CFG::addPredecessor(CFG *cfg) { this->predecessors.insert(cfg); }
+void CFG::addPredecessor(CFG *cfg) { this->predecessors.push_back(cfg); }
 
 std::string CFG::getBranchName() { return this->branchName; }
 
-std::set<CFG *> CFG::getSuccessors() { return this->successors; }
+std::list<CFG *> CFG::getSuccessors() { return this->successors; }
 
-std::set<CFG *> CFG::getPredecessors() { return this->predecessors; }
+std::list<CFG *> CFG::getPredecessors() { return this->predecessors; }
 
 void CFG::setInstructions(llvm::SetVector<Instruction *> instructions) {
   this->instructions = instructions;

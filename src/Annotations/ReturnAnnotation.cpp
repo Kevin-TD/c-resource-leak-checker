@@ -11,9 +11,10 @@ ReturnAnnotation::ReturnAnnotation(AnnotationType annotationType,
 }
 
 std::string ReturnAnnotation::generateStringRep() {
-  std::string annoTypeString = annotationTypeToString(this->annotationType);
+  std::string annoTypeString =
+      rlc_annotation_util::annotationTypeToString(this->annotationType);
   std::string annoMethodsString =
-      dataflow::setToString(this->annotationMethods);
+      rlc_util::setToString(this->annotationMethods);
 
   std::string fieldString;
   if (this->field != -1) {

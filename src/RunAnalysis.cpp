@@ -1,6 +1,6 @@
 #include "RunAnalysis.h"
 
-namespace dataflow {
+namespace rlc_dataflow {
 
 bool CodeAnalyzer::runOnFunction(Function &F) {
   doAnalysis(F, F.getParent()->getSourceFileName());
@@ -16,4 +16,4 @@ bool CodeAnalyzer::doFinalization(Module &M) {
 char CodeAnalyzer::ID = 1;
 static RegisterPass<CodeAnalyzer> X("CodeAnalyzer", "Code analyzer", false,
                                     false);
-} // namespace dataflow
+} // namespace rlc_dataflow

@@ -34,10 +34,10 @@ bool TestRunner::runTests(const std::string functionName,
               ->getMethodsSet();
 
       std::set<std::string> expectedSet = expectedMethodsSet.getMethods();
-      std::string expectedSetString = dataflow::setToString(expectedSet);
+      std::string expectedSetString = rlc_util::setToString(expectedSet);
 
       std::set<std::string> receivedSet = receivedMethodsSet.getMethods();
-      std::string receivedSetString = dataflow::setToString(receivedSet);
+      std::string receivedSetString = rlc_util::setToString(receivedSet);
 
       errs() << "Test for branch name = " << branchName
              << " var name = " << varName;
@@ -77,9 +77,9 @@ FullFile TestRunner::buildExpectedResults(std::string testName,
       std::string inputPassName, branchName, varName, functionName;
       std::set<std::string> methodsSet;
 
-      std::vector<std::string> arguments = dataflow::splitString(line, ' ');
+      std::vector<std::string> arguments = rlc_util::splitString(line, ' ');
       for (std::string arg : arguments) {
-        std::vector<std::string> argChunks = dataflow::splitString(arg, '=');
+        std::vector<std::string> argChunks = rlc_util::splitString(arg, '=');
 
         if (argChunks.size() != 2) {
           logout("**TEST RUNNER ERROR: Too few or too many spaces in argument '"
@@ -101,8 +101,8 @@ FullFile TestRunner::buildExpectedResults(std::string testName,
         } else if (type == "var") {
           varName = input;
         } else if (type == "methods") {
-          std::vector<std::string> methodsSetVec = dataflow::splitString(
-              dataflow::sliceString(input, input.find('{') + 1,
+          std::vector<std::string> methodsSetVec = rlc_util::splitString(
+              rlc_util::sliceString(input, input.find('{') + 1,
                                     input.find('}') - 1),
               ',');
           methodsSet =

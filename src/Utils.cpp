@@ -4,7 +4,7 @@
 
 const char *WHITESPACES = " \t\n\r";
 
-namespace dataflow {
+namespace rlc_dataflow {
 
 /*
 Code handles IR vars coming from parameters and explicitly defined vars
@@ -37,7 +37,7 @@ std::string variable(const Value *Val) {
     variable_logout("0.FOR VAL "
                     << *Val << " RETURNING "
                     << sliceString(Code, Code.find(' ') + 1, Code.size() - 1));
-    return sliceString(Code, Code.find(' ') + 1, Code.size() - 1);
+    return rlc_util::sliceString(Code, Code.find(' ') + 1, Code.size() - 1);
   }
 
   Code.erase(0, Code.find_first_not_of(WHITESPACES));
@@ -60,7 +60,7 @@ bool IRstructNameEqualsCstructName(std::string &structName,
   SMDiagnostic error;
 
   std::string IRFileName =
-      dataflow::sliceString(optLoadFileName, 0, optLoadFileName.size() - 3) +
+      rlc_util::sliceString(optLoadFileName, 0, optLoadFileName.size() - 3) +
       ".ll";
 
   std::unique_ptr<Module> module = parseIRFile(IRFileName, error, context);
@@ -81,6 +81,23 @@ bool IRstructNameEqualsCstructName(std::string &structName,
 
   return false;
 }
+
+StructType *unwrapValuePointerToStruct(Value *value) {
+  PointerType *valuePointer = dyn_cast<PointerType>(value->getType());
+  while (valuePointer) {
+    if (StructType *structType =
+            dyn_cast<StructType>(valuePointer->getElementType())) {
+      return structType;
+    }
+
+    valuePointer = dyn_cast<PointerType>(valuePointer->getElementType());
+  }
+  return NULL;
+}
+
+} // namespace rlc_dataflow
+
+namespace rlc_util {
 
 bool isNumber(const std::string &s) {
   char *endPtr;
@@ -166,17 +183,4 @@ bool startsWith(std::string str, std::string starts) {
   return str.rfind(starts, 0) == 0;
 }
 
-StructType *unwrapValuePointerToStruct(Value *value) {
-  PointerType *valuePointer = dyn_cast<PointerType>(value->getType());
-  while (valuePointer) {
-    if (StructType *structType =
-            dyn_cast<StructType>(valuePointer->getElementType())) {
-      return structType;
-    }
-
-    valuePointer = dyn_cast<PointerType>(valuePointer->getElementType());
-  }
-  return NULL;
-}
-
-} // namespace dataflow
+} // namespace rlc_util

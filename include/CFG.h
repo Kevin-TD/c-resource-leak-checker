@@ -1,14 +1,13 @@
 #ifndef CFG_H
 #define CFG_H
 
-#include "RunAnalysis.h"
 #include "Utils.h"
 
 class CFG {
 private:
   std::string branchName;
-  std::set<CFG *> successors;
-  std::set<CFG *> predecessors;
+  std::list<CFG *> successors;
+  std::list<CFG *> predecessors;
   llvm::SetVector<Instruction *> instructions;
 
 public:
@@ -29,8 +28,8 @@ public:
   void setInstructions(llvm::SetVector<Instruction *> instructions);
 
   std::string getBranchName();
-  std::set<CFG *> getSuccessors();
-  std::set<CFG *> getPredecessors();
+  std::list<CFG *> getSuccessors();
+  std::list<CFG *> getPredecessors();
   llvm::SetVector<Instruction *> getInstructions();
 };
 
