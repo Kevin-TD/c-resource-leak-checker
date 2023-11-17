@@ -143,7 +143,8 @@ chunks[6..end] are all the methods
 // TODO: make method more generic and write automated testing for that
 bool Annotation::rawStringIsCorrectlyFormatted(
     const std::string &rawAnnotationString) {
-  std::vector<std::string> chunks = Util::splitString(rawAnnotationString, ' ');
+  std::vector<std::string> chunks =
+      rlc_util::splitString(rawAnnotationString, ' ');
 
   if (chunks.size() < 7) {
     logout("Annotation String Error 0: malformed string '"
@@ -182,7 +183,7 @@ bool Annotation::rawStringIsCorrectlyFormatted(
   // chunks[2] == "="
 
   //* --- chunks[3] checker section ---
-  std::vector<std::string> targetChunks = Util::splitString(chunks[3], '.');
+  std::vector<std::string> targetChunks = rlc_util::splitString(chunks[3], '.');
   // {FUNCTION || STRUCT}(name).?PARAM(int).?FIELD(str) ->
   // ["FUNCTION(name)" or "STRUCT(name)", optional "PARAM(int)", optional
   // "FIELD(str)"] required: 1 <= targetChunks.size() <= 3
@@ -200,7 +201,7 @@ bool Annotation::rawStringIsCorrectlyFormatted(
 
   // targetChunks[0] should look like FUNCTION(...) or STRUCT(...)
   // should have one (and only one) set of balanced parentheses
-  if (!Util::hasOnlyOneBalancedParentheses(targetChunks[0])) {
+  if (!rlc_util::hasOnlyOneBalancedParentheses(targetChunks[0])) {
     logout("Annotation String Error 6: invalid annotation '"
            << rawAnnotationString << "' type FUNCTION or STRUCT specification '"
            << targetChunks[0]
@@ -222,9 +223,9 @@ bool Annotation::rawStringIsCorrectlyFormatted(
   // targetChunks[0] starts with "FUNCTION(" or "STRUCT("
 
   std::string name =
-      Util::sliceString(targetChunks[0], targetChunks[0].find('(') + 1,
-                        targetChunks[0].find(')') - 1);
-  if (!Util::isValidCVariableName(name)) {
+      rlc_util::sliceString(targetChunks[0], targetChunks[0].find('(') + 1,
+                            targetChunks[0].find(')') - 1);
+  if (!rlc_util::isValidCVariableName(name)) {
     logout("Annotation String Error 8: invalid annotation '"
            << rawAnnotationString << "' invalid target name; target name '"
            << name << "' is not valid C variable name");
@@ -255,7 +256,7 @@ bool Annotation::rawStringIsCorrectlyFormatted(
 
     if (targetChunksSize >= 2) {
       // targetChunks[1] must be PARAM(int)
-      if (!Util::hasOnlyOneBalancedParentheses(targetChunks[1]) &&
+      if (!rlc_util::hasOnlyOneBalancedParentheses(targetChunks[1]) &&
           targetChunks[1] != "RETURN") {
         logout("Annotation String Error 10: invalid annotation '"
                << rawAnnotationString
@@ -276,10 +277,10 @@ bool Annotation::rawStringIsCorrectlyFormatted(
       // targetChunk[1] is "PARAM(" or "RETURN"
 
       if (paramSpecifier == "PARAM") {
-        std::string nthParameter =
-            Util::sliceString(targetChunks[1], targetChunks[1].find('(') + 1,
-                              targetChunks[1].find(')') - 1);
-        if (!Util::isNumber(nthParameter)) {
+        std::string nthParameter = rlc_util::sliceString(
+            targetChunks[1], targetChunks[1].find('(') + 1,
+            targetChunks[1].find(')') - 1);
+        if (!rlc_util::isNumber(nthParameter)) {
           logout("Annotation String Error 12: invalid annotation '"
                  << rawAnnotationString << "' PARAM argument is not a number; '"
                  << nthParameter << "' found");
@@ -300,7 +301,7 @@ bool Annotation::rawStringIsCorrectlyFormatted(
 
       if (targetChunksSize == 3) {
         // targetChunks[2] must be FIELD(int)
-        if (!Util::hasOnlyOneBalancedParentheses(targetChunks[2])) {
+        if (!rlc_util::hasOnlyOneBalancedParentheses(targetChunks[2])) {
           logout("Annotation String Error 14: invalid annotation '"
                  << rawAnnotationString
                  << "' target is malformed; # of balanced parentheses does not "
@@ -320,10 +321,10 @@ bool Annotation::rawStringIsCorrectlyFormatted(
         }
         // targetChunk[2] is "FIELD("
 
-        std::string fieldName =
-            Util::sliceString(targetChunks[2], targetChunks[2].find('(') + 1,
-                              targetChunks[2].find(')') - 1);
-        if (!Util::isNumber(fieldName)) {
+        std::string fieldName = rlc_util::sliceString(
+            targetChunks[2], targetChunks[2].find('(') + 1,
+            targetChunks[2].find(')') - 1);
+        if (!rlc_util::isNumber(fieldName)) {
           logout("Annotation String Error 16: invalid annotation '"
                  << rawAnnotationString << "' FIELD argument of '" << fieldName
                  << "'is not a number");
@@ -350,7 +351,7 @@ bool Annotation::rawStringIsCorrectlyFormatted(
       return false;
     }
     // targetChunks looks ["STRUCT(name)", "FIELD(int)"]
-    if (!Util::hasOnlyOneBalancedParentheses(targetChunks[1])) {
+    if (!rlc_util::hasOnlyOneBalancedParentheses(targetChunks[1])) {
       logout("Annotation String Error 18: invalid annotation '"
              << rawAnnotationString
              << "' target is malformed; number of balanced parentheses on '"
@@ -369,9 +370,9 @@ bool Annotation::rawStringIsCorrectlyFormatted(
     // targetChunk[1] is "FIELD("
 
     std::string fieldName =
-        Util::sliceString(targetChunks[1], targetChunks[1].find('(') + 1,
-                          targetChunks[1].find(')') - 1);
-    if (!Util::isNumber(fieldName)) {
+        rlc_util::sliceString(targetChunks[1], targetChunks[1].find('(') + 1,
+                              targetChunks[1].find(')') - 1);
+    if (!rlc_util::isNumber(fieldName)) {
       logout("Annotation String Error 20: invalid annotation '"
              << rawAnnotationString << "' FIELD argument '" << fieldName
              << "' is not a number");
@@ -418,13 +419,13 @@ bool Annotation::rawStringIsCorrectlyFormatted(
     return false;
   }
 
-  Util::removeWhitespace(methodsString);
+  rlc_util::removeWhitespace(methodsString);
 
   std::vector<std::string> methodsVector =
-      Util::splitString(methodsString, ',');
+      rlc_util::splitString(methodsString, ',');
 
   for (std::string &method : methodsVector) {
-    if (!Util::isValidCVariableName(method)) {
+    if (!rlc_util::isValidCVariableName(method)) {
 
       logout("Annotation String Error 24: invalid annotation '"
              << rawAnnotationString << "' method argument '" << method
@@ -442,16 +443,15 @@ bool Annotation::rawStringIsCorrectlyFormatted(
   return true;
 }
 
-Annotation *
-Annotation::generateAnnotation(const std::string &rawAnnotationString) {
-  if (!Annotation::rawStringIsCorrectlyFormatted(rawAnnotationString)) {
+Annotation *Annotation::generateAnnotation(const std::string &rawAnno) {
+  if (!Annotation::rawStringIsCorrectlyFormatted(rawAnno)) {
     return new ErrorAnnotation();
   }
 
   // we can assume string is correctly formatted
 
   AnnotationType annoType;
-  std::vector<std::string> chunks = Util::splitString(rawAnnotationString, ' ');
+  std::vector<std::string> chunks = rlc_util::splitString(rawAnno, ' ');
 
   if (chunks[0] == "Calls") {
     annoType = AnnotationType::CallsAnnotation;
@@ -466,21 +466,21 @@ Annotation::generateAnnotation(const std::string &rawAnnotationString) {
   for (int i = 6; i < chunks.size(); i++) {
     methodsString += chunks[i];
   }
-  Util::removeWhitespace(methodsString);
+  rlc_util::removeWhitespace(methodsString);
 
   std::vector<std::string> methodsVector =
-      Util::splitString(methodsString, ',');
+      rlc_util::splitString(methodsString, ',');
   std::set<std::string> methodsSet(methodsVector.begin(), methodsVector.end());
 
   std::vector<std::string> targetChunks =
-      Util::splitString(chunks[3], '.'); // target = ... section
+      rlc_util::splitString(chunks[3], '.'); // target = ... section
   int targetChunksSize = targetChunks.size();
 
   std::string targetType = targetChunks[0].substr(
       0, targetChunks[0].find('(')); // equals FUNCTION(...) or STRUCT(...)
   std::string name =
-      Util::sliceString(targetChunks[0], targetChunks[0].find('(') + 1,
-                        targetChunks[0].find(')') - 1);
+      rlc_util::sliceString(targetChunks[0], targetChunks[0].find('(') + 1,
+                            targetChunks[0].find(')') - 1);
 
   if (targetChunksSize == 1 && targetType == "FUNCTION") {
     return new FunctionAnnotation(annoType, methodsSet, name);
@@ -488,9 +488,9 @@ Annotation::generateAnnotation(const std::string &rawAnnotationString) {
 
   // all structs targets specify a field
   if (targetChunksSize == 2 && targetType == "STRUCT") {
-    int field = std::stoi(Util::sliceString(targetChunks[1],
-                                            targetChunks[1].find('(') + 1,
-                                            targetChunks[1].find(')') - 1));
+    int field = std::stoi(rlc_util::sliceString(targetChunks[1],
+                                                targetChunks[1].find('(') + 1,
+                                                targetChunks[1].find(')') - 1));
     return new StructAnnotation(annoType, methodsSet, name, field);
   }
 
@@ -506,9 +506,9 @@ Annotation::generateAnnotation(const std::string &rawAnnotationString) {
 
       // there is a return field
       if (targetChunksSize == 3) {
-        returnField =
-            Util::sliceString(targetChunks[2], targetChunks[2].find('(') + 1,
-                              targetChunks[2].find(')') - 1);
+        returnField = rlc_util::sliceString(targetChunks[2],
+                                            targetChunks[2].find('(') + 1,
+                                            targetChunks[2].find(')') - 1);
       }
 
       int returnFieldInt;
@@ -523,15 +523,15 @@ Annotation::generateAnnotation(const std::string &rawAnnotationString) {
     }
 
     // targetField is PARAM(int)
-    int nthParameter = std::stoi(Util::sliceString(
+    int nthParameter = std::stoi(rlc_util::sliceString(
         targetField, targetField.find('(') + 1, targetField.find(')') - 1));
     std::string parameterField;
 
     // there is a parameter field
     if (targetChunksSize == 3) {
       parameterField =
-          Util::sliceString(targetChunks[2], targetChunks[2].find('(') + 1,
-                            targetChunks[2].find(')') - 1);
+          rlc_util::sliceString(targetChunks[2], targetChunks[2].find('(') + 1,
+                                targetChunks[2].find(')') - 1);
     }
 
     int parameterFieldInt;
@@ -549,7 +549,7 @@ Annotation::generateAnnotation(const std::string &rawAnnotationString) {
   return new ErrorAnnotation();
 }
 
-namespace AnnotationUtil {
+namespace rlc_annotation_util {
 
 std::string annotationTypeToString(AnnotationType anno) {
   switch (anno) {
@@ -563,4 +563,4 @@ std::string annotationTypeToString(AnnotationType anno) {
   return "";
 }
 
-} // namespace AnnotationUtil
+} // namespace rlc_annotation_util

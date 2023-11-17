@@ -5,7 +5,7 @@
 
 extern const char *WHITESPACES;
 
-namespace Dataflow {
+namespace rlc_dataflow {
 
 /**
  * @brief Get a human-readable string name for an llvm Value
@@ -28,9 +28,9 @@ StructType *unwrapValuePointerToStruct(Value *value);
 bool IRstructNameEqualsCstructName(std::string &structName,
                                    std::string &optLoadFileName);
 
-} // namespace Dataflow
+} // namespace rlc_dataflow
 
-namespace Util {
+namespace rlc_util {
 
 bool isNumber(const std::string &s);
 
@@ -54,6 +54,6 @@ bool startsWith(std::string str, std::string starts);
 // for debugging; just an easier way to get a string rep of a set
 std::string setToString(std::set<std::string> &setString);
 
-} // namespace Util
+} // namespace rlc_util
 
 #endif // UTILS_H

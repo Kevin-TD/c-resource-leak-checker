@@ -68,7 +68,7 @@ void ProgramFunction::logoutPF(ProgramFunction &pf) {
     for (auto var : point.getProgramVariables()) {
       logout("> var name " << var.getRawName());
       auto aliases = var.getAllAliases(false);
-      auto aliasesStr = Util::setToString(aliases);
+      auto aliasesStr = rlc_util::setToString(aliases);
       logout("--> aliases " << aliasesStr);
     }
   }

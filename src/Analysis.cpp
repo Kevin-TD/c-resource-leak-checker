@@ -31,7 +31,7 @@ struct InstructionHolder {
   SetVector<Instruction *> successors;
 };
 
-namespace Dataflow {
+namespace rlc_dataflow {
 
 std::set<std::string> SafeFunctions;
 std::set<std::string> ReallocFunctions;
@@ -294,9 +294,9 @@ void doAliasReasoning(Instruction *instruction,
     if (valueToStore->getType()->isPointerTy() &&
         receivingValue->getType()->isPointerTy()) {
       StructType *valueStruct =
-          Dataflow::unwrapValuePointerToStruct(valueToStore);
+          rlc_dataflow::unwrapValuePointerToStruct(valueToStore);
       StructType *receivingStruct =
-          Dataflow::unwrapValuePointerToStruct(receivingValue);
+          rlc_dataflow::unwrapValuePointerToStruct(receivingValue);
 
       if (valueStruct && receivingStruct && valueStruct == receivingStruct) {
         logout("two structs to alias " << *store);
@@ -325,9 +325,9 @@ void doAliasReasoning(Instruction *instruction,
     ProgramVariable sourceVar = ProgramVariable(bitcast);
     ProgramVariable destinationVar = ProgramVariable(bitcast->getOperand(0));
 
-    StructType *sourceType = Dataflow::unwrapValuePointerToStruct(bitcast);
+    StructType *sourceType = rlc_dataflow::unwrapValuePointerToStruct(bitcast);
     StructType *destType =
-        Dataflow::unwrapValuePointerToStruct(bitcast->getOperand(0));
+        rlc_dataflow::unwrapValuePointerToStruct(bitcast->getOperand(0));
 
     if (sourceType && destType && sourceType->hasName() &&
         destType->hasName()) {
@@ -416,7 +416,7 @@ void doAliasReasoning(Instruction *instruction,
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
     logout("alloca inst = " << *allocate);
 
-    StructType *structType = Dataflow::unwrapValuePointerToStruct(allocate);
+    StructType *structType = rlc_dataflow::unwrapValuePointerToStruct(allocate);
 
     if (!structType) {
       return;
@@ -426,11 +426,12 @@ void doAliasReasoning(Instruction *instruction,
 
     std::string structName = structType->getName();
 
-    structName = Util::sliceString(structName, structName.find_last_of('.') + 1,
-                                   structName.size() - 1);
+    structName = rlc_util::sliceString(
+        structName, structName.find_last_of('.') + 1, structName.size() - 1);
     logout("struct name in IR = " << structName);
 
-    if (!Dataflow::IRstructNameEqualsCstructName(structName, optLoadFileName)) {
+    if (!rlc_dataflow::IRstructNameEqualsCstructName(structName,
+                                                     optLoadFileName)) {
       errs() << "Error: Did not find struct name '" << structName
              << "' in debug info\n";
       exit(1);
@@ -468,8 +469,8 @@ void doAliasReasoning(Instruction *instruction,
     but we wont need to worry about them; they hold no aliasing information
     */
 
-    if (Util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
-        Util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
+    if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
+        rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
       ProgramVariable sourceVar = ProgramVariable(call);
       ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
       programPoint->addAlias(sourceVar, destinationVar);
@@ -600,4 +601,4 @@ void CodeAnalyzer::onEnd() {
   }
 }
 
-} // namespace Dataflow
+} // namespace rlc_dataflow

@@ -37,11 +37,11 @@ public:
   virtual std::string generateStringRep() = 0;
 };
 
-namespace AnnotationUtil {
+namespace rlc_annotation_util {
 
 // more for debugging
 std::string annotationTypeToString(AnnotationType anno);
 
-} // namespace AnnotationUtil
+} // namespace rlc_annotation_util
 
 #endif

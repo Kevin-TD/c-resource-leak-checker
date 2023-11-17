@@ -12,8 +12,9 @@ StructAnnotation::StructAnnotation(AnnotationType annotationType,
 
 std::string StructAnnotation::generateStringRep() {
   std::string annoTypeString =
-      AnnotationUtil::annotationTypeToString(this->annotationType);
-  std::string annoMethodsString = Util::setToString(this->annotationMethods);
+      rlc_annotation_util::annotationTypeToString(this->annotationType);
+  std::string annoMethodsString =
+      rlc_util::setToString(this->annotationMethods);
 
   std::string fieldString = "Field = " + std::to_string(this->field);
 

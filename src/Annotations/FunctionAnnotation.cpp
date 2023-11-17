@@ -11,8 +11,9 @@ FunctionAnnotation::FunctionAnnotation(AnnotationType annotationType,
 
 std::string FunctionAnnotation::generateStringRep() {
   std::string annoTypeString =
-      AnnotationUtil::annotationTypeToString(this->annotationType);
-  std::string annoMethodsString = Util::setToString(this->annotationMethods);
+      rlc_annotation_util::annotationTypeToString(this->annotationType);
+  std::string annoMethodsString =
+      rlc_util::setToString(this->annotationMethods);
 
   return "@" + annoTypeString + " FunctionAnnotation Name = " + targetName +
          " methods = " + annoMethodsString;

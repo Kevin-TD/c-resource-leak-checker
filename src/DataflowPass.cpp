@@ -71,7 +71,7 @@ void DataflowPass::transfer(Instruction *instruction,
       }
 
     } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(valueToStore)) {
-      std::string argName = Dataflow::variable(store->getOperand(1));
+      std::string argName = rlc_dataflow::variable(store->getOperand(1));
       logout("arg name store inst bitcast = " << argName);
 
       if (argName[0] == '@') {
@@ -174,15 +174,15 @@ void DataflowPass::transfer(Instruction *instruction,
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
 
     // searches for struct annotations
-    StructType *structType = Dataflow::unwrapValuePointerToStruct(allocate);
+    StructType *structType = rlc_dataflow::unwrapValuePointerToStruct(allocate);
 
     if (!structType) {
       return;
     }
 
     std::string structName = structType->getName();
-    structName = Util::sliceString(structName, structName.find_last_of('.') + 1,
-                                   structName.size() - 1);
+    structName = rlc_util::sliceString(
+        structName, structName.find_last_of('.') + 1, structName.size() - 1);
     int numFields = structType->getNumElements();
     for (int i = 0; i < numFields; i++) {
 

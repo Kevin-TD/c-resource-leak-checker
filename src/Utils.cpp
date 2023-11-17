@@ -4,7 +4,7 @@
 
 const char *WHITESPACES = " \t\n\r";
 
-namespace Dataflow {
+namespace rlc_dataflow {
 
 /*
 Code handles IR vars coming from parameters and explicitly defined vars
@@ -37,7 +37,7 @@ std::string variable(const Value *Val) {
     variable_logout("0.FOR VAL "
                     << *Val << " RETURNING "
                     << sliceString(Code, Code.find(' ') + 1, Code.size() - 1));
-    return Util::sliceString(Code, Code.find(' ') + 1, Code.size() - 1);
+    return rlc_util::sliceString(Code, Code.find(' ') + 1, Code.size() - 1);
   }
 
   Code.erase(0, Code.find_first_not_of(WHITESPACES));
@@ -60,7 +60,8 @@ bool IRstructNameEqualsCstructName(std::string &structName,
   SMDiagnostic error;
 
   std::string IRFileName =
-      Util::sliceString(optLoadFileName, 0, optLoadFileName.size() - 3) + ".ll";
+      rlc_util::sliceString(optLoadFileName, 0, optLoadFileName.size() - 3) +
+      ".ll";
 
   std::unique_ptr<Module> module = parseIRFile(IRFileName, error, context);
   if (!module) {
@@ -94,9 +95,9 @@ StructType *unwrapValuePointerToStruct(Value *value) {
   return NULL;
 }
 
-} // namespace Dataflow
+} // namespace rlc_dataflow
 
-namespace Util {
+namespace rlc_util {
 
 bool isNumber(const std::string &s) {
   char *endPtr;
@@ -182,4 +183,4 @@ bool startsWith(std::string str, std::string starts) {
   return str.rfind(starts, 0) == 0;
 }
 
-} // namespace Util
+} // namespace rlc_util
