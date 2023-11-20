@@ -160,7 +160,12 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
       "python3 ../Annotations/annotation_generator.py " +
       std::string(astTempTextFile) + " " + std::string(annotationsTempTextFile);
 
-  system(readASTCommand.c_str());
+  int commandExitStatus = system(readASTCommand.c_str());
+
+  if (commandExitStatus != 0) {
+    errs() << "Annotation generator failed\n";
+    std::exit(1);
+  }
 
   logout("dump command " << dumpASTCommand);
   logout("to py run " << readASTCommand);

@@ -207,6 +207,57 @@ void DataflowPass::transfer(Instruction *instruction,
         this->insertAnnotation(structAnno, pv);
       }
     }
+  } else if (llvm::ReturnInst *returnInst =
+                 dyn_cast<llvm::ReturnInst>(instruction)) {
+    ProgramVariable returnVar = ProgramVariable(returnInst->getReturnValue());
+    std::string returnVarName = returnVar.getCleanedName();
+    ProgramVariable *pv = inputProgramPoint.getPVRef(returnVarName, false);
+
+    if (!pv) {
+      return;
+    }
+
+    // verify that annotation methods of return is a subset of annotation
+    // methods specified on the method
+
+    logout("found return " << pv->getCleanedName());
+
+    if (StructType *structTy =
+            rlc_dataflow::unwrapValuePointerToStruct(pv->getValue())) {
+      if (pv->hasIndex()) { // refers to a field of a struct
+
+      } else { // refers to struct itself
+      }
+
+      return;
+    }
+
+    logout("non struct return");
+
+    std::set<std::string> annoMethods;
+    AnnotationType annoType;
+    std::set<std::string> pvMethods = pv->getMethodsSet().getMethods();
+    std::string fnName = this->programFunction.getFunctionName();
+
+    if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(
+            this->annotations.getReturnAnnotation(fnName))) {
+      annoMethods = returnAnno->getAnnotationMethods();
+      annoType = returnAnno->getAnnotationType();
+    }
+
+    logout(rlc_util::setToString(pvMethods));
+    logout(rlc_util::setToString(annoMethods));
+    // TODO: make this a dataflow abstract(?) method
+    if ((this->passName == MUST_CALL_PASS_NAME &&
+         annoType == AnnotationType::MustCallAnnotation) ||
+        (this->passName == CALLED_METHODS_PASS_NAME &&
+         annoType == AnnotationType::CallsAnnotation)) {
+
+      if (pvMethods > annoMethods) { // checks if pv method set is not a sub
+                                     // type of annotation methods
+        // error
+      }
+    }
   }
 }
 
@@ -538,8 +589,8 @@ void DataflowPass::setAnnotations(AnnotationHandler annotations) {
   this->annotations = annotations;
 }
 
-FullFile DataflowPass::getExpectedResult() { return this->expectedResult; }
-
 void DataflowPass::setProgramFunction(ProgramFunction programFunction) {
   this->programFunction = programFunction;
 }
+
+FullFile DataflowPass::getExpectedResult() { return this->expectedResult; }

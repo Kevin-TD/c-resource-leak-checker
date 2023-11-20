@@ -77,7 +77,6 @@ private:
 protected:
   ProgramFunction programFunction;
   AnnotationHandler annotations;
-  std::string testName;
   CFG *cfg;
   FullFile expectedResult;
 
