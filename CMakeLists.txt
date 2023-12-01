@@ -33,6 +33,8 @@ add_llvm_library(CodeAnalyzer MODULE
   src/Analysis.cpp
   src/RunAnalysis.cpp
   src/Utils.cpp
+  src/DisjointedSetWrapper.cpp
+  src/DisjointedSets.cpp
 )
 
 target_compile_options(CodeAnalyzer PRIVATE -frtti)
