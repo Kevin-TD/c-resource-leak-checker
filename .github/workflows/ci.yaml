@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
 
     steps:
     - name: Checkout Repository
@@ -15,6 +15,7 @@ jobs:
     
     - name: Install Clang Format
       run: |
+        apt search clang-format
         sudo apt-get update
         sudo apt install -y clang-format-6.0
         clang-format -version
