@@ -10,8 +10,6 @@
 		"--privileged"
 	],
 
-	"postStartCommand": "apt-get update; apt install -y clang-format-6.0",
-
 	// Set the env-variables for the container
 	"remoteEnv": {
 		"LD_LIBRARY_PATH": "${containerWorkspaceFolder}/build:${containerEnv:LD_LIBRARY_PATH}"
