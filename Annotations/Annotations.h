@@ -2,8 +2,8 @@
   __attribute__((annotate("Calls target = _ methods "                          \
                           "= " methods)))
 #define CALLS_2_ARG(methods, field)                                            \
-  __attribute__((                                                              \
-      annotate("Calls target = _.FIELD(" field ") methods = " methods)))
+  __attribute__(                                                               \
+      (annotate("Calls target = _.FIELD(" field ") methods = " methods)))
 
 #define GET_3RD_ARG(arg1, arg2, arg3, ...) arg3
 #define CALLS_CHOOSER(...) GET_3RD_ARG(__VA_ARGS__, CALLS_2_ARG, CALLS_1_ARG, )
@@ -13,8 +13,8 @@
 #define MUST_CALL_1_ARG(methods)                                               \
   __attribute__((annotate("MustCall target = _ methods = " methods)))
 #define MUST_CALL_2_ARG(methods, field)                                        \
-  __attribute__((                                                              \
-      annotate("MustCall target = _.FIELD(" field ") methods = " methods)))
+  __attribute__(                                                               \
+      (annotate("MustCall target = _.FIELD(" field ") methods = " methods)))
 
 #define MUST_CALL_CHOOSER(...)                                                 \
   GET_3RD_ARG(__VA_ARGS__, MUST_CALL_2_ARG, MUST_CALL_1_ARG, )
