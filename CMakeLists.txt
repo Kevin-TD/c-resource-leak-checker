@@ -22,6 +22,8 @@ add_llvm_library(CodeAnalyzer MODULE
   src/Annotations/ErrorAnnotation.cpp
   src/ProgramRepresentation/MethodsSet.cpp
   src/ProgramRepresentation/ProgramVariable.cpp
+  src/ProgramRepresentation/PVAliasSet.cpp
+  src/ProgramRepresentation/DisjointedPVAliasSets.cpp
   src/ProgramRepresentation/ProgramPoint.cpp
   src/ProgramRepresentation/ProgramFunction.cpp
   src/ProgramRepresentation/FullFile.cpp
@@ -33,8 +35,6 @@ add_llvm_library(CodeAnalyzer MODULE
   src/Analysis.cpp
   src/RunAnalysis.cpp
   src/Utils.cpp
-  src/DisjointedSetWrapper.cpp
-  src/DisjointedSets.cpp
 )
 
 target_compile_options(CodeAnalyzer PRIVATE -frtti)

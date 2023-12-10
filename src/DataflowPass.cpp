@@ -48,8 +48,8 @@ void DataflowPass::transfer(Instruction *instruction,
       std::string fnName = call->getCalledFunction()->getName().str();
       ProgramVariable assignedVar = ProgramVariable(store->getOperand(1));
       std::string arg = assignedVar.getCleanedName();
-      ProgramVariable *pv = inputProgramPoint.getPVRef(arg, false);
-      MethodsSet *methods = pv->getMethodsSetRef();
+      PVAliasSet *pvas = inputProgramPoint.getPVASRef(arg, false);
+      MethodsSet *methods = pvas->getMethodsSetRef();
 
       if (this->memoryFunctions[fnName].size() > 0 &&
           assignedVar.isIdentifier()) {
@@ -61,12 +61,12 @@ void DataflowPass::transfer(Instruction *instruction,
                      dynamic_cast<ReturnAnnotation *>(
                          this->annotations.getReturnAnnotation(fnName))) {
         logout("found return annotation " << returnAnno->generateStringRep());
-        this->insertAnnotation(returnAnno, pv);
-      } else if (pv->hasIndex()) {
+        this->insertAnnotation(returnAnno, pvas);
+      } else if (pvas->hasIndex()) {
         if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(
                 this->annotations.getReturnAnnotation(fnName,
-                                                      pv->getIndex()))) {
-          this->insertAnnotation(returnAnno, pv);
+                                                      pvas->getIndex()))) {
+          this->insertAnnotation(returnAnno, pvas);
         }
       }
 
@@ -89,7 +89,7 @@ void DataflowPass::transfer(Instruction *instruction,
             bitcastVar.isIdentifier()) {
           std::string arg = bitcastVar.getCleanedName();
           MethodsSet *methods =
-              inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
+              inputProgramPoint.getPVASRef(arg, false)->getMethodsSetRef();
           this->onAllocationFunctionCall(methods,
                                          this->memoryFunctions[fnName]);
         }
@@ -104,14 +104,14 @@ void DataflowPass::transfer(Instruction *instruction,
       */
       ProgramVariable assignedVar = ProgramVariable(extractValue);
       std::string arg = assignedVar.getCleanedName();
-      ProgramVariable *pv = inputProgramPoint.getPVRef(arg, false);
+      PVAliasSet *pvas = inputProgramPoint.getPVASRef(arg, false);
 
-      if (!pv->hasIndex()) {
+      if (!pvas->hasIndex()) {
         return;
       }
 
-      logout("found pv " << pv->getCleanedName() << " with index "
-                         << pv->getIndex());
+      logout("found pv " << pvas->getVarsStringUsingCleanedNames()
+                         << " with index " << pvas->getIndex());
 
       if (CallInst *call = dyn_cast<CallInst>(extractValue->getOperand(0))) {
         std::string fnName = call->getCalledFunction()->getName().str();
@@ -120,7 +120,7 @@ void DataflowPass::transfer(Instruction *instruction,
         logout("traced back extract value to " << fnName);
         logout("index specified = " << fieldIndex);
 
-        if (fieldIndex != pv->getIndex()) {
+        if (fieldIndex != pvas->getIndex()) {
           return;
         }
 
@@ -128,7 +128,7 @@ void DataflowPass::transfer(Instruction *instruction,
                 this->annotations.getReturnAnnotation(fnName, fieldIndex))) {
           logout("found annotation from extract value "
                  << returnAnno->generateStringRep());
-          this->insertAnnotation(returnAnno, pv);
+          this->insertAnnotation(returnAnno, pvas);
         }
       }
     }
@@ -146,13 +146,13 @@ void DataflowPass::transfer(Instruction *instruction,
     for (unsigned i = 0; i < call->getNumArgOperands(); ++i) {
       ProgramVariable argumentVar = ProgramVariable(call->getArgOperand(i));
       std::string arg = argumentVar.getCleanedName();
-      ProgramVariable *pv = inputProgramPoint.getPVRef(arg, false);
+      PVAliasSet *pvas = inputProgramPoint.getPVASRef(arg, false);
 
       if (!argumentVar.isIdentifier()) {
         continue;
       }
 
-      if (handleIfKnownFunctionForCallInsts(call, pv)) {
+      if (handleIfKnownFunctionForCallInsts(call, pvas)) {
         continue;
       }
 
@@ -162,13 +162,13 @@ void DataflowPass::transfer(Instruction *instruction,
         return;
       }
 
-      if (handleIfAnnotationExistsForCallInsts(fnName, i, pv)) {
+      if (handleIfAnnotationExistsForCallInsts(fnName, i, pvas)) {
         continue;
       }
 
       // no annotations found, treat function call as unknown function
       logout("no annotations found for " << fnName);
-      MethodsSet *methods = pv->getMethodsSetRef();
+      MethodsSet *methods = pvas->getMethodsSetRef();
       this->onUnknownFunctionCall(methods);
     }
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
@@ -203,8 +203,8 @@ void DataflowPass::transfer(Instruction *instruction,
                << structAnno->generateStringRep());
 
         std::string arg = sourceVar.getCleanedName();
-        ProgramVariable *pv = inputProgramPoint.getPVRef(arg, false);
-        this->insertAnnotation(structAnno, pv);
+        PVAliasSet *pvas = inputProgramPoint.getPVASRef(arg, false);
+        this->insertAnnotation(structAnno, pvas);
       }
     }
   }
@@ -243,7 +243,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
   priorPostPoint->add(
       this->programFunction.getProgramPointRef(currentBranch, true));
 
-  if (priorPrePoint->getProgramVariables().size() > 0) {
+  if (priorPrePoint->getProgramVariableAliasSets().getNumberOfSets() > 0) {
     logout("need to lub for " << currentBranch << " " << priorBranch);
 
     ProgramPoint *currentPrePoint =
@@ -257,28 +257,31 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
     // lub PriorPreCM and CurrentPreCM
     ProgramPoint lub(currentBranch);
 
-    std::list<ProgramVariable> priorPreVars =
-        priorPrePoint->getProgramVariables();
+    DisjointedPVAliasSets priorPreVars =
+        priorPrePoint->getProgramVariableAliasSets();
 
-    for (ProgramVariable pv : priorPreVars) {
+    for (PVAliasSet pvas : priorPreVars.getSets()) {
       MethodsSet lubMethodsSet;
 
-      MethodsSet priorPreMethodsSet = pv.getMethodsSet();
+      MethodsSet priorPreMethodsSet = pvas.getMethodsSet();
 
       MethodsSet currentPreMethodsSet;
-      if (currentPrePoint->varExists(pv.getCleanedName())) {
-        currentPreMethodsSet.setMethods(
-            currentPrePoint->getPVRef(pv.getCleanedName(), false)
-                ->getMethodsSet()
-                .getMethods());
+      for (ProgramVariable pv : pvas.getProgramVariables()) {
+        if (currentPrePoint->varExists(pv.getCleanedName())) {
+          currentPreMethodsSet.setMethods(
+              currentPrePoint->getPVASRef(pv.getCleanedName(), false)
+                  ->getMethodsSet()
+                  .getMethods());
+          break;
+        }
       }
 
       this->leastUpperBound(priorPreMethodsSet, currentPreMethodsSet,
                             lubMethodsSet);
 
-      pv.setMethodsSet(lubMethodsSet);
+      pvas.setMethodsSet(lubMethodsSet);
 
-      lub.addVariable(pv);
+      lub.addPVAliasSet(pvas);
     }
 
     // fill the lub with remaining facts from priorPostPoint
@@ -305,7 +308,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         postProgramFunction.getProgramPointRef(priorBranch, true);
 
     preProgramFunction.getProgramPointRef(currentBranch, true)
-        ->setProgramVariables(priorPostPoint);
+        ->setProgramVariableAliasSets(priorPostPoint);
 
     llvm::SetVector<Instruction *> instructions = cfg->getInstructions();
 
@@ -320,7 +323,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
     }
 
     postProgramFunction.getProgramPointRef(currentBranch, true)
-        ->setProgramVariables(flowInto);
+        ->setProgramVariableAliasSets(flowInto);
 
     for (CFG *succ : cfg->getSuccessors()) {
       analyzeCFG(succ, preProgramFunction, postProgramFunction, currentBranch);
@@ -328,10 +331,10 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
   }
 }
 
-void DataflowPass::insertAnnotation(Annotation *anno, ProgramVariable *pv) {
+void DataflowPass::insertAnnotation(Annotation *anno, PVAliasSet *pvas) {
   AnnotationType annoType = anno->getAnnotationType();
   std::set<std::string> annoMethods = anno->getAnnotationMethods();
-  MethodsSet *argMethods = pv->getMethodsSetRef();
+  MethodsSet *argMethods = pvas->getMethodsSetRef();
 
   for (std::string annoMethod : annoMethods) {
     this->onAnnotation(argMethods, annoMethod, annoType);
@@ -358,15 +361,15 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
 
       for (int fieldIndex = 0; fieldIndex < numFields; fieldIndex++) {
         std::string fieldArg = argName + "." + std::to_string(fieldIndex);
-        ProgramVariable *pvField = programPoint.getPVRef(fieldArg, false);
+        PVAliasSet *pvasField = programPoint.getPVASRef(fieldArg, false);
 
-        logout("found field " << pvField->getCleanedName());
+        logout("found field " << pvasField->getVarsStringUsingCleanedNames());
 
         if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(
                 this->annotations.getReturnAnnotation(fnName, fieldIndex))) {
           logout("found annotation from sret "
                  << returnAnno->generateStringRep());
-          this->insertAnnotation(returnAnno, pvField);
+          this->insertAnnotation(returnAnno, pvasField);
         }
       }
     }
@@ -386,10 +389,11 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
 
         for (int fieldIndex = 0; fieldIndex < numFields; fieldIndex++) {
           std::string fieldArg = nextArg + "." + std::to_string(fieldIndex);
-          ProgramVariable *pvField = programPoint.getPVRef(fieldArg, false);
+          PVAliasSet *pvasField = programPoint.getPVASRef(fieldArg, false);
 
-          logout("found next arg fields " << pvField->getCleanedName()
-                                          << " for j = " << j);
+          logout("found next arg fields "
+                 << pvasField->getVarsStringUsingCleanedNames()
+                 << " for j = " << j);
 
           auto allAnnotationsWithFields =
               this->annotations.getAllParameterAnnotationsWithFields(fnName);
@@ -399,7 +403,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
               if (paramAnno->getField() == fieldIndex) {
                 logout("found param annotation "
                        << paramAnno->generateStringRep());
-                this->insertAnnotation(paramAnno, pvField);
+                this->insertAnnotation(paramAnno, pvasField);
               }
             }
           }
@@ -416,10 +420,11 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
             // ones a part of the call.
 
             if (paramAnno->getNthParameter() == j - 1) {
-              ProgramVariable *argVar = programPoint.getPVRef(nextArg, false);
+              PVAliasSet *argVar = programPoint.getPVASRef(nextArg, false);
               logout("found j param annotation "
                      << paramAnno->generateStringRep() << " for j = " << j
-                     << " and var " << argVar->getCleanedName());
+                     << " and var "
+                     << argVar->getVarsStringUsingCleanedNames());
               this->insertAnnotation(paramAnno, argVar);
             }
           }
@@ -432,7 +437,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
 }
 
 bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
-                                                     ProgramVariable *pv) {
+                                                     PVAliasSet *pvas) {
   /*
   handles the case where function being called is "an indirect function
   invocation", meaning its target is determined at runtime. we are not
@@ -449,7 +454,7 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
     errs() << "WARNING: implicitly declared function call on " << location
            << "\n";
 
-    MethodsSet *methods = pv->getMethodsSetRef();
+    MethodsSet *methods = pvas->getMethodsSetRef();
     this->onUnknownFunctionCall(methods);
     return true;
   }
@@ -459,13 +464,13 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
   logout("call fnname = " << fnName);
   if (this->reallocFunctions.count(fnName)) {
 
-    MethodsSet *methods = pv->getMethodsSetRef();
+    MethodsSet *methods = pvas->getMethodsSetRef();
     this->onReallocFunctionCall(methods, fnName);
     return true;
   }
 
   if (this->safeFunctions.count(fnName)) {
-    MethodsSet *methods = pv->getMethodsSetRef();
+    MethodsSet *methods = pvas->getMethodsSetRef();
     this->onSafeFunctionCall(methods, fnName);
     return true;
   }
@@ -489,7 +494,7 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
     if (fnName == allocationFunction) {
       return true;
     } else if (fnName == deallocationFunction) {
-      MethodsSet *methods = pv->getMethodsSetRef();
+      MethodsSet *methods = pvas->getMethodsSetRef();
       this->onDeallocationFunctionCall(methods, fnName);
       return true;
     }
@@ -506,27 +511,27 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
 }
 
 bool DataflowPass::handleIfAnnotationExistsForCallInsts(
-    const std::string &fnName, int argIndex, ProgramVariable *pv) {
+    const std::string &fnName, int argIndex, PVAliasSet *pvas) {
   // checks for parameter annotations (no field specified)
   Annotation *mayParameterAnnotation =
       this->annotations.getParameterAnnotation(fnName, argIndex);
   if (ParameterAnnotation *paramAnno =
           dynamic_cast<ParameterAnnotation *>(mayParameterAnnotation)) {
     logout("found param annotation " << paramAnno->generateStringRep());
-    this->insertAnnotation(paramAnno, pv);
+    this->insertAnnotation(paramAnno, pvas);
     return true;
   }
 
   // checks for parameter annotations (field specified)
-  if (pv->hasIndex()) {
+  if (pvas->hasIndex()) {
     Annotation *mayParamAnnoWithField =
         this->annotations.getParameterAnnotation(fnName, argIndex,
-                                                 pv->getIndex());
+                                                 pvas->getIndex());
     if (ParameterAnnotation *paramAnno =
             dynamic_cast<ParameterAnnotation *>(mayParamAnnoWithField)) {
       logout("found param struct annotation "
              << paramAnno->generateStringRep());
-      this->insertAnnotation(paramAnno, pv);
+      this->insertAnnotation(paramAnno, pvas);
       return true;
     }
   }

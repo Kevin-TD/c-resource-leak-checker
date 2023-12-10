@@ -304,18 +304,19 @@ void doAliasReasoning(Instruction *instruction,
         logout("two structs to alias " << *store);
         int numFields = valueStruct->getNumElements();
 
+        logout("pre alias");
+        ProgramPoint::logoutProgramPoint(*programPoint, true);
+
         for (int i = 0; i < numFields; i++) {
           ProgramVariable valueStructVar = ProgramVariable(valueToStore, i);
           ProgramVariable receivingStructVar =
               ProgramVariable(receivingValue, i);
 
-          ProgramVariable originalValue =
-              programPoint->getPV(valueStructVar.getCleanedName(), false);
-          ProgramVariable originalReceiving =
-              programPoint->getPV(receivingStructVar.getCleanedName(), false);
-
-          programPoint->addAlias(originalReceiving, originalValue);
+          programPoint->makeAliased(valueStructVar, receivingStructVar);
         }
+
+        logout("post alias");
+        ProgramPoint::logoutProgramPoint(*programPoint, true);
 
         return;
       }
@@ -356,13 +357,9 @@ void doAliasReasoning(Instruction *instruction,
   } else if (GetElementPtrInst *gepInst =
                  dyn_cast<GetElementPtrInst>(instruction)) {
 
-    // for some struct k { int x; int y }, here'a an example getptr inst:
-    // %y = getelementptr inbounds %struct.my_struct, %struct.my_struct* %k, i32
-    // 0, i32 1, !dbg !57
-
-    // %x = getelementptr inbounds %struct.my_struct,
-    // %struct.my_struct* %k, i32 0, i32 0, !dbg !54
-    // last argument on RHS is the index of the struct
+    // gepInsts typically take a struct and breaks it down into
+    // its fields. an indivudual gepInst may represent one field of a struct.
+    // note:
     /*
     LLVM removes field names and just makes them indices
     example:
@@ -374,12 +371,6 @@ void doAliasReasoning(Instruction *instruction,
     see:
     https://mapping-high-level-constructs-to-llvm-ir.readthedocs.io/en/latest/basic-constructs/structures.html
     */
-
-    // gepinst could also look like:
-    // %2 = getelementptr inbounds { i8*, i8* }, { i8*, i8* }* %1, i32 0, i32 0,
-    // !dbg !84 in which case we see if %1 is bitcast: %1 = bitcast
-    // %struct.my_struct* %k to { i8*, i8* }*, !dbg !84 then we alias %k.0 and
-    // %2
 
     llvm::Type *structType = gepInst->getPointerOperandType();
     llvm::Value *pointerOperand = gepInst->getPointerOperand();
@@ -403,15 +394,23 @@ void doAliasReasoning(Instruction *instruction,
 
           ProgramVariable structPV = ProgramVariable(pointerOperand);
 
-          ProgramVariable *originalStructPVRef =
-              programPoint->getPVRef(structPV.getCleanedName(), false);
-          ProgramVariable structVar =
-              ProgramVariable(originalStructPVRef->getValue(), index);
+          PVAliasSet *originalStructPVASRef =
+              programPoint->getPVASRef(structPV.getCleanedName(), false);
 
-          logout("spec index inst = " << *gepInst);
-          logout("specifying index for " << structVar.getCleanedName());
+          for (ProgramVariable pv :
+               originalStructPVASRef->getProgramVariables()) {
+            if (AllocaInst *structAllocaInst =
+                    dyn_cast<AllocaInst>(pv.getValue())) {
+              ProgramVariable structVar = ProgramVariable(pv.getValue(), index);
 
-          programPoint->addAlias(sourceVar, structVar);
+              logout("spec index inst = " << *gepInst);
+              logout("specifying index for " << structVar.getCleanedName());
+
+              programPoint->addAlias(sourceVar, structVar);
+
+              return;
+            }
+          }
         }
       }
     }
@@ -568,13 +567,13 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
   ProgramFunction PostMustCalls = mustCall.generatePassResults();
 
   logout("\n\nPROGRAM FUNCTION for " << programFunction.getFunctionName());
-  ProgramFunction::logoutPF(programFunction);
+  ProgramFunction::logoutProgramFunction(programFunction, false);
 
   logout("\n\nCALLED METHODS RESULT");
-  ProgramFunction::logoutPF(PostCalledMethods);
+  ProgramFunction::logoutProgramFunction(PostCalledMethods, true);
 
   logout("\n\nMUST CALL RESULT");
-  ProgramFunction::logoutPF(PostMustCalls);
+  ProgramFunction::logoutProgramFunction(PostMustCalls, true);
 
   errs() << "\n\nRUNNING CALLED METHODS TESTS - "
          << " TEST NAME - " << testName << "\n\n";

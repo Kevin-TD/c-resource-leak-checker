@@ -22,7 +22,7 @@ public:
 
   bool isUninit();
 
-  std::set<std::string> getMethods();
+  std::set<std::string> getMethods() const;
 };
 
 #endif
