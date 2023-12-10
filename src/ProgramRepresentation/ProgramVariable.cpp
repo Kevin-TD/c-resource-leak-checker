@@ -16,15 +16,6 @@ ProgramVariable::ProgramVariable(Value *value) {
     this->fixNameAndIdentifier();
 }
 
-ProgramVariable::ProgramVariable(Value *value, MethodsSet methods) {
-    this->value = value;
-    this->rawName = rlc_dataflow::variable(value);
-    this->cleanedName = this->rawName;
-    this->fixNameAndIdentifier();
-    this->methods = methods;
-    this->index = -1;
-}
-
 ProgramVariable::ProgramVariable(Value *value, int index) {
     this->value = value;
     this->rawName = rlc_dataflow::variable(value) + "." + std::to_string(index);
@@ -42,9 +33,7 @@ void ProgramVariable::fixNameAndIdentifier() {
     }
 }
 
-std::string ProgramVariable::getRawName() {
-    return this->rawName;
-}
+std::string ProgramVariable::getRawName() const { return this->rawName; }
 
 std::string ProgramVariable::getCleanedName() {
     return this->cleanedName;
@@ -79,97 +68,5 @@ bool ProgramVariable::equalsCleanedName(std::string otherName) {
 }
 
 bool ProgramVariable::equalsRawName(std::string otherRawName) {
-    return this->rawName.compare(otherRawName) == 0;
-}
-
-bool ProgramVariable::equals(ProgramVariable other) {
-    if (this->getCleanedName() != other.getCleanedName()) {
-        return false;
-    }
-
-    if (!this->getMethodsSet().equals(other.getMethodsSet())) {
-        return false;
-    }
-
-    return true;
-}
-
-void ProgramVariable::addAlias(ProgramVariable pv) {
-    this->aliases.push_back(pv);
-}
-
-std::set<std::string> ProgramVariable::getNamedAliases(bool cleanNames) {
-    std::set<std::string> namedAliases;
-
-    if (this->hasProgramName()) {
-        if (cleanNames) {
-            namedAliases.insert(this->cleanedName);
-        } else {
-            namedAliases.insert(this->rawName);
-        }
-    }
-
-    for (ProgramVariable pv : this->aliases) {
-        if (pv.hasProgramName()) {
-            if (cleanNames) {
-                namedAliases.insert(pv.getCleanedName());
-            } else {
-                namedAliases.insert(pv.getRawName());
-            }
-        }
-    }
-    return namedAliases;
-}
-
-std::set<std::string> ProgramVariable::getAllAliases(bool cleanNames) {
-    std::set<std::string> allAliases;
-
-    if (cleanNames) {
-        allAliases.insert(this->cleanedName);
-    } else {
-        allAliases.insert(this->rawName);
-    }
-
-    for (ProgramVariable pv : this->aliases) {
-        if (cleanNames) {
-            allAliases.insert(pv.getCleanedName());
-        } else {
-            allAliases.insert(pv.getRawName());
-        }
-    }
-    return allAliases;
-}
-
-MethodsSet ProgramVariable::getMethodsSet() {
-    return this->methods;
-}
-
-MethodsSet *ProgramVariable::getMethodsSetRef() {
-    return &this->methods;
-}
-
-std::list<ProgramVariable> ProgramVariable::getPValiases() {
-    return this->aliases;
-}
-
-std::list<ProgramVariable> *ProgramVariable::getPValiasesRef() {
-    return &this->aliases;
-}
-
-std::list<ProgramVariable *> ProgramVariable::generatePVptrAliases() {
-    std::list<ProgramVariable *> result;
-    for (ProgramVariable &pv : this->aliases) {
-        result.push_back(&pv);
-    }
-    return result;
-}
-
-void ProgramVariable::setMethodsSet(MethodsSet methods) {
-    this->methods.clearMethods();
-    this->methods = methods;
-}
-
-void ProgramVariable::setAliases(std::list<ProgramVariable> aliases) {
-    this->aliases.clear();
-    this->aliases = aliases;
+  return this->rawName.compare(otherRawName) == 0;
 }

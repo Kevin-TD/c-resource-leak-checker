@@ -239,13 +239,87 @@ std::vector<Instruction *> getSuccessors(Instruction *Inst) {
 void doAliasReasoning(Instruction *instruction,
                       ProgramFunction &programFunction,
                       std::string optLoadFileName) {
-    bool includes = false;
-    std::string branchName = instruction->getParent()->getName().str();
-    for (auto branch : realBranchOrder) {
-        if (branch == branchName) {
-            includes = true;
-            break;
+  bool includes = false;
+  std::string branchName = instruction->getParent()->getName().str();
+  for (auto branch : realBranchOrder) {
+    if (branch == branchName) {
+      includes = true;
+      break;
+    }
+  }
+
+  ProgramPoint *programPoint =
+      programFunction.getProgramPointRef(branchName, true);
+
+  if (!includes) {
+    realBranchOrder.push_back(branchName);
+  }
+
+  if (LoadInst *load = dyn_cast<LoadInst>(instruction)) {
+    logout("(load) name is " << variable(load) << " for "
+                             << variable(load->getPointerOperand()));
+    std::string varName = variable(load->getPointerOperand());
+
+    ProgramVariable receivingVar = ProgramVariable(load);
+    ProgramVariable givingVar = ProgramVariable(load->getPointerOperand());
+
+    programPoint->addAlias(receivingVar, givingVar);
+
+  } else if (StoreInst *store = dyn_cast<StoreInst>(instruction)) {
+    Value *valueToStore = store->getOperand(0);
+    Value *receivingValue = store->getOperand(1);
+
+    ProgramVariable varToStore = ProgramVariable(store->getOperand(0));
+
+    // necessary check since the value to store could just be a number, and we
+    // don't need to alias vars with nums. Also can cause name clashes; e.g.,
+    // if we have some "ret i32 0", we'll be adding program variable 0, but
+    // there may be in the IR something like "%0 = ...", and our code will
+    // interpret these as aliased
+
+    if (!varToStore.isIdentifier()) {
+      return;
+    }
+
+    ProgramVariable receivingVar = ProgramVariable(store->getOperand(1));
+
+    if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
+      ProgramVariable callVar = ProgramVariable(call);
+      programPoint->addAlias(callVar, receivingVar);
+      return;
+    }
+
+    // check if two structs are being aliased. the structs must refer
+    // to the same type. if they do not, they are not aliased;
+    // it is safe to do this because worst case scenario,
+    // it yields a false positive.
+    if (valueToStore->getType()->isPointerTy() &&
+        receivingValue->getType()->isPointerTy()) {
+      StructType *valueStruct =
+          rlc_dataflow::unwrapValuePointerToStruct(valueToStore);
+      StructType *receivingStruct =
+          rlc_dataflow::unwrapValuePointerToStruct(receivingValue);
+
+      if (valueStruct && receivingStruct && valueStruct == receivingStruct) {
+        logout("two structs to alias " << *store);
+        int numFields = valueStruct->getNumElements();
+
+        logout("pre alias");
+        ProgramPoint::logoutProgramPoint(*programPoint, true);
+
+        for (int i = 0; i < numFields; i++) {
+          ProgramVariable valueStructVar = ProgramVariable(valueToStore, i);
+          ProgramVariable receivingStructVar =
+              ProgramVariable(receivingValue, i);
+
+          programPoint->makeAliased(valueStructVar, receivingStructVar);
         }
+
+        logout("post alias");
+        ProgramPoint::logoutProgramPoint(*programPoint, true);
+
+        return;
+      }
     }
 
     ProgramPoint *programPoint =
@@ -263,22 +337,47 @@ void doAliasReasoning(Instruction *instruction,
         ProgramVariable receivingVar = ProgramVariable(load);
         ProgramVariable givingVar = ProgramVariable(load->getPointerOperand());
 
-        programPoint->addAlias(receivingVar, givingVar);
+    // gepInsts typically take a struct and breaks it down into
+    // its fields. an indivudual gepInst may represent one field of a struct.
+    // note:
+    /*
+    LLVM removes field names and just makes them indices
+    example:
+    struct s {
+      int a; // index 0
+      int b; // index 1
+      int c; // index 2
+    }
+    see:
+    https://mapping-high-level-constructs-to-llvm-ir.readthedocs.io/en/latest/basic-constructs/structures.html
+    */
 
-    } else if (StoreInst *store = dyn_cast<StoreInst>(instruction)) {
-        Value *valueToStore = store->getOperand(0);
-        Value *receivingValue = store->getOperand(1);
-
-        ProgramVariable varToStore = ProgramVariable(store->getOperand(0));
-
-        // necessary check since the value to store could just be a number, and we
-        // don't need to alias vars with nums. Also can cause name clashes; e.g.,
-        // if we have some "ret i32 0", we'll be adding program variable 0, but
-        // there may be in the IR something like "%0 = ...", and our code will
-        // interpret these as aliased
+    llvm::Type *structType = gepInst->getPointerOperandType();
+    llvm::Value *pointerOperand = gepInst->getPointerOperand();
 
         if (!varToStore.isIdentifier()) {
             return;
+          }
+
+          ProgramVariable structPV = ProgramVariable(pointerOperand);
+
+          PVAliasSet *originalStructPVASRef =
+              programPoint->getPVASRef(structPV.getCleanedName(), false);
+
+          for (ProgramVariable pv :
+               originalStructPVASRef->getProgramVariables()) {
+            if (AllocaInst *structAllocaInst =
+                    dyn_cast<AllocaInst>(pv.getValue())) {
+              ProgramVariable structVar = ProgramVariable(pv.getValue(), index);
+
+              logout("spec index inst = " << *gepInst);
+              logout("specifying index for " << structVar.getCleanedName());
+
+              programPoint->addAlias(sourceVar, structVar);
+
+              return;
+            }
+          }
         }
 
         ProgramVariable receivingVar = ProgramVariable(store->getOperand(1));
@@ -540,19 +639,14 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     ProgramFunction programFunction(fnName);
     std::map<std::string, InstructionHolder> branchInstructionMap;
 
-    for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
-        std::string branchName = I->getParent()->getName().str();
-        doAliasReasoning(&(*I), programFunction, optLoadFileName);
+  logout("\n\nPROGRAM FUNCTION for " << programFunction.getFunctionName());
+  ProgramFunction::logoutProgramFunction(programFunction, false);
 
-        auto succs = getSuccessors(&(*I));
-        branchInstructionMap[branchName].branch.insert(&(*I));
-        for (auto succ : succs) {
-            branchInstructionMap[branchName].successors.insert(succ);
-        }
-    }
+  logout("\n\nCALLED METHODS RESULT");
+  ProgramFunction::logoutProgramFunction(PostCalledMethods, true);
 
-    CFG cfg;
-    buildCFG(cfg, realBranchOrder, branchInstructionMap);
+  logout("\n\nMUST CALL RESULT");
+  ProgramFunction::logoutProgramFunction(PostMustCalls, true);
 
     calledMethods.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
                                annotationHandler);

@@ -14,8 +14,8 @@ bool TestRunner::runTests(const std::string functionName,
         expectedResult.getProgramFunction(functionName, true);
     std::list<ProgramPoint> points = function.getProgramPoints();
 
-    for (ProgramPoint point : points) {
-        std::string branchName = point.getPointName();
+  for (ProgramPoint expectedResultPoint : points) {
+    std::string branchName = expectedResultPoint.getPointName();
 
         if (branchName == "") {
             branchName = lastBranchName;
@@ -53,7 +53,48 @@ bool TestRunner::runTests(const std::string functionName,
         }
     }
 
-    return testPassed;
+    logout("branch = " << branchName);
+
+    DisjointedPVAliasSets expectedDPVAS =
+        expectedResultPoint.getProgramVariableAliasSets();
+
+    ProgramPoint receivedResultPoint =
+        receivedResult.getProgramPoint(branchName, true);
+
+    for (PVAliasSet expctedPVAS : expectedDPVAS.getSets()) {
+      std::set<std::string> expectedSet =
+          expctedPVAS.getMethodsSet().getMethods();
+      std::string expectedSetString = rlc_util::setToString(expectedSet);
+
+      // TODO: change structure for expectedResult.
+      // expctedPVAS.getProgramVariables().size() will always equal 1, so
+      // this for loop is misleading
+      for (ProgramVariable expectedPV : expctedPVAS.getProgramVariables()) {
+        std::string expectedPVName = expectedPV.getCleanedName();
+
+        PVAliasSet receivedPVAS =
+            receivedResultPoint.getPVAS(expectedPVName, true);
+
+        std::set<std::string> receivedSet =
+            receivedPVAS.getMethodsSet().getMethods();
+        std::string receivedSetString = rlc_util::setToString(receivedSet);
+
+        errs() << "Test for branch name = " << branchName
+               << " var name = " << expectedPVName;
+
+        if (expectedSet == receivedSet) {
+          errs() << " passed\n";
+        } else {
+          errs() << " **FAILED**\n";
+          testPassed = EXIT_FAILURE;
+        }
+        errs() << "EXPECTED " << expectedSetString << "\n";
+        errs() << "RECEIVED " << receivedSetString << "\n\n";
+      }
+    }
+  }
+
+  return testPassed;
 }
 
 FullFile TestRunner::buildExpectedResults(std::string testName,
@@ -133,6 +174,50 @@ FullFile TestRunner::buildExpectedResults(std::string testName,
                 ->setMethodsSet(methodsSet);
             }
         }
+
+        std::string type = argChunks[0];
+        std::string input = argChunks[1];
+
+        if (type == "pass") {
+          inputPassName = input;
+        } else if (type == "function") {
+          functionName = input;
+        } else if (type == "branch") {
+          branchName = input;
+        } else if (type == "var") {
+          varName = input;
+        } else if (type == "methods") {
+          std::vector<std::string> methodsSetVec = rlc_util::splitString(
+              rlc_util::sliceString(input, input.find('{') + 1,
+                                    input.find('}') - 1),
+              ',');
+          methodsSet =
+              std::set<std::string>(methodsSetVec.begin(), methodsSetVec.end());
+        } else {
+          logout("**TEST RUNNER ERROR: Unrecognized argument '"
+                 << type << "' on line '" << line << "'");
+          std::exit(EXIT_FAILURE);
+        }
+      }
+
+      if (functionName == "") {
+        logout("**TEST RUNNER ERROR: Function name argument missing on line '"
+               << line << "'");
+        std::exit(EXIT_FAILURE);
+      }
+
+      if (varName == "") {
+        logout("**TEST RUNNER ERROR: Variable name argument missing on line '"
+               << line << "'");
+        std::exit(EXIT_FAILURE);
+      }
+
+      if (passName == inputPassName) {
+        expectedResult.getProgramFunctionRef(functionName, true)
+            ->getProgramPointRef(branchName, true)
+            ->getPVASRef(varName, true)
+            ->setMethodsSet(methodsSet);
+      }
     }
 
     testFile.close();
