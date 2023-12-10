@@ -10,7 +10,7 @@
 		"--privileged"
 	],
 
-	"postStartCommand": "apt-get update; apt install -y clang-format",
+	"postStartCommand": "apt-get update; apt install -y clang-format-6.0",
 
 	// Set the env-variables for the container
 	"remoteEnv": {

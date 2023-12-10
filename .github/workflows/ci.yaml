@@ -16,7 +16,7 @@ jobs:
     - name: Install Clang Format
       run: |
         sudo apt-get update
-        sudo apt install -y clang-format
+        sudo apt install -y clang-format-6.0
         clang-format -version
     
     - name: Check Code Formatting
