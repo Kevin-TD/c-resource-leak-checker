@@ -73,14 +73,6 @@ public:
   // variables and methods set
   bool equals(ProgramPoint *programPoint);
 
-  // merges self and another point ref only if facts from otherPoint are not in
-  // self. no facts are replaced, e.g., if PV with name "x" is in self and in
-  // otherPoint, self's fact about "x" will be replaced with otherPoint's fact
-  // about "x". if "x" is not in self but is in otherPoint, "x" will be added to
-  // self. aliases as well are added, which is crucial to ensuring accurate
-  // alias reasoning
-  // NOTE: this only updates aliasing info... should change name accordingly ...
-
   // add the alias sets in programPoint to self. a set may be merged into an
   // existenting set (in which case, methods set is not updated) or is added
   // into our set of sets (in which case, program variables and methods set are
