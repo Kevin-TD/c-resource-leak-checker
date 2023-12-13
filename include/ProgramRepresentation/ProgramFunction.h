@@ -5,13 +5,14 @@
 
 // reflects a function from the C code. this class manages a set of points that
 // make up a function
-class ProgramFunction {
-  private:
+class ProgramFunction
+{
+private:
     std::list<ProgramPoint> programPoints;
 
     std::string functionName;
 
-  public:
+public:
     static void logoutPF(ProgramFunction &pf);
     ProgramFunction();
     ProgramFunction(std::string functionName);

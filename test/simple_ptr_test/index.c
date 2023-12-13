@@ -13,7 +13,8 @@ struct my_struct2 {
     char* x MustCall("free");
 };
 
-int main() {
+int main()
+{
     char* var1 = (char*)malloc(15);
     char** var2 = &var1;
     free(*var2);

@@ -3,7 +3,8 @@
 #include <string.h>
 
 
-int main () {
+int main ()
+{
     char *str;
     int a = getchar();
 

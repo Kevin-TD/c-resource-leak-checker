@@ -3,13 +3,14 @@
 
 #include "Annotation.h"
 
-class ReturnAnnotation : public Annotation {
-  private:
+class ReturnAnnotation : public Annotation
+{
+private:
     // if return is a struct type, this refers to its index.
     // otherwise, this equals -1.
     int field;
 
-  public:
+public:
     ReturnAnnotation(AnnotationType annotationType,
                      std::set<std::string> annotationMethods,
                      std::string targetName, int field);

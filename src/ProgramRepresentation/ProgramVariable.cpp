@@ -3,12 +3,14 @@
 
 ProgramVariable::ProgramVariable() {}
 
-ProgramVariable::ProgramVariable(std::string cleanedName) {
+ProgramVariable::ProgramVariable(std::string cleanedName)
+{
     this->cleanedName = cleanedName;
     this->index = -1;
 }
 
-ProgramVariable::ProgramVariable(Value *value) {
+ProgramVariable::ProgramVariable(Value *value)
+{
     this->value = value;
     this->rawName = rlc_dataflow::variable(value);
     this->cleanedName = this->rawName;
@@ -16,7 +18,8 @@ ProgramVariable::ProgramVariable(Value *value) {
     this->fixNameAndIdentifier();
 }
 
-ProgramVariable::ProgramVariable(Value *value, MethodsSet methods) {
+ProgramVariable::ProgramVariable(Value *value, MethodsSet methods)
+{
     this->value = value;
     this->rawName = rlc_dataflow::variable(value);
     this->cleanedName = this->rawName;
@@ -25,7 +28,8 @@ ProgramVariable::ProgramVariable(Value *value, MethodsSet methods) {
     this->index = -1;
 }
 
-ProgramVariable::ProgramVariable(Value *value, int index) {
+ProgramVariable::ProgramVariable(Value *value, int index)
+{
     this->value = value;
     this->rawName = rlc_dataflow::variable(value) + "." + std::to_string(index);
     this->index = index;
@@ -33,7 +37,8 @@ ProgramVariable::ProgramVariable(Value *value, int index) {
     this->fixNameAndIdentifier();
 }
 
-void ProgramVariable::fixNameAndIdentifier() {
+void ProgramVariable::fixNameAndIdentifier()
+{
     this->varIsIdentifier = true;
     if (this->cleanedName[0] == '%' || this->cleanedName[0] == '@') {
         this->cleanedName.erase(0, 1);
@@ -42,47 +47,58 @@ void ProgramVariable::fixNameAndIdentifier() {
     }
 }
 
-std::string ProgramVariable::getRawName() {
+std::string ProgramVariable::getRawName()
+{
     return this->rawName;
 }
 
-std::string ProgramVariable::getCleanedName() {
+std::string ProgramVariable::getCleanedName()
+{
     return this->cleanedName;
 }
 
-Value *ProgramVariable::getValue() {
+Value *ProgramVariable::getValue()
+{
     return this->value;
 }
 
-bool ProgramVariable::hasProgramName() {
+bool ProgramVariable::hasProgramName()
+{
     return this->value->hasName();
 }
 
-bool ProgramVariable::hasIndex() {
+bool ProgramVariable::hasIndex()
+{
     return this->index != -1;
 }
 
-int ProgramVariable::getIndex() {
+int ProgramVariable::getIndex()
+{
     return this->index;
 }
 
-bool ProgramVariable::isIdentifier() {
+bool ProgramVariable::isIdentifier()
+{
     return this->varIsIdentifier;
 }
 
-bool ProgramVariable::equalsValue(Value *otherValue) {
+bool ProgramVariable::equalsValue(Value *otherValue)
+{
     return this->value == otherValue;
 }
 
-bool ProgramVariable::equalsCleanedName(std::string otherName) {
+bool ProgramVariable::equalsCleanedName(std::string otherName)
+{
     return this->cleanedName.compare(otherName) == 0;
 }
 
-bool ProgramVariable::equalsRawName(std::string otherRawName) {
+bool ProgramVariable::equalsRawName(std::string otherRawName)
+{
     return this->rawName.compare(otherRawName) == 0;
 }
 
-bool ProgramVariable::equals(ProgramVariable other) {
+bool ProgramVariable::equals(ProgramVariable other)
+{
     if (this->getCleanedName() != other.getCleanedName()) {
         return false;
     }
@@ -94,11 +110,13 @@ bool ProgramVariable::equals(ProgramVariable other) {
     return true;
 }
 
-void ProgramVariable::addAlias(ProgramVariable pv) {
+void ProgramVariable::addAlias(ProgramVariable pv)
+{
     this->aliases.push_back(pv);
 }
 
-std::set<std::string> ProgramVariable::getNamedAliases(bool cleanNames) {
+std::set<std::string> ProgramVariable::getNamedAliases(bool cleanNames)
+{
     std::set<std::string> namedAliases;
 
     if (this->hasProgramName()) {
@@ -121,7 +139,8 @@ std::set<std::string> ProgramVariable::getNamedAliases(bool cleanNames) {
     return namedAliases;
 }
 
-std::set<std::string> ProgramVariable::getAllAliases(bool cleanNames) {
+std::set<std::string> ProgramVariable::getAllAliases(bool cleanNames)
+{
     std::set<std::string> allAliases;
 
     if (cleanNames) {
@@ -140,23 +159,28 @@ std::set<std::string> ProgramVariable::getAllAliases(bool cleanNames) {
     return allAliases;
 }
 
-MethodsSet ProgramVariable::getMethodsSet() {
+MethodsSet ProgramVariable::getMethodsSet()
+{
     return this->methods;
 }
 
-MethodsSet *ProgramVariable::getMethodsSetRef() {
+MethodsSet *ProgramVariable::getMethodsSetRef()
+{
     return &this->methods;
 }
 
-std::list<ProgramVariable> ProgramVariable::getPValiases() {
+std::list<ProgramVariable> ProgramVariable::getPValiases()
+{
     return this->aliases;
 }
 
-std::list<ProgramVariable> *ProgramVariable::getPValiasesRef() {
+std::list<ProgramVariable> *ProgramVariable::getPValiasesRef()
+{
     return &this->aliases;
 }
 
-std::list<ProgramVariable *> ProgramVariable::generatePVptrAliases() {
+std::list<ProgramVariable *> ProgramVariable::generatePVptrAliases()
+{
     std::list<ProgramVariable *> result;
     for (ProgramVariable &pv : this->aliases) {
         result.push_back(&pv);
@@ -164,12 +188,14 @@ std::list<ProgramVariable *> ProgramVariable::generatePVptrAliases() {
     return result;
 }
 
-void ProgramVariable::setMethodsSet(MethodsSet methods) {
+void ProgramVariable::setMethodsSet(MethodsSet methods)
+{
     this->methods.clearMethods();
     this->methods = methods;
 }
 
-void ProgramVariable::setAliases(std::list<ProgramVariable> aliases) {
+void ProgramVariable::setAliases(std::list<ProgramVariable> aliases)
+{
     this->aliases.clear();
     this->aliases = aliases;
 }

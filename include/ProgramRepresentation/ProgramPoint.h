@@ -5,8 +5,9 @@
 
 // reflects a branch that holds some instructions in the IR. this class manages
 // a point's program variables
-class ProgramPoint {
-  private:
+class ProgramPoint
+{
+private:
     std::list<ProgramVariable> programVariables;
 
     // the name is same as the branch name that shows up in the IR
@@ -16,7 +17,7 @@ class ProgramPoint {
     // PV
     void fillAlias(std::string varNameCleaned, ProgramVariable variable);
 
-  public:
+public:
     ProgramPoint();
     ProgramPoint(std::string pointName);
     ProgramPoint(std::string pointName, ProgramPoint *programPoint);

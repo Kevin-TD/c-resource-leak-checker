@@ -3,15 +3,18 @@
 #include <string.h>
 #include "../../Annotations/Annotations.h"
 
-void* MustCall("free") malloc0(size_t __size) {
+void* MustCall("free") malloc0(size_t __size)
+{
     return malloc(__size);
 }
 
-void free0(void* p Calls("free")) {
+void free0(void* p Calls("free"))
+{
     free(p);
 }
 
-int main () {
+int main ()
+{
     char *str;
 
     str = (char *) malloc0(15);

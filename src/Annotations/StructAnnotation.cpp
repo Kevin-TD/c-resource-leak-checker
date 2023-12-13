@@ -2,7 +2,8 @@
 
 StructAnnotation::StructAnnotation(AnnotationType annotationType,
                                    std::set<std::string> annotationMethods,
-                                   std::string targetName, int field) {
+                                   std::string targetName, int field)
+{
     this->annotationType = annotationType;
     this->annotationMethods = annotationMethods;
     this->targetName = targetName;
@@ -10,7 +11,8 @@ StructAnnotation::StructAnnotation(AnnotationType annotationType,
     this->isVerified = false;
 }
 
-std::string StructAnnotation::generateStringRep() {
+std::string StructAnnotation::generateStringRep()
+{
     std::string annoTypeString =
         rlc_annotation_util::annotationTypeToString(this->annotationType);
     std::string annoMethodsString =
@@ -23,14 +25,17 @@ std::string StructAnnotation::generateStringRep() {
            fieldString + " methods = " + annoMethodsString;
 }
 
-bool StructAnnotation::structNameEquals(const std::string &structName) {
+bool StructAnnotation::structNameEquals(const std::string &structName)
+{
     return structName.compare(this->targetName) == 0;
 }
 
-bool StructAnnotation::fieldNameEquals(int fieldName) {
+bool StructAnnotation::fieldNameEquals(int fieldName)
+{
     return fieldName == this->field;
 }
 
-int StructAnnotation::getFieldName() {
+int StructAnnotation::getFieldName()
+{
     return this->field;
 }

@@ -3,11 +3,12 @@
 
 #include "Annotation.h"
 
-class StructAnnotation : public Annotation {
-  private:
+class StructAnnotation : public Annotation
+{
+private:
     int field;
 
-  public:
+public:
     StructAnnotation(AnnotationType annotationType,
                      std::set<std::string> annotationMethods,
                      std::string targetName, int field);

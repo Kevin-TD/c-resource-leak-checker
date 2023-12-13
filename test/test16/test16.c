@@ -15,12 +15,14 @@ typedef struct struct_2 {
     char* y MustCall("free");
 } my_struct_2;
 
-void does_free(char* s Calls("free")) {
+void does_free(char* s Calls("free"))
+{
     free(s);
 }
 
 
-char* MustCall("free") creates_obligation(char* s Calls("free"), struct my_struct X Calls("free", "x")) {
+char* MustCall("free") creates_obligation(char* s Calls("free"), struct my_struct X Calls("free", "x"))
+{
     free(s);
     free(X.x);
     char* str = (char*)malloc(15);
@@ -29,18 +31,21 @@ char* MustCall("free") creates_obligation(char* s Calls("free"), struct my_struc
 
 
 
-struct my_struct Calls("free", "x") does_something(struct my_struct S Calls("free", "x")) {
+struct my_struct Calls("free", "x") does_something(struct my_struct S Calls("free", "x"))
+{
     free(S.x);
     return S;
 }
 
-char* Calls("free") does_something_simpler(char* S Calls("free")) {
+char* Calls("free") does_something_simpler(char* S Calls("free"))
+{
     free(S);
     return S;
 }
 
 
-int main() {
+int main()
+{
     struct my_struct_3 {
         char* x MustCall("free");
         char* y MustCall("free");

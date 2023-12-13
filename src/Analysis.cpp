@@ -31,7 +31,8 @@ struct InstructionHolder {
     SetVector<Instruction *> successors;
 };
 
-namespace rlc_dataflow {
+namespace rlc_dataflow
+{
 
 std::set<std::string> SafeFunctions;
 std::set<std::string> ReallocFunctions;
@@ -43,7 +44,8 @@ CalledMethods calledMethods;
 MustCall mustCall;
 AnnotationHandler annotationHandler;
 
-void loadFunctions() {
+void loadFunctions()
+{
     // working directory is /build
 
     std::ifstream safeFunctionsFile("../Functions/safe.txt");
@@ -91,7 +93,8 @@ void loadFunctions() {
 // for some .c file ../test/<dir>/<file_name>.c, <dir>/<file_name> is returned.
 // e.g., ../test/simple_layer_test/layer/test1_again.c ->
 // simple_layer_test/layer/test1_again
-std::string getTestName(std::string optLoadFileName) {
+std::string getTestName(std::string optLoadFileName)
+{
     std::string startsWith = "../test";
     std::string endsWith = ".c";
     optLoadFileName.replace(0, startsWith.length() + 1, "");
@@ -103,7 +106,8 @@ std::string getTestName(std::string optLoadFileName) {
 }
 
 void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
-              std::map<std::string, InstructionHolder> branchInstMap) {
+              std::map<std::string, InstructionHolder> branchInstMap)
+{
     topCFG = CFG(FIRST_BRANCH_NAME);
     std::map<std::string, CFG *> cfgMap;
     cfgMap[FIRST_BRANCH_NAME] = &topCFG;
@@ -132,7 +136,8 @@ void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
     }
 }
 
-std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
+std::vector<std::string> getAnnotationStrings(std::string optLoadFileName)
+{
     char astTempTextFile[] = "/tmp/astTempTextFileXXXXXX";
     int astFD = mkstemp(astTempTextFile);
 
@@ -190,7 +195,8 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
  * @param Inst The instruction to get the predecessors of.
  * @return Vector of all predecessors of Inst.
  */
-std::vector<Instruction *> getPredecessors(Instruction *Inst) {
+std::vector<Instruction *> getPredecessors(Instruction *Inst)
+{
     std::vector<Instruction *> Ret;
     auto Block = Inst->getParent();
     for (auto Iter = Block->rbegin(), End = Block->rend(); Iter != End; ++Iter) {
@@ -201,7 +207,7 @@ std::vector<Instruction *> getPredecessors(Instruction *Inst) {
                 return Ret;
             }
             for (auto Pre = pred_begin(Block), BE = pred_end(Block); Pre != BE;
-                    ++Pre) {
+                 ++Pre) {
                 Ret.push_back(&(*((*Pre)->rbegin())));
             }
             return Ret;
@@ -216,7 +222,8 @@ std::vector<Instruction *> getPredecessors(Instruction *Inst) {
  * @param Inst The instruction to get the successors of.
  * @return Vector of all successors of Inst.
  */
-std::vector<Instruction *> getSuccessors(Instruction *Inst) {
+std::vector<Instruction *> getSuccessors(Instruction *Inst)
+{
     std::vector<Instruction *> Ret;
     auto Block = Inst->getParent();
     for (auto Iter = Block->begin(), End = Block->end(); Iter != End; ++Iter) {
@@ -227,7 +234,7 @@ std::vector<Instruction *> getSuccessors(Instruction *Inst) {
                 return Ret;
             }
             for (auto Succ = succ_begin(Block), BS = succ_end(Block); Succ != BS;
-                    ++Succ) {
+                 ++Succ) {
                 Ret.push_back(&(*((*Succ)->begin())));
             }
             return Ret;
@@ -238,7 +245,8 @@ std::vector<Instruction *> getSuccessors(Instruction *Inst) {
 
 void doAliasReasoning(Instruction *instruction,
                       ProgramFunction &programFunction,
-                      std::string optLoadFileName) {
+                      std::string optLoadFileName)
+{
     bool includes = false;
     std::string branchName = instruction->getParent()->getName().str();
     for (auto branch : realBranchOrder) {
@@ -294,7 +302,7 @@ void doAliasReasoning(Instruction *instruction,
         // it is safe to do this because worst case scenario,
         // it yields a false positive.
         if (valueToStore->getType()->isPointerTy() &&
-                receivingValue->getType()->isPointerTy()) {
+            receivingValue->getType()->isPointerTy()) {
             StructType *valueStruct =
                 rlc_dataflow::unwrapValuePointerToStruct(valueToStore);
             StructType *receivingStruct =
@@ -332,7 +340,7 @@ void doAliasReasoning(Instruction *instruction,
             rlc_dataflow::unwrapValuePointerToStruct(bitcast->getOperand(0));
 
         if (sourceType && destType && sourceType->hasName() &&
-                destType->hasName()) {
+            destType->hasName()) {
             if (sourceType->getName() != destType->getName()) {
                 errs() << "WARNING: Struct type conversions/bitcasting ('"
                        << destType->getName() << "' to '" << sourceType->getName()
@@ -385,12 +393,12 @@ void doAliasReasoning(Instruction *instruction,
         llvm::Value *pointerOperand = gepInst->getPointerOperand();
 
         if (llvm::PointerType *pointerType =
-                    llvm::dyn_cast<llvm::PointerType>(pointerOperand->getType())) {
+                llvm::dyn_cast<llvm::PointerType>(pointerOperand->getType())) {
             if (llvm::StructType *structType =
-                        llvm::dyn_cast<llvm::StructType>(pointerType->getElementType())) {
+                    llvm::dyn_cast<llvm::StructType>(pointerType->getElementType())) {
                 llvm::Value *indexValue = gepInst->getOperand(2);
                 if (llvm::ConstantInt *constIndex =
-                            llvm::dyn_cast<llvm::ConstantInt>(indexValue)) {
+                        llvm::dyn_cast<llvm::ConstantInt>(indexValue)) {
                     ProgramVariable sourceVar = ProgramVariable(gepInst);
                     int index = constIndex->getValue().getSExtValue();
 
@@ -472,7 +480,7 @@ void doAliasReasoning(Instruction *instruction,
         */
 
         if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
-                rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
+            rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
             ProgramVariable sourceVar = ProgramVariable(call);
             ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
             programPoint->addAlias(sourceVar, destinationVar);
@@ -480,7 +488,8 @@ void doAliasReasoning(Instruction *instruction,
     }
 }
 
-void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
+void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName)
+{
     std::string fnName = F.getName().str();
 
     std::string testName = getTestName(optLoadFileName);
@@ -595,7 +604,8 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     }
 }
 
-void CodeAnalyzer::onEnd() {
+void CodeAnalyzer::onEnd()
+{
     if (anyTestFailed) {
         std::exit(EXIT_FAILURE);
     } else {

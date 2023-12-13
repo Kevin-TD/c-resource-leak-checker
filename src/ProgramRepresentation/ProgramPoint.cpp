@@ -1,19 +1,22 @@
 #include "ProgramRepresentation/ProgramPoint.h"
 #include "Debug.h"
 
-ProgramPoint::ProgramPoint(std::string pointName) {
+ProgramPoint::ProgramPoint(std::string pointName)
+{
     this->pointName = pointName;
 }
 
 ProgramPoint::ProgramPoint() {}
 
-ProgramPoint::ProgramPoint(std::string pointName, ProgramPoint *programPoint) {
+ProgramPoint::ProgramPoint(std::string pointName, ProgramPoint *programPoint)
+{
     this->pointName = pointName;
     this->programVariables = programPoint->getProgramVariables();
 }
 
 void ProgramPoint::addAlias(ProgramVariable receiving,
-                            ProgramVariable receiver) {
+                            ProgramVariable receiver)
+{
     std::string addedAliasRawName;
 
     for (ProgramVariable &pv : this->programVariables) {
@@ -91,12 +94,14 @@ void ProgramPoint::addAlias(ProgramVariable receiving,
     this->addVariable(receiver);
 }
 
-void ProgramPoint::addVariable(ProgramVariable programVar) {
+void ProgramPoint::addVariable(ProgramVariable programVar)
+{
     this->programVariables.push_back(programVar);
 }
 
 void ProgramPoint::fillAlias(std::string varNameCleaned,
-                             ProgramVariable variable) {
+                             ProgramVariable variable)
+{
     for (ProgramVariable &pv : this->programVariables) {
         if (varNameCleaned != pv.getCleanedName()) {
             continue;
@@ -117,16 +122,19 @@ void ProgramPoint::fillAlias(std::string varNameCleaned,
     }
 }
 
-std::list<ProgramVariable> ProgramPoint::getProgramVariables() {
+std::list<ProgramVariable> ProgramPoint::getProgramVariables()
+{
     return this->programVariables;
 }
 
-std::string ProgramPoint::getPointName() {
+std::string ProgramPoint::getPointName()
+{
     return this->pointName;
 }
 
 ProgramVariable *ProgramPoint::getPVRef(std::string cleanedName,
-                                        bool addNewIfNotFound) {
+                                        bool addNewIfNotFound)
+{
     for (ProgramVariable &pv : this->programVariables) {
         if (pv.getCleanedName() == cleanedName) {
             return &pv;
@@ -148,7 +156,8 @@ ProgramVariable *ProgramPoint::getPVRef(std::string cleanedName,
 }
 
 ProgramVariable ProgramPoint::getPV(std::string cleanedName,
-                                    bool addNewIfNotFound) {
+                                    bool addNewIfNotFound)
+{
     for (ProgramVariable &pv : this->programVariables) {
         if (pv.getCleanedName() == cleanedName) {
             return pv;
@@ -173,7 +182,8 @@ ProgramVariable ProgramPoint::getPV(std::string cleanedName,
     std::exit(EXIT_FAILURE);
 }
 
-bool ProgramPoint::equals(ProgramPoint programPoint) {
+bool ProgramPoint::equals(ProgramPoint programPoint)
+{
     if (this->pointName != programPoint.getPointName()) {
         return false;
     }
@@ -199,7 +209,8 @@ bool ProgramPoint::equals(ProgramPoint programPoint) {
     return true;
 }
 
-bool ProgramPoint::equals(ProgramPoint *programPoint) {
+bool ProgramPoint::equals(ProgramPoint *programPoint)
+{
     for (ProgramVariable pv1 : this->programVariables) {
         std::string cleanedName = pv1.getCleanedName();
         ProgramVariable *pv2 = programPoint->getPVRef(cleanedName, false);
@@ -221,7 +232,8 @@ bool ProgramPoint::equals(ProgramPoint *programPoint) {
     return true;
 }
 
-bool ProgramPoint::varExists(std::string cleanedName) {
+bool ProgramPoint::varExists(std::string cleanedName)
+{
     for (ProgramVariable pv : this->programVariables) {
         if (pv.getCleanedName() == cleanedName) {
             return true;
@@ -232,22 +244,26 @@ bool ProgramPoint::varExists(std::string cleanedName) {
 }
 
 void ProgramPoint::setProgramVariables(
-    std::list<ProgramVariable> programVariables) {
+    std::list<ProgramVariable> programVariables)
+{
     this->programVariables.clear();
     this->programVariables = programVariables;
 }
 
-void ProgramPoint::setProgramVariables(ProgramPoint *programPoint) {
+void ProgramPoint::setProgramVariables(ProgramPoint *programPoint)
+{
     this->programVariables.clear();
     this->programVariables = programPoint->getProgramVariables();
 }
 
-void ProgramPoint::setProgramVariables(ProgramPoint programPoint) {
+void ProgramPoint::setProgramVariables(ProgramPoint programPoint)
+{
     this->programVariables.clear();
     this->programVariables = programPoint.getProgramVariables();
 }
 
-void ProgramPoint::add(ProgramPoint *otherPoint) {
+void ProgramPoint::add(ProgramPoint *otherPoint)
+{
     for (ProgramVariable pv : otherPoint->getProgramVariables()) {
         std::string pvCleanedName = pv.getCleanedName();
 

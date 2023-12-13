@@ -5,7 +5,8 @@
 bool TestRunner::runTests(const std::string functionName,
                           const std::string lastBranchName,
                           FullFile expectedResult,
-                          ProgramFunction receivedResult) {
+                          ProgramFunction receivedResult)
+{
     bool testPassed = EXIT_SUCCESS;
 
     logout("Function Name Test Running = " << functionName);
@@ -57,7 +58,8 @@ bool TestRunner::runTests(const std::string functionName,
 }
 
 FullFile TestRunner::buildExpectedResults(std::string testName,
-        std::string passName) {
+        std::string passName)
+{
 
     std::ifstream testFile("../Testers/Passes/" + testName + ".txt");
     std::string line;

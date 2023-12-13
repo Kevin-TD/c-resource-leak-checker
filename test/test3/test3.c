@@ -2,11 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *strcpy(char *__restrict__ __dest, const char *__restrict__ __src) {
+char *strcpy(char *__restrict__ __dest, const char *__restrict__ __src)
+{
     printf("a mimicry");
 }
 
-int main () {
+int main ()
+{
     char *str;
     int a;
 

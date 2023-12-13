@@ -3,45 +3,54 @@
 #include <string.h>
 #include "../../Annotations/Annotations.h"
 
-void* MustCall("free0") malloc0(size_t __size) {
+void* MustCall("free0") malloc0(size_t __size)
+{
     return malloc(__size);
 }
 
-void* MustCall("free1") malloc1(size_t __size) {
+void* MustCall("free1") malloc1(size_t __size)
+{
     return malloc(__size);
 }
 
-void* MustCall("free2") malloc2(size_t __size) {
+void* MustCall("free2") malloc2(size_t __size)
+{
     return malloc(__size);
 }
 
-void* MustCall("free3") malloc3(size_t __size) {
+void* MustCall("free3") malloc3(size_t __size)
+{
     return malloc(__size);
 }
 
-int free0(void* p Calls("free0")) {
+int free0(void* p Calls("free0"))
+{
     free(p);
     return 1;
 }
 
-int free1(void* p Calls("free1")) {
+int free1(void* p Calls("free1"))
+{
     free(p);
     return 1;
 }
 
-int free2(void* p Calls("free2")) {
+int free2(void* p Calls("free2"))
+{
     free(p);
     return 1;
 }
 
-int free3(void* p Calls("free3")) {
+int free3(void* p Calls("free3"))
+{
     free(p);
     return 1;
 }
 
 
 
-int main () {
+int main ()
+{
     char *str;
     int a = getchar();
 

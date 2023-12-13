@@ -2,22 +2,26 @@
 #include "Debug.h"
 #include "ProgramRepresentation/ProgramVariable.h"
 
-ProgramFunction::ProgramFunction(std::string functionName) {
+ProgramFunction::ProgramFunction(std::string functionName)
+{
     this->functionName = functionName;
 }
 
 ProgramFunction::ProgramFunction() {}
 
-void ProgramFunction::addProgramPoint(ProgramPoint programPoint) {
+void ProgramFunction::addProgramPoint(ProgramPoint programPoint)
+{
     this->programPoints.push_back(programPoint);
 }
 
-std::list<ProgramPoint> ProgramFunction::getProgramPoints() {
+std::list<ProgramPoint> ProgramFunction::getProgramPoints()
+{
     return this->programPoints;
 }
 
 ProgramPoint *ProgramFunction::getProgramPointRef(std::string pointName,
-        bool addNewIfNotFound) {
+        bool addNewIfNotFound)
+{
     for (ProgramPoint &programPoint : this->programPoints) {
         if (programPoint.getPointName() == pointName) {
             return &programPoint;
@@ -36,7 +40,8 @@ ProgramPoint *ProgramFunction::getProgramPointRef(std::string pointName,
 }
 
 ProgramPoint ProgramFunction::getProgramPoint(std::string pointName,
-        bool addNewIfNotFound) {
+        bool addNewIfNotFound)
+{
     for (ProgramPoint &programPoint : this->programPoints) {
         if (programPoint.getPointName() == pointName) {
             return programPoint;
@@ -54,17 +59,20 @@ ProgramPoint ProgramFunction::getProgramPoint(std::string pointName,
     std::exit(EXIT_FAILURE);
 }
 
-std::string ProgramFunction::getFunctionName() {
+std::string ProgramFunction::getFunctionName()
+{
     return this->functionName;
 }
 
 void ProgramFunction::setProgramPoint(std::string name,
-                                      ProgramPoint programPoint) {
+                                      ProgramPoint programPoint)
+{
     ProgramPoint *programPointRef = this->getProgramPointRef(name, true);
     programPointRef->setProgramVariables(programPoint.getProgramVariables());
 }
 
-void ProgramFunction::logoutPF(ProgramFunction &pf) {
+void ProgramFunction::logoutPF(ProgramFunction &pf)
+{
     for (auto point : pf.getProgramPoints()) {
         logout("\n**point name " << point.getPointName());
         for (auto var : point.getProgramVariables()) {

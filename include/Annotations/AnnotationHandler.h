@@ -11,12 +11,13 @@
 #include "Utils.h"
 
 // manages annotations for a single file
-class AnnotationHandler {
-  private:
+class AnnotationHandler
+{
+private:
     std::list<Annotation *> annotations;
     void addAnnotation(const std::string &rawAnnotationString);
 
-  public:
+public:
     AnnotationHandler();
     void addAnnotations(std::vector<std::string> rawAnnotationStrings);
 

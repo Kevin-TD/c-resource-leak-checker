@@ -8,6 +8,7 @@ struct my_struct {
     char* y MustCall("free");
 };
 
-int main() {
+int main()
+{
     struct my_struct M;
 }
