@@ -4,12 +4,12 @@
 #include "Annotation.h"
 
 class FunctionAnnotation : public Annotation {
-public:
-  FunctionAnnotation(AnnotationType annotationType,
-                     std::set<std::string> annotationMethods,
-                     std::string targetName);
-  std::string generateStringRep();
-  bool functionNameEquals(const std::string &functionName);
+  public:
+    FunctionAnnotation(AnnotationType annotationType,
+                       std::set<std::string> annotationMethods,
+                       std::string targetName);
+    std::string generateStringRep();
+    bool functionNameEquals(const std::string &functionName);
 };
 
 #endif

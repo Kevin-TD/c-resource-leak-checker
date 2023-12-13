@@ -7,8 +7,8 @@
 #include "Annotation.h"
 
 class ErrorAnnotation : public Annotation {
-public:
-  std::string generateStringRep();
+  public:
+    std::string generateStringRep();
 };
 
 #endif

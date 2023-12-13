@@ -16,11 +16,11 @@ jobs:
     - name: Install Clang Format
       run: |
         sudo apt-get update
-        sudo apt install -y clang-format
+        sudo apt install -y astyle
     
     - name: Check Code Formatting
       run: |
-        find . -path ./build -prune -o \( -name '*.cpp' -o -name '*.h' \) -print | xargs clang-format --dry-run -Werror --style=LLVM
+        ! astyle --dry-run --style=google --exclude=build --recursive *.cpp,*.h,*.c -n | grep -q Formatted
 
     - name: Run Analysis in Docker
       run: |

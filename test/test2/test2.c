@@ -7,25 +7,25 @@ void unknown_function(char* s) {
 }
 
 int main () {
-   char *str;
-   int a;
+    char *str;
+    int a;
 
-   /* Initial memory allocation */
-   str = (char *) malloc(15);
-   strcpy(str, "helloworld");
-   printf("String = %s,  Address = %u\n", str, str);
+    /* Initial memory allocation */
+    str = (char *) malloc(15);
+    strcpy(str, "helloworld");
+    printf("String = %s,  Address = %u\n", str, str);
 
-   /* Reallocating memory */
-   str = (char *) realloc(str, 25);
-   strcat(str, "hello");
-   printf("String = %s,  Address = %u\n", str, str);
+    /* Reallocating memory */
+    str = (char *) realloc(str, 25);
+    strcat(str, "hello");
+    printf("String = %s,  Address = %u\n", str, str);
 
-   free(str);
+    free(str);
 
-   unknown_function(str);
+    unknown_function(str);
 
-   
-   
-   return(0);
+
+
+    return(0);
 }
 
