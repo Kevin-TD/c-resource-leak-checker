@@ -2,29 +2,24 @@
 
 FullFile::FullFile() {}
 
-FullFile::FullFile(std::string fileName)
-{
+FullFile::FullFile(std::string fileName) {
     this->fileName = fileName;
 }
 
-void FullFile::addProgramFunction(ProgramFunction programFunction)
-{
+void FullFile::addProgramFunction(ProgramFunction programFunction) {
     this->programFunctions.push_back(programFunction);
 }
 
-std::list<ProgramFunction> FullFile::getProgramFunctions()
-{
+std::list<ProgramFunction> FullFile::getProgramFunctions() {
     return this->programFunctions;
 }
 
-std::string FullFile::getFileName()
-{
+std::string FullFile::getFileName() {
     return this->fileName;
 }
 
 ProgramFunction FullFile::getProgramFunction(std::string functionName,
-        bool addNewIfNotFound)
-{
+        bool addNewIfNotFound) {
     for (ProgramFunction &programFunction : this->programFunctions) {
         if (programFunction.getFunctionName() == functionName) {
             return programFunction;
@@ -43,8 +38,7 @@ ProgramFunction FullFile::getProgramFunction(std::string functionName,
 }
 
 ProgramFunction *FullFile::getProgramFunctionRef(std::string functionName,
-        bool addNewIfNotFound)
-{
+        bool addNewIfNotFound) {
     for (ProgramFunction &programFunction : this->programFunctions) {
         if (programFunction.getFunctionName() == functionName) {
             return &programFunction;

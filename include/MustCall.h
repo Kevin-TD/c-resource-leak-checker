@@ -3,9 +3,8 @@
 
 #include "DataflowPass.h"
 
-class MustCall : public DataflowPass
-{
-protected:
+class MustCall : public DataflowPass {
+  protected:
     void leastUpperBound(MethodsSet &preMethods, MethodsSet &curMethods,
                          MethodsSet &result);
     void onAllocationFunctionCall(MethodsSet *input, std::string &fnName);
@@ -16,7 +15,7 @@ protected:
     void onAnnotation(MethodsSet *input, std::string &fnName,
                       AnnotationType annotationType);
 
-public:
+  public:
     MustCall();
 };
 

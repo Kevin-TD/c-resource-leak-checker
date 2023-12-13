@@ -5,13 +5,12 @@
 
 // holds some set of methods, whether it be the set of called methods or must
 // calls. all ProgramVariable's (PVs) have their own MethodsSet
-class MethodsSet
-{
-private:
+class MethodsSet {
+  private:
     bool setIsUninit;
     std::set<std::string> methods;
 
-public:
+  public:
     MethodsSet();
     MethodsSet(std::set<std::string> methods);
 

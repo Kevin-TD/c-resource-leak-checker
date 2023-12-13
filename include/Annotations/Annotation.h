@@ -15,21 +15,20 @@ enum AnnotationType {
 // already checks things like if a struct being referred to
 // actually exists in our program.
 
-class Annotation
-{
-private:
+class Annotation {
+  private:
     static bool
     methodsArgumentIsCorrectlyFormatted(const std::string &rawMethodsString);
     static bool
     rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString);
 
-protected:
+  protected:
     AnnotationType annotationType;
     std::set<std::string> annotationMethods;
     std::string targetName;
     bool isVerified;
 
-public:
+  public:
     static Annotation *generateAnnotation(const std::string &rawAnnotationString);
     bool annotationIsVerified();
     AnnotationType getAnnotationType();
@@ -38,8 +37,7 @@ public:
     virtual std::string generateStringRep() = 0;
 };
 
-namespace rlc_annotation_util
-{
+namespace rlc_annotation_util {
 
 // more for debugging
 std::string annotationTypeToString(AnnotationType anno);

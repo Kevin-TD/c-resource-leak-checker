@@ -1,17 +1,14 @@
 #include "RunAnalysis.h"
 
-namespace rlc_dataflow
-{
+namespace rlc_dataflow {
 
-bool CodeAnalyzer::runOnFunction(Function &F)
-{
+bool CodeAnalyzer::runOnFunction(Function &F) {
     doAnalysis(F, F.getParent()->getSourceFileName());
 
     return false;
 }
 
-bool CodeAnalyzer::doFinalization(Module &M)
-{
+bool CodeAnalyzer::doFinalization(Module &M) {
     onEnd();
     return false;
 }

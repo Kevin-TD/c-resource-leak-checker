@@ -2,13 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-void unknown_function(char* s)
-{
+void unknown_function(char* s) {
     printf("do nothing!");
 }
 
-int main ()
-{
+int main () {
     char *str;
     int a;
 

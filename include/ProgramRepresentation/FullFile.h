@@ -5,14 +5,13 @@
 
 // reflects a file. this class manages all the functions that make up a single
 // file.
-class FullFile
-{
-private:
+class FullFile {
+  private:
     std::list<ProgramFunction> programFunctions;
 
     std::string fileName;
 
-public:
+  public:
     FullFile();
     FullFile(std::string fileName);
 

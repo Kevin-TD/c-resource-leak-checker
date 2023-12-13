@@ -3,9 +3,8 @@
 
 #include "Annotation.h"
 
-class FunctionAnnotation : public Annotation
-{
-public:
+class FunctionAnnotation : public Annotation {
+  public:
     FunctionAnnotation(AnnotationType annotationType,
                        std::set<std::string> annotationMethods,
                        std::string targetName);

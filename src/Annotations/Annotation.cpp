@@ -7,23 +7,19 @@
 #include "Debug.h"
 #include "Utils.h"
 
-bool Annotation::annotationIsVerified()
-{
+bool Annotation::annotationIsVerified() {
     return this->isVerified;
 }
 
-AnnotationType Annotation::getAnnotationType()
-{
+AnnotationType Annotation::getAnnotationType() {
     return this->annotationType;
 }
 
-std::set<std::string> Annotation::getAnnotationMethods()
-{
+std::set<std::string> Annotation::getAnnotationMethods() {
     return this->annotationMethods;
 }
 
-std::string Annotation::getName()
-{
+std::string Annotation::getName() {
     return this->targetName;
 }
 
@@ -53,8 +49,7 @@ Example valid strings: "x", "x, y", "x,y,z", "x, y,z", "x, y, z"
 Example invalid strings: " x", "x y", "x,  y", "x,y,z  "
 */
 bool Annotation::methodsArgumentIsCorrectlyFormatted(
-    const std::string &rawMethodsString)
-{
+    const std::string &rawMethodsString) {
     int rawMethodsStringSize = rawMethodsString.size();
 
     if (rawMethodsStringSize == 0) {
@@ -81,7 +76,7 @@ bool Annotation::methodsArgumentIsCorrectlyFormatted(
             }
         } else if (rawMethodsString[i] == ' ') {
             if ((i == rawMethodsStringSize - 1) || rawMethodsString[i + 1] == ' ' ||
-                rawMethodsString[i + 1] == ',') {
+                    rawMethodsString[i + 1] == ',') {
                 logout("Method Args Error 3 on '"
                        << rawMethodsString
                        << "': space must be followed by alnum and cannot be last char, "
@@ -153,8 +148,7 @@ chunks[6..end] are all the methods
 
 // TODO: make method more generic and write automated testing for that
 bool Annotation::rawStringIsCorrectlyFormatted(
-    const std::string &rawAnnotationString)
-{
+    const std::string &rawAnnotationString) {
     std::vector<std::string> chunks =
         rlc_util::splitString(rawAnnotationString, ' ');
 
@@ -269,7 +263,7 @@ bool Annotation::rawStringIsCorrectlyFormatted(
         if (targetChunksSize >= 2) {
             // targetChunks[1] must be PARAM(int)
             if (!rlc_util::hasOnlyOneBalancedParentheses(targetChunks[1]) &&
-                targetChunks[1] != "RETURN") {
+                    targetChunks[1] != "RETURN") {
                 logout("Annotation String Error 10: invalid annotation '"
                        << rawAnnotationString
                        << "' target is malformed; # of balanced parentheses does not "
@@ -455,8 +449,7 @@ bool Annotation::rawStringIsCorrectlyFormatted(
     return true;
 }
 
-Annotation *Annotation::generateAnnotation(const std::string &rawAnno)
-{
+Annotation *Annotation::generateAnnotation(const std::string &rawAnno) {
     if (!Annotation::rawStringIsCorrectlyFormatted(rawAnno)) {
         return new ErrorAnnotation();
     }
@@ -562,11 +555,9 @@ Annotation *Annotation::generateAnnotation(const std::string &rawAnno)
     return new ErrorAnnotation();
 }
 
-namespace rlc_annotation_util
-{
+namespace rlc_annotation_util {
 
-std::string annotationTypeToString(AnnotationType anno)
-{
+std::string annotationTypeToString(AnnotationType anno) {
     switch (anno) {
     case AnnotationType::MustCallAnnotation:
         return "MustCallAnnotation";

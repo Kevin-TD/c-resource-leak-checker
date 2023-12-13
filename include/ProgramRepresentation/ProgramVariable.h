@@ -6,9 +6,8 @@
 #include "Utils.h"
 
 // reflects a variable visible in the C program and/or IR
-class ProgramVariable
-{
-private:
+class ProgramVariable {
+  private:
     Value *value;
 
     // name is llvm IR name without % or @
@@ -39,7 +38,7 @@ private:
     // otherwise, it is equal to -1
     int index;
 
-public:
+  public:
     ProgramVariable();
     ProgramVariable(Value *value);
     ProgramVariable(Value *value, MethodsSet methods);

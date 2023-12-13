@@ -3,13 +3,11 @@
 #include <unistd.h>
 #include "../../Annotations/Annotations.h"
 
-void does_free(char* s Calls("free"))
-{
+void does_free(char* s Calls("free")) {
     free(s);
 }
 
-int main()
-{
+int main() {
     char* s = (char*)malloc(15);
     does_free(s);
 

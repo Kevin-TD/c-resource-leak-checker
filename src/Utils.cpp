@@ -4,14 +4,12 @@
 
 const char *WHITESPACES = " \t\n\r";
 
-namespace rlc_dataflow
-{
+namespace rlc_dataflow {
 
 /*
 Code handles IR vars coming from parameters and explicitly defined vars
 */
-std::string variable(const Value *Val)
-{
+std::string variable(const Value *Val) {
     std::string Code;
     raw_string_ostream SS(Code);
     Val->print(SS);
@@ -57,8 +55,7 @@ std::string variable(const Value *Val)
 }
 
 bool IRstructNameEqualsCstructName(std::string &structName,
-                                   std::string &optLoadFileName)
-{
+                                   std::string &optLoadFileName) {
     LLVMContext context;
     SMDiagnostic error;
 
@@ -77,7 +74,7 @@ bool IRstructNameEqualsCstructName(std::string &structName,
 
     for (auto &DICompositeType : debugInfoFinder.types()) {
         if (DICompositeType->getTag() == dwarf::DW_TAG_structure_type &&
-            DICompositeType->getName() == structName) {
+                DICompositeType->getName() == structName) {
             return true;
         }
     }
@@ -85,12 +82,11 @@ bool IRstructNameEqualsCstructName(std::string &structName,
     return false;
 }
 
-StructType *unwrapValuePointerToStruct(Value *value)
-{
+StructType *unwrapValuePointerToStruct(Value *value) {
     PointerType *valuePointer = dyn_cast<PointerType>(value->getType());
     while (valuePointer) {
         if (StructType *structType =
-                dyn_cast<StructType>(valuePointer->getElementType())) {
+                    dyn_cast<StructType>(valuePointer->getElementType())) {
             return structType;
         }
 
@@ -101,18 +97,15 @@ StructType *unwrapValuePointerToStruct(Value *value)
 
 } // namespace rlc_dataflow
 
-namespace rlc_util
-{
+namespace rlc_util {
 
-bool isNumber(const std::string &s)
-{
+bool isNumber(const std::string &s) {
     char *endPtr;
     std::strtol(s.c_str(), &endPtr, 10);
     return endPtr != s.c_str() && *endPtr == '\0';
 }
 
-std::vector<std::string> splitString(const std::string &input, char delimiter)
-{
+std::vector<std::string> splitString(const std::string &input, char delimiter) {
     std::vector<std::string> result;
     std::stringstream ss(input);
     std::string token;
@@ -124,8 +117,7 @@ std::vector<std::string> splitString(const std::string &input, char delimiter)
     return result;
 }
 
-void removeWhitespace(std::string &input)
-{
+void removeWhitespace(std::string &input) {
     input.erase(
         std::remove_if(input.begin(), input.end(),
     [](char c) {
@@ -134,13 +126,11 @@ void removeWhitespace(std::string &input)
     input.end());
 }
 
-std::string sliceString(const std::string &str, int i, int j)
-{
+std::string sliceString(const std::string &str, int i, int j) {
     return str.substr(i, j - i + 1);
 }
 
-bool isValidCVariableName(const std::string &str)
-{
+bool isValidCVariableName(const std::string &str) {
     if (str.empty() || !std::isalpha(str[0]) && str[0] != '_') {
         return false;
     }
@@ -154,8 +144,7 @@ bool isValidCVariableName(const std::string &str)
     return true;
 }
 
-bool hasOnlyOneBalancedParentheses(const std::string &str)
-{
+bool hasOnlyOneBalancedParentheses(const std::string &str) {
     std::stack<char> parenthesesStack;
     int balancedPairs = 0;
 
@@ -176,8 +165,7 @@ bool hasOnlyOneBalancedParentheses(const std::string &str)
     return parenthesesStack.empty() && balancedPairs == 1;
 }
 
-std::string setToString(std::set<std::string> &setString)
-{
+std::string setToString(std::set<std::string> &setString) {
     std::string result = "{";
     int setStringSize = setString.size();
 
@@ -193,8 +181,7 @@ std::string setToString(std::set<std::string> &setString)
     return result;
 }
 
-bool startsWith(std::string str, std::string starts)
-{
+bool startsWith(std::string str, std::string starts) {
     return str.rfind(starts, 0) == 0;
 }
 

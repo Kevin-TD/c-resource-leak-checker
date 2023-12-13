@@ -5,8 +5,7 @@
 
 char* str2;
 
-int main ()
-{
+int main () {
     char *str;
 
     /* Initial memory allocation */

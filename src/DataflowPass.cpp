@@ -7,35 +7,30 @@
 void DataflowPass::setFunctions(
     std::set<std::string> safeFunctions, std::set<std::string> reallocFunctions,
     std::map<std::string, std::string> memoryFunctions,
-    AnnotationHandler annotations)
-{
+    AnnotationHandler annotations) {
     this->safeFunctions = safeFunctions;
     this->reallocFunctions = reallocFunctions;
     this->memoryFunctions = memoryFunctions;
     this->annotations = annotations;
 }
 
-void DataflowPass::setExpectedResult(FullFile expectedResult)
-{
+void DataflowPass::setExpectedResult(FullFile expectedResult) {
     this->expectedResult = expectedResult;
 }
 
-ProgramFunction DataflowPass::generatePassResults()
-{
+ProgramFunction DataflowPass::generatePassResults() {
     ProgramFunction preProgramFunction;
     ProgramFunction postProgramFunction;
     this->analyzeCFG(this->cfg, preProgramFunction, postProgramFunction, "");
     return postProgramFunction;
 }
 
-void DataflowPass::setCFG(CFG *cfg)
-{
+void DataflowPass::setCFG(CFG *cfg) {
     this->cfg = cfg;
 }
 
 void DataflowPass::transfer(Instruction *instruction,
-                            ProgramPoint &inputProgramPoint)
-{
+                            ProgramPoint &inputProgramPoint) {
     std::string branchName = instruction->getParent()->getName().str();
 
     if (StoreInst *store = dyn_cast<StoreInst>(instruction)) {
@@ -59,7 +54,7 @@ void DataflowPass::transfer(Instruction *instruction,
             MethodsSet *methods = pv->getMethodsSetRef();
 
             if (this->memoryFunctions[fnName].size() > 0 &&
-                assignedVar.isIdentifier()) {
+                    assignedVar.isIdentifier()) {
 
                 logout("calling on alloc function for argname "
                        << arg << " and fnname " << fnName << " fnname = " << fnName);
@@ -93,7 +88,7 @@ void DataflowPass::transfer(Instruction *instruction,
                 ProgramVariable bitcastVar = ProgramVariable(store->getOperand(1));
 
                 if (this->memoryFunctions[fnName].size() > 0 &&
-                    bitcastVar.isIdentifier()) {
+                        bitcastVar.isIdentifier()) {
                     std::string arg = bitcastVar.getCleanedName();
                     MethodsSet *methods =
                         inputProgramPoint.getPVRef(arg, false)->getMethodsSetRef();
@@ -199,7 +194,7 @@ void DataflowPass::transfer(Instruction *instruction,
 
             Annotation *anno = this->annotations.getStructAnnotation(structName, i);
             if (StructAnnotation *structAnno =
-                    dynamic_cast<StructAnnotation *>(anno)) {
+                        dynamic_cast<StructAnnotation *>(anno)) {
                 ProgramVariable sourceVar = ProgramVariable(allocate, i);
 
                 if (!sourceVar.isIdentifier()) {
@@ -219,8 +214,7 @@ void DataflowPass::transfer(Instruction *instruction,
 
 void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
                               ProgramFunction &postProgramFunction,
-                              std::string priorBranch)
-{
+                              std::string priorBranch) {
     std::string currentBranch = cfg->getBranchName();
 
     if (currentBranch == FIRST_BRANCH_NAME) {
@@ -336,8 +330,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
     }
 }
 
-void DataflowPass::insertAnnotation(Annotation *anno, ProgramVariable *pv)
-{
+void DataflowPass::insertAnnotation(Annotation *anno, ProgramVariable *pv) {
     AnnotationType annoType = anno->getAnnotationType();
     std::set<std::string> annoMethods = anno->getAnnotationMethods();
     MethodsSet *argMethods = pv->getMethodsSetRef();
@@ -350,8 +343,7 @@ void DataflowPass::insertAnnotation(Annotation *anno, ProgramVariable *pv)
 bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
         const std::string &fnName,
         const std::string &argName,
-        ProgramPoint &programPoint)
-{
+        ProgramPoint &programPoint) {
     if (argIndex != 0 || !call->getCalledFunction()->hasStructRetAttr()) {
         return false;
     }
@@ -405,7 +397,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                         this->annotations.getAllParameterAnnotationsWithFields(fnName);
                     for (Annotation *anno : allAnnotationsWithFields) {
                         if (ParameterAnnotation *paramAnno =
-                                dynamic_cast<ParameterAnnotation *>(anno)) {
+                                    dynamic_cast<ParameterAnnotation *>(anno)) {
                             if (paramAnno->getField() == fieldIndex) {
                                 logout("found param annotation "
                                        << paramAnno->generateStringRep());
@@ -420,7 +412,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                     this->annotations.getAllParameterAnnotationsWithoutFields(fnName);
                 for (Annotation *anno : allAnnotationsWithoutFields) {
                     if (ParameterAnnotation *paramAnno =
-                            dynamic_cast<ParameterAnnotation *>(anno)) {
+                                dynamic_cast<ParameterAnnotation *>(anno)) {
                         // j - 1 because the 0th argument of the IR function call is not a
                         // part of the actual function. the rest of the arguments are the
                         // ones a part of the call.
@@ -442,8 +434,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
 }
 
 bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
-        ProgramVariable *pv)
-{
+        ProgramVariable *pv) {
     /*
     handles the case where function being called is "an indirect function
     invocation", meaning its target is determined at runtime. we are not
@@ -517,13 +508,12 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
 }
 
 bool DataflowPass::handleIfAnnotationExistsForCallInsts(
-    const std::string &fnName, int argIndex, ProgramVariable *pv)
-{
+    const std::string &fnName, int argIndex, ProgramVariable *pv) {
     // checks for parameter annotations (no field specified)
     Annotation *mayParameterAnnotation =
         this->annotations.getParameterAnnotation(fnName, argIndex);
     if (ParameterAnnotation *paramAnno =
-            dynamic_cast<ParameterAnnotation *>(mayParameterAnnotation)) {
+                dynamic_cast<ParameterAnnotation *>(mayParameterAnnotation)) {
         logout("found param annotation " << paramAnno->generateStringRep());
         this->insertAnnotation(paramAnno, pv);
         return true;
@@ -535,7 +525,7 @@ bool DataflowPass::handleIfAnnotationExistsForCallInsts(
             this->annotations.getParameterAnnotation(fnName, argIndex,
                     pv->getIndex());
         if (ParameterAnnotation *paramAnno =
-                dynamic_cast<ParameterAnnotation *>(mayParamAnnoWithField)) {
+                    dynamic_cast<ParameterAnnotation *>(mayParamAnnoWithField)) {
             logout("found param struct annotation "
                    << paramAnno->generateStringRep());
             this->insertAnnotation(paramAnno, pv);
@@ -546,17 +536,14 @@ bool DataflowPass::handleIfAnnotationExistsForCallInsts(
     return false;
 }
 
-void DataflowPass::setAnnotations(AnnotationHandler annotations)
-{
+void DataflowPass::setAnnotations(AnnotationHandler annotations) {
     this->annotations = annotations;
 }
 
-FullFile DataflowPass::getExpectedResult()
-{
+FullFile DataflowPass::getExpectedResult() {
     return this->expectedResult;
 }
 
-void DataflowPass::setProgramFunction(ProgramFunction programFunction)
-{
+void DataflowPass::setProgramFunction(ProgramFunction programFunction) {
     this->programFunction = programFunction;
 }

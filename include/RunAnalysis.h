@@ -39,8 +39,7 @@
 
 using namespace llvm;
 
-namespace rlc_dataflow
-{
+namespace rlc_dataflow {
 
 struct CodeAnalyzer : public FunctionPass {
     static char ID;
@@ -55,12 +54,11 @@ struct CodeAnalyzer : public FunctionPass {
     // calls when all functions have been passed
     bool doFinalization(Module &M) override;
 
-protected:
+  protected:
     void doAnalysis(Function &F, std::string optLoadFileName);
     void onEnd();
 
-    std::string getAnalysisName()
-    {
+    std::string getAnalysisName() {
         return "CalledMethodsPass";
     }
 };

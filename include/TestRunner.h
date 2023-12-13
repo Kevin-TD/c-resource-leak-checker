@@ -3,9 +3,8 @@
 
 #include "DataflowPass.h"
 
-class TestRunner
-{
-public:
+class TestRunner {
+  public:
     // if in the tests the branch is not specified, it will default to
     // lastBranchName
     static bool runTests(const std::string functionName,

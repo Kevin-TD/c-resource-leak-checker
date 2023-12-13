@@ -2,34 +2,28 @@
 #include "Constants.h"
 #include "Debug.h"
 
-CalledMethods::CalledMethods()
-{
+CalledMethods::CalledMethods() {
     this->passName = CALLED_METHODS_PASS_NAME;
 }
 
 void CalledMethods::onAllocationFunctionCall(MethodsSet *input,
         std::string &fnName) {}
 void CalledMethods::onDeallocationFunctionCall(MethodsSet *input,
-        std::string &fnName)
-{
+        std::string &fnName) {
     input->addMethod(fnName);
 }
-void CalledMethods::onUnknownFunctionCall(MethodsSet *input)
-{
+void CalledMethods::onUnknownFunctionCall(MethodsSet *input) {
     input->clearMethods();
 }
 void CalledMethods::onReallocFunctionCall(MethodsSet *input,
-        std::string &fnName)
-{
+        std::string &fnName) {
     input->clearMethods();
 }
-void CalledMethods::onSafeFunctionCall(MethodsSet *input, std::string &fnName)
-{
+void CalledMethods::onSafeFunctionCall(MethodsSet *input, std::string &fnName) {
 }
 void CalledMethods::leastUpperBound(MethodsSet &preMethods,
                                     MethodsSet &curMethods,
-                                    MethodsSet &result)
-{
+                                    MethodsSet &result) {
     std::set<std::string> res;
     std::set<std::string> preSet = preMethods.getMethods();
     std::set<std::string> curSet = curMethods.getMethods();
@@ -40,8 +34,7 @@ void CalledMethods::leastUpperBound(MethodsSet &preMethods,
 }
 
 void CalledMethods::onAnnotation(MethodsSet *input, std::string &fnName,
-                                 AnnotationType annotationType)
-{
+                                 AnnotationType annotationType) {
     if (annotationType == AnnotationType::CallsAnnotation) {
         input->addMethod(fnName);
     }

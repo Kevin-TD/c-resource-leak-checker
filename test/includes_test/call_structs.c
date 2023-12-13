@@ -25,27 +25,23 @@
 // annotations can be in either .c or .h. if it's in both, check if they're the same
 
 
-void does_free(char* s Calls("free"))
-{
+void does_free(char* s Calls("free")) {
     free(s);
 }
 
-char* MustCall("free") creates_obligation(char* s Calls("free"), my_struct X Calls("free", "x"))
-{
+char* MustCall("free") creates_obligation(char* s Calls("free"), my_struct X Calls("free", "x")) {
     free(s);
     free(X.x);
     char* str = (char*)malloc(15);
     return str;
 }
 
-my_struct Calls("free", "x") does_something(my_struct S Calls("free", "x"))
-{
+my_struct Calls("free", "x") does_something(my_struct S Calls("free", "x")) {
     free(S.x);
     return S;
 }
 
-int main()
-{
+int main() {
     // should we have to worry about cases where structs are defined
     // inside a method body? the AST cannot easily extract annotations
     // when the struct is inside a method body (we to go inside the method).

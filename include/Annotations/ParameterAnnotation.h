@@ -3,9 +3,8 @@
 
 #include "Annotation.h"
 
-class ParameterAnnotation : public Annotation
-{
-private:
+class ParameterAnnotation : public Annotation {
+  private:
     // iff the parameter is a struct, this refers to the
     // index of that struct. e.g., for a
     // struct my_struct { int x, y; }
@@ -18,7 +17,7 @@ private:
 
     int nthParameter;
 
-public:
+  public:
     ParameterAnnotation(AnnotationType annotationType,
                         std::set<std::string> annotationMethods,
                         std::string targetName, int field, int nthParameter);

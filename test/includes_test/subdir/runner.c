@@ -1,26 +1,22 @@
 #include "../call_structs.h"
 
-void does_free(char* s Calls("free"))
-{
+void does_free(char* s Calls("free")) {
     free(s);
 }
 
-char* MustCall("free") creates_obligation(char* s Calls("free"), my_struct X Calls("free", "x"))
-{
+char* MustCall("free") creates_obligation(char* s Calls("free"), my_struct X Calls("free", "x")) {
     free(s);
     free(X.x);
     char* str = (char*)malloc(15);
     return str;
 }
 
-my_struct Calls("free", "x") does_something(my_struct S Calls("free", "x"))
-{
+my_struct Calls("free", "x") does_something(my_struct S Calls("free", "x")) {
     free(S.x);
     return S;
 }
 
-int main()
-{
+int main() {
     struct my_struct k;
     my_struct_2 m;
     struct my_struct_3 km;

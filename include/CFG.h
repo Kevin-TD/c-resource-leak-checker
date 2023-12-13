@@ -3,15 +3,14 @@
 
 #include "Utils.h"
 
-class CFG
-{
-private:
+class CFG {
+  private:
     std::string branchName;
     std::list<CFG *> successors;
     std::list<CFG *> predecessors;
     llvm::SetVector<Instruction *> instructions;
 
-public:
+  public:
     CFG();
     CFG(std::string branchName, llvm::SetVector<Instruction *> instructions);
     CFG(std::string branchName);

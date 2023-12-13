@@ -13,9 +13,8 @@
 #include "RunAnalysis.h"
 #include "Utils.h"
 
-class DataflowPass
-{
-private:
+class DataflowPass {
+  private:
     void analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
                     ProgramFunction &postProgramFunction,
                     std::string priorBranch);
@@ -75,7 +74,7 @@ private:
     bool handleIfAnnotationExistsForCallInsts(const std::string &fnName,
             int argIndex, ProgramVariable *pv);
 
-protected:
+  protected:
     ProgramFunction programFunction;
     AnnotationHandler annotations;
     std::string testName;
@@ -96,7 +95,7 @@ protected:
     virtual void onAnnotation(MethodsSet *input, std::string &fnName,
                               AnnotationType annotationType) = 0;
 
-public:
+  public:
     void setFunctions(std::set<std::string> safeFunctions,
                       std::set<std::string> reallocFunctions,
                       std::map<std::string, std::string> memoryFunctions,

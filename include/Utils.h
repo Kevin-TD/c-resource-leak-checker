@@ -5,8 +5,7 @@
 
 extern const char *WHITESPACES;
 
-namespace rlc_dataflow
-{
+namespace rlc_dataflow {
 
 /**
  * @brief Get a human-readable string name for an llvm Value
@@ -31,8 +30,7 @@ bool IRstructNameEqualsCstructName(std::string &structName,
 
 } // namespace rlc_dataflow
 
-namespace rlc_util
-{
+namespace rlc_util {
 
 bool isNumber(const std::string &s);
 

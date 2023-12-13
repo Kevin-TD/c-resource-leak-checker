@@ -25,32 +25,27 @@ typedef struct my_struct {
 } my_struct;
 
 
-my_struct Calls("free", "a") does_something_a(my_struct S Calls("free", "a"))
-{
+my_struct Calls("free", "a") does_something_a(my_struct S Calls("free", "a")) {
     free(S.a);
     return S;
 }
 
-my_struct Calls("free", "b") does_something_b(my_struct S Calls("free", "b"))
-{
+my_struct Calls("free", "b") does_something_b(my_struct S Calls("free", "b")) {
     free(S.b);
     return S;
 }
 
-my_struct Calls("free", "c") does_something_c(my_struct S Calls("free", "c"))
-{
+my_struct Calls("free", "c") does_something_c(my_struct S Calls("free", "c")) {
     free(S.c);
     return S;
 }
 
-my_struct Calls("free", "d") does_something_d(int a, my_struct S Calls("free", "d"), my_struct S1 Calls("free", "d"), int c, char* m Calls("free"))
-{
+my_struct Calls("free", "d") does_something_d(int a, my_struct S Calls("free", "d"), my_struct S1 Calls("free", "d"), int c, char* m Calls("free")) {
     free(S.d);
     return S;
 }
 
-int main()
-{
+int main() {
     my_struct A;
     A.a = (char*)malloc(15);
     my_struct A1 = does_something_a(A);
