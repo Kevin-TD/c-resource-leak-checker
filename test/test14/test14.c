@@ -3,19 +3,19 @@
 #include <string.h>
 
 int main () {
-   char* str;
+    char* str;
 
-   char** p = &str; 
-   char*** x = &p;
+    char** p = &str;
+    char*** x = &p;
 
-   *p = (char*)malloc(15);
+    *p = (char*)malloc(15);
 
-   strcat(*p, "hello");
-   printf("String = %s,  Address = %u\n", *p, *p);
+    strcat(*p, "hello");
+    printf("String = %s,  Address = %u\n", *p, *p);
 
 
     free(**x);
-   return(0);
+    return(0);
 
- 
+
 }

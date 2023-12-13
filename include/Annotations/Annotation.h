@@ -5,8 +5,8 @@
 #include "Utils.h"
 
 enum AnnotationType {
-  MustCallAnnotation,
-  CallsAnnotation,
+    MustCallAnnotation,
+    CallsAnnotation,
 };
 
 // TODO: add virtual method verifyAnnotation and implement for the superclasses
@@ -16,25 +16,25 @@ enum AnnotationType {
 // actually exists in our program.
 
 class Annotation {
-private:
-  static bool
-  methodsArgumentIsCorrectlyFormatted(const std::string &rawMethodsString);
-  static bool
-  rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString);
+  private:
+    static bool
+    methodsArgumentIsCorrectlyFormatted(const std::string &rawMethodsString);
+    static bool
+    rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString);
 
-protected:
-  AnnotationType annotationType;
-  std::set<std::string> annotationMethods;
-  std::string targetName;
-  bool isVerified;
+  protected:
+    AnnotationType annotationType;
+    std::set<std::string> annotationMethods;
+    std::string targetName;
+    bool isVerified;
 
-public:
-  static Annotation *generateAnnotation(const std::string &rawAnnotationString);
-  bool annotationIsVerified();
-  AnnotationType getAnnotationType();
-  std::set<std::string> getAnnotationMethods();
-  std::string getName();
-  virtual std::string generateStringRep() = 0;
+  public:
+    static Annotation *generateAnnotation(const std::string &rawAnnotationString);
+    bool annotationIsVerified();
+    AnnotationType getAnnotationType();
+    std::set<std::string> getAnnotationMethods();
+    std::string getName();
+    virtual std::string generateStringRep() = 0;
 };
 
 namespace rlc_annotation_util {

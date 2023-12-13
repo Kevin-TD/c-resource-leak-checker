@@ -7,22 +7,22 @@ char *strcpy(char *__restrict__ __dest, const char *__restrict__ __src) {
 }
 
 int main () {
-   char *str;
-   int a;
+    char *str;
+    int a;
 
-   /* Initial memory allocation */
-   str = (char *) malloc(15);
-   strcpy(str, "helloworld");
-   printf("String = %s,  Address = %u\n", str, str);
+    /* Initial memory allocation */
+    str = (char *) malloc(15);
+    strcpy(str, "helloworld");
+    printf("String = %s,  Address = %u\n", str, str);
 
-   /* Reallocating memory */
-   str = (char *) realloc(str, 25);
-   strcat(str, "hello");
-   printf("String = %s,  Address = %u\n", str, str);
+    /* Reallocating memory */
+    str = (char *) realloc(str, 25);
+    strcat(str, "hello");
+    printf("String = %s,  Address = %u\n", str, str);
 
-   free(str);
-   
-   strcpy(str, "helloworld");
-   
-   return(0);
+    free(str);
+
+    strcpy(str, "helloworld");
+
+    return(0);
 }

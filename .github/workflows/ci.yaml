@@ -13,14 +13,15 @@ jobs:
     - name: Pull Docker Image
       run: docker pull cis547/cis547-base:latest
     
-    - name: Install Clang Format
+    - name: Install Artistic Style Formatter
       run: |
         sudo apt-get update
-        sudo apt install -y clang-format
+        sudo apt install -y astyle
+        astyle --version
     
     - name: Check Code Formatting
       run: |
-        find . -path ./build -prune -o \( -name '*.cpp' -o -name '*.h' \) -print | xargs clang-format --dry-run -Werror --style=LLVM
+        python3 check_formatting.py
 
     - name: Run Analysis in Docker
       run: |

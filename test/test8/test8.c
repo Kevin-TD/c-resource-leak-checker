@@ -36,33 +36,32 @@ void free3(void* p Calls("free3")) {
 }
 
 int main () {
-   char *str;
-   int a = getchar();
+    char *str;
+    int a = getchar();
 
-   str = (char *) malloc(15);
-   strcpy(str, "helloworld");
-   printf("String = %s,  Address = %u\n", str, str);
+    str = (char *) malloc(15);
+    strcpy(str, "helloworld");
+    printf("String = %s,  Address = %u\n", str, str);
 
-   str = (char *) realloc(str, 25);
-   strcat(str, "hello");
-   printf("String = %s,  Address = %u\n", str, str);  
+    str = (char *) realloc(str, 25);
+    strcat(str, "hello");
+    printf("String = %s,  Address = %u\n", str, str);
 
     for (int i = 0; i < 10; i++) {
         free0(str);
     }
 
-    free0(str); 
+    free0(str);
 
     if (a < 15) {
         free1(str);
-    }
-    else {
+    } else {
         free1(str);
     }
 
-   return(0);
+    return(0);
 
- 
+
 }
 
 /*

@@ -36,16 +36,16 @@ void free3(void* p Calls("free3")) {
 }
 
 int main () {
-   char *str;
-   int a = getchar();
+    char *str;
+    int a = getchar();
 
-   str = (char *) malloc(15);
-   strcpy(str, "helloworld");
-   printf("String = %s,  Address = %u\n", str, str);
+    str = (char *) malloc(15);
+    strcpy(str, "helloworld");
+    printf("String = %s,  Address = %u\n", str, str);
 
-   str = (char *) realloc(str, 25);
-   strcat(str, "hello");
-   printf("String = %s,  Address = %u\n", str, str);  
+    str = (char *) realloc(str, 25);
+    strcat(str, "hello");
+    printf("String = %s,  Address = %u\n", str, str);
 
     while (a < 10) {
         while (a < 15) {
@@ -59,31 +59,31 @@ int main () {
         if (a == -15) {
             free(str);
         }
-        a++; 
+        a++;
 
         switch (a) {
-            case 0:
-                free(str);
-                break; 
-            case 1: 
-                free(str); 
-                break;
-            default:
-                free(str);
+        case 0:
+            free(str);
+            break;
+        case 1:
+            free(str);
+            break;
+        default:
+            free(str);
         }
-        
+
     }
 
     free0(str);
-    
 
-   return(0);
 
- 
+    return(0);
+
+
 }
 
 /*
-Results 
+Results
 sw.epilog str {free}
 while.end14 str {free0}
 
