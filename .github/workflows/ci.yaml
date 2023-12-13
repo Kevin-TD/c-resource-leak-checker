@@ -17,10 +17,11 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt install -y astyle
+        astyle --version
     
     - name: Check Code Formatting
       run: |
-        ! astyle --dry-run --style=google --exclude=build --recursive *.cpp,*.h,*.c -n | grep -q Formatted
+        ! astyle --dry-run --style=google --exclude=build --recursive *.cpp,*.h,*.c -n | grep Formatted
 
     - name: Run Analysis in Docker
       run: |
