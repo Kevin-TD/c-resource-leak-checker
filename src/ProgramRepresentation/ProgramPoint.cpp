@@ -16,7 +16,7 @@ void ProgramPoint::logoutProgramPoint(const ProgramPoint &point,
                                       bool logMethods) {
   logout("\n**point name " << point.getPointName());
   for (auto aliasSet : point.getProgramVariableAliasSets().getSets()) {
-    logout("> alias set = " << aliasSet.getVarsStringUsingRawNames());
+    logout("> alias set = " << aliasSet.toString(false));
 
     if (logMethods) {
       logout("--> methods set = " << aliasSet.getMethodsString());
@@ -28,7 +28,7 @@ void ProgramPoint::logoutProgramPoint(const ProgramPoint *point,
                                       bool logMethods) {
   logout("\n**point name " << point->getPointName());
   for (auto aliasSet : point->getProgramVariableAliasSets().getSets()) {
-    logout("> alias set = " << aliasSet.getVarsStringUsingRawNames());
+    logout("> alias set = " << aliasSet.toString(false));
 
     if (logMethods) {
       logout("--> methods set = " << aliasSet.getMethodsString());
@@ -60,9 +60,24 @@ DisjointedPVAliasSets ProgramPoint::getProgramVariableAliasSets() const {
 
 std::string ProgramPoint::getPointName() const { return this->pointName; }
 
-PVAliasSet *ProgramPoint::getPVASRef(const std::string &cleanedName,
+PVAliasSet *ProgramPoint::getPVASRef(ProgramVariable programVar,
                                      bool addNewIfNotFound) {
-  PVAliasSet *pvas = this->programVariableAliasSets.getSetRef(cleanedName);
+  PVAliasSet *pvas = this->programVariableAliasSets.getSetRef(programVar);
+
+  if (pvas) {
+    return pvas;
+  }
+
+  if (addNewIfNotFound) {
+    this->addVariable(programVar);
+    return &this->programVariableAliasSets.sets.back();
+  }
+
+  return NULL;
+}
+
+PVAliasSet *ProgramPoint::getPVASRef(const std::string& cleanedName, bool addNewIfNotFound) {
+  PVAliasSet *pvas = this->programVariableAliasSets.getSetRef(cleanedName); 
 
   if (pvas) {
     return pvas;
@@ -77,24 +92,17 @@ PVAliasSet *ProgramPoint::getPVASRef(const std::string &cleanedName,
   return NULL;
 }
 
-PVAliasSet ProgramPoint::getPVAS(std::string cleanedName,
-                                 bool addNewIfNotFound) {
-  for (PVAliasSet set : this->programVariableAliasSets.sets) {
-    if (set.containsByCleanedName(cleanedName)) {
-      return set;
-    }
   }
 
   if (addNewIfNotFound) {
     ProgramVariable newPV = ProgramVariable(cleanedName);
+    ProgramVariable newPV = ProgramVariable(value);
     this->addVariable(newPV);
     return this->programVariableAliasSets.sets.back();
+    return &this->programVariableAliasSets.sets.back();
   }
 
-  errs() << "Error at getPV: Program var not found and new program var not "
-            "added for var '"
-         << cleanedName << "'\n";
-  std::exit(EXIT_FAILURE);
+  return NULL;
 }
 
 bool ProgramPoint::equals(ProgramPoint *programPoint) {
@@ -102,7 +110,7 @@ bool ProgramPoint::equals(ProgramPoint *programPoint) {
     PVAliasSet *pointAliasSet;
 
     for (ProgramVariable pv : set.getProgramVariables()) {
-      pointAliasSet = programPoint->getPVASRef(pv.getCleanedName(), false);
+      pointAliasSet = programPoint->getPVASRef(pv, false);
       if (pointAliasSet) {
         break;
       }
@@ -121,7 +129,7 @@ bool ProgramPoint::equals(ProgramPoint *programPoint) {
        programPoint->getProgramVariableAliasSets().getSets()) {
     PVAliasSet *selfAliasSet;
     for (ProgramVariable pointPV : pointSet.getProgramVariables()) {
-      selfAliasSet = this->getPVASRef(pointPV.getCleanedName(), false);
+      selfAliasSet = this->getPVASRef(pointPV, false);
 
       if (selfAliasSet) {
         break;
@@ -140,24 +148,14 @@ bool ProgramPoint::equals(ProgramPoint *programPoint) {
   return true;
 }
 
-bool ProgramPoint::varExists(const std::string &cleanedName) {
-  return programVariableAliasSets.varIsInAnySetByCleanedName(cleanedName);
+bool ProgramPoint::varExists(ProgramVariable programVar) {
+  return programVariableAliasSets.elementIsInAnySet(programVar);
 }
 
 void ProgramPoint::setProgramVariableAliasSets(
     DisjointedPVAliasSets programVariableAliasSets) {
   this->programVariableAliasSets.clear();
   this->programVariableAliasSets = programVariableAliasSets;
-}
-
-void ProgramPoint::setProgramVariableAliasSets(ProgramPoint *programPoint) {
-  this->programVariableAliasSets.clear();
-  this->programVariableAliasSets = programPoint->getProgramVariableAliasSets();
-}
-
-void ProgramPoint::setProgramVariableAliasSets(ProgramPoint programPoint) {
-  this->programVariableAliasSets.clear();
-  this->programVariableAliasSets = programPoint.getProgramVariableAliasSets();
 }
 
 void ProgramPoint::add(ProgramPoint *programPoint) {

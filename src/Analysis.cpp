@@ -26,6 +26,9 @@
 // remove it from safe/realloc/memory functions (wherever it's in).
 // it's annotations should be checked (once annotations are fully implemented)
 
+// TODO: git rebase main once api concerns addressed. resolving merge conflicts with formatting should not be in the same update
+// TODO: handle un-aliasing
+
 struct InstructionHolder {
   SetVector<Instruction *> branch;
   SetVector<Instruction *> successors;
@@ -263,9 +266,12 @@ void doAliasReasoning(Instruction *instruction,
     ProgramVariable receivingVar = ProgramVariable(load);
     ProgramVariable givingVar = ProgramVariable(load->getPointerOperand());
 
+    logout("add alias for analysis loadinst");
     programPoint->addAlias(receivingVar, givingVar);
 
   } else if (StoreInst *store = dyn_cast<StoreInst>(instruction)) {
+    logout("store inst " << *instruction);
+
     Value *valueToStore = store->getOperand(0);
     Value *receivingValue = store->getOperand(1);
 
@@ -285,6 +291,7 @@ void doAliasReasoning(Instruction *instruction,
 
     if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
       ProgramVariable callVar = ProgramVariable(call);
+      logout("add alias for analysis storeinst call inst");
       programPoint->addAlias(callVar, receivingVar);
       return;
     }
@@ -321,8 +328,11 @@ void doAliasReasoning(Instruction *instruction,
         return;
       }
     }
-
+    
+    logout("add alias for analysis storeinst else case");
+    ProgramPoint::logoutProgramPoint(*programPoint, true);
     programPoint->addAlias(varToStore, receivingVar);
+    ProgramPoint::logoutProgramPoint(*programPoint, true);
 
   } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
     ProgramVariable sourceVar = ProgramVariable(bitcast);
@@ -352,6 +362,7 @@ void doAliasReasoning(Instruction *instruction,
       }
     }
 
+    logout("add alias for analysis bitcast");
     programPoint->addAlias(sourceVar, destinationVar);
 
   } else if (GetElementPtrInst *gepInst =
@@ -371,9 +382,10 @@ void doAliasReasoning(Instruction *instruction,
     see:
     https://mapping-high-level-constructs-to-llvm-ir.readthedocs.io/en/latest/basic-constructs/structures.html
     */
-
+   
     llvm::Type *structType = gepInst->getPointerOperandType();
     llvm::Value *pointerOperand = gepInst->getPointerOperand();
+
 
     if (llvm::PointerType *pointerType =
             llvm::dyn_cast<llvm::PointerType>(pointerOperand->getType())) {
@@ -388,6 +400,7 @@ void doAliasReasoning(Instruction *instruction,
           if (BitCastInst *bitcast = dyn_cast<BitCastInst>(pointerOperand)) {
             ProgramVariable structVar =
                 ProgramVariable(bitcast->getOperand(0), index);
+            logout("add alias for analysis gepinst");
             programPoint->addAlias(sourceVar, structVar);
             return;
           }
@@ -395,7 +408,10 @@ void doAliasReasoning(Instruction *instruction,
           ProgramVariable structPV = ProgramVariable(pointerOperand);
 
           PVAliasSet *originalStructPVASRef =
-              programPoint->getPVASRef(structPV.getCleanedName(), false);
+              programPoint->getPVASRef(structPV, false);
+          
+
+          ProgramFunction::logoutProgramFunction(programFunction, false);
 
           for (ProgramVariable pv :
                originalStructPVASRef->getProgramVariables()) {
@@ -474,6 +490,7 @@ void doAliasReasoning(Instruction *instruction,
         rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
       ProgramVariable sourceVar = ProgramVariable(call);
       ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
+      logout("add alias for analysis callinst llvm annotation"); 
       programPoint->addAlias(sourceVar, destinationVar);
     }
   }

@@ -48,7 +48,7 @@ public:
 
   // returns true iff index does not equal -1, meaning the program var
   // refers to a struct's field
-  bool hasIndex();
+  bool containsStructFieldVar();
 
   // IR names like %7 are considered unnamed and program names like %str are
   // named
