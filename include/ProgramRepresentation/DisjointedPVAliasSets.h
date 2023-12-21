@@ -3,7 +3,9 @@
 
 #include "ProgramRepresentation/PVAliasSet.h"
 
-// manages a set of alias sets
+// manages a disjoint set (https://en.wikipedia.org/wiki/Disjoint-set_data_structure) 
+// of program variable must-aliases. 
+// each program variable is an element of no more than 1 set. 
 class DisjointedPVAliasSets {
 private:
   std::list<PVAliasSet> sets;
@@ -11,16 +13,6 @@ private:
   // returns a reference to the alias set programVar belongs to. if it's not
   // found, .end() is returned.
   typename std::list<PVAliasSet>::iterator findIter(ProgramVariable programVar);
-
-  // returns a reference to the alias set where there is a program variables
-  // with raw name rawName. if it's not found, .end() is returned.
-  typename std::list<PVAliasSet>::iterator
-  findIterByRawName(const std::string &rawName);
-
-  // returns a reference to the alias set where there is a program variables
-  // with cleaned name cleanedName. if it's not found, .end() is returned.
-  typename std::list<PVAliasSet>::iterator
-  findIterByCleanedName(const std::string &cleanedName);
 
   // puts the elements of set2 into set1 in constant time. set2 is also deleteed
   // from our set of sets.
@@ -31,31 +23,29 @@ public:
   // returns true iff programVar is in any of the disjointed sets
   bool elementIsInAnySet(ProgramVariable programVar);
 
-  // returns true iff there is a program variable in any of the sets
-  // with cleaned name cleanedName
-  bool varIsInAnySetByCleanedName(const std::string &cleanedName);
-
-  // returns true iff there is a program variable in any of the sets
-  // with raw name rawName
-  bool varIsInAnySetByRawName(const std::string &rawName);
-
   // returns a copy of every disjointed set
   std::list<PVAliasSet> getSets() const;
 
-  // returns the alias set belonging to programVar. an empty set is returned if
-  // it's not found.
-  PVAliasSet getSet(ProgramVariable programVar);
+  // returns a reference to the alias set that has programVar. 
+  // NULL is returned if it's not found. 
+  PVAliasSet *getSetRef(ProgramVariable programVar);
 
-  // returns the alias set that has a program variable with cleaned name
-  // cleanedName. an empty set is returned if it's not found.
-  PVAliasSet getSet(const std::string &cleanedName);
+  // returns a reference to the alias set that has a program variable 
+  // with name cleanedName. NULL is return if it's not found. 
+  // it is preferable to use the overload that specifies a ProgramVariable to avoid 
+  // collisions between local (%) and global (@) LLVM identifiers. see 
+  // LLVM docs: https://llvm.org/docs/LangRef.html#identifiers
+  PVAliasSet *getSetRef(const std::string& cleanedName);
 
   // returns a reference to the alias set that has a program variable with
   // cleaned name cleanedName. an empty set is returned if it's not found.
   PVAliasSet *getSetRef(const std::string &cleanedName);
+  // returns a reference to the alias set that has a program variable 
+  // with value val. NULL is return if it's not found. 
+  PVAliasSet *getSetRef(Value* val);
 
-  // unions sets A and B of elementA and elementB. if A == B, or elementA or
-  // elementB are not actually elements of any set, the union is not performed.
+  // unions the sets that contain either elementA or elementB. if elementA == elementB, or 
+  // elementA or elementB are not actually elements of any set, the union is not performed. 
   void unionSets(ProgramVariable elementA, ProgramVariable elementB);
 
   // creates a new disjoint set if it's already not an element in any of the
@@ -70,7 +60,8 @@ public:
   // removes all sets
   void clear();
 
-  int getNumberOfSets();
+  // returns the number of disjointed sets
+  int size();
 
   // adds pvas by either merging it into one of our sets or adding it to our set
   // of sets. the program variables in pvas are merged if it has a program

@@ -47,9 +47,7 @@ bool ProgramVariable::hasProgramName() {
     return this->value->hasName();
 }
 
-bool ProgramVariable::hasIndex() {
-    return this->index != -1;
-}
+bool ProgramVariable::containsStructFieldVar() { return this->index != -1; }
 
 int ProgramVariable::getIndex() {
     return this->index;

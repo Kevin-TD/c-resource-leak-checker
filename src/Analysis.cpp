@@ -26,6 +26,9 @@
 // remove it from safe/realloc/memory functions (wherever it's in).
 // it's annotations should be checked (once annotations are fully implemented)
 
+// TODO: git rebase main once api concerns addressed. resolving merge conflicts with formatting should not be in the same update
+// TODO: handle un-aliasing
+
 struct InstructionHolder {
     SetVector<Instruction *> branch;
     SetVector<Instruction *> successors;
@@ -263,9 +266,12 @@ void doAliasReasoning(Instruction *instruction,
     ProgramVariable receivingVar = ProgramVariable(load);
     ProgramVariable givingVar = ProgramVariable(load->getPointerOperand());
 
+    logout("add alias for analysis loadinst");
     programPoint->addAlias(receivingVar, givingVar);
 
   } else if (StoreInst *store = dyn_cast<StoreInst>(instruction)) {
+    logout("store inst " << *instruction);
+
     Value *valueToStore = store->getOperand(0);
     Value *receivingValue = store->getOperand(1);
 
@@ -285,6 +291,7 @@ void doAliasReasoning(Instruction *instruction,
 
     if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
       ProgramVariable callVar = ProgramVariable(call);
+      logout("add alias for analysis storeinst call inst");
       programPoint->addAlias(callVar, receivingVar);
       return;
     }
@@ -321,18 +328,18 @@ void doAliasReasoning(Instruction *instruction,
         return;
       }
     }
-
-    ProgramPoint *programPoint =
-        programFunction.getProgramPointRef(branchName, true);
+    
+    logout("add alias for analysis storeinst else case");
+    ProgramPoint::logoutProgramPoint(*programPoint, true);
+    programPoint->addAlias(varToStore, receivingVar);
+    ProgramPoint::logoutProgramPoint(*programPoint, true);
 
     if (!includes) {
         realBranchOrder.push_back(branchName);
     }
 
-    if (LoadInst *load = dyn_cast<LoadInst>(instruction)) {
-        logout("(load) name is " << variable(load) << " for "
-               << variable(load->getPointerOperand()));
-        std::string varName = variable(load->getPointerOperand());
+    logout("add alias for analysis bitcast");
+    programPoint->addAlias(sourceVar, destinationVar);
 
         ProgramVariable receivingVar = ProgramVariable(load);
         ProgramVariable givingVar = ProgramVariable(load->getPointerOperand());
@@ -351,18 +358,36 @@ void doAliasReasoning(Instruction *instruction,
     see:
     https://mapping-high-level-constructs-to-llvm-ir.readthedocs.io/en/latest/basic-constructs/structures.html
     */
-
+   
     llvm::Type *structType = gepInst->getPointerOperandType();
     llvm::Value *pointerOperand = gepInst->getPointerOperand();
 
-        if (!varToStore.isIdentifier()) {
+
+    if (llvm::PointerType *pointerType =
+            llvm::dyn_cast<llvm::PointerType>(pointerOperand->getType())) {
+      if (llvm::StructType *structType =
+              llvm::dyn_cast<llvm::StructType>(pointerType->getElementType())) {
+        llvm::Value *indexValue = gepInst->getOperand(2);
+        if (llvm::ConstantInt *constIndex =
+                llvm::dyn_cast<llvm::ConstantInt>(indexValue)) {
+          ProgramVariable sourceVar = ProgramVariable(gepInst);
+          int index = constIndex->getValue().getSExtValue();
+
+          if (BitCastInst *bitcast = dyn_cast<BitCastInst>(pointerOperand)) {
+            ProgramVariable structVar =
+                ProgramVariable(bitcast->getOperand(0), index);
+            logout("add alias for analysis gepinst");
+            programPoint->addAlias(sourceVar, structVar);
             return;
           }
 
           ProgramVariable structPV = ProgramVariable(pointerOperand);
 
           PVAliasSet *originalStructPVASRef =
-              programPoint->getPVASRef(structPV.getCleanedName(), false);
+              programPoint->getPVASRef(structPV, false);
+          
+
+          ProgramFunction::logoutProgramFunction(programFunction, false);
 
           for (ProgramVariable pv :
                originalStructPVASRef->getProgramVariables()) {
@@ -577,6 +602,70 @@ void doAliasReasoning(Instruction *instruction,
             programPoint->addAlias(sourceVar, destinationVar);
         }
     }
+  } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
+    logout("alloca inst = " << *allocate);
+
+    StructType *structType = rlc_dataflow::unwrapValuePointerToStruct(allocate);
+
+    if (!structType) {
+      return;
+    }
+
+    programPoint->addVariable(ProgramVariable(allocate));
+
+    std::string structName = structType->getName();
+
+    structName = rlc_util::sliceString(
+        structName, structName.find_last_of('.') + 1, structName.size() - 1);
+    logout("struct name in IR = " << structName);
+
+    if (!rlc_dataflow::IRstructNameEqualsCstructName(structName,
+                                                     optLoadFileName)) {
+      errs() << "Error: Did not find struct name '" << structName
+             << "' in debug info\n";
+      exit(1);
+    }
+
+    int numFields = structType->getNumElements();
+    for (int i = 0; i < numFields; i++) {
+      ProgramVariable sourceVar = ProgramVariable(allocate, i);
+      programPoint->addVariable(sourceVar);
+    }
+
+  } else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
+    std::string fnName = call->getCalledFunction()->getName().str();
+    /*
+    there are 2 llvm annotations to consider:
+    - llvm.ptr.annotation.*
+     - https://llvm.org/docs/LangRef.html#llvm-ptr-annotation-intrinsic
+     - the * "specifies an address space for the pointer"
+     - "the first argument is a pointer to an integer value of arbitrary
+    bitwidth (result of some expression), the second is a pointer to a global
+    string, the third is a pointer to a global string which is the source file
+    name, and the last argument is the line number."
+    - llvm.var.annotation
+     - https://llvm.org/docs/LangRef.html#llvm-var-annotation-intrinsic
+     - "the first argument is a pointer to a value,
+     the second is a pointer to a global string,
+      the third is a pointer to a global string which is the source file name,
+      and the last argument is the line number."
+
+
+    there is also llvm.codeview.annotation
+    (https://llvm.org/docs/LangRef.html#llvm-codeview-annotation-intrinsic)
+    and llvm.annotation.*
+    (https://llvm.org/docs/LangRef.html#llvm-annotation-intrinsic)
+    but we wont need to worry about them; they hold no aliasing information
+    */
+
+    if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
+        rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
+      ProgramVariable sourceVar = ProgramVariable(call);
+      ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
+      logout("add alias for analysis callinst llvm annotation"); 
+      programPoint->addAlias(sourceVar, destinationVar);
+    }
+  }
 }
 
 void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {

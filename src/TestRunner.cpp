@@ -72,11 +72,11 @@ bool TestRunner::runTests(const std::string functionName,
       for (ProgramVariable expectedPV : expctedPVAS.getProgramVariables()) {
         std::string expectedPVName = expectedPV.getCleanedName();
 
-        PVAliasSet receivedPVAS =
-            receivedResultPoint.getPVAS(expectedPVName, true);
+        PVAliasSet *receivedPVAS =
+            receivedResultPoint.getPVASRef(expectedPV, true);
 
         std::set<std::string> receivedSet =
-            receivedPVAS.getMethodsSet().getMethods();
+            receivedPVAS->getMethodsSet().getMethods();
         std::string receivedSetString = rlc_util::setToString(receivedSet);
 
         errs() << "Test for branch name = " << branchName

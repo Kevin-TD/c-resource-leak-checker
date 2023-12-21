@@ -12,9 +12,9 @@ bool PVAliasSet::contains(ProgramVariable programVar) {
   return false;
 }
 
-bool PVAliasSet::containsByRawName(const std::string &rawName) {
+bool PVAliasSet::contains(const std::string& cleanedName) {
   for (ProgramVariable pv : programVariables) {
-    if (pv.getRawName() == rawName) {
+    if (pv.getCleanedName() == cleanedName) {
       return true;
     }
   }
@@ -22,9 +22,7 @@ bool PVAliasSet::containsByRawName(const std::string &rawName) {
   return false;
 }
 
-bool PVAliasSet::containsByCleanedName(const std::string &rawName) {
   for (ProgramVariable pv : programVariables) {
-    if (pv.getCleanedName() == rawName) {
       return true;
     }
   }
@@ -33,7 +31,7 @@ bool PVAliasSet::containsByCleanedName(const std::string &rawName) {
 }
 
 void PVAliasSet::add(ProgramVariable programVar) {
-  if (containsByCleanedName(programVar.getCleanedName())) {
+  if (contains(programVar)) {
     return;
   }
 
@@ -60,28 +58,17 @@ void PVAliasSet::setMethodsSet(MethodsSet methods) {
   this->methods = methods;
 }
 
-std::string PVAliasSet::getVarsStringUsingCleanedNames() const {
+std::string PVAliasSet::toString(bool cleanNames) const {
   std::string result = "{";
   int pvSize = programVariables.size();
 
   int iterator = 0;
   for (ProgramVariable pv : programVariables) {
-    result += pv.getCleanedName();
-    if (iterator != pvSize - 1) {
-      result += ", ";
+    if (cleanNames) {
+      result += pv.getCleanedName();
+    } else {
+      result += pv.getRawName(); 
     }
-    iterator++;
-  }
-  result += "}";
-  return result;
-}
-std::string PVAliasSet::getVarsStringUsingRawNames() const {
-  std::string result = "{";
-  int pvSize = programVariables.size();
-
-  int iterator = 0;
-  for (ProgramVariable pv : programVariables) {
-    result += pv.getRawName();
     if (iterator != pvSize - 1) {
       result += ", ";
     }
@@ -98,7 +85,7 @@ std::string PVAliasSet::getMethodsString() const {
 
 int PVAliasSet::getIndex() {
   for (ProgramVariable pv : programVariables) {
-    if (pv.hasIndex()) {
+    if (pv.containsStructFieldVar()) {
       return pv.getIndex();
     }
   }
@@ -106,9 +93,9 @@ int PVAliasSet::getIndex() {
   return -1;
 }
 
-bool PVAliasSet::hasIndex() {
+bool PVAliasSet::containsStructFieldVar() {
   for (ProgramVariable pv : programVariables) {
-    if (pv.hasIndex()) {
+    if (pv.containsStructFieldVar()) {
       return true;
     }
   }
