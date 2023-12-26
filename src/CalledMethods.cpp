@@ -4,34 +4,27 @@
 
 CalledMethods::CalledMethods() { this->passName = CALLED_METHODS_PASS_NAME; }
 
-void CalledMethods::onAllocationFunctionCall(MethodsSet *input,
+void CalledMethods::onAllocationFunctionCall(PVAliasSet *input,
                                              std::string &fnName) {}
-void CalledMethods::onDeallocationFunctionCall(MethodsSet *input,
+void CalledMethods::onDeallocationFunctionCall(PVAliasSet *input,
                                                std::string &fnName) {
   input->addMethod(fnName);
 }
-void CalledMethods::onUnknownFunctionCall(MethodsSet *input) {
+void CalledMethods::onUnknownFunctionCall(PVAliasSet *input) {
   input->clearMethods();
 }
-void CalledMethods::onReallocFunctionCall(MethodsSet *input,
+void CalledMethods::onReallocFunctionCall(PVAliasSet *input,
                                           std::string &fnName) {
   input->clearMethods();
 }
-void CalledMethods::onSafeFunctionCall(MethodsSet *input, std::string &fnName) {
-}
-void CalledMethods::leastUpperBound(MethodsSet &preMethods,
-                                    MethodsSet &curMethods,
-                                    MethodsSet &result) {
-  std::set<std::string> res;
-  std::set<std::string> preSet = preMethods.getMethods();
-  std::set<std::string> curSet = curMethods.getMethods();
-
-  std::set_intersection(preSet.begin(), preSet.end(), curSet.begin(),
-                        curSet.end(), std::inserter(res, res.begin()));
-  result.setMethods(res);
+void CalledMethods::onSafeFunctionCall(PVAliasSet *input, std::string &fnName) {
 }
 
-void CalledMethods::onAnnotation(MethodsSet *input, std::string &fnName,
+void CalledMethods::leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSet) {
+  preSet.methodsSetIntersection(curMethodsSet); 
+}
+
+void CalledMethods::onAnnotation(PVAliasSet *input, std::string &fnName,
                                  AnnotationType annotationType) {
   if (annotationType == AnnotationType::CallsAnnotation) {
     input->addMethod(fnName);

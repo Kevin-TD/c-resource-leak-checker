@@ -51,11 +51,32 @@ std::list<ProgramVariable> PVAliasSet::getProgramVariables() {
 
 MethodsSet PVAliasSet::getMethodsSet() const { return methods; }
 
-MethodsSet *PVAliasSet::getMethodsSetRef() { return &methods; }
+void PVAliasSet::methodsSetUnion(const MethodsSet other) {
+  std::set<std::string> res;
+  std::set<std::string> curSet = getMethodsSet().getMethods();
+  std::set<std::string> otherSet = other.getMethods();
 
-void PVAliasSet::setMethodsSet(MethodsSet methods) {
+  std::set_union(curSet.begin(), curSet.end(), otherSet.begin(),
+                        otherSet.end(), std::inserter(res, res.begin()));
+  this->methods.setMethods(res);
+}
+
+void PVAliasSet::methodsSetIntersection(const MethodsSet other) {
+  std::set<std::string> res;
+  std::set<std::string> curSet = getMethodsSet().getMethods();
+  std::set<std::string> otherSet = other.getMethods();
+
+  std::set_intersection(curSet.begin(), curSet.end(), otherSet.begin(),
+                        otherSet.end(), std::inserter(res, res.begin()));
+  this->methods.setMethods(res);
+}
+
+void PVAliasSet::addMethod(std::string method) {
+  this->methods.addMethod(method);
+}
+
+void PVAliasSet::clearMethods() {
   this->methods.clearMethods();
-  this->methods = methods;
 }
 
 std::string PVAliasSet::toString(bool cleanNames) const {

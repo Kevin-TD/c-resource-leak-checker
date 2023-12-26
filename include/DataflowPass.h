@@ -81,18 +81,17 @@ protected:
   CFG *cfg;
   FullFile expectedResult;
 
-  virtual void leastUpperBound(MethodsSet &preMethods, MethodsSet &curMethods,
-                               MethodsSet &result) = 0;
+  virtual void leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSet) = 0;
 
-  virtual void onAllocationFunctionCall(MethodsSet *input,
+  virtual void onAllocationFunctionCall(PVAliasSet* input,
                                         std::string &fnName) = 0;
-  virtual void onDeallocationFunctionCall(MethodsSet *input,
+  virtual void onDeallocationFunctionCall(PVAliasSet* input,
                                           std::string &fnName) = 0;
-  virtual void onUnknownFunctionCall(MethodsSet *input) = 0;
-  virtual void onReallocFunctionCall(MethodsSet *input,
+  virtual void onUnknownFunctionCall(PVAliasSet* input) = 0;
+  virtual void onReallocFunctionCall(PVAliasSet* input,
                                      std::string &fnName) = 0;
-  virtual void onSafeFunctionCall(MethodsSet *input, std::string &fnName) = 0;
-  virtual void onAnnotation(MethodsSet *input, std::string &fnName,
+  virtual void onSafeFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
+  virtual void onAnnotation(PVAliasSet* input, std::string &fnName,
                             AnnotationType annotationType) = 0;
 
 public:

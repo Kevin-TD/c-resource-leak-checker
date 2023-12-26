@@ -49,14 +49,13 @@ void DataflowPass::transfer(Instruction *instruction,
       ProgramVariable assignedVar = ProgramVariable(store->getOperand(1));
       std::string arg = assignedVar.getCleanedName();
       PVAliasSet *pvas = inputProgramPoint.getPVASRef(assignedVar, false);
-      MethodsSet *methods = pvas->getMethodsSetRef();
 
       if (this->memoryFunctions[fnName].size() > 0 &&
           assignedVar.isIdentifier()) {
 
         logout("calling on alloc function for argname "
                << arg << " and fnname " << fnName << " fnname = " << fnName);
-        this->onAllocationFunctionCall(methods, this->memoryFunctions[fnName]);
+        this->onAllocationFunctionCall(pvas, this->memoryFunctions[fnName]);
       } else if (ReturnAnnotation *returnAnno =
                      dynamic_cast<ReturnAnnotation *>(
                          this->annotations.getReturnAnnotation(fnName))) {
@@ -88,9 +87,8 @@ void DataflowPass::transfer(Instruction *instruction,
         if (this->memoryFunctions[fnName].size() > 0 &&
             bitcastVar.isIdentifier()) {
           std::string arg = bitcastVar.getCleanedName();
-          MethodsSet *methods =
-              inputProgramPoint.getPVASRef(bitcastVar, false)->getMethodsSetRef();
-          this->onAllocationFunctionCall(methods,
+          PVAliasSet* pvas = inputProgramPoint.getPVASRef(bitcastVar, false);
+          this->onAllocationFunctionCall(pvas,
                                          this->memoryFunctions[fnName]);
         }
       }
@@ -173,8 +171,7 @@ void DataflowPass::transfer(Instruction *instruction,
 
       // no annotations found, treat function call as unknown function
       logout("no annotations found for " << fnName);
-      MethodsSet *methods = pvas->getMethodsSetRef();
-      this->onUnknownFunctionCall(methods);
+      this->onUnknownFunctionCall(pvas);
     }
   } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
 
@@ -270,23 +267,17 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
 
       MethodsSet priorPreMethodsSet = pvas.getMethodsSet();
 
-      MethodsSet currentPreMethodsSet;
+      MethodsSet curPrePointMethods;
       for (ProgramVariable pv : pvas.getProgramVariables()) {
         if (currentPrePoint->varExists(pv)) {
-          currentPreMethodsSet.setMethods(
-              currentPrePoint->getPVASRef(pv, false)
-                  ->getMethodsSet()
-                  .getMethods());
+          curPrePointMethods = currentPrePoint->getPVASRef(pv, false)->getMethodsSet(); 
           break;
         }
       }
-
-      this->leastUpperBound(priorPreMethodsSet, currentPreMethodsSet,
-                            lubMethodsSet);
-
-      pvas.setMethodsSet(lubMethodsSet);
-
-      lub.addPVAliasSet(pvas);
+    
+      this->leastUpperBound(pvas, curPrePointMethods);
+    
+      lub.addPVAS(pvas);
     }
 
     // fill the lub with remaining facts from priorPostPoint
@@ -339,10 +330,9 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
 void DataflowPass::insertAnnotation(Annotation *anno, PVAliasSet *pvas) {
   AnnotationType annoType = anno->getAnnotationType();
   std::set<std::string> annoMethods = anno->getAnnotationMethods();
-  MethodsSet *argMethods = pvas->getMethodsSetRef();
 
   for (std::string annoMethod : annoMethods) {
-    this->onAnnotation(argMethods, annoMethod, annoType);
+    this->onAnnotation(pvas, annoMethod, annoType);
   }
 }
 
@@ -459,8 +449,7 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
     errs() << "WARNING: implicitly declared function call on " << location
            << "\n";
 
-    MethodsSet *methods = pvas->getMethodsSetRef();
-    this->onUnknownFunctionCall(methods);
+    this->onUnknownFunctionCall(pvas);
     return true;
   }
 
@@ -469,14 +458,12 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
   logout("call fnname = " << fnName);
   if (this->reallocFunctions.count(fnName)) {
 
-    MethodsSet *methods = pvas->getMethodsSetRef();
-    this->onReallocFunctionCall(methods, fnName);
+    this->onReallocFunctionCall(pvas, fnName);
     return true;
   }
 
   if (this->safeFunctions.count(fnName)) {
-    MethodsSet *methods = pvas->getMethodsSetRef();
-    this->onSafeFunctionCall(methods, fnName);
+    this->onSafeFunctionCall(pvas, fnName);
     return true;
   }
 
@@ -499,8 +486,7 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
     if (fnName == allocationFunction) {
       return true;
     } else if (fnName == deallocationFunction) {
-      MethodsSet *methods = pvas->getMethodsSetRef();
-      this->onDeallocationFunctionCall(methods, fnName);
+      this->onDeallocationFunctionCall(pvas, fnName);
       return true;
     }
   }

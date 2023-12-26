@@ -37,9 +37,6 @@ public:
   // LLVM docs: https://llvm.org/docs/LangRef.html#identifiers
   PVAliasSet *getSetRef(const std::string& cleanedName);
 
-  // returns a reference to the alias set that has a program variable with
-  // cleaned name cleanedName. an empty set is returned if it's not found.
-  PVAliasSet *getSetRef(const std::string &cleanedName);
   // returns a reference to the alias set that has a program variable 
   // with value val. NULL is return if it's not found. 
   PVAliasSet *getSetRef(Value* val);
