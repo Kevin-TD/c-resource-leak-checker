@@ -215,8 +215,7 @@ FullFile TestRunner::buildExpectedResults(std::string testName,
       if (passName == inputPassName) {
         expectedResult.getProgramFunctionRef(functionName, true)
             ->getProgramPointRef(branchName, true)
-            ->getPVASRef(varName, true)
-            ->setMethodsSet(methodsSet);
+            ->getPVASRef(varName, true)->methods = methodsSet; 
       }
     }
 

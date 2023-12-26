@@ -37,7 +37,7 @@ public:
   // adds pvas into this set of alias sets. pvas's program variables will merge
   // into one of these sets if it contains a program variable that exists in one
   // of these sets
-  void addPVAliasSet(PVAliasSet pvas);
+  void addPVAS(PVAliasSet pvas);
 
   // finds set A and B from element A and element B (respectively) and merges
   // them together. if A == B or one of the elements is not found in any of these

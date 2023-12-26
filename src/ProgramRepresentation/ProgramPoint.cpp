@@ -50,7 +50,7 @@ void ProgramPoint::addVariable(ProgramVariable programVar) {
   this->programVariableAliasSets.makeSet(programVar);
 }
 
-void ProgramPoint::addPVAliasSet(PVAliasSet pvas) {
+void ProgramPoint::addPVAS(PVAliasSet pvas) {
   this->programVariableAliasSets.mergeSet(pvas);
 }
 
@@ -95,10 +95,8 @@ PVAliasSet *ProgramPoint::getPVASRef(const std::string& cleanedName, bool addNew
   }
 
   if (addNewIfNotFound) {
-    ProgramVariable newPV = ProgramVariable(cleanedName);
     ProgramVariable newPV = ProgramVariable(value);
     this->addVariable(newPV);
-    return this->programVariableAliasSets.sets.back();
     return &this->programVariableAliasSets.sets.back();
   }
 
