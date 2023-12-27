@@ -15,7 +15,6 @@ if os.path.split(os.getcwd())[1] != "build":
 
 # TODO: add command line arg support to specify if we dont want to 
 # call make or  re-make IR. also modify if we want to exclude certain files. 
-# TODO?: make it so when we write tests, if we specify a struct field name (and not the index), it'll translate over. '?' because 
 # TODO: if we ctrl c out of test it should just stop all tests
 # TODO: there should be final display of all the test results at the end
 

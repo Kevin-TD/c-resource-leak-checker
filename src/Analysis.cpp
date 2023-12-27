@@ -11,6 +11,7 @@
 #include "DataflowPass.h"
 #include "Debug.h"
 #include "MustCall.h"
+#include "StructFieldToIndexMap.h"
 #include "ProgramRepresentation/FullFile.h"
 #include "RunAnalysis.h"
 #include "TestRunner.h"
@@ -45,6 +46,7 @@ bool anyTestFailed = false;
 CalledMethods calledMethods;
 MustCall mustCall;
 AnnotationHandler annotationHandler;
+StructFieldToIndexMap structFieldToIndexMap; 
 
 void loadFunctions() {
   // working directory is /build
@@ -140,7 +142,7 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
   int astFD = mkstemp(astTempTextFile);
 
   if (astFD == -1) {
-    logout("failed to create temp ast text file");
+    logout("failed to create temp ast text file at getAnnotationStrings");
     perror("mkstemp");
     exit(1);
   }
@@ -154,7 +156,7 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
   int annotationsFD = mkstemp(annotationsTempTextFile);
 
   if (annotationsFD == -1) {
-    logout("failed to create temp annotations text file");
+    logout("failed to create temp annotations text file at getAnnotationStrings");
     perror("mkstemp");
     exit(1);
   }
@@ -524,6 +526,9 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     mustCall.setExpectedResult(
         TestRunner::buildExpectedResults(testName, mustCall.passName));
     annotationHandler.addAnnotations(annotations);
+    
+    structFieldToIndexMap.buildMap(optLoadFileName); 
+
     loadAndBuild = true;
   }
 
@@ -608,12 +613,12 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
   bool calledMethodsResult = TestRunner::runTests(
       fnName, lastBranchName, calledMethods.getExpectedResult(),
-      PostCalledMethods);
+      PostCalledMethods, structFieldToIndexMap);
 
   errs() << "\n\nRUNNING MUST CALL TESTS "
          << " TEST NAME - " << testName << "\n\n";
   bool mustCallResult = TestRunner::runTests(
-      fnName, lastBranchName, mustCall.getExpectedResult(), PostMustCalls);
+      fnName, lastBranchName, mustCall.getExpectedResult(), PostMustCalls, structFieldToIndexMap);
 
   if (calledMethodsResult == EXIT_FAILURE || mustCallResult == EXIT_FAILURE) {
     anyTestFailed = true;

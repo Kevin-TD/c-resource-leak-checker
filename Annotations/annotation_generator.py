@@ -6,13 +6,11 @@
 
 # clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics ../test/test23/test24.c > CodeAnalyzerFiles/test24_AST.txt ; python3 ../Annotations/annotation_generator.py CodeAnalyzerFiles/test24_AST.txt CodeAnalyzerFiles/test24_ANNOTATIONS.txt
 
-# TODO: make testing framework for annotations generated
-
 
 import sys 
 from abc import ABC as AbstractClass
 
-DEBUG = False 
+DEBUG = False
 
 def logout(x: str):
     if (DEBUG):

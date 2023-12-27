@@ -2,6 +2,7 @@
 #define TEST_RUNNER_H
 
 #include "DataflowPass.h"
+#include "StructFieldToIndexMap.h"
 
 class TestRunner {
 public:
@@ -9,7 +10,7 @@ public:
   // lastBranchName
   static bool runTests(const std::string functionName,
                        const std::string lastBranchName,
-                       FullFile expectedResult, ProgramFunction receivedResult);
+                       FullFile expectedResult, ProgramFunction receivedResult, StructFieldToIndexMap structFieldToIndexMap);
   static FullFile buildExpectedResults(std::string testName,
                                        std::string passName);
 };
