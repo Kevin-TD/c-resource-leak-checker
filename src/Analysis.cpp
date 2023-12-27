@@ -410,6 +410,15 @@ void doAliasReasoning(Instruction *instruction,
           PVAliasSet *originalStructPVASRef =
               programPoint->getPVASRef(structPV, false);
           
+          if (!originalStructPVASRef) {
+            originalStructPVASRef = programFunction.getPVASRefFromValue(pointerOperand); 
+
+            if (!originalStructPVASRef) {
+              errs() << "pvas struct ref not found by value " << *pointerOperand << ". early exit\n"; 
+              std::exit(1); 
+            }
+          }
+          
 
           ProgramFunction::logoutProgramFunction(programFunction, false);
 

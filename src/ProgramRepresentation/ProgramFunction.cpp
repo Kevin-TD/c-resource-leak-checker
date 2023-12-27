@@ -65,6 +65,16 @@ void ProgramFunction::setProgramPoint(std::string name,
       programPoint.getProgramVariableAliasSets());
 }
 
+PVAliasSet *ProgramFunction::getPVASRefFromValue(Value* value) {
+  for (ProgramPoint& programPoint : programPoints) {
+    if (PVAliasSet* pvas = programPoint.getPVASRef(value, false)) {
+      return pvas; 
+    }
+  }
+
+  return NULL; 
+}
+
 void ProgramFunction::logoutProgramFunction(ProgramFunction &programFunction,
                                             bool logMethods) {
   for (auto point : programFunction.getProgramPoints()) {

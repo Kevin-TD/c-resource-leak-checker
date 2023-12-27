@@ -92,6 +92,13 @@ PVAliasSet *ProgramPoint::getPVASRef(const std::string& cleanedName, bool addNew
   return NULL;
 }
 
+PVAliasSet *ProgramPoint::getPVASRef(Value* value,
+                                     bool addNewIfNotFound) {
+
+  PVAliasSet *pvas = this->programVariableAliasSets.getSetRef(value);   
+
+  if (pvas) {
+    return pvas;
   }
 
   if (addNewIfNotFound) {
