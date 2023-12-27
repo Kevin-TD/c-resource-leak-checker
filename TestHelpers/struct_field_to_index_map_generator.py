@@ -110,7 +110,6 @@ class StructVar:
     def __init__(self, var_name: str, type_name: str):
         self.var_name = var_name
         self.type_name = type_name
-
     def get_var_name(self):
         return self.var_name
 

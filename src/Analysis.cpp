@@ -11,6 +11,7 @@
 #include "DataflowPass.h"
 #include "Debug.h"
 #include "MustCall.h"
+#include "StructFieldToIndexMap.h"
 #include "ProgramRepresentation/FullFile.h"
 #include "StructFieldToIndexMap.h"
 #include "RunAnalysis.h"
@@ -131,10 +132,43 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
     char astTempTextFile[] = "/tmp/astTempTextFileXXXXXX";
     int astFD = mkstemp(astTempTextFile);
 
-    if (astFD == -1) {
-        logout("failed to create temp ast text file");
-        perror("mkstemp");
-        exit(1);
+  if (astFD == -1) {
+    logout("failed to create temp ast text file at getAnnotationStrings");
+    perror("mkstemp");
+    exit(1);
+  }
+
+  std::string dumpASTCommand =
+      "clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics " +
+      optLoadFileName + "> " + astTempTextFile;
+  system(dumpASTCommand.c_str());
+
+  char annotationsTempTextFile[] = "/tmp/annotationsFileXXXXXX";
+  int annotationsFD = mkstemp(annotationsTempTextFile);
+
+  if (annotationsFD == -1) {
+    logout("failed to create temp annotations text file at getAnnotationStrings");
+    perror("mkstemp");
+    exit(1);
+  }
+
+  std::string readASTCommand =
+      "python3 ../Annotations/annotation_generator.py " +
+      std::string(astTempTextFile) + " " + std::string(annotationsTempTextFile);
+
+  system(readASTCommand.c_str());
+
+  logout("dump command " << dumpASTCommand);
+  logout("to py run " << readASTCommand);
+
+  std::ifstream annotationFile(annotationsTempTextFile);
+  std::vector<std::string> annotations;
+
+  std::string line;
+  if (annotationFile.is_open()) {
+    while (std::getline(annotationFile, line)) {
+      logout("got anno: " << line);
+      annotations.push_back(line);
     }
 
     std::string dumpASTCommand =
@@ -617,11 +651,14 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     mustCall.setCFG(&cfg);
     mustCall.setProgramFunction(programFunction);
 
-    ProgramFunction PostCalledMethods = calledMethods.generatePassResults();
-    ProgramFunction PostMustCalls = mustCall.generatePassResults();
+  bool calledMethodsResult = TestRunner::runTests(
+      fnName, lastBranchName, calledMethods.getExpectedResult(),
+      PostCalledMethods, structFieldToIndexMap);
 
-    logout("\n\nPROGRAM FUNCTION for " << programFunction.getFunctionName());
-    ProgramFunction::logoutProgramFunction(programFunction, false);
+  errs() << "\n\nRUNNING MUST CALL TESTS "
+         << " TEST NAME - " << testName << "\n\n";
+  bool mustCallResult = TestRunner::runTests(
+      fnName, lastBranchName, mustCall.getExpectedResult(), PostMustCalls, structFieldToIndexMap);
 
     logout("\n\nCALLED METHODS RESULT");
     ProgramFunction::logoutProgramFunction(PostCalledMethods, true);
