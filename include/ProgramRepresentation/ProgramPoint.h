@@ -61,9 +61,10 @@ class ProgramPoint {
     // programVar. if addNewIfNotFound is false, NULL is returned
     PVAliasSet *getPVASRef(const std::string& cleanedName, bool addNewIfNotFound);
 
-    // returns a reference to the alias set if there is a set that contains a program variable with
-    // that value pointer
-    PVAliasSet *getPVASRef(Value* value, bool addNewIfNotFound);
+  // returns a reference to the alias set if there is a set that contains a program variable with 
+  // that value pointer. this overload should only be used if you are looking for value that may 
+  // not exist in the branch you're currently analyzing. 
+  PVAliasSet *getPVASRef(Value* value, bool addNewIfNotFound);
 
     std::string getPointName() const;
 

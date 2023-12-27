@@ -275,6 +275,39 @@ void doAliasReasoning(Instruction *instruction,
 
         if (!varToStore.isIdentifier()) {
             return;
+          }
+
+          ProgramVariable structPV = ProgramVariable(pointerOperand);
+
+          PVAliasSet *originalStructPVASRef =
+              programPoint->getPVASRef(structPV, false);
+          
+          if (!originalStructPVASRef) {
+            originalStructPVASRef = programFunction.getPVASRefFromValue(pointerOperand); 
+
+            if (!originalStructPVASRef) {
+              errs() << "pvas struct ref not found by value " << *pointerOperand << ". early exit\n"; 
+              std::exit(1); 
+            }
+          }
+          
+
+          ProgramFunction::logoutProgramFunction(programFunction, false);
+
+          for (ProgramVariable pv :
+               originalStructPVASRef->getProgramVariables()) {
+            if (AllocaInst *structAllocaInst =
+                    dyn_cast<AllocaInst>(pv.getValue())) {
+              ProgramVariable structVar = ProgramVariable(pv.getValue(), index);
+
+              logout("spec index inst = " << *gepInst);
+              logout("specifying index for " << structVar.getCleanedName());
+
+              programPoint->addAlias(sourceVar, structVar);
+
+              return;
+            }
+          }
         }
 
         ProgramVariable receivingVar = ProgramVariable(store->getOperand(1));
