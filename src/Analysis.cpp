@@ -15,6 +15,7 @@
 #include "ProgramRepresentation/FullFile.h"
 #include "RunAnalysis.h"
 #include "TestRunner.h"
+#include "TempFileManager.h"
 #include "Utils.h"
 
 // to run: cd build   then
@@ -137,40 +138,18 @@ void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
   }
 }
 
-std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
-  char astTempTextFile[] = "/tmp/astTempTextFileXXXXXX";
-  int astFD = mkstemp(astTempTextFile);
-
-  if (astFD == -1) {
-    logout("failed to create temp ast text file at getAnnotationStrings");
-    perror("mkstemp");
-    exit(1);
-  }
-
-  std::string dumpASTCommand =
-      "clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics " +
-      optLoadFileName + "> " + astTempTextFile;
-  system(dumpASTCommand.c_str());
-
-  char annotationsTempTextFile[] = "/tmp/annotationsFileXXXXXX";
-  int annotationsFD = mkstemp(annotationsTempTextFile);
-
-  if (annotationsFD == -1) {
-    logout("failed to create temp annotations text file at getAnnotationStrings");
-    perror("mkstemp");
-    exit(1);
-  }
+std::vector<std::string> getAnnotationStrings(const TempFileManager& astFile) {
+  TempFileManager annotationsTempFile = TempFileManager("annotationsTempFile"); 
 
   std::string readASTCommand =
       "python3 ../Annotations/annotation_generator.py " +
-      std::string(astTempTextFile) + " " + std::string(annotationsTempTextFile);
+      astFile.getFileName() + " " + annotationsTempFile.getFileName();
 
   system(readASTCommand.c_str());
 
-  logout("dump command " << dumpASTCommand);
   logout("to py run " << readASTCommand);
 
-  std::ifstream annotationFile(annotationsTempTextFile);
+  std::ifstream annotationFile = annotationsTempFile.getFileStream(); 
   std::vector<std::string> annotations;
 
   std::string line;
@@ -180,11 +159,6 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
       annotations.push_back(line);
     }
   }
-
-  close(astFD);
-  close(annotationsFD);
-  unlink(astTempTextFile);
-  unlink(annotationsTempTextFile);
 
   return annotations;
 }
@@ -519,15 +493,19 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
   if (!loadAndBuild) {
     loadFunctions();
-    auto annotations = getAnnotationStrings(optLoadFileName);
+    
+    TempFileManager astTempFile("astTempFile");
+    tempfile_util::dumpASTIntoTempFile(optLoadFileName, astTempFile); 
+
+    auto annotations = getAnnotationStrings(astTempFile);
 
     calledMethods.setExpectedResult(
         TestRunner::buildExpectedResults(testName, calledMethods.passName));
     mustCall.setExpectedResult(
         TestRunner::buildExpectedResults(testName, mustCall.passName));
     annotationHandler.addAnnotations(annotations);
-    
-    structFieldToIndexMap.buildMap(optLoadFileName); 
+
+    structFieldToIndexMap.buildMap(astTempFile); 
 
     loadAndBuild = true;
   }

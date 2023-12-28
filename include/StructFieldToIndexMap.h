@@ -2,13 +2,7 @@
 #define STRUCT_FIELD_TO_INDEX_H
 
 #include "Utils.h"
-
-// TODO: update test cases to refer by field name than by field index
-
-// TODO: buildMap and getAnnotationStrings share code. 
-// make another func/class that can generate the AST and then we can 
-// just use it. it would just store that temp file name. 
-// destructor needs to do unlinking. 
+#include "TempFileManager.h"
 
 /*
 string map between struct var name + struct field to struct name + struct index.
@@ -45,7 +39,8 @@ private:
 public:
     StructFieldToIndexMap(); 
 
-    void buildMap(const std::string& optLoadFileName); 
+    // builds the map based off a tmp file which consists of the AST of a C program
+    void buildMap(const TempFileManager& astFile); 
 
     // returns the corresponding struct name and index based on structNameAndField
     std::string get(const std::string& structNameAndField);
