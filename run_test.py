@@ -13,12 +13,29 @@ if os.path.split(os.getcwd())[1] != "build":
     print(f"WARNING: not in build dir; cwd is {os.getcwd()}")
     sys.exit(1)
 
-# TODO: add command line arg support to specify if we dont want to 
-# call make or  re-make IR. also modify if we want to exclude certain files. 
 # TODO: there should be final display of all the test results at the end
 # TODO: update annotation tester to be as robust as run_test 
+# TODO: turn run_test (and good number of other python files in codebase) into separate files. run_test.py should do if __name__ == main 
 
-class Command: 
+# splits a string every n characters into a new array. does not split words apart. 
+def split_string_by_n_characters(input_string: str, n: int):
+    words = input_string.split(' ')
+    
+    result = []
+    current_chunk = ''
+    for word in words:
+        if len(current_chunk) + len(word) <= n:
+            current_chunk += (' ' if current_chunk else '') + word
+        else:
+            result.append(current_chunk)
+            current_chunk = word
+    
+    if current_chunk:
+        result.append(current_chunk)
+    
+    return result
+
+class Flag: 
     def __init__(self, name: str, alias: str, describe: str, action = lambda x : x):
         self.__name = "-" + name
         self.__alias = "--" + alias
@@ -31,142 +48,128 @@ class Command:
     def get_alias(self) -> str:
         return self.__alias
 
+    def get_display_name(self) -> str:
+        return self.__name + ", " + self.__alias
+
     def get_describe(self) -> str:
         return self.__describe
     
     def get_action(self):
         return self.__action
 
-class CommandManager:
-    # usage is description describing how to use bundle of commands
+class FlagManager:
+    # usage is description describing how to use bundle of flags
     def __init__(self, usage: str):
-        self.commands: list[Command] = []
-        self.usage = usage
+        self.__flags: list[Flag] = []
+        self.__usage = usage
     
-    def add_command(self, name: str, alias: str, describe: str, action: lambda x : x):
-        self.commands.append(Command(name, alias, describe, action))
+    def add_flag(self, name: str, alias: str, describe: str, action = lambda x : x):
+        self.__flags.append(Flag(name, alias, describe, action))
 
-    def command_exists(self, command_name: str) -> bool:
-        for command in self.commands:
-            if command.get_name() == command_name or command.get_alias() == command_name:
+    def flag_exists(self, flag_name: str) -> bool:
+        for flag in self.__flags:
+            if flag.get_name() == flag_name or flag.get_alias() == flag_name:
                 return True
             
         return False 
     
-    def get_command(self, command_name: str) -> Command:
-        for command in self.commands:
-            if command.get_name() == command_name or command.get_alias() == command_name:
-                return command
+    def get_flag(self, flag_name: str) -> Flag:
+        for flag in self.__flags:
+            if flag.get_name() == flag_name or flag.get_alias() == flag_name:
+                return flag
             
-        raise ValueError(f"Command '{command_name}' not found")
+        raise ValueError(f"flag '{flag_name}' not found")
     
-    def get_commands_str(self) -> str:
-        # formatting
-        pass
+    def to_string(self) -> str:
+        format_str = f"\nUsage: {self.__usage}\n\nOptions:\n"
+        
+        max_flag_length = max(len(flag.get_display_name()) for flag in self.__flags) + 5
 
-command_manager = CommandManager("python3 ../run_test.py [required test folder name] [optional flags]")
-command_manager.add_command(
+        max_description_length = 55
+
+        flag_names_left_padding = 5
+
+        max_left_padding_until_desc = 1 + max_flag_length + flag_names_left_padding
+
+        for flag in self.__flags:
+            flag_names = ' ' * flag_names_left_padding + (flag.get_display_name()).ljust(max_flag_length)
+
+            desc = flag.get_describe()
+
+            
+            if (len(desc) > max_description_length):
+                segmented_desc = split_string_by_n_characters(desc, max_description_length)
+
+                new_desc = ""
+                
+                for i in range(len(segmented_desc)):
+                    new_desc += segmented_desc[i]
+                    if i != len(segmented_desc) - 1:
+                        new_desc += "\n"
+                    new_desc += ' ' * max_left_padding_until_desc
+                
+                desc = new_desc
+
+
+            format_str += f"{flag_names} {desc}\n"
+                
+        return format_str
+    
+
+
+flag_manager = FlagManager("python3 ../run_test.py [required test folder name] [optional flags]")
+flag_manager.add_flag(
     "h", "help",
     "Show help"
 )
-command_manager.add_command(
+
+flag_manager.add_flag(
     "m", "no-make",
     "Does not call 'make' command", 
     lambda file_runner_manager : file_runner_manager.toggle_make_call()
 )
-command_manager.add_command(
+
+flag_manager.add_flag(
     "b", "no-build-ir", 
-    "Does not build IR for any file", 
+    "Does not build IR for any file. Combined with --only-build-ir-for may result in undesirable output as these commands are opposites. ", 
     lambda file_runner_manager : file_runner_manager.toggle_make_call()
 )
 
+flag_manager.add_flag(
+    "f", "no-build-ir-for", 
+    "Does not build IR for the specified c file. Can be called multiple times. c file must be specified in the succeeding argument, or else there will be an error.", 
+    lambda file_runner_manager, file_name: file_runner_manager.get_file(file_name).toggle_ir_generation()
 
-options = {
-    "usage": "str",
-    "commands": {
-        "h": {
-            "alias": "help",
-            "describe": "blah blah blah"
-        }, 
-        "m": {
-            "alias": "no-make",
-            "describe": "___",
-            "action": lambda file_runner_manager : file_runner_manager.toggle_make_call()
-        }, 
-        "b": {
-            "alias": "no-build-ir",
-            "describe": "__",
-            "action": lambda file_runner_manager : [file.toggle_ir_generation() for file in file_runner_manager]
-        }, 
-        "f": {
-            "alias": "no-build-ir-for",
-            "describe": "__",
-            "action": lambda file_runner_manager, file_name: file_runner_manager.get_file(file_name).toggle_ir_generation()
-        }, 
-        "u" : {
-            "alias": "only-build-ir-for", 
-            "describe": "__",
-            "action": lambda file_runner_manager, file_name : [file.toggle_ir_generation() for file in file_runner_manager.get_all_files_excluding(file_name)]
-        }, 
+)
+flag_manager.add_flag(
+    "u", "only-build-ir-for", 
+    "Only builds ir for specified c file. c file must be specified in the succeeding argument, or else there will be an error. Note that c files will still be ran unless otherwise disallowed (use -n). Combined with --no-build-ir may result in undesirable output as these commands are opposites.",
+    lambda file_runner_manager, file_name : [file.toggle_ir_generation() for file in file_runner_manager.get_all_files_excluding(file_name)]
+)
 
-        "r": {
-            "alias": "no-run-for", 
-            "describe": "___",
-            "action": lambda file_runner_manager, file_name: file_runner_manager.get_file(file_name).toggle_test_running()
-        }, 
-        "n": {
-            "alias": "only-run-for",
-            "describe": "___",
-            "action": lambda file_runner_manager, file_name : [file.toggle_test_running() for file in file_runner_manager.get_all_files_excluding(file_name)]
-        }
-    } 
-}
+flag_manager.add_flag(
+    "r", "no-run-for", 
+    "Does not specified c file. Can be called multiple times. c file must be specified in the succeeding argument, or else there will be an error.", 
+    lambda file_runner_manager, file_name: file_runner_manager.get_file(file_name).toggle_test_running()   
+)
 
+flag_manager.add_flag(
+    "n", "only-run-for", 
+    "Only runs specified c file. c file must be specified in the succeeding argument, or else there will be an error. Note that IR will still generate unless otherwise disallowed (use -u).",
+    lambda file_runner_manager, file_name : [file.toggle_test_running() for file in file_runner_manager.get_all_files_excluding(file_name)]
+)
 
 
 '''
-(plans for command line tool impl)
-(should also say for results at the end if we did not build ir or explicitly excluded it or did not make)
-
 syntax: 
 python3 ../run_test.py [file name] [flags]
 python3 ../run_test.py or python3 ../run_test.py --help or python3 ../run_test.py -h     gives you the help 
 
-
-typical usage
+example usage
 python3 ../run_test.py simple_ptr_test
-
-extra usage 
 python3 ../run_test.py simple_ptr_test --no-make --no-build-ir
 python3 ../run_test.py simple_layer_test --only-run-for test1.c
 python3 ../run_test.py simple_layer_test --only-run-for layer/test1_again.c
-
-commands
---no-make: does not run make 
-
---no-build-ir: does not build ir for any files. assumes it exists already and will error if they do not 
-
---no-build-ir-for [c file name] does not build ir for specified file 
-    for like simple_layer_test, if you wanted to ignore test1.c, just enter test1.c. if nested,
-    type layer/test1_again.c
---only-build-ir-for [c file name]    can be ran for multiple files. ignores all except the ones specified by --only-build-ir-for
-
---no-run-for [c file name]
---only-run-for [c file name]
-
-should error for the following combinations:  
-• --no-build-ir and --only-build-ir-for [file]
-• --no-build-ir-for [A] and --only-build-ir-for [B] where A = B 
-• --no-run-for [A] and --only-run-for [B] where A = B
-
-
-class TestFile:
-    string file_name
-    bool ir_generation
-    bool test_ran 
-
-
-
 '''
 
 
@@ -177,13 +180,20 @@ def find_nth(full_string: str, sub_str: str, n: int) -> int:
         n -= 1
     return start
 
+
+
 class TestFile:
+    INIT_TEST_CONDITIONS = {
+        "IR_WILL_GENERATE": True, 
+        "TEST_WILL_RUN": True, 
+    }
+    
     # Assumption: all file paths start with ../test/[test name]/
     def __init__(self, file_path: str):
         self.__file_path = file_path
         self.__file_name = file_path[find_nth(file_path, "/", 3) + 1:]
-        self.__ir_will_generate = True
-        self.__test_will_run = True
+        self.__ir_will_generate = self.INIT_TEST_CONDITIONS["IR_WILL_GENERATE"]
+        self.__test_will_run = self.INIT_TEST_CONDITIONS["TEST_WILL_RUN"]
 
     def toggle_ir_generation(self):
         self.__ir_will_generate = not self.__ir_will_generate
@@ -285,7 +295,7 @@ def get_all_c_files(folder_path: str, collected_files = []):
 # nothing specified; print help
 # TODO: make help message and put it here
 if len(sys.argv) == 1:
-    print("<USAGE MESSAGE>")
+    print(flag_manager.to_string())
     sys.exit(1)
 
 # for sys.argv, 0th = ../run_test.py, 1st = folder name, 2 and beyond = user args
@@ -293,7 +303,7 @@ if len(sys.argv) == 1:
 test_folder_name = sys.argv[1]
 
 if (test_folder_name == "-h" or test_folder_name == "--help"):
-    print("<USAGE MESSAGE>")
+    print(flag_manager.to_string())
     sys.exit(0)
 
 c_files = get_all_c_files(f"../test/{test_folder_name}")
@@ -306,35 +316,23 @@ sys_arg_iterator = 2
 while sys_arg_iterator < len(sys.argv):
     arg = sys.argv[sys_arg_iterator]
 
-    if (arg == "--no-make"):
-        # file_runner_manager.toggle_make_call()
-        options["commands"]["m"]["action"](file_runner_manager)
-        
+    if (flag_manager.flag_exists(arg)):
+        flag = flag_manager.get_flag(arg)
 
+        action_arg_count = flag.get_action().__code__.co_argcount
 
-    elif (arg == "--no-build-ir"):
-        for f in file_runner_manager.get_all_files():
-            f.toggle_ir_generation()
-    elif (arg == "--no-build-ir-for"):
-        next_arg = sys.argv[sys_arg_iterator + 1]
-        f = file_runner_manager.get_file(next_arg)
-        f.toggle_ir_generation()
-    elif (arg == "--only-build-ir-for"):
-        for f in file_runner_manager.get_all_files_excluding(arg):
-            f.toggle_ir_generation()
-    elif (arg == "--no-run-for"):
-        next_arg = sys.argv[sys_arg_iterator + 1]
+        if (action_arg_count == 1):
+            flag.get_action()(file_runner_manager)
+        elif (action_arg_count == 2):
+            next_arg = sys.argv[sys_arg_iterator + 1]
+            flag.get_action()(file_runner_manager, next_arg)
+            sys_arg_iterator += 2
+            continue
 
-        options["commands"]["r"]["action"](file_runner_manager, next_arg)
-
-        # f = file_runner_manager.get_file(next_arg)
-        # f.toggle_test_running()
-    elif (arg == "--only-run-for"):
-        for f in file_runner_manager.get_all_files_excluding(arg):
-            f.toggle_test_running()
+    else:
+        raise ValueError(f"Flag {arg} not found. {flag_manager.to_string()}")
 
     sys_arg_iterator += 1
-
 
 print(f"Calling Make: {file_runner_manager.make_will_be_called()}")
 
@@ -387,7 +385,12 @@ for c_file in c_files:
 
             results.append(result)
     else:
-        results.append(f"test {c_file} was not ran")
+        result = f"test {c_file} was not ran"
+        if not f.ir_will_generate():
+            result += " | ir not generated"
+
+        results.append(result)
+
 
 
         
