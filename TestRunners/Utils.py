@@ -21,7 +21,6 @@ def split_string_by_n_characters(input_string: str, n: int) -> "list[str]":
     """
 
     words = input_string.split(' ')
-
     result = []
     current_chunk = ''
     for word in words:
@@ -71,5 +70,4 @@ def get_all_c_files(folder_path: str, collected_files=[]) -> "list[str]":
 
             elif entry.is_dir():
                 get_all_c_files(f"{folder_path}/{entry.name}", collected_files)
-
     return collected_files
