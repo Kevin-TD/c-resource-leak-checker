@@ -25,6 +25,9 @@ int main() {
 [B.x] => [B.0]
 [B.y] => [B.1]
 '''
+# this is used for Testers/Passes when we want to specify 
+# a field of a variable by field name (rather than index) 
+# to test its MustCall/CalledMethods
 
 import sys 
 

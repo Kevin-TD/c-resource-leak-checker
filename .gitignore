@@ -7,3 +7,4 @@ build
 llvm.sh
 *.tmp
 *.pyc
+*__pycache__
