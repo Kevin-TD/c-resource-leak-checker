@@ -82,12 +82,11 @@ class FlagManager:
     
     def to_string(self) -> str:
         format_str = f"\nUsage: {self.__usage}\n\nOptions:\n"
+
+        flag_names_left_padding = 5 # TODO: class const with double underscore 
+        max_description_length = 55 # TODO: class const with double underscore
         
-        max_flag_length = max(len(flag.get_display_name()) for flag in self.__flags) + 5
-
-        max_description_length = 55
-
-        flag_names_left_padding = 5
+        max_flag_length = max(len(flag.get_display_name()) for flag in self.__flags) + flag_names_left_padding
 
         max_left_padding_until_desc = 1 + max_flag_length + flag_names_left_padding
 
@@ -132,7 +131,7 @@ flag_manager.add_flag(
 flag_manager.add_flag(
     "b", "no-build-ir", 
     "Does not build IR for any file. Combined with --only-build-ir-for may result in undesirable output as these commands are opposites. ", 
-    lambda file_runner_manager : file_runner_manager.toggle_make_call()
+    lambda file_runner_manager : [file.toggle_ir_generation() for file in file_runner_manager.get_all_files()]
 )
 
 flag_manager.add_flag(
@@ -163,7 +162,7 @@ flag_manager.add_flag(
 '''
 syntax: 
 python3 ../run_test.py [file name] [flags]
-python3 ../run_test.py or python3 ../run_test.py --help or python3 ../run_test.py -h     gives you the help 
+python3 ../run_test.py or python3 ../run_test.py --help or python3 ../run_test.py -h to get help
 
 example usage
 python3 ../run_test.py simple_ptr_test
@@ -292,8 +291,6 @@ def get_all_c_files(folder_path: str, collected_files = []):
     return collected_files
 
 
-# nothing specified; print help
-# TODO: make help message and put it here
 if len(sys.argv) == 1:
     print(flag_manager.to_string())
     sys.exit(1)

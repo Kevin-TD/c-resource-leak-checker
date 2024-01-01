@@ -6,3 +6,4 @@ build
 /test/experiments
 llvm.sh
 *.tmp
+*__pycache__
