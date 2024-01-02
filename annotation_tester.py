@@ -8,7 +8,7 @@ import tempfile
 results = []
 tests_that_did_not_run = []
 
-DEBUG = True 
+DEBUG = True
 
 def logout(x: str):
     if (DEBUG):

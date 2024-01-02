@@ -13,13 +13,7 @@ class Flag:
             describe (str): description of what the flag does. should typically be
             available to the user when they call for help or insert a flag incorrectly
 
-            action: lambda function that can have 0, 1, or 2 parameters. if there are 0 parameters, 
-            no action is done. if there is 1 parameter, a FileRunnerManager instance is passed 
-            into that first parameter. if there is a second 
-            parameter, a TestFile instance is passed into that second parameter. these can be used 
-            to enforce an action, such as toggling IR generation for all files or toggling IR 
-            generation for a specific file. 
-            nothing is done with its return. 
+            action: lambda function that defines some usage
         """
         self.__name: str = "-" + name
         self.__alias: str  = "--" + alias

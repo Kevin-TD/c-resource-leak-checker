@@ -29,9 +29,11 @@ int main() {
 # a field of a variable by field name (rather than index) 
 # to test its MustCall/CalledMethods
 
+# TODO: refactor this code
+
 import sys 
 
-DEBUG = False
+DEBUG = True
 
 def logout(x: str):
     if (DEBUG):
@@ -45,13 +47,20 @@ class Field:
 class Struct:
     def __init__(self, name: str):
         self.name = name
+        self.typedefs: list[str] = []
         self.fields: list[Field] = []
 
     def get_name(self) -> str: 
         return self.name
     
+    def get_typedefs(self) -> "list[str]":
+        return self.typedefs
+    
     def add_field(self, field: Field) -> None:
         self.fields.append(field)
+    
+    def add_typedef(self, typedef: str) -> None:
+        self.typedefs.append(typedef)
     
 
 class StructsManager:
@@ -61,15 +70,22 @@ class StructsManager:
     # if struct is not found, a new one is returned with name struct_name if error_if_not_found is false
     def get_struct(self, struct_name: str, error_if_not_found: bool = False) -> Struct:
         for struct in self.structs:
-            if struct.get_name() == struct_name:
+            if struct.get_name() == struct_name or struct_name in struct.get_typedefs():
                 return struct
         
         if error_if_not_found:
-            raise ValueError("struct not found")
+            raise ValueError(f"struct {struct_name} not found")
 
         new_struct = Struct(struct_name)
         self.structs.append(new_struct)
         return self.structs[-1] 
+
+    def struct_exists(self, struct_name: str) -> bool:
+        for struct in self.structs:
+            if struct.get_name() == struct_name or struct_name in struct.get_typedefs():
+                return True
+        
+        return False
     
     # if there already exists a struct of name struct_name, that struct is returned. 
     # otherwise, the struct is added and returned. 
@@ -107,6 +123,7 @@ class StructVarManager:
         new_struct_var = StructVar(var_name, type_name)
         self.struct_vars.append(new_struct_var)
         return self.struct_vars[-1] 
+
     
 def add_struct(record_decl: str, structs_manager: StructsManager):
     record_decl_chunks = record_decl.split(" ")
@@ -133,10 +150,16 @@ def add_field(field_decl: str, field_index: int, struct: Struct):
     field = Field(field_name, field_index)
     struct.add_field(field)
 
-def add_struct_var(var_decl: str, struct_var_manager: StructVarManager):
+def add_struct_var(var_decl: str, struct_var_manager: StructVarManager, structs_manager: StructsManager):
+
     var_decl_chunks = var_decl.split(" ")
+
+    print(var_decl_chunks)
     
-    var_name = var_decl_chunks[7]
+    if var_decl_chunks[5] == "used":
+        var_name = var_decl_chunks[6]
+    else: 
+        var_name = var_decl_chunks[5]
 
     struct_name = ""
     start_index = var_decl.find("'") + 1
@@ -149,17 +172,52 @@ def add_struct_var(var_decl: str, struct_var_manager: StructVarManager):
         cur_char = var_decl[start_index]
     
     struct_name_split = struct_name.split(" ")
-    if struct_name_split[1] != "":
+    if len(struct_name_split) > 1 and struct_name_split[1] != "":
         struct_name = struct_name_split[1]
     else:
         struct_name = struct_name_split[0]
+    
+    if not structs_manager.struct_exists(struct_name):
+        return
 
     logout(var_decl)
-    logout(f"parsed var_decl var name = {var_name} struct name = {struct_name}")
+    logout(f"parsed var_decl var name = {var_name} struct name = '{struct_name}'")
 
     struct_var_manager.add_struct_var(var_name, struct_name)
 
+def add_typedef_alias(structs_manager: StructsManager, typedef_decl: str):
+    if not ("referenced" in typedef_decl and "struct" in typedef_decl):
+        return
 
+    original_name = ""
+    start_index = typedef_decl.find("'") + 1
+    cur_char = typedef_decl[start_index]
+
+    while (cur_char != "'"):
+        original_name += cur_char 
+
+        start_index += 1
+        cur_char = typedef_decl[start_index]
+    
+    original_name_split = original_name.split(" ")
+    if len(original_name_split) > 1 and original_name_split[1] != "":
+        original_name = original_name_split[1]
+    else:
+        original_name = original_name_split[0]
+
+    typedef_alias_name = ""
+    start_index = typedef_decl.find("referenced") + len("referenced") + 1
+    cur_char = typedef_decl[start_index]
+
+    while (cur_char != " "):
+        typedef_alias_name += cur_char
+        
+        start_index += 1 
+        cur_char = typedef_decl[start_index]
+
+    if original_name != typedef_alias_name:
+        structs_manager.get_struct(original_name, False).add_typedef(typedef_alias_name)
+        logout(f"added typedef '{original_name}' '{typedef_alias_name}'")
     
 file_to_read = sys.argv[1]
 output_file = sys.argv[2]
@@ -178,8 +236,8 @@ with open(file_to_read) as ast:
     for expr in ast_lines: 
         expr = expr.strip() 
 
-        # gets decl 
-        start_decl_index = expr.find(next(filter(str.isalpha, expr))) # finds index of first letter
+        first_letter_index = expr.find(next(filter(str.isalpha, expr)))
+        start_decl_index = first_letter_index 
         decl = ""
         cur_decl_char = expr[start_decl_index]
 
@@ -201,11 +259,15 @@ with open(file_to_read) as ast:
             cur_top_decl = expr
             field_index = None 
             cur_struct = add_struct(cur_top_decl, structs_manager)
+        
+        elif "TypedefDecl" == decl:
+            cur_top_decl = expr
+            field_index = None
+            add_typedef_alias(structs_manager, cur_top_decl)
 
         elif "ParmVarDecl" == decl: 
             cur_mid_decl = expr
             field_index = None 
-
 
         elif "FieldDecl" == decl:
             cur_mid_decl = expr 
@@ -223,8 +285,8 @@ with open(file_to_read) as ast:
                 cur_mid_decl = None
 
         else:
-            if "VarDecl" == decl and "struct" in expr and "used" in expr:
-                add_struct_var(expr, struct_var_manager)
+            if "VarDecl" == decl and "struct" in expr:
+                add_struct_var(expr[first_letter_index:], struct_var_manager, structs_manager)
 
             field_index = None
 
