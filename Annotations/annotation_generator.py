@@ -11,6 +11,7 @@ import sys
 from abc import ABC as AbstractClass
 
 DEBUG = False
+LOG_ANNOTATIONS = False 
 
 def logout(x: str):
     if (DEBUG):
@@ -449,6 +450,8 @@ with open(file_to_read) as ast:
             anno = annotation_manager.annotations[i]
             
             output.write(anno.to_str())
+            if LOG_ANNOTATIONS:
+                print(anno.to_str())
 
             if i != len(annotation_manager.annotations) - 1:
                 output.write("\n")

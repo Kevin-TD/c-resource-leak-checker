@@ -9,6 +9,8 @@ TempFileManager::TempFileManager(const std::string& fileName) {
 
     tempFileFD = mkstemp(tempFileFDChar);
 
+    tempFileName = std::string(tempFileFDChar);
+
     delete[] tempFileFDChar;
 
     if (tempFileFD == -1) {

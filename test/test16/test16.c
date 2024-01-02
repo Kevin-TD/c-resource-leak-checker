@@ -3,8 +3,6 @@
 #include <unistd.h>
 #include "../../Annotations/Annotations.h"
 
-//! So, even though our annotations currently aren't ideal, LLVM IR still interprets them. This created more IR code & calls to llvm.annotations and aliases between IR variables, and I don't find it necessary to handle it right now when we are not relying on the IR for annotations. Thus, all annotations have been moved to the main method, where the IR won't do anything extra 
-
 struct my_struct {
     char* x MustCall("free");
     char* y MustCall("free");

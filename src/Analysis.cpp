@@ -31,6 +31,9 @@
 // TODO: git rebase main once api concerns addressed. resolving merge conflicts with formatting should not be in the same update
 // TODO: handle un-aliasing
 
+// TODO?: when writing tests its hard to write tests if we want to test something at a branch that isnt the start and the end (because we to have dig through the ir to find it.) maybe make tool to make this easier
+// TODO: give tests more descriptive names
+
 struct InstructionHolder {
   SetVector<Instruction *> branch;
   SetVector<Instruction *> successors;

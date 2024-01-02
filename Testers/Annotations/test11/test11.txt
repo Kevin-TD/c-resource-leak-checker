@@ -1,0 +1,8 @@
+MustCall target = FUNCTION(malloc0).RETURN methods = free0
+MustCall target = FUNCTION(malloc1).RETURN methods = free1
+MustCall target = FUNCTION(malloc2).RETURN methods = free2
+MustCall target = FUNCTION(malloc3).RETURN methods = free3
+Calls target = FUNCTION(free0).PARAM(0) methods = free0
+Calls target = FUNCTION(free1).PARAM(0) methods = free1
+Calls target = FUNCTION(free2).PARAM(0) methods = free2
+Calls target = FUNCTION(free3).PARAM(0) methods = free3

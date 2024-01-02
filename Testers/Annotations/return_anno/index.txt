@@ -1,0 +1,5 @@
+MustCall target = STRUCT(my_struct).FIELD(0) methods = free
+Calls target = FUNCTION(return_calls_free).PARAM(0) methods = free
+Calls target = FUNCTION(return_calls_free).RETURN methods = free
+Calls target = FUNCTION(return_calls_free_on_struct).PARAM(0).FIELD(0) methods = free
+Calls target = FUNCTION(return_calls_free_on_struct).RETURN.FIELD(0) methods = free

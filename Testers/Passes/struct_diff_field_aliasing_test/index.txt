@@ -1,2 +1,2 @@
-pass=CalledMethods function=main var=s.0 methods={free}
-pass=CalledMethods function=main var=s.1 methods={free}
+pass=CalledMethods function=main var=s.x methods={free}
+pass=CalledMethods function=main var=s.y methods={free}
