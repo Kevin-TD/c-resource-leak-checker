@@ -1,0 +1,2 @@
+# annotation_tester.py runs every test. this runs for single file
+#  clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics ../test/double_mustcall/index.c > AST.txt ; python3 ../Annotations/annotation_generator.py AST.txt ANNO.txt

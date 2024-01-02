@@ -34,7 +34,7 @@ int main() {
 
 import sys
 
-DEBUG = False
+DEBUG = True
 
 
 def logout(x: str):
@@ -184,6 +184,9 @@ def parse_var_decl(var_decl: str, struct_var_manager_holder: StructVarManager, s
         struct_name = struct_name_split[1]
     else:
         struct_name = struct_name_split[0]
+    
+    if not structs_manager.struct_exists(struct_name):
+        return
 
     if not structs_manager_holder.struct_exists(struct_name):
         return
@@ -230,6 +233,9 @@ def parse_typedef_decl(structs_manager_holder: StructsManager, typedef_decl: str
             original_name, False).add_typedef(typedef_alias_name)
         logout(f"added typedef '{original_name}' '{typedef_alias_name}'")
 
+def add_typedef_alias(structs_manager: StructsManager, typedef_decl: str):
+    if not ("referenced" in typedef_decl and "struct" in typedef_decl):
+        return
 
 file_to_read = sys.argv[1]
 output_file = sys.argv[2]

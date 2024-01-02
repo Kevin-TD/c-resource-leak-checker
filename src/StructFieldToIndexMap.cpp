@@ -14,7 +14,12 @@ void StructFieldToIndexMap::buildMap(const TempFileManager& astFile) {
 
     int command_exit_status = system(readASTCommand.c_str());
 
-    logout("to py run " << readASTCommand);
+    logout("ran command " << readASTCommand);
+
+    if (command_exit_status != 0) {
+        errs() << "error occured while building map; early exit\n"; 
+        std::exit(1);
+    }
 
     std::ifstream mapFile = mapTempFile.getFileStream();
 

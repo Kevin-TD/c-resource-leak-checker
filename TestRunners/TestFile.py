@@ -1,17 +1,11 @@
-# TODO:  make abstract version to be extended for other test runners
-
-import sys
-
-sys.path.insert(0, '..')
-from TestRunners.Utils import *
+from .Utils import *
 
 class TestFile:
-    """ represents a C file from the test directory. holds information on whether its IR 
-    will be generated or if that file will be ran. 
+    """ represents a file to test with information on whether certain properties will be ran. 
+    used as a base class to be extended for specific tests. 
     """
 
-    INIT_TEST_CONDITIONS = {
-        "IR_WILL_GENERATE": True, 
+    __INIT_TEST_CONDITIONS = {
         "TEST_WILL_RUN": True, 
     }
     
@@ -28,17 +22,10 @@ class TestFile:
         except Exception:
             raise FileNotFoundError(f"File path {file_path} has unexpected format; must begin with '../test/[test name]/'")
     
-        self.__ir_will_generate: bool = self.INIT_TEST_CONDITIONS["IR_WILL_GENERATE"]
-        self.__test_will_run: bool = self.INIT_TEST_CONDITIONS["TEST_WILL_RUN"]
-
-    def toggle_ir_generation(self):
-        self.__ir_will_generate = not self.__ir_will_generate
+        self.__test_will_run: bool = self.__INIT_TEST_CONDITIONS["TEST_WILL_RUN"]
     
     def toggle_test_running(self):
         self.__test_will_run = not self.__test_will_run
-
-    def ir_will_generate(self) -> bool:
-        return self.__ir_will_generate
 
     def test_will_run(self) -> bool:
         return self.__test_will_run
