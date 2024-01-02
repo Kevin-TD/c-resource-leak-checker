@@ -1,6 +1,5 @@
 from .Utils import *
 
-
 class TestFile:
     """ represents a file to test with information on whether certain properties will be ran. 
     used as a base class to be extended for specific tests. 
