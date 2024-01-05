@@ -18,7 +18,8 @@ jobs:
         sudo apt-get update
         sudo apt update
         sudo apt install -y astyle
-        sudo apt-get install python3-autopep8
+        sudo apt install python3-pip
+        pip3 install --uprgrade autopep8
     
     - name: Check Code Formatting
       run: |

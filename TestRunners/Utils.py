@@ -50,7 +50,7 @@ def find_nth(full_string: str, sub_str: str, n: int) -> int:
     """
     start = full_string.find(sub_str)
     while start >= 0 and n > 1:
-        start = full_string.find(sub_str, start+len(sub_str))
+        start = full_string.find(sub_str, start + len(sub_str))
         n -= 1
     return start
 

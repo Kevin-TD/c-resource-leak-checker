@@ -123,14 +123,16 @@ if __name__ == "__main__":
                 try:
                     next_arg = sys.argv[sys_arg_iterator + 1]
                 except IndexError:
-                    raise FileNotFoundError(f"c file not specified for flag {arg}")
+                    raise FileNotFoundError(
+                        f"c file not specified for flag {arg}")
 
                 flag.get_action()(pass_test_files_manager, next_arg)
                 sys_arg_iterator += 2
                 continue
 
         else:
-            raise ValueError(f"Flag {arg} not found. {flag_managers.to_string()}")
+            raise ValueError(
+                f"Flag {arg} not found. {flag_managers.to_string()}")
 
         sys_arg_iterator += 1
 
@@ -168,7 +170,8 @@ if __name__ == "__main__":
             if ir_generate_exit_status != 0:
                 commands_did_not_fail = False
 
-                test_result.test_has_failed(f"failed @ IR generation - exit status {ir_generate_exit_status}")
+                test_result.test_has_failed(
+                    f"failed @ IR generation - exit status {ir_generate_exit_status}")
 
                 results.append(test_result.to_string())
                 continue
@@ -184,7 +187,8 @@ if __name__ == "__main__":
             if test_run_exit_status != 0:
                 commands_did_not_fail = False
 
-                test_result.test_has_failed(f"failed @ running - exit status {test_run_exit_status}")
+                test_result.test_has_failed(
+                    f"failed @ running - exit status {test_run_exit_status}")
             else:
                 test_text_file = "../Testers/Passes/" + test_folder_name + \
                     "/" + f.get_file_name().replace(".c", ".txt")
