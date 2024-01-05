@@ -186,7 +186,8 @@ def add_struct_var(var_decl: str, struct_var_manager: StructVarManager, structs_
         return
 
     logout(var_decl)
-    logout(f"parsed var_decl var name = {var_name} struct name = '{struct_name}'")
+    logout(
+        f"parsed var_decl var name = {var_name} struct name = '{struct_name}'")
 
     struct_var_manager.add_struct_var(var_name, struct_name)
 
@@ -306,6 +307,8 @@ with open(file_to_read) as ast:
 
             for j in range(len(found_struct.fields)):
                 field = found_struct.fields[j]
-                output.write(f"{struct_var.get_var_name()}.{field.field_name}={struct_var.get_var_name()}.{field.field_index}\n")
+                output.write(
+                    f"{struct_var.get_var_name()}.{field.field_name}={struct_var.get_var_name()}.{field.field_index}\n")
 
-                logout(f"wrote: {struct_var.get_var_name()}.{field.field_name}={struct_var.get_var_name()}.{field.field_index}")
+                logout(
+                    f"wrote: {struct_var.get_var_name()}.{field.field_name}={struct_var.get_var_name()}.{field.field_index}")

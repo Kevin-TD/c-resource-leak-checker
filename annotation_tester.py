@@ -70,7 +70,8 @@ with os.scandir("../test") as entries:
 
                     if build_status != 0:
                         tests_passed = False
-                        results.append(f"{test_file} failed - annotation build error")
+                        results.append(
+                            f"{test_file} failed - annotation build error")
                     elif diff_status != 0:
                         logout(f"DIFF ANNOTATION RECEIVED:\n{out}")
                         tests_passed = False

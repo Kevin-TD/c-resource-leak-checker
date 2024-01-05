@@ -325,7 +325,8 @@ def parse_anno(anno: str, spec: Specifier, annotation_manager: AnnotationManager
                         anno_unfilled_target_field_name = field.field_index
                         break
                 else:
-                    raise ValueError(f"Did not find field '{anno_unfilled_target_field_name}' for struct '{struct.get_name()}', anno {anno}")
+                    raise ValueError(
+                        f"Did not find field '{anno_unfilled_target_field_name}' for struct '{struct.get_name()}', anno {anno}")
             else:
                 # for the parameter, we need the type (the struct that it is definitely referring to)
                 found_field = False
@@ -336,7 +337,8 @@ def parse_anno(anno: str, spec: Specifier, annotation_manager: AnnotationManager
 
                     if param.index == param_index:
                         # Assumption: param.param_type looks like 'struct <struct_name>' or '<struct_name>'
-                        logout(f"param_type_struct_name = '{param.param_type}'")
+                        logout(
+                            f"param_type_struct_name = '{param.param_type}'")
                         try:
                             param_type_struct_name = param.param_type.split(" ")[
                                 1]
@@ -352,15 +354,18 @@ def parse_anno(anno: str, spec: Specifier, annotation_manager: AnnotationManager
                                 found_field = True
                                 break
                         else:
-                            raise ValueError(f"Did not find field '{anno_unfilled_target_field_name}' for struct '{struct.get_name()}', anno {anno}")
+                            raise ValueError(
+                                f"Did not find field '{anno_unfilled_target_field_name}' for struct '{struct.get_name()}', anno {anno}")
 
                 if (not found_field):
-                    raise ValueError(f"Did not find field '{anno_unfilled_target_field_name}' for anno '{anno}', specifier '{spec.get_name()}'")
+                    raise ValueError(
+                        f"Did not find field '{anno_unfilled_target_field_name}' for anno '{anno}', specifier '{spec.get_name()}'")
 
             logout(f"UNFILLED_FIELD = {anno_unfilled_target_field_name}")
             known_target += f".FIELD({anno_unfilled_target_field_name})"
 
-    logout(f"for anno {anno} known target is {known_target} and {spec.get_name()}")
+    logout(
+        f"for anno {anno} known target is {known_target} and {spec.get_name()}")
     built_anno = Annotation(anno_type, known_target, anno_methods)
     annotation_manager.add_annotation(built_anno)
 
@@ -440,7 +445,8 @@ with open(file_to_read) as ast:
             if cur_mid_decl is None:
                 param_index = None
 
-            logout(f"top: {cur_top_decl}\nmid: {cur_mid_decl}\nanno: {annotation}\nparam_index: {param_index}\nfield_index: {field_index}\n")
+            logout(
+                f"top: {cur_top_decl}\nmid: {cur_mid_decl}\nanno: {annotation}\nparam_index: {param_index}\nfield_index: {field_index}\n")
             parse_anno(annotation, cur_spec, annotation_manager,
                        param_index, field_index)
 

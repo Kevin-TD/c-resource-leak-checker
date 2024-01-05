@@ -27,10 +27,12 @@ class TestFilesManager:
             if issubclass(file_object_type, TestFile):
                 self.__declared_subclass = file_object_type
             else:
-                raise ValueError(f"Type of file_object ({file_object_type}) is not sub class of TestFile")
+                raise ValueError(
+                    f"Type of file_object ({file_object_type}) is not sub class of TestFile")
         else:
             if not type(file_object) is self.__declared_subclass:
-                raise ValueError(f"Type of file_object ({type(file_object)}) is equal to {self.__declared_subclass}")
+                raise ValueError(
+                    f"Type of file_object ({type(file_object)}) is equal to {self.__declared_subclass}")
 
         self.__test_files.append(file_object)
 
