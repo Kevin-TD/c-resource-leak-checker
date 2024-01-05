@@ -10,3 +10,4 @@ if os.path.split(os.getcwd())[1] != "c-resource-leak-checker":
     sys.exit(1)
 
 os.system("astyle --style=google --exclude=build --ignore-exclude-errors --recursive *.cpp,*.h,*.c -n")
+os.system("autopep8 --in-place --recursive .")
