@@ -25,27 +25,27 @@ for this C code, the map will look like:
 [B.y] => [B.1]
 
 this is used for writing test cases where we may need to specify the index of some variable.
-e.g., we may need to test if M.x and M.y has called free. the user may always reference it by 
-index (e.g., M.0) but this is inconvenient and can be less trivial if the struct has many fields. 
+e.g., we may need to test if M.x and M.y has called free. the user may always reference it by
+index (e.g., M.0) but this is inconvenient and can be less trivial if the struct has many fields.
 
 LLVM stores fields of structs as indicies, so we cannot directly reference them by name (e.g., M.x).
-thus, this map translates name references into how LLVM recognizes them. 
+thus, this map translates name references into how LLVM recognizes them.
 
-the AST of a program is used to generate the map. 
+the AST of a program is used to generate the map.
 */
 class StructFieldToIndexMap {
-private:
-    std::map<std::string, std::string> fieldToIndexMap; 
-public:
-    StructFieldToIndexMap(); 
+  private:
+    std::map<std::string, std::string> fieldToIndexMap;
+  public:
+    StructFieldToIndexMap();
 
     // builds the map based off a tmp file which consists of the AST of a C program
-    void buildMap(const TempFileManager& astFile); 
+    void buildMap(const TempFileManager& astFile);
 
     // returns the corresponding struct name and index based on structNameAndField
     std::string get(const std::string& structNameAndField);
 
-    // returns true iff structNameAndField has a corresponding struct name and index, and false otherwise. 
+    // returns true iff structNameAndField has a corresponding struct name and index, and false otherwise.
     bool structNameAndFieldIsInMap(const std::string& structNameAndField);
 };
 

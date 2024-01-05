@@ -10,7 +10,7 @@ class TestRunner {
     // lastBranchName
     static bool runTests(const std::string functionName,
                          const std::string lastBranchName,
-                         FullFile expectedResult, ProgramFunction receivedResult);
+                         FullFile expectedResult, ProgramFunction receivedResult, StructFieldToIndexMap structFieldToIndexMap);
     static FullFile buildExpectedResults(std::string testName,
                                          std::string passName);
 };

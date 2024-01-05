@@ -4,16 +4,16 @@
 #include "../../Annotations/Annotations.h"
 
 struct M {
-    char* x MustCall("free"); 
-    char* y MustCall("free"); 
+    char* x MustCall("free");
+    char* y MustCall("free");
 };
 
-int main() {   
-    struct M s; 
+int main() {
+    struct M s;
 
     s.x = (char*)malloc(15);
 
     s.y = s.x;
 
-    free(s.x); 
+    free(s.x);
 }
