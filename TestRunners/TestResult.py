@@ -1,6 +1,5 @@
 from .Utils import TERMINAL_TEXT_STYLES
 
-
 class TestResult:
     """Used to generate a string representing a test result, detailing 
     the test name, if it passed, and any additional notes. 
