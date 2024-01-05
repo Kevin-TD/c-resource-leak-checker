@@ -27,17 +27,17 @@ if os.path.split(os.getcwd())[1] != "build":
 if __name__ == "__main__":
     '''
     syntax: 
-    python3 ../TestRunners/PassTestRunner/run_test.py [file name] [flags]
-    python3 ../TestRunners/PassTestRunner/run_test.py -h to get help
+    python3 ../run_pt.py [file name] [flags]
+    python3 ../run_pt.py -h to get help
 
     example usage
-    python3 ../TestRunners/PassTestRunner/run_test.py simple_ptr_test
-    python3 ../TestRunners/PassTestRunner/run_test.py simple_ptr_test --no-make --no-build-ir
-    python3 ../TestRunners/PassTestRunner/run_test.py simple_layer_test --only-run-for test1.c
-    python3 ../TestRunners/PassTestRunner/run_test.py simple_layer_test --only-run-for layer/test1_again.c
+    python3 ../run_pt.py simple_ptr_test
+    python3 ../run_pt.py simple_ptr_test --no-make --no-build-ir
+    python3 ../run_pt.py simple_layer_test --only-run-for test1.c
+    python3 ../run_pt.py simple_layer_test --only-run-for layer/test1_again.c
     '''
 
-    flag_managers = FlagsManager("python3 ../TestRunners/PassTestRunner/run_test.py [required test folder name] [optional flags]")
+    flag_managers = FlagsManager("python3 ../run_pt.py [required test folder name] [optional flags]")
     flag_managers.add_flag(
         "h", "help",
         "Show help"
@@ -57,25 +57,25 @@ if __name__ == "__main__":
 
     flag_managers.add_flag(
         "f", "no-build-ir-for", 
-        "Does not build IR for the specified c file. Can be called multiple times. c file must be specified in the succeeding argument, or else there will be an error.", 
+        "Does not build IR for the specified c file. Can be called multiple times. c file must be specified in the succeeding argument.", 
         lambda pass_test_files_manager, file_name: pass_test_files_manager.get_file(file_name).toggle_ir_generation()
 
     )
     flag_managers.add_flag(
         "u", "only-build-ir-for", 
-        "Only builds ir for specified c file. c file must be specified in the succeeding argument, or else there will be an error. Note that c files will still be ran unless otherwise disallowed (use -n). Combined with --no-build-ir may result in undesirable output as these commands are opposites.",
+        "Only builds ir for specified c file. c file must be specified in the succeeding argument. Note that c files will still be ran unless otherwise disallowed (use -n). Combined with --no-build-ir may result in undesirable output as these commands are opposites.",
         lambda pass_test_files_manager, file_name : [file.toggle_ir_generation() for file in pass_test_files_manager.get_all_files_excluding(file_name)]
     )
 
     flag_managers.add_flag(
         "r", "no-run-for", 
-        "Does not specified c file. Can be called multiple times. c file must be specified in the succeeding argument, or else there will be an error.", 
+        "Does not specified c file. Can be called multiple times. c file must be specified in the succeeding argument. Combined with --only-run-for may result in undesirable output.", 
         lambda pass_test_files_manager, file_name: pass_test_files_manager.get_file(file_name).toggle_test_running()   
     )
 
     flag_managers.add_flag(
         "n", "only-run-for", 
-        "Only runs specified c file. c file must be specified in the succeeding argument, or else there will be an error. Note that IR will still generate unless otherwise disallowed (use -u).",
+        "Only runs specified c file. c file must be specified in the succeeding argument. Note that IR will still generate unless otherwise disallowed (use -u). Combined with --no-run-for may result in undesireable output.",
         lambda pass_test_files_manager, file_name : [file.toggle_test_running() for file in pass_test_files_manager.get_all_files_excluding(file_name)]
     )
 
@@ -162,8 +162,7 @@ if __name__ == "__main__":
             if ir_generate_exit_status != 0:
                 commands_did_not_fail = False
 
-                test_result.test_has_failed()
-                test_result.add_note(f"failed @ IR generation - exit status {ir_generate_exit_status}")
+                test_result.test_has_failed(f"failed @ IR generation - exit status {ir_generate_exit_status}")
 
                 results.append(test_result.to_string())
                 continue
@@ -179,15 +178,12 @@ if __name__ == "__main__":
             if test_run_exit_status != 0:
                 commands_did_not_fail = False
 
-                test_result.test_has_failed()
-                test_result.add_note(f"failed @ running - exit status {test_run_exit_status}")
-                
+                test_result.test_has_failed(f"failed @ running - exit status {test_run_exit_status}")                
             else:
                 test_text_file = "../Testers/Passes/" + test_folder_name + "/" + f.get_file_name().replace(".c", ".txt")
                 
                 if not os.path.isfile(test_text_file):
-                    test_result.test_is_ignored()
-                    test_result.add_note("no test written")
+                    test_result.test_is_ignored("no test written")
                 else:
                     test_result.test_has_passed()
 
