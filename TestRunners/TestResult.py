@@ -1,3 +1,5 @@
+from .Utils import TERMINAL_TEXT_STYLES
+
 class TestResult:
     """Used to generate a string representing a test result, detailing 
     the test name, if it passed, and any additional notes. 
@@ -5,18 +7,12 @@ class TestResult:
     called at least once for a string to generate without error. 
 
     """
-    __BOLD_ON = "\033[1m"
-    __BOLD_OFF = "\033[22m"
-    __RED_COLOR = "\033[31m"
-    __GREEN_COLOR = "\033[32m"
-    __RESET_COLOR = "\033[0m"
-
 
     __TEST_STATUS = {
         "UNSET": None,
         "IGNORED": "IGNORED",
-        "PASSED": f"{__GREEN_COLOR}PASSED{__RESET_COLOR}", 
-        "FAILED": f"{__RED_COLOR}FAILED{__RESET_COLOR}", 
+        "PASSED": f"{TERMINAL_TEXT_STYLES['GREEN_COLOR']}PASSED{TERMINAL_TEXT_STYLES['RESET_COLOR']}", 
+        "FAILED": f"{TERMINAL_TEXT_STYLES['RED_COLOR']}FAILED{TERMINAL_TEXT_STYLES['RESET_COLOR']}", 
     }
 
     def __init__(self, file_name: str):
@@ -24,13 +20,22 @@ class TestResult:
         self.__test_notes: list[str] = []
         self.__test_status = self.__TEST_STATUS["UNSET"]
     
-    def test_has_passed(self): 
+    def test_has_passed(self, note = ""): 
+        if note != "":
+            self.add_note(note)
+
         self.__test_status = self.__TEST_STATUS["PASSED"]
     
-    def test_has_failed(self):
+    def test_has_failed(self, note = ""):
+        if note != "":
+            self.add_note(note)
+
         self.__test_status = self.__TEST_STATUS["FAILED"]
     
-    def test_is_ignored(self):
+    def test_is_ignored(self, note = ""):
+        if note != "":
+            self.add_note(note)
+            
         self.__test_status = self.__TEST_STATUS["IGNORED"]
     
     def add_note(self, note: str):
@@ -51,4 +56,4 @@ class TestResult:
         
         notes_str = ("| " if len(self.__test_notes) else "")  + (" | ".join(self.__test_notes))
 
-        return f"{self.__BOLD_ON}File{self.__BOLD_OFF} {self.__file_name} {self.__test_status} {notes_str}"
+        return f"{TERMINAL_TEXT_STYLES['BOLD_ON']}File{TERMINAL_TEXT_STYLES['BOLD_OFF']} {self.__file_name} {self.__test_status} {notes_str}"

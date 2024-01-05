@@ -42,9 +42,7 @@ with os.scandir("../test") as entries:
 
             for c_file in c_files:
                 c_file_no_extension = c_file[:-2]
-                c_file_txt = c_file_no_extension + ".txt"
-                c_file_ll = c_file_no_extension + ".ll"
-
+                                
                 test_file = "../Testers/Annotations/" + c_file_no_extension.replace("../test/", "") + ".txt"
 
                 if os.path.isfile(test_file):
