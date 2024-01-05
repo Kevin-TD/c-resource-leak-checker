@@ -14,7 +14,7 @@ if os.path.split(os.getcwd())[1] != "build":
     sys.exit(1)
 
 
-def get_all_c_files(folder_path: str, collected_files = []):
+def get_all_c_files(folder_path: str, collected_files=[]):
     with os.scandir(folder_path) as entries:
         for entry in entries:
             if entry.is_file() and entry.name.endswith(".c"):
@@ -22,8 +22,9 @@ def get_all_c_files(folder_path: str, collected_files = []):
 
             elif entry.is_dir():
                 get_all_c_files(f"{folder_path}/{entry.name}", collected_files)
-    
+
     return collected_files
+
 
 print("---------BEGINNING CODE TEST---------")
 print("Making analysis")
@@ -45,7 +46,8 @@ with os.scandir("../test") as entries:
                 c_file_txt = c_file_no_extension + ".txt"
                 c_file_ll = c_file_no_extension + ".ll"
 
-                test_file = "../Testers/Passes/" + c_file_no_extension.replace("../test/", "") + ".txt"
+                test_file = "../Testers/Passes/" + \
+                    c_file_no_extension.replace("../test/", "") + ".txt"
 
                 if os.path.isfile(test_file):
                     command = f"clang -emit-llvm -g -S -fno-discard-value-names -Xclang -disable-O0-optnone -c {c_file} -o {c_file_ll} ; opt -load CodeAnalyzer.so -CodeAnalyzer {c_file_ll}"
@@ -58,7 +60,6 @@ with os.scandir("../test") as entries:
                     else:
                         results.append(f"{test_file} passed")
 
-                    
                 else:
                     tests_that_did_not_run.append(test_file)
 
