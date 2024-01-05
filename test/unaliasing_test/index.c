@@ -15,6 +15,10 @@ void free1(void* p Calls("free1")) {
 int main() {
     struct M s;
 
+    s.x = (char*)malloc(15);
+
+    s.y = s.x; // aliased
+
     s.y = (char*)malloc(15); // no longer aliased
 
     free(s.x); // s.x freed, s.y not freed
