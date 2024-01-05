@@ -130,27 +130,28 @@ void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
 }
 
 std::vector<std::string> getAnnotationStrings(const TempFileManager& astFile) {
-  TempFileManager annotationsTempFile = TempFileManager("annotationsTempFile"); 
+    TempFileManager annotationsTempFile = TempFileManager("annotationsTempFile");
 
-  std::string readASTCommand =
-      "python3 ../Annotations/annotation_generator.py " +
-      astFile.getFileName() + " " + annotationsTempFile.getFileName();
+    std::string readASTCommand =
+        "python3 ../Annotations/annotation_generator.py " +
+        astFile.getFileName() + " " + annotationsTempFile.getFileName();
 
-  system(readASTCommand.c_str());
+    system(readASTCommand.c_str());
 
-  logout("to py run " << readASTCommand);
+    logout("to py run " << readASTCommand);
 
-  std::ifstream annotationFile = annotationsTempFile.getFileStream(); 
-  std::vector<std::string> annotations;
+    std::ifstream annotationFile = annotationsTempFile.getFileStream();
+    std::vector<std::string> annotations;
 
-  std::string line;
-  if (annotationFile.is_open()) {
-    while (std::getline(annotationFile, line)) {
-      logout("got anno: " << line);
-      annotations.push_back(line);
+    std::string line;
+    if (annotationFile.is_open()) {
+        while (std::getline(annotationFile, line)) {
+            logout("got anno: " << line);
+            annotations.push_back(line);
+        }
     }
 
-  return annotations;
+    return annotations;
 }
 
 /**
@@ -251,39 +252,6 @@ void doAliasReasoning(Instruction *instruction,
 
         if (!varToStore.isIdentifier()) {
             return;
-          }
-
-          ProgramVariable structPV = ProgramVariable(pointerOperand);
-
-          PVAliasSet *originalStructPVASRef =
-              programPoint->getPVASRef(structPV, false);
-          
-          if (!originalStructPVASRef) {
-            originalStructPVASRef = programFunction.getPVASRefFromValue(pointerOperand); 
-
-            if (!originalStructPVASRef) {
-              errs() << "pvas struct ref not found by value " << *pointerOperand << ". early exit\n"; 
-              std::exit(1); 
-            }
-          }
-          
-
-          ProgramFunction::logoutProgramFunction(programFunction, false);
-
-          for (ProgramVariable pv :
-               originalStructPVASRef->getProgramVariables()) {
-            if (AllocaInst *structAllocaInst =
-                    dyn_cast<AllocaInst>(pv.getValue())) {
-              ProgramVariable structVar = ProgramVariable(pv.getValue(), index);
-
-              logout("spec index inst = " << *gepInst);
-              logout("specifying index for " << structVar.getCleanedName());
-
-              programPoint->addAlias(sourceVar, structVar);
-
-              return;
-            }
-          }
         }
 
         ProgramVariable receivingVar = ProgramVariable(store->getOperand(1));
@@ -514,23 +482,21 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     logout("Analyzing Function with Name = " << fnName
            << " test_name = " << testName);
 
-  if (!loadAndBuild) {
-    loadFunctions();
-    
-    TempFileManager astTempFile("astTempFile");
-    tempfile_util::dumpASTIntoTempFile(optLoadFileName, astTempFile); 
+    if (!loadAndBuild) {
+        loadFunctions();
 
-    auto annotations = getAnnotationStrings(astTempFile);
+        TempFileManager astTempFile("astTempFile");
+        tempfile_util::dumpASTIntoTempFile(optLoadFileName, astTempFile);
 
-    calledMethods.setExpectedResult(
-        TestRunner::buildExpectedResults(testName, calledMethods.passName));
-    mustCall.setExpectedResult(
-        TestRunner::buildExpectedResults(testName, mustCall.passName));
-    annotationHandler.addAnnotations(annotations);
+        auto annotations = getAnnotationStrings(astTempFile);
 
-    structFieldToIndexMap.buildMap(astTempFile); 
+        calledMethods.setExpectedResult(
+            TestRunner::buildExpectedResults(testName, calledMethods.passName));
+        mustCall.setExpectedResult(
+            TestRunner::buildExpectedResults(testName, mustCall.passName));
+        annotationHandler.addAnnotations(annotations);
 
-        structFieldToIndexMap.buildMap(optLoadFileName);
+        structFieldToIndexMap.buildMap(astTempFile);
 
         loadAndBuild = true;
     }
@@ -597,14 +563,11 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     mustCall.setCFG(&cfg);
     mustCall.setProgramFunction(programFunction);
 
-  bool calledMethodsResult = TestRunner::runTests(
-      fnName, lastBranchName, calledMethods.getExpectedResult(),
-      PostCalledMethods, structFieldToIndexMap);
+    ProgramFunction PostCalledMethods = calledMethods.generatePassResults();
+    ProgramFunction PostMustCalls = mustCall.generatePassResults();
 
-  errs() << "\n\nRUNNING MUST CALL TESTS "
-         << " TEST NAME - " << testName << "\n\n";
-  bool mustCallResult = TestRunner::runTests(
-      fnName, lastBranchName, mustCall.getExpectedResult(), PostMustCalls, structFieldToIndexMap);
+    logout("\n\nPROGRAM FUNCTION for " << programFunction.getFunctionName());
+    ProgramFunction::logoutProgramFunction(programFunction, false);
 
     logout("\n\nCALLED METHODS RESULT");
     ProgramFunction::logoutProgramFunction(PostCalledMethods, true);

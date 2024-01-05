@@ -76,13 +76,13 @@ PVAliasSet *ProgramFunction::getPVASRefFromValue(Value* value) {
 }
 
 PVAliasSet *ProgramFunction::getPVASRefFromValue(Value* value) {
-  for (ProgramPoint& programPoint : programPoints) {
-    if (PVAliasSet* pvas = programPoint.getPVASRef(value, false)) {
-      return pvas; 
+    for (ProgramPoint& programPoint : programPoints) {
+        if (PVAliasSet* pvas = programPoint.getPVASRef(value, false)) {
+            return pvas;
+        }
     }
-  }
 
-  return NULL; 
+    return NULL;
 }
 
 void ProgramFunction::logoutProgramFunction(ProgramFunction &programFunction,

@@ -17,7 +17,7 @@ void StructFieldToIndexMap::buildMap(const TempFileManager& astFile) {
     logout("ran command " << readASTCommand);
 
     if (command_exit_status != 0) {
-        errs() << "error occured while building map; early exit\n"; 
+        errs() << "error occured while building map; early exit\n";
         std::exit(1);
     }
 
