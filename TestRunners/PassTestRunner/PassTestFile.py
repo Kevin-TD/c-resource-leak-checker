@@ -4,6 +4,7 @@ sys.path.insert(0, '..')
 from TestRunners.Utils import *
 from TestRunners.TestFile import TestFile
 
+
 class PassTestFile(TestFile):
     """ represents a C file from the test directory. holds information on whether its IR 
     will be generated or if that file will be ran. 

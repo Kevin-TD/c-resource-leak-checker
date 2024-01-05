@@ -9,14 +9,6 @@ TERMINAL_TEXT_STYLES = {
 }
 
 
-TERMINAL_TEXT_STYLES = {
-    "BOLD_ON": "\033[1m",
-    "BOLD_OFF": "\033[22m",
-    "RED_COLOR": "\033[31m",
-    "GREEN_COLOR": "\033[32m",
-    "RESET_COLOR": "\033[0m",
-}
-
 def split_string_by_n_characters(input_string: str, n: int) -> "list[str]":
     """splits a string every n characters into a new array. does not split words apart. 
 

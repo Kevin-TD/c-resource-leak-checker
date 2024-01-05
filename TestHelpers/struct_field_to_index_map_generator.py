@@ -184,7 +184,7 @@ def parse_var_decl(var_decl: str, struct_var_manager_holder: StructVarManager, s
         struct_name = struct_name_split[1]
     else:
         struct_name = struct_name_split[0]
-    
+
     if not structs_manager.struct_exists(struct_name):
         return
 
@@ -199,6 +199,7 @@ def parse_var_decl(var_decl: str, struct_var_manager_holder: StructVarManager, s
         f"parsed var_decl var name = {var_name} struct name = '{struct_name}'")
 
     struct_var_manager_holder.add_struct_var(var_name, struct_name)
+
 
 def add_typedef_alias(structs_manager: StructsManager, typedef_decl: str):
     if not ("referenced" in typedef_decl and "struct" in typedef_decl):
