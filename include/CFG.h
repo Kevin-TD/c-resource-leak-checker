@@ -4,33 +4,33 @@
 #include "Utils.h"
 
 class CFG {
-private:
-  std::string branchName;
-  std::list<CFG *> successors;
-  std::list<CFG *> predecessors;
-  llvm::SetVector<Instruction *> instructions;
+  private:
+    std::string branchName;
+    std::list<CFG *> successors;
+    std::list<CFG *> predecessors;
+    llvm::SetVector<Instruction *> instructions;
 
-public:
-  CFG();
-  CFG(std::string branchName, llvm::SetVector<Instruction *> instructions);
-  CFG(std::string branchName);
+  public:
+    CFG();
+    CFG(std::string branchName, llvm::SetVector<Instruction *> instructions);
+    CFG(std::string branchName);
 
-  void addSuccessor(std::string branchName,
-                    llvm::SetVector<Instruction *> instructions);
-  CFG *addSuccessor(std::string branchName);
-  void addSuccessor(CFG *cfg);
-
-  void addPredecessor(std::string branchName,
+    void addSuccessor(std::string branchName,
                       llvm::SetVector<Instruction *> instructions);
-  void addPredecessor(std::string branchName);
-  void addPredecessor(CFG *cfg);
+    CFG *addSuccessor(std::string branchName);
+    void addSuccessor(CFG *cfg);
 
-  void setInstructions(llvm::SetVector<Instruction *> instructions);
+    void addPredecessor(std::string branchName,
+                        llvm::SetVector<Instruction *> instructions);
+    void addPredecessor(std::string branchName);
+    void addPredecessor(CFG *cfg);
 
-  std::string getBranchName();
-  std::list<CFG *> getSuccessors();
-  std::list<CFG *> getPredecessors();
-  llvm::SetVector<Instruction *> getInstructions();
+    void setInstructions(llvm::SetVector<Instruction *> instructions);
+
+    std::string getBranchName();
+    std::list<CFG *> getSuccessors();
+    std::list<CFG *> getPredecessors();
+    llvm::SetVector<Instruction *> getInstructions();
 };
 
 #endif

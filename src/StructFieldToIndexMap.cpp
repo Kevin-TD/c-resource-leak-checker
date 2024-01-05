@@ -17,7 +17,7 @@ void StructFieldToIndexMap::buildMap(const TempFileManager& astFile) {
     logout("ran command " << readASTCommand);
 
     if (command_exit_status != 0) {
-        errs() << "error occured while building map; early exit\n"; 
+        errs() << "error occured while building map; early exit\n";
         std::exit(1);
     }
 
@@ -27,19 +27,19 @@ void StructFieldToIndexMap::buildMap(const TempFileManager& astFile) {
     if (mapFile.is_open()) {
         while (std::getline(mapFile, line)) {
             if (line == "") {
-                continue; 
+                continue;
             }
 
-            auto keyMapPair = rlc_util::splitString(line, '='); 
+            auto keyMapPair = rlc_util::splitString(line, '=');
             if (keyMapPair.size() != 2) {
                 logout("unexpected error; line '" << line << "' does not look like key-pair map in the form 'a=b'; early exit");
                 std::exit(1);
             }
 
             auto structNameAndField = keyMapPair[0];
-            auto structNameAndIndex = keyMapPair[1]; 
+            auto structNameAndIndex = keyMapPair[1];
 
-            this->fieldToIndexMap[structNameAndField] = structNameAndIndex; 
+            this->fieldToIndexMap[structNameAndField] = structNameAndIndex;
         }
     }
 }
@@ -49,5 +49,5 @@ std::string StructFieldToIndexMap::get(const std::string& structNameAndField) {
 }
 
 bool StructFieldToIndexMap::structNameAndFieldIsInMap(const std::string& structNameAndField) {
-    return this->fieldToIndexMap.count(structNameAndField); 
+    return this->fieldToIndexMap.count(structNameAndField);
 }

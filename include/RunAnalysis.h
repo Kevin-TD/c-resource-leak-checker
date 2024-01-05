@@ -43,23 +43,25 @@ using namespace llvm;
 namespace rlc_dataflow {
 
 struct CodeAnalyzer : public FunctionPass {
-  static char ID;
-  CodeAnalyzer() : FunctionPass(ID) {}
+    static char ID;
+    CodeAnalyzer() : FunctionPass(ID) {}
 
-  /**
-   * This function is called for each function F in the input C program
-   * that the compiler encounters during a pass.
-   */
-  bool runOnFunction(Function &F) override;
+    /**
+     * This function is called for each function F in the input C program
+     * that the compiler encounters during a pass.
+     */
+    bool runOnFunction(Function &F) override;
 
-  // calls when all functions have been passed
-  bool doFinalization(Module &M) override;
+    // calls when all functions have been passed
+    bool doFinalization(Module &M) override;
 
-protected:
-  void doAnalysis(Function &F, std::string optLoadFileName);
-  void onEnd();
+  protected:
+    void doAnalysis(Function &F, std::string optLoadFileName);
+    void onEnd();
 
-  std::string getAnalysisName() { return "CalledMethodsPass"; }
+    std::string getAnalysisName() {
+        return "CalledMethodsPass";
+    }
 };
 } // namespace rlc_dataflow
 

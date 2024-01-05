@@ -4,14 +4,14 @@
 #include "../../Annotations/Annotations.h"
 
 int main() {
-    // malloc 
-    char* str; 
+    // malloc
+    char* str;
     str = (char*)malloc(15);
 
-    // calloc 
+    // calloc
     int n = 5;
     int* numbers = (int*)calloc(n, sizeof(int));
-    
+
 
     // valloc
     size_t pageSize = sysconf(_SC_PAGESIZE);
@@ -30,14 +30,14 @@ int main() {
     free(alignedBlock);
 
     char* str2;
-   char** p = &str2; 
-   char*** x = &p;
+    char** p = &str2;
+    char*** x = &p;
 
-   *p = (char*)malloc(15);
-   free(**x);
+    *p = (char*)malloc(15);
+    free(**x);
 
 
 
-    return 0; 
+    return 0;
 
 }

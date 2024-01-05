@@ -10,89 +10,89 @@ namespace rlc_dataflow {
 Code handles IR vars coming from parameters and explicitly defined vars
 */
 std::string variable(const Value *Val) {
-  std::string Code;
-  raw_string_ostream SS(Code);
-  Val->print(SS);
+    std::string Code;
+    raw_string_ostream SS(Code);
+    Val->print(SS);
 
-  // checks if Code does not contain '=', in which case, treat it as a parameter
-  // to a function
-  /*
-  Typically, variables are initialized by some alloca instruction. So int
-  i; would look like %i = alloca i32. This is at least the case for when we
-  define new variables inside the body of a function. The case where an '=' did
-  not show up was in this IR snippet:
-  TODO: verify if all variable are initialized by some alloca instruction
+    // checks if Code does not contain '=', in which case, treat it as a parameter
+    // to a function
+    /*
+    Typically, variables are initialized by some alloca instruction. So int
+    i; would look like %i = alloca i32. This is at least the case for when we
+    define new variables inside the body of a function. The case where an '=' did
+    not show up was in this IR snippet:
+    TODO: verify if all variable are initialized by some alloca instruction
 
-  ; Function Attrs: noinline nounwind uwtable
-  define dso_local void @does_free(i8* %s) #0 !dbg !10 {
-  entry:
-    %s.addr = alloca i8*, align 8
-    store i8* %s, i8** %s.addr, align 8
-  Here, at the store instruction, when we try getting the string name of %s, the
-  Code looks like i8* %s instead of something like %s = alloca i8*. I am
-  assuming this is the case since %s is a parameter and not a newly defined
-  variable.
-  */
-  if (Code.find_first_of('=') == std::string::npos) {
-    variable_logout("0.FOR VAL "
-                    << *Val << " RETURNING "
-                    << sliceString(Code, Code.find(' ') + 1, Code.size() - 1));
-    return rlc_util::sliceString(Code, Code.find(' ') + 1, Code.size() - 1);
-  }
+    ; Function Attrs: noinline nounwind uwtable
+    define dso_local void @does_free(i8* %s) #0 !dbg !10 {
+    entry:
+      %s.addr = alloca i8*, align 8
+      store i8* %s, i8** %s.addr, align 8
+    Here, at the store instruction, when we try getting the string name of %s, the
+    Code looks like i8* %s instead of something like %s = alloca i8*. I am
+    assuming this is the case since %s is a parameter and not a newly defined
+    variable.
+    */
+    if (Code.find_first_of('=') == std::string::npos) {
+        variable_logout("0.FOR VAL "
+                        << *Val << " RETURNING "
+                        << sliceString(Code, Code.find(' ') + 1, Code.size() - 1));
+        return rlc_util::sliceString(Code, Code.find(' ') + 1, Code.size() - 1);
+    }
 
-  Code.erase(0, Code.find_first_not_of(WHITESPACES));
-  std::string RetVal = Code.substr(0, Code.find_first_of(WHITESPACES));
+    Code.erase(0, Code.find_first_not_of(WHITESPACES));
+    std::string RetVal = Code.substr(0, Code.find_first_of(WHITESPACES));
 
-  if (RetVal == "ret" || RetVal == "br" || RetVal == "store") {
-    variable_logout("1.FOR VAL " << *Val << " RETURNING " << Code);
-    return Code;
-  }
-  if (RetVal == "i1" || RetVal == "i8" || RetVal == "i32" || RetVal == "i64") {
-    RetVal = Code;
-  }
-  variable_logout("2.FOR VAL " << *Val << " RETURNING " << RetVal);
-  return RetVal;
+    if (RetVal == "ret" || RetVal == "br" || RetVal == "store") {
+        variable_logout("1.FOR VAL " << *Val << " RETURNING " << Code);
+        return Code;
+    }
+    if (RetVal == "i1" || RetVal == "i8" || RetVal == "i32" || RetVal == "i64") {
+        RetVal = Code;
+    }
+    variable_logout("2.FOR VAL " << *Val << " RETURNING " << RetVal);
+    return RetVal;
 }
 
 bool IRstructNameEqualsCstructName(std::string &structName,
                                    std::string &optLoadFileName) {
-  LLVMContext context;
-  SMDiagnostic error;
+    LLVMContext context;
+    SMDiagnostic error;
 
-  std::string IRFileName =
-      rlc_util::sliceString(optLoadFileName, 0, optLoadFileName.size() - 3) +
-      ".ll";
+    std::string IRFileName =
+        rlc_util::sliceString(optLoadFileName, 0, optLoadFileName.size() - 3) +
+        ".ll";
 
-  std::unique_ptr<Module> module = parseIRFile(IRFileName, error, context);
-  if (!module) {
-    errs() << "Error: IR file '" + IRFileName + "' not found\n";
-    exit(1);
-  }
-
-  DebugInfoFinder debugInfoFinder;
-  debugInfoFinder.processModule(*module);
-
-  for (auto &DICompositeType : debugInfoFinder.types()) {
-    if (DICompositeType->getTag() == dwarf::DW_TAG_structure_type &&
-        DICompositeType->getName() == structName) {
-      return true;
+    std::unique_ptr<Module> module = parseIRFile(IRFileName, error, context);
+    if (!module) {
+        errs() << "Error: IR file '" + IRFileName + "' not found\n";
+        exit(1);
     }
-  }
 
-  return false;
+    DebugInfoFinder debugInfoFinder;
+    debugInfoFinder.processModule(*module);
+
+    for (auto &DICompositeType : debugInfoFinder.types()) {
+        if (DICompositeType->getTag() == dwarf::DW_TAG_structure_type &&
+                DICompositeType->getName() == structName) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 StructType *unwrapValuePointerToStruct(Value *value) {
-  PointerType *valuePointer = dyn_cast<PointerType>(value->getType());
-  while (valuePointer) {
-    if (StructType *structType =
-            dyn_cast<StructType>(valuePointer->getElementType())) {
-      return structType;
-    }
+    PointerType *valuePointer = dyn_cast<PointerType>(value->getType());
+    while (valuePointer) {
+        if (StructType *structType =
+                    dyn_cast<StructType>(valuePointer->getElementType())) {
+            return structType;
+        }
 
-    valuePointer = dyn_cast<PointerType>(valuePointer->getElementType());
-  }
-  return NULL;
+        valuePointer = dyn_cast<PointerType>(valuePointer->getElementType());
+    }
+    return NULL;
 }
 
 } // namespace rlc_dataflow
@@ -100,87 +100,89 @@ StructType *unwrapValuePointerToStruct(Value *value) {
 namespace rlc_util {
 
 bool isNumber(const std::string &s) {
-  char *endPtr;
-  std::strtol(s.c_str(), &endPtr, 10);
-  return endPtr != s.c_str() && *endPtr == '\0';
+    char *endPtr;
+    std::strtol(s.c_str(), &endPtr, 10);
+    return endPtr != s.c_str() && *endPtr == '\0';
 }
 
 std::vector<std::string> splitString(const std::string &input, char delimiter) {
-  std::vector<std::string> result;
-  std::stringstream ss(input);
-  std::string token;
+    std::vector<std::string> result;
+    std::stringstream ss(input);
+    std::string token;
 
-  while (getline(ss, token, delimiter)) {
-    result.push_back(token);
-  }
+    while (getline(ss, token, delimiter)) {
+        result.push_back(token);
+    }
 
-  return result;
+    return result;
 }
 
 void removeWhitespace(std::string &input) {
-  input.erase(
-      std::remove_if(input.begin(), input.end(),
-                     [](char c) { return std::isspace(c) || c == '\0'; }),
-      input.end());
+    input.erase(
+        std::remove_if(input.begin(), input.end(),
+    [](char c) {
+        return std::isspace(c) || c == '\0';
+    }),
+    input.end());
 }
 
 std::string sliceString(const std::string &str, int i, int j) {
-  return str.substr(i, j - i + 1);
+    return str.substr(i, j - i + 1);
 }
 
 bool isValidCVariableName(const std::string &str) {
-  if (str.empty() || !std::isalpha(str[0]) && str[0] != '_') {
-    return false;
-  }
-
-  for (int i = 1; i < str.length(); i++) {
-    if (!std::isalnum(str[i]) && str[i] != '_') {
-      return false;
+    if (str.empty() || !std::isalpha(str[0]) && str[0] != '_') {
+        return false;
     }
-  }
 
-  return true;
+    for (int i = 1; i < str.length(); i++) {
+        if (!std::isalnum(str[i]) && str[i] != '_') {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool hasOnlyOneBalancedParentheses(const std::string &str) {
-  std::stack<char> parenthesesStack;
-  int balancedPairs = 0;
+    std::stack<char> parenthesesStack;
+    int balancedPairs = 0;
 
-  for (char c : str) {
-    if (c == '(') {
-      parenthesesStack.push(c);
-    } else if (c == ')') {
+    for (char c : str) {
+        if (c == '(') {
+            parenthesesStack.push(c);
+        } else if (c == ')') {
 
-      // Unbalanced: encountered closing parenthesis without an opening one
-      if (parenthesesStack.empty()) {
-        return false;
-      }
-      parenthesesStack.pop();
-      balancedPairs++;
+            // Unbalanced: encountered closing parenthesis without an opening one
+            if (parenthesesStack.empty()) {
+                return false;
+            }
+            parenthesesStack.pop();
+            balancedPairs++;
+        }
     }
-  }
 
-  return parenthesesStack.empty() && balancedPairs == 1;
+    return parenthesesStack.empty() && balancedPairs == 1;
 }
 
 std::string setToString(std::set<std::string> &setString) {
-  std::string result = "{";
-  int setStringSize = setString.size();
+    std::string result = "{";
+    int setStringSize = setString.size();
 
-  int iterator = 0;
-  for (std::string str : setString) {
-    result += str;
-    if (iterator != setStringSize - 1) {
-      result += ", ";
+    int iterator = 0;
+    for (std::string str : setString) {
+        result += str;
+        if (iterator != setStringSize - 1) {
+            result += ", ";
+        }
+        iterator++;
     }
-    iterator++;
-  }
-  result += "}";
-  return result;
+    result += "}";
+    return result;
 }
 
 bool startsWith(std::string str, std::string starts) {
-  return str.rfind(starts, 0) == 0;
+    return str.rfind(starts, 0) == 0;
 }
 
 } // namespace rlc_util

@@ -2,170 +2,172 @@
 #include "Debug.h"
 
 ProgramPoint::ProgramPoint(std::string pointName) {
-  this->pointName = pointName;
+    this->pointName = pointName;
 }
 
 ProgramPoint::ProgramPoint() {}
 
 ProgramPoint::ProgramPoint(std::string pointName, ProgramPoint *programPoint) {
-  this->pointName = pointName;
-  this->programVariableAliasSets = programPoint->getProgramVariableAliasSets();
+    this->pointName = pointName;
+    this->programVariableAliasSets = programPoint->getProgramVariableAliasSets();
 }
 
 void ProgramPoint::logoutProgramPoint(const ProgramPoint &point,
                                       bool logMethods) {
-  logout("\n**point name " << point.getPointName());
-  for (auto aliasSet : point.getProgramVariableAliasSets().getSets()) {
-    logout("> alias set = " << aliasSet.toString(false));
+    logout("\n**point name " << point.getPointName());
+    for (auto aliasSet : point.getProgramVariableAliasSets().getSets()) {
+        logout("> alias set = " << aliasSet.toString(false));
 
-    if (logMethods) {
-      logout("--> methods set = " << aliasSet.getMethodsString());
+        if (logMethods) {
+            logout("--> methods set = " << aliasSet.getMethodsString());
+        }
     }
-  }
 }
 
 void ProgramPoint::logoutProgramPoint(const ProgramPoint *point,
                                       bool logMethods) {
-  logout("\n**point name " << point->getPointName());
-  for (auto aliasSet : point->getProgramVariableAliasSets().getSets()) {
-    logout("> alias set = " << aliasSet.toString(false));
+    logout("\n**point name " << point->getPointName());
+    for (auto aliasSet : point->getProgramVariableAliasSets().getSets()) {
+        logout("> alias set = " << aliasSet.toString(false));
 
-    if (logMethods) {
-      logout("--> methods set = " << aliasSet.getMethodsString());
+        if (logMethods) {
+            logout("--> methods set = " << aliasSet.getMethodsString());
+        }
     }
-  }
 }
 
 void ProgramPoint::addAlias(ProgramVariable element1,
                             ProgramVariable element2) {
-  this->programVariableAliasSets.addAlias(element1, element2);
+    this->programVariableAliasSets.addAlias(element1, element2);
 }
 
 void ProgramPoint::makeAliased(ProgramVariable elementA,
                                ProgramVariable elementB) {
-  this->programVariableAliasSets.unionSets(elementA, elementB);
+    this->programVariableAliasSets.unionSets(elementA, elementB);
 }
 
 void ProgramPoint::addVariable(ProgramVariable programVar) {
-  this->programVariableAliasSets.makeSet(programVar);
+    this->programVariableAliasSets.makeSet(programVar);
 }
 
 void ProgramPoint::addPVAS(PVAliasSet pvas) {
-  this->programVariableAliasSets.mergeSet(pvas);
+    this->programVariableAliasSets.mergeSet(pvas);
 }
 
 DisjointedPVAliasSets ProgramPoint::getProgramVariableAliasSets() const {
-  return this->programVariableAliasSets;
+    return this->programVariableAliasSets;
 }
 
-std::string ProgramPoint::getPointName() const { return this->pointName; }
+std::string ProgramPoint::getPointName() const {
+    return this->pointName;
+}
 
 PVAliasSet *ProgramPoint::getPVASRef(ProgramVariable programVar,
                                      bool addNewIfNotFound) {
-  PVAliasSet *pvas = this->programVariableAliasSets.getSetRef(programVar);
+    PVAliasSet *pvas = this->programVariableAliasSets.getSetRef(programVar);
 
-  if (pvas) {
-    return pvas;
-  }
+    if (pvas) {
+        return pvas;
+    }
 
-  if (addNewIfNotFound) {
-    this->addVariable(programVar);
-    return &this->programVariableAliasSets.sets.back();
-  }
+    if (addNewIfNotFound) {
+        this->addVariable(programVar);
+        return &this->programVariableAliasSets.sets.back();
+    }
 
-  return NULL;
+    return NULL;
 }
 
 PVAliasSet *ProgramPoint::getPVASRef(const std::string& cleanedName, bool addNewIfNotFound) {
-  PVAliasSet *pvas = this->programVariableAliasSets.getSetRef(cleanedName); 
+    PVAliasSet *pvas = this->programVariableAliasSets.getSetRef(cleanedName);
 
-  if (pvas) {
-    return pvas;
-  }
+    if (pvas) {
+        return pvas;
+    }
 
-  if (addNewIfNotFound) {
-    ProgramVariable newPV = ProgramVariable(cleanedName);
-    this->addVariable(newPV);
-    return &this->programVariableAliasSets.sets.back();
-  }
+    if (addNewIfNotFound) {
+        ProgramVariable newPV = ProgramVariable(cleanedName);
+        this->addVariable(newPV);
+        return &this->programVariableAliasSets.sets.back();
+    }
 
-  return NULL;
+    return NULL;
 }
 
 PVAliasSet *ProgramPoint::getPVASRef(Value* value,
                                      bool addNewIfNotFound) {
 
-  PVAliasSet *pvas = this->programVariableAliasSets.getSetRef(value);   
+    PVAliasSet *pvas = this->programVariableAliasSets.getSetRef(value);
 
-  if (pvas) {
-    return pvas;
-  }
+    if (pvas) {
+        return pvas;
+    }
 
-  if (addNewIfNotFound) {
-    ProgramVariable newPV = ProgramVariable(value);
-    this->addVariable(newPV);
-    return &this->programVariableAliasSets.sets.back();
-  }
+    if (addNewIfNotFound) {
+        ProgramVariable newPV = ProgramVariable(value);
+        this->addVariable(newPV);
+        return &this->programVariableAliasSets.sets.back();
+    }
 
-  return NULL;
+    return NULL;
 }
 
 bool ProgramPoint::equals(ProgramPoint *programPoint) {
-  for (PVAliasSet set : this->programVariableAliasSets.sets) {
-    PVAliasSet *pointAliasSet;
+    for (PVAliasSet set : this->programVariableAliasSets.sets) {
+        PVAliasSet *pointAliasSet;
 
-    for (ProgramVariable pv : set.getProgramVariables()) {
-      pointAliasSet = programPoint->getPVASRef(pv, false);
-      if (pointAliasSet) {
-        break;
-      }
+        for (ProgramVariable pv : set.getProgramVariables()) {
+            pointAliasSet = programPoint->getPVASRef(pv, false);
+            if (pointAliasSet) {
+                break;
+            }
+        }
+
+        if (!pointAliasSet) {
+            return false;
+        }
+
+        if (!set.getMethodsSet().equals(pointAliasSet->getMethodsSet())) {
+            return false;
+        }
     }
 
-    if (!pointAliasSet) {
-      return false;
+    for (PVAliasSet pointSet :
+            programPoint->getProgramVariableAliasSets().getSets()) {
+        PVAliasSet *selfAliasSet;
+        for (ProgramVariable pointPV : pointSet.getProgramVariables()) {
+            selfAliasSet = this->getPVASRef(pointPV, false);
+
+            if (selfAliasSet) {
+                break;
+            }
+        }
+
+        if (!selfAliasSet) {
+            return false;
+        }
+
+        if (!pointSet.getMethodsSet().equals(selfAliasSet->getMethodsSet())) {
+            return false;
+        }
     }
 
-    if (!set.getMethodsSet().equals(pointAliasSet->getMethodsSet())) {
-      return false;
-    }
-  }
-
-  for (PVAliasSet pointSet :
-       programPoint->getProgramVariableAliasSets().getSets()) {
-    PVAliasSet *selfAliasSet;
-    for (ProgramVariable pointPV : pointSet.getProgramVariables()) {
-      selfAliasSet = this->getPVASRef(pointPV, false);
-
-      if (selfAliasSet) {
-        break;
-      }
-    }
-
-    if (!selfAliasSet) {
-      return false;
-    }
-
-    if (!pointSet.getMethodsSet().equals(selfAliasSet->getMethodsSet())) {
-      return false;
-    }
-  }
-
-  return true;
+    return true;
 }
 
 bool ProgramPoint::varExists(ProgramVariable programVar) {
-  return programVariableAliasSets.elementIsInAnySet(programVar);
+    return programVariableAliasSets.elementIsInAnySet(programVar);
 }
 
 void ProgramPoint::setProgramVariableAliasSets(
     DisjointedPVAliasSets programVariableAliasSets) {
-  this->programVariableAliasSets.clear();
-  this->programVariableAliasSets = programVariableAliasSets;
+    this->programVariableAliasSets.clear();
+    this->programVariableAliasSets = programVariableAliasSets;
 }
 
 void ProgramPoint::add(ProgramPoint *programPoint) {
-  for (PVAliasSet pvas :
-       programPoint->getProgramVariableAliasSets().getSets()) {
-    this->programVariableAliasSets.mergeSet(pvas);
-  }
+    for (PVAliasSet pvas :
+            programPoint->getProgramVariableAliasSets().getSets()) {
+        this->programVariableAliasSets.mergeSet(pvas);
+    }
 }

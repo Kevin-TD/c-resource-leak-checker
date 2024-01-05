@@ -3,14 +3,14 @@
 namespace rlc_dataflow {
 
 bool CodeAnalyzer::runOnFunction(Function &F) {
-  doAnalysis(F, F.getParent()->getSourceFileName());
+    doAnalysis(F, F.getParent()->getSourceFileName());
 
-  return false;
+    return false;
 }
 
 bool CodeAnalyzer::doFinalization(Module &M) {
-  onEnd();
-  return false;
+    onEnd();
+    return false;
 }
 
 char CodeAnalyzer::ID = 1;

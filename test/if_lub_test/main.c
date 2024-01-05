@@ -5,9 +5,9 @@
 
 int main () {
     char *str = (char *) malloc(15);
-    int a = getchar(); 
+    int a = getchar();
 
     if (a == -15) {
-        free(str); 
+        free(str);
     }
 }

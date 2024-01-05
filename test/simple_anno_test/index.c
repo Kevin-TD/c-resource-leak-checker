@@ -12,12 +12,12 @@ void free0(void* p Calls("free")) {
 }
 
 int main () {
-   char *str;
+    char *str;
 
-   str = (char *) malloc0(15);
-   free0(str);
+    str = (char *) malloc0(15);
+    free0(str);
 
-   return 0; 
+    return 0;
 
- 
+
 }

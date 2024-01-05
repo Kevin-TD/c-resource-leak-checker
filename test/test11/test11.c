@@ -21,7 +21,7 @@ void* MustCall("free3") malloc3(size_t __size) {
 
 int free0(void* p Calls("free0")) {
     free(p);
-    return 1; 
+    return 1;
 }
 
 int free1(void* p Calls("free1")) {
@@ -36,43 +36,42 @@ int free2(void* p Calls("free2")) {
 
 int free3(void* p Calls("free3")) {
     free(p);
-    return 1; 
+    return 1;
 }
 
 
 
 int main () {
-   char *str;
-   int a = getchar();
+    char *str;
+    int a = getchar();
 
-   str = (char *) malloc(15);
+    str = (char *) malloc(15);
 
-   if (free0(str)) {
+    if (free0(str)) {
 
-   }
-   else {
+    } else {
 
-   }
+    }
 
-   if (a == -15) {
+    if (a == -15) {
 
-   } else if (free1(str)) {
+    } else if (free1(str)) {
 
-   }
+    }
 
-   while (free2(str)) {
+    while (free2(str)) {
 
-   }
-
+    }
 
 
-   return(0);
 
- 
+    return(0);
+
+
 }
 
 /*
-Results 
+Results
 while.end str {free0, free2}
 
 

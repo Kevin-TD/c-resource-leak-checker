@@ -17,7 +17,7 @@ TempFileManager::TempFileManager(const std::string& fileName) {
         logout("failed to create temp file '" << fileName << "'");
         perror("mkstemp");
         exit(1);
-    }   
+    }
 }
 
 std::string TempFileManager::getFileName() const {
@@ -25,7 +25,7 @@ std::string TempFileManager::getFileName() const {
 }
 
 std::ifstream TempFileManager::getFileStream() const {
-    return std::ifstream(tempFileName); 
+    return std::ifstream(tempFileName);
 }
 
 TempFileManager::~TempFileManager() {
