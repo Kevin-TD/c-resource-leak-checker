@@ -1,4 +1,4 @@
-import os 
+import os
 
 TERMINAL_TEXT_STYLES = {
     "BOLD_ON": "\033[1m",
@@ -7,6 +7,7 @@ TERMINAL_TEXT_STYLES = {
     "GREEN_COLOR": "\033[32m",
     "RESET_COLOR": "\033[0m",
 }
+
 
 def split_string_by_n_characters(input_string: str, n: int) -> "list[str]":
     """splits a string every n characters into a new array. does not split words apart. 
@@ -20,7 +21,7 @@ def split_string_by_n_characters(input_string: str, n: int) -> "list[str]":
     """
 
     words = input_string.split(' ')
-    
+
     result = []
     current_chunk = ''
     for word in words:
@@ -29,11 +30,12 @@ def split_string_by_n_characters(input_string: str, n: int) -> "list[str]":
         else:
             result.append(current_chunk)
             current_chunk = word
-    
+
     if current_chunk:
         result.append(current_chunk)
-    
+
     return result
+
 
 def find_nth(full_string: str, sub_str: str, n: int) -> int:
     """returns the index of the nth occurrence of sub_str in full_string
@@ -52,7 +54,8 @@ def find_nth(full_string: str, sub_str: str, n: int) -> int:
         n -= 1
     return start
 
-def get_all_c_files(folder_path: str, collected_files = []) -> "list[str]":
+
+def get_all_c_files(folder_path: str, collected_files=[]) -> "list[str]":
     """returns a list of all c files in a folder, including those in subdirectories
 
     Args:
@@ -68,5 +71,5 @@ def get_all_c_files(folder_path: str, collected_files = []) -> "list[str]":
 
             elif entry.is_dir():
                 get_all_c_files(f"{folder_path}/{entry.name}", collected_files)
-    
+
     return collected_files

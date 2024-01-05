@@ -10,6 +10,7 @@ tests_that_did_not_run = []
 
 DEBUG = True
 
+
 def logout(x: str):
     if (DEBUG):
         print(x)
@@ -43,8 +44,9 @@ with os.scandir("../test") as entries:
 
             for c_file in c_files:
                 c_file_no_extension = c_file[:-2]
-                                
-                test_file = "../Testers/Annotations/" + c_file_no_extension.replace("../test/", "") + ".txt"
+
+                test_file = "../Testers/Annotations/" + \
+                    c_file_no_extension.replace("../test/", "") + ".txt"
 
                 if os.path.isfile(test_file):
                     with tempfile.NamedTemporaryFile(prefix="temp_ast_input", suffix=".txt", delete=False) as ast_input:

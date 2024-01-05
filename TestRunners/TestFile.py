@@ -1,14 +1,15 @@
 from .Utils import *
 
+
 class TestFile:
     """ represents a file to test with information on whether certain properties will be ran. 
     used as a base class to be extended for specific tests. 
     """
 
     __INIT_TEST_CONDITIONS = {
-        "TEST_WILL_RUN": True, 
+        "TEST_WILL_RUN": True,
     }
-    
+
     def __init__(self, file_path: str):
         """
         Args:
@@ -21,9 +22,9 @@ class TestFile:
             self.__file_name: str = file_path[find_nth(file_path, "/", 3) + 1:]
         except Exception:
             raise FileNotFoundError(f"File path {file_path} has unexpected format; must begin with '../test/[test name]/'")
-    
+
         self.__test_will_run: bool = self.__INIT_TEST_CONDITIONS["TEST_WILL_RUN"]
-    
+
     def toggle_test_running(self):
         self.__test_will_run = not self.__test_will_run
 
