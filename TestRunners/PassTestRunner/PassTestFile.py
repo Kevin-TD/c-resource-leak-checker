@@ -1,5 +1,3 @@
-# TODO:  make abstract version to be extended for other test runners
-
 import sys
 
 sys.path.insert(0, '..')
