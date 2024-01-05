@@ -83,14 +83,16 @@ if __name__ == "__main__":
                 try:
                     next_arg = sys.argv[sys_arg_iterator + 1]
                 except IndexError:
-                    raise FileNotFoundError(f"c file not specified for flag {arg}")
+                    raise FileNotFoundError(
+                        f"c file not specified for flag {arg}")
 
                 flag.get_action()(annotation_test_files_manager, next_arg)
                 sys_arg_iterator += 2
                 continue
 
         else:
-            raise ValueError(f"Flag {arg} not found. {flag_managers.to_string()}")
+            raise ValueError(
+                f"Flag {arg} not found. {flag_managers.to_string()}")
 
         sys_arg_iterator += 1
 
@@ -137,10 +139,12 @@ if __name__ == "__main__":
 
                 if build_status != 0:
                     commands_did_not_fail = False
-                    test_result.test_has_failed(f"annotation build error - exit status {build_status}")
+                    test_result.test_has_failed(
+                        f"annotation build error - exit status {build_status}")
                 elif diff_status != 0:
                     commands_did_not_fail = False
-                    test_result.test_has_failed(f"diff annotation - output:\n{out}")
+                    test_result.test_has_failed(
+                        f"diff annotation - output:\n{out}")
                 else:
                     test_result.test_has_passed()
 

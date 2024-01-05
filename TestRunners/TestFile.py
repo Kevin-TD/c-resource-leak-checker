@@ -21,7 +21,8 @@ class TestFile:
         try:
             self.__file_name: str = file_path[find_nth(file_path, "/", 3) + 1:]
         except Exception:
-            raise FileNotFoundError(f"File path {file_path} has unexpected format; must begin with '../test/[test name]/'")
+            raise FileNotFoundError(
+                f"File path {file_path} has unexpected format; must begin with '../test/[test name]/'")
 
         self.__test_will_run: bool = self.__INIT_TEST_CONDITIONS["TEST_WILL_RUN"]
 
