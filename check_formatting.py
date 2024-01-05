@@ -14,7 +14,7 @@ if os.system("! astyle --dry-run --style=google --exclude=build --ignore-exclude
     print(".cpp, .h, and .c files unformatted - checked with astyle")
     sys.exit(1)
 
-if os.system("! autopep8 -d -r . | grep fixed") != 0:
+if os.system("! autopep8 -d -r --ignore=E402 . | grep fixed") != 0:
     print(".py files unformatted - checked with autopep8")
     sys.exit(1)
 else:

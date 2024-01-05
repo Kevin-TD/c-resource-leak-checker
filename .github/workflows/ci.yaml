@@ -18,6 +18,7 @@ jobs:
         sudo apt-get update
         sudo apt update
         sudo apt install -y astyle
+        astyle --version
         sudo apt install python3-pip
         pip3 install pycodestyle==2.10.0
         pip3 install autopep8==2.0.0
