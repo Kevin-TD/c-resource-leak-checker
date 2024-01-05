@@ -16,6 +16,7 @@ jobs:
     - name: Install Artistic Style Formatter
       run: |
         sudo apt-get update
+        sudo apt update
         sudo apt install -y astyle
         astyle --version
         
