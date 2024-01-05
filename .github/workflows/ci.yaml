@@ -16,6 +16,7 @@ jobs:
     - name: Install Artistic Style Formatter
       run: |
         sudo apt-get update
+        sudo apt update
         sudo apt install -y astyle
         sudo apt-get install python-autopep8
     
