@@ -4,7 +4,7 @@ sys.path.insert(0, '..')
 from TestRunners.TestFilesManager import TestFilesManager
 
 
-class AnnotationTestFileManager(TestFilesManager):
+class AnnotationTestFilesManager(TestFilesManager):
     """ holder for annotation test files
     """
 
