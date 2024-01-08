@@ -33,6 +33,9 @@ class TestResult:
 
         self.__test_status = self.__TEST_STATUS["FAILED"]
 
+    def check_if_test_has_failed(self) -> bool:
+        return self.__test_status == self.__TEST_STATUS["FAILED"]
+
     def test_is_ignored(self, note=""):
         if note != "":
             self.add_note(note)
