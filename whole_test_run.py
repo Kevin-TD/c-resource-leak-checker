@@ -1,9 +1,9 @@
 #! python3 ../whole_test_run.py [test runner folder name] [expected result folder name] [optional --run-if-no-test] [additional flags for test runner]
 # must be in build dir
 
-# --run-if-no-test flag will make it so a test directory will be tested a
-# anyways even if no tests are written for it. by default, if no test
-# dir exists, the test is not ran.
+# --run-if-no-test flag will make it so a test directory will be tested
+# anyways even if no tests are written for it. by default, if no tests
+# are written exists, the test is not run.
 
 # additional flags are found by calling -h on test runner's run_test.py file.
 # the flags are applied to all calls to test folders
@@ -14,9 +14,10 @@
 # python3 ../whole_test_run.py PassTestRunner Passes --run-if-no-test
 # python3 ../whole_test_run.py PassTestRunner Passes --run-if-no-test --no-make
 
-# test runner name is based on what is found in /TestRunners
-# runs the run_test.py file in the test runner for each test in /test
-# then prints the output
+# test runner name is based on what the contents of /TestRunners. 
+# the run_test.py file found is ran for each test in /test. 
+# expected result folder name is based the contents /Testers
+# the output is each test is printed at the end
 
 # TODO: in ci call make then call test with no make
 
@@ -35,13 +36,12 @@ if os.path.split(os.getcwd())[1] != "build":
 test_runner_name = sys.argv[1]
 expected_result_name = sys.argv[2]
 
-
 extra_flags = ""
-no_run_if_no_test = True
+run_if_no_test = False
 
 if len(sys.argv) > 3:
     if sys.argv[3] == "--run-if-no-test":
-        no_run_if_no_test = False
+        run_if_no_test = True
 
         if len(sys.argv) > 4:
             extra_flags = " ".join(sys.argv[4:])
@@ -61,12 +61,12 @@ with os.scandir("../test") as entries:
 
             expected_result_folder = f"../Testers/{expected_result_name}/{test_folder_name}"
 
-            no_test_written = not os.path.isdir(expected_result_folder)
+            test_written = os.path.isdir(expected_result_folder)
 
-            if no_test_written:
+            if not test_written:
                 test_result.add_note("no test written")
 
-            if not no_run_if_no_test or not no_test_written:
+            if run_if_no_test or test_written:
                 exit_status = os.system(
                     f"python3 ../TestRunners/{test_runner_name}/run_test.py {test_folder_name} {extra_flags}")
 
