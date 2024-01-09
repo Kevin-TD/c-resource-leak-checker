@@ -32,21 +32,15 @@ jobs:
       run: |
         python3 check_formatting.py
 
-    - name: Build Analysis in Docker
+    - name: Build & Run Analyses in Docker
       run: |
         docker run -v $(pwd):/$(basename $(pwd)) -w /$(basename $(pwd)) cis547/cis547-base:latest \
         bash -c "export LD_LIBRARY_PATH=/opt/mirtk/lib:${LD_LIBRARY_PATH} && \
         rm -rf build && mkdir build && cd build && \
         cmake .. && \
-        make" 
-
-    - name: Run Pass Test
-      run: |
-        bash -c "python3 ../whole_test_run.py PassTestRunner Passes --no-make"
-
-    - name: Run Annotation Test
-      run: |
-        bash -c "python3 ../whole_test_run.py AnnotationTestRunner Annotations"
+        make && \
+        python3 ../whole_test_run.py PassTestRunner Passes --no-make && \
+        python3 ../whole_test_run.py AnnotationTestRunner Annotations" 
 
     - name: Check Make Exit Status
       run: echo $?
