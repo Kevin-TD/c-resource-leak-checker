@@ -63,6 +63,7 @@ void DisjointedPVAliasSets::makeSet(ProgramVariable programVar) {
 
 void DisjointedPVAliasSets::addAlias(ProgramVariable element1,
                                      ProgramVariable element2) {
+    // TODO: pr for bug fix
     for (auto it = sets.begin(); it != sets.end(); ++it) {
         if (it->contains(element1)) {
             it->add(element2);

@@ -94,6 +94,25 @@ PVAliasSet *ProgramPoint::getPVASRef(const std::string& cleanedName, bool addNew
     return NULL;
 }
 
+// TODO: diff pr
+PVAliasSet *ProgramPoint::getPVASRef(Value* value,
+                                     bool addNewIfNotFound) {
+
+    PVAliasSet *pvas = this->programVariableAliasSets.getSetRef(value);
+
+    if (pvas) {
+        return pvas;
+    }
+
+    if (addNewIfNotFound) {
+        ProgramVariable newPV = ProgramVariable(value);
+        this->addVariable(newPV);
+        return &this->programVariableAliasSets.sets.back();
+    }
+
+    return NULL;
+}
+
 bool ProgramPoint::equals(ProgramPoint *programPoint) {
     for (PVAliasSet set : this->programVariableAliasSets.sets) {
         PVAliasSet *pointAliasSet;
@@ -112,29 +131,29 @@ bool ProgramPoint::equals(ProgramPoint *programPoint) {
         if (!set.getMethodsSet().equals(pointAliasSet->getMethodsSet())) {
             return false;
         }
+    }
 
-        for (PVAliasSet pointSet :
-                programPoint->getProgramVariableAliasSets().getSets()) {
-            PVAliasSet *selfAliasSet;
-            for (ProgramVariable pointPV : pointSet.getProgramVariables()) {
-                selfAliasSet = this->getPVASRef(pointPV, false);
+    for (PVAliasSet pointSet :
+            programPoint->getProgramVariableAliasSets().getSets()) {
+        PVAliasSet *selfAliasSet;
+        for (ProgramVariable pointPV : pointSet.getProgramVariables()) {
+            selfAliasSet = this->getPVASRef(pointPV, false);
 
-                if (selfAliasSet) {
-                    break;
-                }
+            if (selfAliasSet) {
+                break;
             }
+        }
 
-            if (!selfAliasSet) {
-                return false;
-            }
+        if (!selfAliasSet) {
+            return false;
+        }
 
-            if (!pointSet.getMethodsSet().equals(selfAliasSet->getMethodsSet())) {
-                return false;
-            }
-
-            return true;
+        if (!pointSet.getMethodsSet().equals(selfAliasSet->getMethodsSet())) {
+            return false;
         }
     }
+
+    return true;
 }
 
 bool ProgramPoint::varExists(ProgramVariable programVar) {
