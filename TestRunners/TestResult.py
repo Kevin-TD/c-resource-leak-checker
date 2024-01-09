@@ -20,6 +20,19 @@ class TestResult:
         self.__file_name = file_name
         self.__test_notes: list[str] = []
         self.__test_status = self.__TEST_STATUS["UNSET"]
+        self.__object_type = "File"
+
+    def set_object_type_to_folder(self):
+        """When to_string is called, test will be referred to as a folder 
+        """
+        self.__object_type = "Folder"
+
+    def set_object_type_to_file(self):
+        """"When to_string is called, test will be referred to as a file. 
+        This is the default behavior and does not need to be called if the test 
+        is intended to represent a file and not a folder. 
+        """
+        self.__object_type = "File"
 
     def test_has_passed(self, note=""):
         if note != "":
@@ -62,4 +75,4 @@ class TestResult:
         notes_str = ("| " if len(self.__test_notes) else "") + \
             (" | ".join(self.__test_notes))
 
-        return f"{TERMINAL_TEXT_STYLES['BOLD_ON']}File{TERMINAL_TEXT_STYLES['BOLD_OFF']} {self.__file_name} {self.__test_status} {notes_str}"
+        return f"{TERMINAL_TEXT_STYLES['BOLD_ON']}{self.__object_type}{TERMINAL_TEXT_STYLES['BOLD_OFF']} {self.__file_name} {self.__test_status} {notes_str}"
