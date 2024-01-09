@@ -19,8 +19,6 @@
 # expected result folder name is based the contents /Testers
 # the output is each test is printed at the end
 
-# TODO: in ci call make then call test with no make
-
 import os
 import sys
 
