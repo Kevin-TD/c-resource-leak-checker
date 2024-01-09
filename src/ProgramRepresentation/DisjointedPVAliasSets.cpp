@@ -63,24 +63,33 @@ void DisjointedPVAliasSets::makeSet(ProgramVariable programVar) {
 
 void DisjointedPVAliasSets::addAlias(ProgramVariable element1,
                                      ProgramVariable element2) {
-    // TODO: pr for bug fix
-    for (auto it = sets.begin(); it != sets.end(); ++it) {
-        if (it->contains(element1)) {
-            it->add(element2);
-            return;
-        }
 
-        if (it->contains(element2)) {
-            it->add(element1);
-            return;
-        }
-    }
+  PVAliasSet* element1Set = this->getSetRef(element1);
+  PVAliasSet* element2Set = this->getSetRef(element2);
+  
+  // case: both sets exist
+  if (element1Set && element2Set) {
+    this->unionSets(element1, element2); 
+    return; 
+  }
 
 
-    // case: neither of the sets exist
-    PVAliasSet newSet;
-    newSet.programVariables = {element1, element2};
-    sets.push_back(newSet);
+  // case: 1 of the sets exist
+  if (element1Set) {
+    element1Set->add(element2);
+    return; 
+  }
+
+  if (element2Set) {
+    element2Set->add(element1);
+    return; 
+  }
+
+
+  // case: neither of the sets exist
+  PVAliasSet newSet;
+  newSet.programVariables = {element1, element2};
+  sets.push_back(newSet);
 
 }
 
