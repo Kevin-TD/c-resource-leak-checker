@@ -38,7 +38,6 @@ class ProgramFunction {
     ProgramPoint *getProgramPointRef(const std::string &pointName,
                                      bool addNewIfNotFound);
 
-    // TODO: push this to separate pr
     // searches every program point to find the alias set with that value pointer. this
     // method should only be used if you need access to an alias set that does not
     // exist in your current branch, but in a preceding one.
