@@ -33,7 +33,9 @@ void ProgramVariable::fixNameAndIdentifier() {
     }
 }
 
-std::string ProgramVariable::getRawName() const { return this->rawName; }
+std::string ProgramVariable::getRawName() const {
+    return this->rawName;
+}
 
 std::string ProgramVariable::getCleanedName() {
     return this->cleanedName;
@@ -47,7 +49,9 @@ bool ProgramVariable::hasProgramName() {
     return this->value->hasName();
 }
 
-bool ProgramVariable::containsStructFieldVar() { return this->index != -1; }
+bool ProgramVariable::containsStructFieldVar() {
+    return this->index != -1;
+}
 
 int ProgramVariable::getIndex() {
     return this->index;
@@ -66,5 +70,5 @@ bool ProgramVariable::equalsCleanedName(std::string otherName) {
 }
 
 bool ProgramVariable::equalsRawName(std::string otherRawName) {
-  return this->rawName.compare(otherRawName) == 0;
+    return this->rawName.compare(otherRawName) == 0;
 }

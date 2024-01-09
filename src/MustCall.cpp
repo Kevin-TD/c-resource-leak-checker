@@ -13,13 +13,13 @@ void MustCall::onAllocationFunctionCall(PVAliasSet *input,
     input->addMethod(fnName);
 }
 void MustCall::onDeallocationFunctionCall(PVAliasSet *input,
-                                          std::string &fnName) {}
+        std::string &fnName) {}
 void MustCall::onUnknownFunctionCall(PVAliasSet *input) {}
 void MustCall::onReallocFunctionCall(PVAliasSet *input, std::string &fnName) {}
 void MustCall::onSafeFunctionCall(PVAliasSet *input, std::string &fnName) {}
 
 void MustCall::leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSet) {
-  preSet.methodsSetUnion(curMethodsSet);
+    preSet.methodsSetUnion(curMethodsSet);
 }
 
 void MustCall::onAnnotation(PVAliasSet *input, std::string &fnName,
