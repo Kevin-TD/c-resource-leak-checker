@@ -14,8 +14,8 @@
 # python3 ../whole_test_run.py PassTestRunner Passes --run-if-no-test
 # python3 ../whole_test_run.py PassTestRunner Passes --run-if-no-test --no-make
 
-# test runner name is based on what the contents of /TestRunners. 
-# the run_test.py file found is ran for each test in /test. 
+# test runner name is based on what the contents of /TestRunners.
+# the run_test.py file found is ran for each test in /test.
 # expected result folder name is based the contents /Testers
 # the output is each test is printed at the end
 
