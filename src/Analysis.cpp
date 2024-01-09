@@ -21,6 +21,9 @@
 
 // TODO: handle un-aliasing
 
+// TODO?: when writing tests its hard to write tests if we want to test something at a branch that isnt the start and the end (because we to have dig through the ir to find it.) maybe make tool to make this easier
+// TODO: give tests more descriptive names
+// TODO: write testing for intentional errors (ErrorTestRunner)
 
 struct InstructionHolder {
     SetVector<Instruction *> branch;
