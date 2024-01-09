@@ -28,8 +28,6 @@ class ProgramVariable {
     mistake the variable %0 with some reference to the '0' program variable
     */
     bool varIsIdentifier;
-  
-    void fixNameAndIdentifier();
 
     // if program var is referring to a struct's field, it has an index.
     // otherwise, it is equal to -1
