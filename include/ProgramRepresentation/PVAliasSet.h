@@ -26,9 +26,7 @@ class PVAliasSet {
     // LLVM docs: https://llvm.org/docs/LangRef.html#identifiers
     bool contains(const std::string& cleanedName);
 
-    // returns true iff there is a program var in this set with Value* value.
-    // this overload should only be used if you are looking for value that may
-    // not exist in the branch you're currently analyzing.
+    // returns true iff there is a program var in this set with Value* value
     bool contains(Value* value);
 
     // adds programVar to this set of program variables. programVar is checked to

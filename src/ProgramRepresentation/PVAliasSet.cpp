@@ -28,6 +28,8 @@ bool PVAliasSet::contains(Value* value) {
             return true;
         }
     }
+
+    return false;
 }
 
 void PVAliasSet::add(ProgramVariable programVar) {
