@@ -43,6 +43,15 @@ PVAliasSet *DisjointedPVAliasSets::getSetRef(const std::string& cleanedName) {
     return NULL;
 }
 
+PVAliasSet *DisjointedPVAliasSets::getSetRef(Value* val) {
+    for (PVAliasSet &set : sets) {
+        if (set.contains(val)) {
+            return &set;
+        }
+    }
+
+    return NULL;
+}
 
 void DisjointedPVAliasSets::unionSets(ProgramVariable elementA,
                                       ProgramVariable elementB) {

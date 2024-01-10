@@ -249,8 +249,6 @@ void doAliasReasoning(Instruction *instruction,
         realBranchOrder.push_back(branchName);
     }
 
-    // TODO: add bug fix to new pr
-
     if (LoadInst *load = dyn_cast<LoadInst>(instruction)) {
         logout("(load) name is " << variable(load) << " for "
                << variable(load->getPointerOperand()));

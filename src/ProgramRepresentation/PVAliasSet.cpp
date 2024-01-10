@@ -22,7 +22,15 @@ bool PVAliasSet::contains(const std::string& cleanedName) {
     return false;
 }
 
-// TODO: diff pr for bool PVAliasSet::contains(Value* value)
+bool PVAliasSet::contains(Value* value) {
+    for (ProgramVariable pv : programVariables) {
+        if (pv.getValue() == value) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 void PVAliasSet::add(ProgramVariable programVar) {
     if (contains(programVar)) {

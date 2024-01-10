@@ -94,8 +94,23 @@ PVAliasSet *ProgramPoint::getPVASRef(const std::string& cleanedName, bool addNew
     return NULL;
 }
 
-// TODO: diff pr for PVAliasSet *ProgramPoint::getPVASRef(Value* value,
-//  bool addNewIfNotFound)
+PVAliasSet *ProgramPoint::getPVASRef(Value* value,
+                                     bool addNewIfNotFound) {
+
+    PVAliasSet *pvas = this->programVariableAliasSets.getSetRef(value);
+
+    if (pvas) {
+        return pvas;
+    }
+
+    if (addNewIfNotFound) {
+        ProgramVariable newPV = ProgramVariable(value);
+        this->addVariable(newPV);
+        return &this->programVariableAliasSets.sets.back();
+    }
+
+    return NULL;
+}
 
 bool ProgramPoint::equals(ProgramPoint *programPoint) {
     for (PVAliasSet set : this->programVariableAliasSets.sets) {
