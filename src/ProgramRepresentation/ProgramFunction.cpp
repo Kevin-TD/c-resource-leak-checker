@@ -13,65 +13,65 @@ void ProgramFunction::addProgramPoint(ProgramPoint programPoint) {
 }
 
 std::list<ProgramPoint> ProgramFunction::getProgramPoints() const {
-  return this->programPoints;
+    return this->programPoints;
 }
 
 ProgramPoint *ProgramFunction::getProgramPointRef(const std::string &pointName,
-                                                  bool addNewIfNotFound) {
-  for (ProgramPoint &programPoint : this->programPoints) {
-    if (programPoint.getPointName() == pointName) {
-      return &programPoint;
+        bool addNewIfNotFound) {
+    for (ProgramPoint &programPoint : this->programPoints) {
+        if (programPoint.getPointName() == pointName) {
+            return &programPoint;
+        }
+
+        if (addNewIfNotFound) {
+            ProgramPoint newProgramPoint = ProgramPoint(pointName);
+            this->addProgramPoint(newProgramPoint);
+            return &this->programPoints.back();
+        }
+
+        errs() << "Error at getProgramPointRef: Program point not found and new "
+               "program point not added\n";
+        std::exit(EXIT_FAILURE);
     }
 
-    if (addNewIfNotFound) {
-        ProgramPoint newProgramPoint = ProgramPoint(pointName);
-        this->addProgramPoint(newProgramPoint);
-        return &this->programPoints.back();
-    }
+    ProgramPoint ProgramFunction::getProgramPoint(const std::string &pointName,
+            bool addNewIfNotFound) {
+        for (ProgramPoint programPoint : this->programPoints) {
+            if (programPoint.getPointName() == pointName) {
+                return programPoint;
+            }
 
-    errs() << "Error at getProgramPointRef: Program point not found and new "
-           "program point not added\n";
-    std::exit(EXIT_FAILURE);
-}
+            if (addNewIfNotFound) {
+                ProgramPoint newProgramPoint = ProgramPoint(pointName);
+                this->addProgramPoint(newProgramPoint);
+                return this->programPoints.back();
+            }
 
-ProgramPoint ProgramFunction::getProgramPoint(const std::string &pointName,
-                                              bool addNewIfNotFound) {
-  for (ProgramPoint programPoint : this->programPoints) {
-    if (programPoint.getPointName() == pointName) {
-      return programPoint;
-    }
+            errs() << "Error at getProgramPoint: Program point not found and new program "
+                   "point not added\n";
+            std::exit(EXIT_FAILURE);
+        }
 
-    if (addNewIfNotFound) {
-        ProgramPoint newProgramPoint = ProgramPoint(pointName);
-        this->addProgramPoint(newProgramPoint);
-        return this->programPoints.back();
-    }
+        std::string ProgramFunction::getFunctionName() const {
+            return this->functionName;
+        }
 
-    errs() << "Error at getProgramPoint: Program point not found and new program "
-           "point not added\n";
-    std::exit(EXIT_FAILURE);
-}
+        void ProgramFunction::setProgramPoint(std::string name,
+                                              ProgramPoint programPoint) {
+            ProgramPoint *programPointRef = this->getProgramPointRef(name, true);
+            programPointRef->setProgramVariableAliasSets(
+                programPoint.getProgramVariableAliasSets());
+        }
 
-std::string ProgramFunction::getFunctionName() const {
-  return this->functionName;
-}
+        void ProgramFunction::logoutProgramFunction(ProgramFunction &programFunction,
+                bool logMethods) {
+            for (auto point : programFunction.getProgramPoints()) {
+                logout("\n**point name " << point.getPointName());
+                for (auto aliasSet : point.getProgramVariableAliasSets().getSets()) {
+                    logout("> alias set = " << aliasSet.toString(false));
 
-void ProgramFunction::setProgramPoint(std::string name,
-                                      ProgramPoint programPoint) {
-  ProgramPoint *programPointRef = this->getProgramPointRef(name, true);
-  programPointRef->setProgramVariableAliasSets(
-      programPoint.getProgramVariableAliasSets());
-}
-
-void ProgramFunction::logoutProgramFunction(ProgramFunction &programFunction,
-                                            bool logMethods) {
-  for (auto point : programFunction.getProgramPoints()) {
-    logout("\n**point name " << point.getPointName());
-    for (auto aliasSet : point.getProgramVariableAliasSets().getSets()) {
-      logout("> alias set = " << aliasSet.toString(false));
-
-      if (logMethods) {
-        logout("--> methods set = " << aliasSet.getMethodsString());
-      }
-    }
-}
+                    if (logMethods) {
+                        logout("--> methods set = " << aliasSet.getMethodsString());
+                    }
+                }
+            }

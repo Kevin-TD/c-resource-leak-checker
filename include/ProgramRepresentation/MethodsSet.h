@@ -22,7 +22,7 @@ class MethodsSet {
 
     bool isUninit();
 
-  std::set<std::string> getMethods() const;
+    std::set<std::string> getMethods() const;
 };
 
 #endif

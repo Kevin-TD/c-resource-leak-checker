@@ -14,12 +14,12 @@
 #include "Utils.h"
 
 class DataflowPass {
-private:
-  void analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
-                  ProgramFunction &postProgramFunction,
-                  std::string priorBranch);
-  void transfer(Instruction *instruction, ProgramPoint &inputProgramPoint);
-  void insertAnnotation(Annotation *annotation, PVAliasSet *pvas);
+  private:
+    void analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
+                    ProgramFunction &postProgramFunction,
+                    std::string priorBranch);
+    void transfer(Instruction *instruction, ProgramPoint &inputProgramPoint);
+    void insertAnnotation(Annotation *annotation, PVAliasSet *pvas);
 
     // a helper function that handles functions with Sret attribute.
     // returns true if the function had an Sret attribute and was handled,
@@ -63,16 +63,16 @@ private:
                                     const std::string &argName,
                                     ProgramPoint &programPoint);
 
-  // a helper function that handles function calls that are implicit,
-  // or  identified as a memory, realloc, or safe function (/Functions files).
-  // also handles when llvm debug function is called. returns true if we
-  // handled the call, and false otherwise.
-  bool handleIfKnownFunctionForCallInsts(CallInst *call, PVAliasSet *pvas);
+    // a helper function that handles function calls that are implicit,
+    // or  identified as a memory, realloc, or safe function (/Functions files).
+    // also handles when llvm debug function is called. returns true if we
+    // handled the call, and false otherwise.
+    bool handleIfKnownFunctionForCallInsts(CallInst *call, PVAliasSet *pvas);
 
-  // a helper function that checks for parameter annotations on call
-  // instructions. returns true if an annotation was found, and false if not.
-  bool handleIfAnnotationExistsForCallInsts(const std::string &fnName,
-                                            int argIndex, PVAliasSet *pvas);
+    // a helper function that checks for parameter annotations on call
+    // instructions. returns true if an annotation was found, and false if not.
+    bool handleIfAnnotationExistsForCallInsts(const std::string &fnName,
+            int argIndex, PVAliasSet *pvas);
 
   protected:
     ProgramFunction programFunction;

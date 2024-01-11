@@ -15,7 +15,9 @@ void MethodsSet::setMethods(std::set<std::string> methods) {
     this->setIsUninit = false;
 }
 
-std::set<std::string> MethodsSet::getMethods() const { return this->methods; }
+std::set<std::string> MethodsSet::getMethods() const {
+    return this->methods;
+}
 
 bool MethodsSet::isUninit() {
     return this->setIsUninit;
