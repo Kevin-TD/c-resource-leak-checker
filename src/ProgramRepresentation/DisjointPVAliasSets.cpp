@@ -1,8 +1,8 @@
-#include "ProgramRepresentation/DisjointedPVAliasSets.h"
+#include "ProgramRepresentation/DisjointPVAliasSets.h"
 #include "Debug.h"
 
 typename std::list<PVAliasSet>::iterator
-DisjointedPVAliasSets::findIter(ProgramVariable programVar) {
+DisjointPVAliasSets::findIter(ProgramVariable programVar) {
     for (auto it = sets.begin(); it != sets.end(); ++it) {
         if (it->contains(programVar)) {
             return it;
@@ -12,7 +12,7 @@ DisjointedPVAliasSets::findIter(ProgramVariable programVar) {
     return sets.end();
 }
 
-void DisjointedPVAliasSets::merge(
+void DisjointPVAliasSets::merge(
     typename std::list<PVAliasSet>::iterator set1,
     typename std::list<PVAliasSet>::iterator set2) {
     if (set1 != sets.end() && set2 != sets.end()) {
@@ -21,19 +21,19 @@ void DisjointedPVAliasSets::merge(
         sets.erase(set2);
     }
 }
-bool DisjointedPVAliasSets::elementIsInAnySet(ProgramVariable programVar) {
+bool DisjointPVAliasSets::elementIsInAnySet(ProgramVariable programVar) {
     return findIter(programVar) != sets.end();
 }
 
-std::list<PVAliasSet> DisjointedPVAliasSets::getSets() const {
+std::list<PVAliasSet> DisjointPVAliasSets::getSets() const {
     return sets;
 }
 
-PVAliasSet *DisjointedPVAliasSets::getSetRef(ProgramVariable programVar) {
+PVAliasSet *DisjointPVAliasSets::getSetRef(ProgramVariable programVar) {
     return getSetRef(programVar.getCleanedName());
 }
 
-PVAliasSet *DisjointedPVAliasSets::getSetRef(const std::string& cleanedName) {
+PVAliasSet *DisjointPVAliasSets::getSetRef(const std::string& cleanedName) {
     for (PVAliasSet &set : sets) {
         if (set.contains(cleanedName)) {
             return &set;
@@ -43,7 +43,7 @@ PVAliasSet *DisjointedPVAliasSets::getSetRef(const std::string& cleanedName) {
     return NULL;
 }
 
-PVAliasSet *DisjointedPVAliasSets::getSetRef(Value* val) {
+PVAliasSet *DisjointPVAliasSets::getSetRef(Value* val) {
     for (PVAliasSet &set : sets) {
         if (set.contains(val)) {
             return &set;
@@ -53,8 +53,8 @@ PVAliasSet *DisjointedPVAliasSets::getSetRef(Value* val) {
     return NULL;
 }
 
-void DisjointedPVAliasSets::unionSets(ProgramVariable elementA,
-                                      ProgramVariable elementB) {
+void DisjointPVAliasSets::unionSets(ProgramVariable elementA,
+                                    ProgramVariable elementB) {
     auto set1 = findIter(elementA);
     auto set2 = findIter(elementB);
 
@@ -64,14 +64,18 @@ void DisjointedPVAliasSets::unionSets(ProgramVariable elementA,
 
     merge(set1, set2);
 }
-void DisjointedPVAliasSets::makeSet(ProgramVariable programVar) {
+void DisjointPVAliasSets::makeSet(ProgramVariable programVar) {
+    if (getSetRef(programVar)) {
+        return;
+    }
+
     PVAliasSet newSet;
     newSet.add(programVar);
     sets.push_back(newSet);
 }
 
-void DisjointedPVAliasSets::addAlias(ProgramVariable element1,
-                                     ProgramVariable element2) {
+void DisjointPVAliasSets::addAlias(ProgramVariable element1,
+                                   ProgramVariable element2) {
 
     PVAliasSet* element1Set = this->getSetRef(element1);
     PVAliasSet* element2Set = this->getSetRef(element2);
@@ -102,11 +106,11 @@ void DisjointedPVAliasSets::addAlias(ProgramVariable element1,
 
 }
 
-void DisjointedPVAliasSets::clear() {
+void DisjointPVAliasSets::clear() {
     sets.clear();
 }
 
-void DisjointedPVAliasSets::mergeSet(PVAliasSet pvas) {
+void DisjointPVAliasSets::mergeSet(PVAliasSet pvas) {
 
     for (ProgramVariable pv : pvas.getProgramVariables()) {
         auto foundAliasSet = findIter(pv);
@@ -120,6 +124,6 @@ void DisjointedPVAliasSets::mergeSet(PVAliasSet pvas) {
     sets.push_back(pvas);
 }
 
-int DisjointedPVAliasSets::size() {
+int DisjointPVAliasSets::size() {
     return sets.size();
 }

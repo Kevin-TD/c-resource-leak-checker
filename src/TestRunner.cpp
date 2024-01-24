@@ -23,7 +23,7 @@ bool TestRunner::runTests(const std::string functionName,
 
         logout("branch = " << branchName);
 
-        DisjointedPVAliasSets expectedDPVAS =
+        DisjointPVAliasSets expectedDPVAS =
             expectedResultPoint.getProgramVariableAliasSets();
 
         ProgramPoint receivedResultPoint =

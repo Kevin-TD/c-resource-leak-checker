@@ -54,7 +54,7 @@ void ProgramPoint::addPVAS(PVAliasSet pvas) {
     this->programVariableAliasSets.mergeSet(pvas);
 }
 
-DisjointedPVAliasSets ProgramPoint::getProgramVariableAliasSets() const {
+DisjointPVAliasSets ProgramPoint::getProgramVariableAliasSets() const {
     return this->programVariableAliasSets;
 }
 
@@ -160,7 +160,7 @@ bool ProgramPoint::varExists(ProgramVariable programVar) {
 }
 
 void ProgramPoint::setProgramVariableAliasSets(
-    DisjointedPVAliasSets programVariableAliasSets) {
+    DisjointPVAliasSets programVariableAliasSets) {
     this->programVariableAliasSets.clear();
     this->programVariableAliasSets = programVariableAliasSets;
 }

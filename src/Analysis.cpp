@@ -16,7 +16,6 @@
 #include "TestRunner.h"
 #include "Utils.h"
 
-// TODO: git rebase main once api concerns addressed. resolving merge conflicts with formatting should not be in the same update
 // TODO: handle un-aliasing
 
 

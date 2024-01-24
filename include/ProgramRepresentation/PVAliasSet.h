@@ -17,7 +17,8 @@ class PVAliasSet {
   public:
     PVAliasSet();
 
-    // returns true iff programVar is in the set by checking its raw name
+    // returns true iff programVar is in the set. this overload is the preferred
+    // way to check if this set contains a ProgramVariable
     bool contains(ProgramVariable programVar);
 
     // return true iff there is a program var in this set with cleaned name cleanedName.
@@ -55,8 +56,6 @@ class PVAliasSet {
     // empties the set of methods called on this
     void clearMethods();
 
-    // void setMethodsSet(MethodsSet methods);
-
     // generates the set of program variables represented by, if cleanNames is true, their clean name
     // or, if cleanNames if false, their raw name
     std::string toString(bool cleanNames) const;
@@ -70,7 +69,7 @@ class PVAliasSet {
 
     Explanation of usage:
 
-    Sometimes, we create a new alias set with a program variable that refers to the field of some struct (i.e., some for some struct my_struct { char* x, char* y } and var my_struct M, we may make a new alias set { M.x }. When creating that program variable, we call the ProgramVariable(Value *value, int index) constructor, letting us specify that this variable has a field.
+    Sometimes, we create a new alias set with a program variable that refers to the field of some struct (i.e., for some struct my_struct { char* x, char* y } and var my_struct M, we may make a new alias set { M.x }. When creating that program variable, we call the ProgramVariable(Value *value, int index) constructor, letting us specify that this variable has a field.
 
     Problems arise by the fact that when we need to add more program variables to the alias set, they likely won't have a field specified. E.g., we can let some my_struct* p = &M.x, and it would not make sense to copy the index of M to p. There are also IR intermediate variables that complicate this as well.
 
@@ -84,7 +83,7 @@ class PVAliasSet {
     // a struct's field. returns false iff there is no program variable with an index
     bool containsStructFieldVar();
 
-    friend class DisjointedPVAliasSets;
+    friend class DisjointPVAliasSets;
     friend class TestRunner;
 };
 

@@ -261,7 +261,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         // lub PriorPreCM and CurrentPreCM
         ProgramPoint lub(currentBranch);
 
-        DisjointedPVAliasSets priorPreVars =
+        DisjointPVAliasSets priorPreVars =
             priorPrePoint->getProgramVariableAliasSets();
 
         for (PVAliasSet pvas : priorPreVars.getSets()) {

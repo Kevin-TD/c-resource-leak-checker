@@ -6,7 +6,7 @@
 // manages a disjoint set (https://en.wikipedia.org/wiki/Disjoint-set_data_structure)
 // of program variable must-aliases.
 // each program variable is an element of no more than 1 set.
-class DisjointedPVAliasSets {
+class DisjointPVAliasSets {
   private:
     std::list<PVAliasSet> sets;
 
@@ -15,7 +15,7 @@ class DisjointedPVAliasSets {
     typename std::list<PVAliasSet>::iterator findIter(ProgramVariable programVar);
 
     // puts the elements of set2 into set1 in constant time. set2 is also deleteed
-    // from our set of sets.
+    // from our set of sets. if set1 or set2 is null, no merging or deletion occurs.
     void merge(typename std::list<PVAliasSet>::iterator set1,
                typename std::list<PVAliasSet>::iterator set2);
 
@@ -45,8 +45,8 @@ class DisjointedPVAliasSets {
     // elementA or elementB are not actually elements of any set, the union is not performed.
     void unionSets(ProgramVariable elementA, ProgramVariable elementB);
 
-    // creates a new disjoint set if it's already not an element in any of the
-    // existing sets.
+    // creates a new disjoint set containing programVar. if programVar is
+    // an existing member of any of the sets, no set is created.
     void makeSet(ProgramVariable programVar);
 
     // aliases element1 and element2 by putting them into the same set. if one of

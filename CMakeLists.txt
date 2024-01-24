@@ -23,7 +23,7 @@ add_llvm_library(CodeAnalyzer MODULE
   src/ProgramRepresentation/MethodsSet.cpp
   src/ProgramRepresentation/ProgramVariable.cpp
   src/ProgramRepresentation/PVAliasSet.cpp
-  src/ProgramRepresentation/DisjointedPVAliasSets.cpp
+  src/ProgramRepresentation/DisjointPVAliasSets.cpp
   src/ProgramRepresentation/ProgramPoint.cpp
   src/ProgramRepresentation/ProgramFunction.cpp
   src/ProgramRepresentation/FullFile.cpp

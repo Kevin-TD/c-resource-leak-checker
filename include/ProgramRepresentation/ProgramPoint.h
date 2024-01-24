@@ -1,14 +1,14 @@
 #ifndef PROGRAM_POINT_H
 #define PROGRAM_POINT_H
 
-#include "ProgramRepresentation/DisjointedPVAliasSets.h"
+#include "ProgramRepresentation/DisjointPVAliasSets.h"
 
 // reflects a branch that holds some instructions in the IR. this class manages
 // a point's program variables using a set of alias sets. it is effectively a
-// wrapper for DisjointedPVAliasSets
+// wrapper for DisjointPVAliasSets
 class ProgramPoint {
   private:
-    DisjointedPVAliasSets programVariableAliasSets;
+    DisjointPVAliasSets programVariableAliasSets;
 
     // the name is same as the branch name that shows up in the IR
     std::string pointName;
@@ -46,9 +46,9 @@ class ProgramPoint {
 
     // copies the disjointed sets from programVariableAliasSets into these alias sets
     void
-    setProgramVariableAliasSets(DisjointedPVAliasSets programVariableAliasSets);
+    setProgramVariableAliasSets(DisjointPVAliasSets programVariableAliasSets);
 
-    DisjointedPVAliasSets getProgramVariableAliasSets() const;
+    DisjointPVAliasSets getProgramVariableAliasSets() const;
 
     // returns a pointer to an alias set based on programVar. if addNewIfNotFound is true,
     // if we do not find the alias set, we will add a new set that consists of only
