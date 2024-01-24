@@ -15,6 +15,7 @@ jobs:
     
     - name: Install Artistic Style Formatter
       run: |
+        sudo apt search clang-format
         sudo apt-get update
         sudo apt install -y astyle
         astyle --version

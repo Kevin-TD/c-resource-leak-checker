@@ -16,15 +16,8 @@
 #include "TestRunner.h"
 #include "Utils.h"
 
-// to run: cd build   then
-// sh ../run_test.sh <test_num>
-// or to run all tests: sh ../run_all.sh
-// note for run all tests is that if you add more tests, you'll have to modify
-// run_all.sh to include that test number
+// TODO: handle un-aliasing
 
-// if a known function is being re-defined, issue a warning and
-// remove it from safe/realloc/memory functions (wherever it's in).
-// it's annotations should be checked (once annotations are fully implemented)
 
 struct InstructionHolder {
     SetVector<Instruction *> branch;
@@ -263,9 +256,12 @@ void doAliasReasoning(Instruction *instruction,
         ProgramVariable receivingVar = ProgramVariable(load);
         ProgramVariable givingVar = ProgramVariable(load->getPointerOperand());
 
+        logout("add alias for analysis loadinst");
         programPoint->addAlias(receivingVar, givingVar);
 
     } else if (StoreInst *store = dyn_cast<StoreInst>(instruction)) {
+        logout("store inst " << *instruction);
+
         Value *valueToStore = store->getOperand(0);
         Value *receivingValue = store->getOperand(1);
 
@@ -285,6 +281,7 @@ void doAliasReasoning(Instruction *instruction,
 
         if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
             ProgramVariable callVar = ProgramVariable(call);
+            logout("add alias for analysis storeinst call inst");
             programPoint->addAlias(callVar, receivingVar);
             return;
         }
@@ -304,24 +301,28 @@ void doAliasReasoning(Instruction *instruction,
                 logout("two structs to alias " << *store);
                 int numFields = valueStruct->getNumElements();
 
+                logout("pre alias");
+                ProgramPoint::logoutProgramPoint(*programPoint, true);
+
                 for (int i = 0; i < numFields; i++) {
                     ProgramVariable valueStructVar = ProgramVariable(valueToStore, i);
                     ProgramVariable receivingStructVar =
                         ProgramVariable(receivingValue, i);
 
-                    ProgramVariable originalValue =
-                        programPoint->getPV(valueStructVar.getCleanedName(), false);
-                    ProgramVariable originalReceiving =
-                        programPoint->getPV(receivingStructVar.getCleanedName(), false);
-
-                    programPoint->addAlias(originalReceiving, originalValue);
+                    programPoint->makeAliased(valueStructVar, receivingStructVar);
                 }
+
+                logout("post alias");
+                ProgramPoint::logoutProgramPoint(*programPoint, true);
 
                 return;
             }
         }
 
+        logout("add alias for analysis storeinst else case");
+        ProgramPoint::logoutProgramPoint(*programPoint, true);
         programPoint->addAlias(varToStore, receivingVar);
+        ProgramPoint::logoutProgramPoint(*programPoint, true);
 
     } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
         ProgramVariable sourceVar = ProgramVariable(bitcast);
@@ -351,18 +352,15 @@ void doAliasReasoning(Instruction *instruction,
             }
         }
 
+        logout("add alias for analysis bitcast");
         programPoint->addAlias(sourceVar, destinationVar);
 
     } else if (GetElementPtrInst *gepInst =
                    dyn_cast<GetElementPtrInst>(instruction)) {
 
-        // for some struct k { int x; int y }, here'a an example getptr inst:
-        // %y = getelementptr inbounds %struct.my_struct, %struct.my_struct* %k, i32
-        // 0, i32 1, !dbg !57
-
-        // %x = getelementptr inbounds %struct.my_struct,
-        // %struct.my_struct* %k, i32 0, i32 0, !dbg !54
-        // last argument on RHS is the index of the struct
+        // gepInsts typically take a struct and breaks it down into
+        // its fields. an individual gepInst may represent one field of a struct.
+        // note:
         /*
         LLVM removes field names and just makes them indices
         example:
@@ -375,14 +373,9 @@ void doAliasReasoning(Instruction *instruction,
         https://mapping-high-level-constructs-to-llvm-ir.readthedocs.io/en/latest/basic-constructs/structures.html
         */
 
-        // gepinst could also look like:
-        // %2 = getelementptr inbounds { i8*, i8* }, { i8*, i8* }* %1, i32 0, i32 0,
-        // !dbg !84 in which case we see if %1 is bitcast: %1 = bitcast
-        // %struct.my_struct* %k to { i8*, i8* }*, !dbg !84 then we alias %k.0 and
-        // %2
-
         llvm::Type *structType = gepInst->getPointerOperandType();
         llvm::Value *pointerOperand = gepInst->getPointerOperand();
+
 
         if (llvm::PointerType *pointerType =
                     llvm::dyn_cast<llvm::PointerType>(pointerOperand->getType())) {
@@ -397,21 +390,42 @@ void doAliasReasoning(Instruction *instruction,
                     if (BitCastInst *bitcast = dyn_cast<BitCastInst>(pointerOperand)) {
                         ProgramVariable structVar =
                             ProgramVariable(bitcast->getOperand(0), index);
+                        logout("add alias for analysis gepinst");
                         programPoint->addAlias(sourceVar, structVar);
                         return;
                     }
 
                     ProgramVariable structPV = ProgramVariable(pointerOperand);
 
-                    ProgramVariable *originalStructPVRef =
-                        programPoint->getPVRef(structPV.getCleanedName(), false);
-                    ProgramVariable structVar =
-                        ProgramVariable(originalStructPVRef->getValue(), index);
+                    PVAliasSet *originalStructPVASRef =
+                        programPoint->getPVASRef(structPV, false);
 
-                    logout("spec index inst = " << *gepInst);
-                    logout("specifying index for " << structVar.getCleanedName());
+                    if (!originalStructPVASRef) {
+                        originalStructPVASRef = programFunction.getPVASRefFromValue(pointerOperand);
 
-                    programPoint->addAlias(sourceVar, structVar);
+                        if (!originalStructPVASRef) {
+                            errs() << "pvas struct ref not found by value " << *pointerOperand << ". early exit\n";
+                            std::exit(1);
+                        }
+                    }
+
+
+                    ProgramFunction::logoutProgramFunction(programFunction, false);
+
+                    for (ProgramVariable pv :
+                            originalStructPVASRef->getProgramVariables()) {
+                        if (AllocaInst *structAllocaInst =
+                                    dyn_cast<AllocaInst>(pv.getValue())) {
+                            ProgramVariable structVar = ProgramVariable(pv.getValue(), index);
+
+                            logout("spec index inst = " << *gepInst);
+                            logout("specifying index for " << structVar.getCleanedName());
+
+                            programPoint->addAlias(sourceVar, structVar);
+
+                            return;
+                        }
+                    }
                 }
             }
         }
@@ -475,6 +489,7 @@ void doAliasReasoning(Instruction *instruction,
                 rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
             ProgramVariable sourceVar = ProgramVariable(call);
             ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
+            logout("add alias for analysis callinst llvm annotation");
             programPoint->addAlias(sourceVar, destinationVar);
         }
     }
@@ -568,13 +583,13 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     ProgramFunction PostMustCalls = mustCall.generatePassResults();
 
     logout("\n\nPROGRAM FUNCTION for " << programFunction.getFunctionName());
-    ProgramFunction::logoutPF(programFunction);
+    ProgramFunction::logoutProgramFunction(programFunction, false);
 
     logout("\n\nCALLED METHODS RESULT");
-    ProgramFunction::logoutPF(PostCalledMethods);
+    ProgramFunction::logoutProgramFunction(PostCalledMethods, true);
 
     logout("\n\nMUST CALL RESULT");
-    ProgramFunction::logoutPF(PostMustCalls);
+    ProgramFunction::logoutProgramFunction(PostMustCalls, true);
 
     errs() << "\n\nRUNNING CALLED METHODS TESTS - "
            << " TEST NAME - " << testName << "\n\n";

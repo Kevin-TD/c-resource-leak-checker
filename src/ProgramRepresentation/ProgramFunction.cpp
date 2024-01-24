@@ -12,11 +12,11 @@ void ProgramFunction::addProgramPoint(ProgramPoint programPoint) {
     this->programPoints.push_back(programPoint);
 }
 
-std::list<ProgramPoint> ProgramFunction::getProgramPoints() {
+std::list<ProgramPoint> ProgramFunction::getProgramPoints() const {
     return this->programPoints;
 }
 
-ProgramPoint *ProgramFunction::getProgramPointRef(std::string pointName,
+ProgramPoint *ProgramFunction::getProgramPointRef(const std::string &pointName,
         bool addNewIfNotFound) {
     for (ProgramPoint &programPoint : this->programPoints) {
         if (programPoint.getPointName() == pointName) {
@@ -35,9 +35,9 @@ ProgramPoint *ProgramFunction::getProgramPointRef(std::string pointName,
     std::exit(EXIT_FAILURE);
 }
 
-ProgramPoint ProgramFunction::getProgramPoint(std::string pointName,
+ProgramPoint ProgramFunction::getProgramPoint(const std::string &pointName,
         bool addNewIfNotFound) {
-    for (ProgramPoint &programPoint : this->programPoints) {
+    for (ProgramPoint programPoint : this->programPoints) {
         if (programPoint.getPointName() == pointName) {
             return programPoint;
         }
@@ -54,24 +54,37 @@ ProgramPoint ProgramFunction::getProgramPoint(std::string pointName,
     std::exit(EXIT_FAILURE);
 }
 
-std::string ProgramFunction::getFunctionName() {
+std::string ProgramFunction::getFunctionName() const {
     return this->functionName;
 }
 
 void ProgramFunction::setProgramPoint(std::string name,
                                       ProgramPoint programPoint) {
     ProgramPoint *programPointRef = this->getProgramPointRef(name, true);
-    programPointRef->setProgramVariables(programPoint.getProgramVariables());
+    programPointRef->setProgramVariableAliasSets(
+        programPoint.getProgramVariableAliasSets());
 }
 
-void ProgramFunction::logoutPF(ProgramFunction &pf) {
-    for (auto point : pf.getProgramPoints()) {
+PVAliasSet *ProgramFunction::getPVASRefFromValue(Value* value) {
+    for (ProgramPoint& programPoint : programPoints) {
+        if (PVAliasSet* pvas = programPoint.getPVASRef(value, false)) {
+            return pvas;
+        }
+    }
+
+    return NULL;
+}
+
+void ProgramFunction::logoutProgramFunction(ProgramFunction &programFunction,
+        bool logMethods) {
+    for (auto point : programFunction.getProgramPoints()) {
         logout("\n**point name " << point.getPointName());
-        for (auto var : point.getProgramVariables()) {
-            logout("> var name " << var.getRawName());
-            auto aliases = var.getAllAliases(false);
-            auto aliasesStr = rlc_util::setToString(aliases);
-            logout("--> aliases " << aliasesStr);
+        for (auto aliasSet : point.getProgramVariableAliasSets().getSets()) {
+            logout("> alias set = " << aliasSet.toString(false));
+
+            if (logMethods) {
+                logout("--> methods set = " << aliasSet.getMethodsString());
+            }
         }
     }
 }

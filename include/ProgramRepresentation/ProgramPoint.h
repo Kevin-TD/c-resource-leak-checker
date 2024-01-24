@@ -1,69 +1,84 @@
 #ifndef PROGRAM_POINT_H
 #define PROGRAM_POINT_H
 
-#include "ProgramRepresentation/ProgramVariable.h"
+#include "ProgramRepresentation/DisjointPVAliasSets.h"
 
 // reflects a branch that holds some instructions in the IR. this class manages
-// a point's program variables
+// a point's program variables using a set of alias sets. it is effectively a
+// wrapper for DisjointPVAliasSets
 class ProgramPoint {
   private:
-    std::list<ProgramVariable> programVariables;
+    DisjointPVAliasSets programVariableAliasSets;
 
     // the name is same as the branch name that shows up in the IR
     std::string pointName;
 
-    // finds the PV based off a cleaned name and adds variable as an alias to that
-    // PV
-    void fillAlias(std::string varNameCleaned, ProgramVariable variable);
-
   public:
+    // debugging function that lists variables and methods (methods logged if
+    // logMethods is true) of a program point
+    static void logoutProgramPoint(const ProgramPoint &point, bool logMethods);
+
+    // debugging function that lists variables and methods (methods logged if
+    // logMethods is true) of a program point
+    static void logoutProgramPoint(const ProgramPoint *point, bool logMethods);
+
     ProgramPoint();
     ProgramPoint(std::string pointName);
+
+    // copies the alias sets of programPoint into a new instance
     ProgramPoint(std::string pointName, ProgramPoint *programPoint);
 
-    void addAlias(ProgramVariable receiving, ProgramVariable receiver);
+    // aliases element1 and element2 by putting them into the same set
+    void addAlias(ProgramVariable element1, ProgramVariable element2);
 
+    // adds variable programVar if it does not already exist in these sets
     void addVariable(ProgramVariable programVar);
 
-    void setProgramVariables(std::list<ProgramVariable> programVariables);
-    void setProgramVariables(ProgramPoint *programPoint);
-    void setProgramVariables(ProgramPoint programPoint);
+    // adds pvas into this set of alias sets. pvas's program variables will merge
+    // into one of these sets if it contains a program variable that exists in one
+    // of these sets
+    void addPVAS(PVAliasSet pvas);
 
-    std::list<ProgramVariable> getProgramVariables();
+    // finds set A and B from element A and element B (respectively) and merges
+    // them together. if A == B or one of the elements is not found in any of these
+    // sets, no actions are performed
+    void makeAliased(ProgramVariable elementA, ProgramVariable elementB);
 
-    // returns a pointer to program variable based on the cleanedName. if
-    // addNewIfNotFound is true, if we do not find the variable, we will add a
-    // program variable that just has the cleanedName to our program variables. if
-    // addNewIfNotFound is false, NULL is returned
-    ProgramVariable *getPVRef(std::string cleanedName, bool addNewIfNotFound);
+    // copies the disjointed sets from programVariableAliasSets into these alias sets
+    void
+    setProgramVariableAliasSets(DisjointPVAliasSets programVariableAliasSets);
 
-    // returns a program variable based on the cleanedName. if addNewIfNotFound is
-    // true, if we do not find the variable, we will add a program variable that
-    // just has the cleanedName to our program variables. if addNewIfNotFound is
-    // false, the program fails & exits
-    ProgramVariable getPV(std::string cleanedName, bool addNewIfNotFound);
+    DisjointPVAliasSets getProgramVariableAliasSets() const;
 
-    std::string getPointName();
+    // returns a pointer to an alias set based on programVar. if addNewIfNotFound is true,
+    // if we do not find the alias set, we will add a new set that consists of only
+    // programVar. if addNewIfNotFound is false, NULL is returned
+    PVAliasSet *getPVASRef(ProgramVariable programVar, bool addNewIfNotFound);
 
-    // compares self and another point to see if they have the same name and
-    // program variables. returns true iff they are equivalent
-    bool equals(ProgramPoint programPoint);
+    // returns a pointer to an alias set if there is a set that contains a program variable with name
+    // cleanedName. if addNewIfNotFound is true,
+    // if we do not find the alias set, we will add a new set that consists of only
+    // programVar. if addNewIfNotFound is false, NULL is returned
+    PVAliasSet *getPVASRef(const std::string& cleanedName, bool addNewIfNotFound);
 
-    // compares self and another point ref to see if they have the same name and
-    // program variables. returns true iff they are equivalent
+    // returns a reference to the alias set if there is a set that contains a program variable with
+    // that value pointer
+    PVAliasSet *getPVASRef(Value* value, bool addNewIfNotFound);
+
+    std::string getPointName() const;
+
+    // compares self and another point ref to see if they have the same program
+    // variables and methods set
     bool equals(ProgramPoint *programPoint);
 
-    // merges self and another point ref only if facts from otherPoint are not in
-    // self. no facts are replaced, e.g., if PV with name "x" is in self and in
-    // otherPoint, self's fact about "x" will be replaced with otherPoint's fact
-    // about "x". if "x" is not in self but is in otherPoint, "x" will be added to
-    // self. aliases as well are added, which is crucial to ensuring accurate
-    // alias reasoning
-    void add(ProgramPoint *otherPoint);
+    // add the alias sets in programPoint to self. a set may be merged into an
+    // existenting set (in which case, methods set is not updated) or is added
+    // into this set of sets (in which case, program variables and methods set are
+    // added)
+    void add(ProgramPoint *programPoint);
 
-    // searches to see if there is a "main" program variable with cleanedName,
-    // "main" meaning that we are not checking some PV's alias' name
-    bool varExists(std::string cleanedName);
+    // checks if programVar is in any of these sets
+    bool varExists(ProgramVariable programVar);
 };
 
 #endif

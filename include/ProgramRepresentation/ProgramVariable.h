@@ -16,9 +16,6 @@ class ProgramVariable {
     // name is llvm IR name maybe with % or @
     std::string rawName;
 
-    // under-approximation of must-aliases
-    std::list<ProgramVariable> aliases;
-
     void fixNameAndIdentifier();
 
     // bool indicates whether the generated ProgramVariable is actually an
@@ -32,8 +29,6 @@ class ProgramVariable {
     */
     bool varIsIdentifier;
 
-    MethodsSet methods;
-
     // if program var is referring to a struct's field, it has an index.
     // otherwise, it is equal to -1
     int index;
@@ -41,20 +36,19 @@ class ProgramVariable {
   public:
     ProgramVariable();
     ProgramVariable(Value *value);
-    ProgramVariable(Value *value, MethodsSet methods);
     ProgramVariable(std::string cleanedName);
 
     // for struct variables
     ProgramVariable(Value *value, int index);
 
-    std::string getRawName();
+    std::string getRawName() const;
     std::string getCleanedName();
     Value *getValue();
     int getIndex();
 
     // returns true iff index does not equal -1, meaning the program var
     // refers to a struct's field
-    bool hasIndex();
+    bool containsStructFieldVar();
 
     // IR names like %7 are considered unnamed and program names like %str are
     // named
@@ -69,31 +63,7 @@ class ProgramVariable {
     // checks if value's name (maybe with % or @) equals other name
     bool equalsRawName(std::string otherRawName);
 
-    bool equals(ProgramVariable other);
-
-    void addAlias(ProgramVariable pv);
-
     bool isIdentifier();
-
-    // returns aliases as their string representation only for aliases that are
-    // given names in the LLVM IR. intermediate variables like %7, %8 are unnamed;
-    // variables present in the C code like %str are named
-    std::set<std::string> getNamedAliases(bool cleanNames);
-
-    // returns both named and unnamed aliases
-    std::set<std::string> getAllAliases(bool cleanNames);
-
-    std::list<ProgramVariable> getPValiases();
-    std::list<ProgramVariable> *getPValiasesRef();
-
-    std::list<ProgramVariable *> generatePVptrAliases();
-
-    MethodsSet getMethodsSet();
-    MethodsSet *getMethodsSetRef();
-
-    void setMethodsSet(MethodsSet methods);
-
-    void setAliases(std::list<ProgramVariable> aliases);
 };
 
 #endif
