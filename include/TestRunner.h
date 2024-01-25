@@ -2,6 +2,7 @@
 #define TEST_RUNNER_H
 
 #include "DataflowPass.h"
+#include "StructFieldToIndexMap.h"
 
 class TestRunner {
   public:
