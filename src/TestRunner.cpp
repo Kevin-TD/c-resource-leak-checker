@@ -23,7 +23,7 @@ bool TestRunner::runTests(const std::string functionName,
 
         logout("branch = " << branchName);
 
-        DisjointedPVAliasSets expectedDPVAS =
+        DisjointPVAliasSets expectedDPVAS =
             expectedResultPoint.getProgramVariableAliasSets();
 
         ProgramPoint receivedResultPoint =
@@ -47,46 +47,6 @@ bool TestRunner::runTests(const std::string functionName,
 
                 PVAliasSet *receivedPVAS =
                     receivedResultPoint.getPVASRef(expectedPVRefName, true);
-
-                std::set<std::string> receivedSet =
-                    receivedPVAS->getMethodsSet().getMethods();
-                std::string receivedSetString = rlc_util::setToString(receivedSet);
-
-                errs() << "Test for branch name = " << branchName
-                       << " var name = " << expectedPVName;
-
-                if (expectedSet == receivedSet) {
-                    errs() << " passed\n";
-                } else {
-                    errs() << " **FAILED**\n";
-                    testPassed = EXIT_FAILURE;
-                }
-                errs() << "EXPECTED " << expectedSetString << "\n";
-                errs() << "RECEIVED " << receivedSetString << "\n\n";
-            }
-        }
-
-        logout("branch = " << branchName);
-
-        DisjointPVAliasSets expectedDPVAS =
-            expectedResultPoint.getProgramVariableAliasSets();
-
-        ProgramPoint receivedResultPoint =
-            receivedResult.getProgramPoint(branchName, true);
-
-        for (PVAliasSet expctedPVAS : expectedDPVAS.getSets()) {
-            std::set<std::string> expectedSet =
-                expctedPVAS.getMethodsSet().getMethods();
-            std::string expectedSetString = rlc_util::setToString(expectedSet);
-
-            // TODO: change structure for expectedResult.
-            // expctedPVAS.getProgramVariables().size() will always equal 1, so
-            // this for loop is misleading
-            for (ProgramVariable expectedPV : expctedPVAS.getProgramVariables()) {
-                std::string expectedPVName = expectedPV.getCleanedName();
-
-                PVAliasSet *receivedPVAS =
-                    receivedResultPoint.getPVASRef(expectedPV, true);
 
                 std::set<std::string> receivedSet =
                     receivedPVAS->getMethodsSet().getMethods();
