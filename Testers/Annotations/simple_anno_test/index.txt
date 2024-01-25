@@ -1,0 +1,2 @@
+MustCall target = FUNCTION(malloc0).RETURN methods = free
+Calls target = FUNCTION(free0).PARAM(0) methods = free

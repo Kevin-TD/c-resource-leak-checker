@@ -6,7 +6,7 @@ bool TestRunner::runTests(const std::string functionName,
                           const std::string lastBranchName,
                           FullFile expectedResult,
                           ProgramFunction receivedResult, StructFieldToIndexMap structFieldToIndexMap) {
-  bool testPassed = EXIT_SUCCESS;
+    bool testPassed = EXIT_SUCCESS;
 
     logout("Function Name Test Running = " << functionName);
 
@@ -17,49 +17,8 @@ bool TestRunner::runTests(const std::string functionName,
     for (ProgramPoint expectedResultPoint : points) {
         std::string branchName = expectedResultPoint.getPointName();
 
-    if (branchName == "") {
-      branchName = lastBranchName;
-    }
-
-    logout("branch = " << branchName);
-
-    DisjointedPVAliasSets expectedDPVAS =
-        expectedResultPoint.getProgramVariableAliasSets();
-
-    ProgramPoint receivedResultPoint =
-        receivedResult.getProgramPoint(branchName, true);
-
-    for (PVAliasSet expctedPVAS : expectedDPVAS.getSets()) {
-      std::set<std::string> expectedSet =
-          expctedPVAS.getMethodsSet().getMethods();
-      std::string expectedSetString = rlc_util::setToString(expectedSet);
-
-      // TODO: change structure for expectedResult.
-      // expctedPVAS.getProgramVariables().size() will always equal 1, so
-      // this for loop is misleading
-      for (ProgramVariable expectedPV : expctedPVAS.getProgramVariables()) {
-        std::string expectedPVName = expectedPV.getCleanedName();
-        std::string expectedPVRefName = expectedPVName;
-
-        if (structFieldToIndexMap.structNameAndFieldIsInMap(expectedPVName)) {
-          expectedPVRefName = structFieldToIndexMap.get(expectedPVName); 
-        }
-
-        PVAliasSet *receivedPVAS =
-            receivedResultPoint.getPVASRef(expectedPVRefName, true);
-
-        std::set<std::string> receivedSet =
-            receivedPVAS->getMethodsSet().getMethods();
-        std::string receivedSetString = rlc_util::setToString(receivedSet);
-
-        errs() << "Test for branch name = " << branchName
-               << " var name = " << expectedPVName;
-
-        if (expectedSet == receivedSet) {
-          errs() << " passed\n";
-        } else {
-          errs() << " **FAILED**\n";
-          testPassed = EXIT_FAILURE;
+        if (branchName == "") {
+            branchName = lastBranchName;
         }
 
         logout("branch = " << branchName);
@@ -80,9 +39,14 @@ bool TestRunner::runTests(const std::string functionName,
             // this for loop is misleading
             for (ProgramVariable expectedPV : expctedPVAS.getProgramVariables()) {
                 std::string expectedPVName = expectedPV.getCleanedName();
+                std::string expectedPVRefName = expectedPVName;
+
+                if (structFieldToIndexMap.structNameAndFieldIsInMap(expectedPVName)) {
+                    expectedPVRefName = structFieldToIndexMap.get(expectedPVName);
+                }
 
                 PVAliasSet *receivedPVAS =
-                    receivedResultPoint.getPVASRef(expectedPV, true);
+                    receivedResultPoint.getPVASRef(expectedPVRefName, true);
 
                 std::set<std::string> receivedSet =
                     receivedPVAS->getMethodsSet().getMethods();

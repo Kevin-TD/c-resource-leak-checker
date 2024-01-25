@@ -33,7 +33,7 @@ void StructFieldToIndexMap::buildMap(const std::string& optLoadFileName) {
         "python3 ../TestHelpers/struct_field_to_index_map_generator.py " +
         std::string(astTempTextFile) + " " + std::string(mapTempTextFile);
 
-    system(readASTCommand.c_str());
+    int command_exit_status = system(readASTCommand.c_str());
 
     logout("dump command " << dumpASTCommand);
     logout("to py run " << readASTCommand);
@@ -44,19 +44,19 @@ void StructFieldToIndexMap::buildMap(const std::string& optLoadFileName) {
     if (mapFile.is_open()) {
         while (std::getline(mapFile, line)) {
             if (line == "") {
-                continue; 
+                continue;
             }
 
-            auto keyMapPair = rlc_util::splitString(line, '='); 
+            auto keyMapPair = rlc_util::splitString(line, '=');
             if (keyMapPair.size() != 2) {
                 logout("unexpected error; key map pair not equal two for line '" << line << "'; early exit");
                 std::exit(1);
             }
 
             auto structNameAndField = keyMapPair[0];
-            auto structNameAndIndex = keyMapPair[1]; 
+            auto structNameAndIndex = keyMapPair[1];
 
-            this->fieldToIndexMap[structNameAndField] = structNameAndIndex; 
+            this->fieldToIndexMap[structNameAndField] = structNameAndIndex;
         }
     }
 
@@ -71,5 +71,5 @@ std::string StructFieldToIndexMap::get(const std::string& structNameAndField) {
 }
 
 bool StructFieldToIndexMap::structNameAndFieldIsInMap(const std::string& structNameAndField) {
-    return this->fieldToIndexMap.count(structNameAndField); 
+    return this->fieldToIndexMap.count(structNameAndField);
 }

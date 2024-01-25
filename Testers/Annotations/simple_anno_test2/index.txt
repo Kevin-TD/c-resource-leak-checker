@@ -1,0 +1,2 @@
+MustCall target = FUNCTION(does_malloc).PARAM(0) methods = free
+Calls target = FUNCTION(does_free).PARAM(0) methods = free

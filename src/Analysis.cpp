@@ -11,8 +11,8 @@
 #include "DataflowPass.h"
 #include "Debug.h"
 #include "MustCall.h"
-#include "StructFieldToIndexMap.h"
 #include "ProgramRepresentation/FullFile.h"
+#include "StructFieldToIndexMap.h"
 #include "RunAnalysis.h"
 #include "TestRunner.h"
 #include "Utils.h"
@@ -36,7 +36,7 @@ bool anyTestFailed = false;
 CalledMethods calledMethods;
 MustCall mustCall;
 AnnotationHandler annotationHandler;
-StructFieldToIndexMap structFieldToIndexMap; 
+StructFieldToIndexMap structFieldToIndexMap;
 
 void loadFunctions() {
     // working directory is /build
@@ -131,43 +131,10 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
     char astTempTextFile[] = "/tmp/astTempTextFileXXXXXX";
     int astFD = mkstemp(astTempTextFile);
 
-  if (astFD == -1) {
-    logout("failed to create temp ast text file at getAnnotationStrings");
-    perror("mkstemp");
-    exit(1);
-  }
-
-  std::string dumpASTCommand =
-      "clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics " +
-      optLoadFileName + "> " + astTempTextFile;
-  system(dumpASTCommand.c_str());
-
-  char annotationsTempTextFile[] = "/tmp/annotationsFileXXXXXX";
-  int annotationsFD = mkstemp(annotationsTempTextFile);
-
-  if (annotationsFD == -1) {
-    logout("failed to create temp annotations text file at getAnnotationStrings");
-    perror("mkstemp");
-    exit(1);
-  }
-
-  std::string readASTCommand =
-      "python3 ../Annotations/annotation_generator.py " +
-      std::string(astTempTextFile) + " " + std::string(annotationsTempTextFile);
-
-  system(readASTCommand.c_str());
-
-  logout("dump command " << dumpASTCommand);
-  logout("to py run " << readASTCommand);
-
-  std::ifstream annotationFile(annotationsTempTextFile);
-  std::vector<std::string> annotations;
-
-  std::string line;
-  if (annotationFile.is_open()) {
-    while (std::getline(annotationFile, line)) {
-      logout("got anno: " << line);
-      annotations.push_back(line);
+    if (astFD == -1) {
+        logout("failed to create temp ast text file");
+        perror("mkstemp");
+        exit(1);
     }
 
     std::string dumpASTCommand =
@@ -544,41 +511,15 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
         loadFunctions();
         auto annotations = getAnnotationStrings(optLoadFileName);
 
-    calledMethods.setExpectedResult(
-        TestRunner::buildExpectedResults(testName, calledMethods.passName));
-    mustCall.setExpectedResult(
-        TestRunner::buildExpectedResults(testName, mustCall.passName));
-    annotationHandler.addAnnotations(annotations);
-    
-    structFieldToIndexMap.buildMap(optLoadFileName); 
+        calledMethods.setExpectedResult(
+            TestRunner::buildExpectedResults(testName, calledMethods.passName));
+        mustCall.setExpectedResult(
+            TestRunner::buildExpectedResults(testName, mustCall.passName));
+        annotationHandler.addAnnotations(annotations);
 
-    loadAndBuild = true;
-  }
+        structFieldToIndexMap.buildMap(optLoadFileName);
 
-  // check if code re-defines a pre-defined function
-  if (SafeFunctions.count(fnName)) {
-    errs() << "**ANALYSIS-WARNING**: Re-definition of safe function '" << fnName
-           << "' identified. Function erased from safe functions.\n";
-    SafeFunctions.erase(fnName);
-  }
-
-  if (ReallocFunctions.count(fnName)) {
-    errs() << "**ANALYSIS-WARNING**: Re-definition of realloc function '"
-           << fnName
-           << "' identified. Function erased from realloc functions.\n";
-    ReallocFunctions.erase(fnName);
-  }
-
-  for (auto allocDeallocPair : MemoryFunctions) {
-    std::string allocationFunction = allocDeallocPair.first;
-    std::string deallocationFunction = allocDeallocPair.second;
-
-    if (fnName == allocationFunction) {
-      errs() << "**ANALYSIS-WARNING**: Re-definition of allocation function '"
-             << fnName
-             << "' identified. Function's alloc and dealloc functions erased "
-                "from memory functions.\n";
-      MemoryFunctions.erase(fnName);
+        loadAndBuild = true;
     }
 
     // check if code re-defines a pre-defined function
@@ -643,14 +584,11 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     mustCall.setCFG(&cfg);
     mustCall.setProgramFunction(programFunction);
 
-  bool calledMethodsResult = TestRunner::runTests(
-      fnName, lastBranchName, calledMethods.getExpectedResult(),
-      PostCalledMethods, structFieldToIndexMap);
+    ProgramFunction PostCalledMethods = calledMethods.generatePassResults();
+    ProgramFunction PostMustCalls = mustCall.generatePassResults();
 
-  errs() << "\n\nRUNNING MUST CALL TESTS "
-         << " TEST NAME - " << testName << "\n\n";
-  bool mustCallResult = TestRunner::runTests(
-      fnName, lastBranchName, mustCall.getExpectedResult(), PostMustCalls, structFieldToIndexMap);
+    logout("\n\nPROGRAM FUNCTION for " << programFunction.getFunctionName());
+    ProgramFunction::logoutProgramFunction(programFunction, false);
 
     logout("\n\nCALLED METHODS RESULT");
     ProgramFunction::logoutProgramFunction(PostCalledMethods, true);
@@ -665,12 +603,12 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
     bool calledMethodsResult = TestRunner::runTests(
                                    fnName, lastBranchName, calledMethods.getExpectedResult(),
-                                   PostCalledMethods);
+                                   PostCalledMethods, structFieldToIndexMap);
 
     errs() << "\n\nRUNNING MUST CALL TESTS "
            << " TEST NAME - " << testName << "\n\n";
     bool mustCallResult = TestRunner::runTests(
-                              fnName, lastBranchName, mustCall.getExpectedResult(), PostMustCalls);
+                              fnName, lastBranchName, mustCall.getExpectedResult(), PostMustCalls, structFieldToIndexMap);
 
     if (calledMethodsResult == EXIT_FAILURE || mustCallResult == EXIT_FAILURE) {
         anyTestFailed = true;
