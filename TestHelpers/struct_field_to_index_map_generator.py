@@ -29,8 +29,6 @@ int main() {
 # a field of a variable by field name (rather than index)
 # to test its MustCall/CalledMethods
 
-# TODO: refactor this code
-
 import sys
 
 DEBUG = True

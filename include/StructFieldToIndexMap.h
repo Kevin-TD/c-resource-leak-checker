@@ -3,13 +3,6 @@
 
 #include "Utils.h"
 
-// TODO: update test cases to refer by field name than by field index
-
-// TODO: buildMap and getAnnotationStrings share code.
-// make another func/class that can generate the AST and then we can
-// just use it. it would just store that temp file name.
-// destructor needs to do unlinking.
-
 /*
 string map between struct var name + struct field to struct name + struct index.
 example:
