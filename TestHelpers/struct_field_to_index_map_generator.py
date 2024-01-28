@@ -29,10 +29,12 @@ int main() {
 # a field of a variable by field name (rather than index)
 # to test its MustCall/CalledMethods
 
+# TODO: CLT that generates AST based on test name (for debugging). 
+# if file name given, pipe into file. if not, log to terminal
+
 import sys
 
-DEBUG = True
-
+DEBUG = False
 
 def logout(x: str):
     if (DEBUG):
@@ -47,21 +49,24 @@ class Field:
 
 class Struct:
     def __init__(self, name: str):
-        self.name = name
-        self.typedefs: list[str] = []
-        self.fields: list[Field] = []
+        self.__name = name
+        self.__typedefs: list[str] = []
+        self.__fields: list[Field] = []
 
     def get_name(self) -> str:
-        return self.name
+        return self.__name
 
     def get_typedefs(self) -> "list[str]":
-        return self.typedefs
+        return self.__typedefs
+
+    def get_fields(self) -> "list[Field]":
+        return self.__fields
 
     def add_field(self, field: Field) -> None:
-        self.fields.append(field)
+        self.__fields.append(field)
 
     def add_typedef(self, typedef: str) -> None:
-        self.typedefs.append(typedef)
+        self.__typedefs.append(typedef)
 
 
 class StructsManager:
@@ -90,7 +95,7 @@ class StructsManager:
 
     # if there already exists a struct of name struct_name, that struct is returned.
     # otherwise, the struct is added and returned.
-    def add_struct(self, struct_name: str) -> bool:
+    def add_struct(self, struct_name: str) -> Struct:
         for struct in self.structs:
             if struct.get_name() == struct_name:
                 return struct
@@ -128,14 +133,14 @@ class StructVarManager:
         return self.struct_vars[-1]
 
 
-def add_struct(record_decl: str, structs_manager: StructsManager):
+def parse_record_decl(record_decl: str, structs_manager_holder: StructsManager):
     record_decl_chunks = record_decl.split(" ")
     struct_name = record_decl_chunks[len(record_decl_chunks) - 2]
 
-    return structs_manager.add_struct(struct_name)
+    return structs_manager_holder.add_struct(struct_name)
 
 
-def add_field(field_decl: str, field_index: int, struct: Struct):
+def parse_field_decl(field_decl: str, decl_field_index: int, struct: Struct):
     if type(struct) != Struct:
         return
 
@@ -149,15 +154,15 @@ def add_field(field_decl: str, field_index: int, struct: Struct):
         start_index -= 1
         cur_char = field_decl[start_index]
 
-    field = Field(field_name, field_index)
+    field = Field(field_name, decl_field_index)
     struct.add_field(field)
 
 
-def add_struct_var(var_decl: str, struct_var_manager: StructVarManager, structs_manager: StructsManager):
+def parse_var_decl(var_decl: str, struct_var_manager_holder: StructVarManager, structs_manager_holder: StructsManager):
 
     var_decl_chunks = var_decl.split(" ")
 
-    print(var_decl_chunks)
+    logout(var_decl_chunks)
 
     if var_decl_chunks[5] == "used":
         var_name = var_decl_chunks[6]
@@ -180,17 +185,17 @@ def add_struct_var(var_decl: str, struct_var_manager: StructVarManager, structs_
     else:
         struct_name = struct_name_split[0]
 
-    if not structs_manager.struct_exists(struct_name):
+    if not structs_manager_holder.struct_exists(struct_name):
         return
 
     logout(var_decl)
     logout(
         f"parsed var_decl var name = {var_name} struct name = '{struct_name}'")
 
-    struct_var_manager.add_struct_var(var_name, struct_name)
+    struct_var_manager_holder.add_struct_var(var_name, struct_name)
 
 
-def add_typedef_alias(structs_manager: StructsManager, typedef_decl: str):
+def parse_typedef_decl(structs_manager_holder: StructsManager, typedef_decl: str):
     if not ("referenced" in typedef_decl and "struct" in typedef_decl):
         return
 
@@ -221,7 +226,7 @@ def add_typedef_alias(structs_manager: StructsManager, typedef_decl: str):
         cur_char = typedef_decl[start_index]
 
     if original_name != typedef_alias_name:
-        structs_manager.get_struct(
+        structs_manager_holder.get_struct(
             original_name, False).add_typedef(typedef_alias_name)
         logout(f"added typedef '{original_name}' '{typedef_alias_name}'")
 
@@ -233,7 +238,7 @@ with open(file_to_read) as ast:
     cur_struct = None
     cur_top_decl = None  # FunctionDecl or RecordDecl (strings)
     cur_mid_decl = None  # ParmVarDecl or FieldDecl (strings)
-    field_index = None
+    cur_field_index = None
 
     ast_lines = ast.readlines()
     structs_manager = StructsManager()
@@ -254,36 +259,36 @@ with open(file_to_read) as ast:
                 cur_decl_char = expr[start_decl_index]
         except IndexError:
             # might be a null stement (looks like "<<<NULL>>>" in AST)
-            field_index = None
+            cur_field_index = None
             continue
 
         if "FunctionDecl" == decl:
             cur_top_decl = expr
-            field_index = None
+            cur_field_index = None
 
         elif "RecordDecl" == decl:
             cur_top_decl = expr
-            field_index = None
-            cur_struct = add_struct(cur_top_decl, structs_manager)
+            cur_field_index = None
+            cur_struct = parse_record_decl(cur_top_decl, structs_manager)
 
         elif "TypedefDecl" == decl:
             cur_top_decl = expr
-            field_index = None
-            add_typedef_alias(structs_manager, cur_top_decl)
+            cur_field_index = None
+            parse_typedef_decl(structs_manager, cur_top_decl)
 
         elif "ParmVarDecl" == decl:
             cur_mid_decl = expr
-            field_index = None
+            cur_field_index = None
 
         elif "FieldDecl" == decl:
             cur_mid_decl = expr
 
-            if field_index is None:
-                field_index = 0
+            if cur_field_index is None:
+                cur_field_index = 0
             else:
-                field_index += 1
+                cur_field_index += 1
 
-            add_field(cur_mid_decl, field_index, cur_struct)
+            parse_field_decl(cur_mid_decl, cur_field_index, cur_struct)
 
         elif "AnnotateAttr" == decl:
             if "|-" not in expr:
@@ -291,22 +296,19 @@ with open(file_to_read) as ast:
 
         else:
             if "VarDecl" == decl and "struct" in expr:
-                add_struct_var(expr[first_letter_index:],
+                parse_var_decl(expr[first_letter_index:],
                                struct_var_manager, structs_manager)
 
-            field_index = None
+            cur_field_index = None
 
     with open(output_file, "w") as output:
-        for i in range(len(struct_var_manager.struct_vars)):
-            struct_var = struct_var_manager.struct_vars[i]
-
+        for cur_struct_var in struct_var_manager.struct_vars:
             found_struct = structs_manager.get_struct(
-                struct_var.get_type_name(), True)
+                cur_struct_var.get_type_name(), True)
 
-            for j in range(len(found_struct.fields)):
-                field = found_struct.fields[j]
+            for found_field in found_struct.get_fields():
                 output.write(
-                    f"{struct_var.get_var_name()}.{field.field_name}={struct_var.get_var_name()}.{field.field_index}\n")
+                    f"{cur_struct_var.get_var_name()}.{found_field.field_name}={cur_struct_var.get_var_name()}.{found_field.field_index}\n")
 
                 logout(
-                    f"wrote: {struct_var.get_var_name()}.{field.field_name}={struct_var.get_var_name()}.{field.field_index}")
+                    f"wrote: {cur_struct_var.get_var_name()}.{found_field.field_name}={cur_struct_var.get_var_name()}.{found_field.field_index}")
