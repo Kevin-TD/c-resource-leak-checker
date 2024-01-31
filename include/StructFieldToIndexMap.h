@@ -2,6 +2,7 @@
 #define STRUCT_FIELD_TO_INDEX_H
 
 #include "Utils.h"
+#include "TempFileManager.h"
 
 /*
 string map between struct var name + struct field to struct name + struct index.
@@ -38,7 +39,8 @@ class StructFieldToIndexMap {
   public:
     StructFieldToIndexMap();
 
-    void buildMap(const std::string& optLoadFileName);
+    // builds the map based off a tmp file which consists of the AST of a C program
+    void buildMap(const TempFileManager& astFile);
 
     // returns the corresponding struct name and index based on structNameAndField
     std::string get(const std::string& structNameAndField);
