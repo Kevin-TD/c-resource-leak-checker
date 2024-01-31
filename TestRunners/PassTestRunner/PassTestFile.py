@@ -13,6 +13,7 @@ class PassTestFile(TestFile):
     __INIT_PASS_TEST_CONDITIONS = {
         "IR_WILL_GENERATE": True
     }
+
     def __init__(self, file_path: str):
         super().__init__(file_path)
         self.__ir_will_generate: bool = self.__INIT_PASS_TEST_CONDITIONS["IR_WILL_GENERATE"]
