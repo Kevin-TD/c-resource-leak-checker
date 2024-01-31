@@ -1,12 +1,12 @@
-#! python3 ../run_test.py <folder name in /test> 
+#! python3 ../run_test.py <folder name in /test>
 # must be in build dir
-# e.g., python3 ../run_test.py nesting_test 
+# e.g., python3 ../run_test.py nesting_test
 
-# takes a test folder in the /test directory and runs every .c 
-# file in it, including those in subdirectories 
+# takes a test folder in the /test directory and runs every .c
+# file in it, including those in subdirectories
 
-import os 
-import sys 
+import os
+import sys
 
 # checks if cwd is build
 if os.path.split(os.getcwd())[1] != "build":
@@ -20,7 +20,8 @@ if os.path.split(os.getcwd())[1] != "build":
 
 test_folder_name = sys.argv[1]
 
-def get_all_c_files(folder_path: str, collected_files = []):
+
+def get_all_c_files(folder_path: str, collected_files=[]):
     with os.scandir(folder_path) as entries:
         for entry in entries:
             if entry.is_file() and entry.name.endswith(".c"):
@@ -28,7 +29,7 @@ def get_all_c_files(folder_path: str, collected_files = []):
 
             elif entry.is_dir():
                 get_all_c_files(f"{folder_path}/{entry.name}", collected_files)
-    
+
     return collected_files
 
 
