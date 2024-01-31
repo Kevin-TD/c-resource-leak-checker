@@ -11,7 +11,8 @@ import sys
 from abc import ABC as AbstractClass
 
 DEBUG = False
-LOG_ANNOTATIONS = False 
+LOG_ANNOTATIONS = False
+
 
 def logout(x: str):
     if (DEBUG):

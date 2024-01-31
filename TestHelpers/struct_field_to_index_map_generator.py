@@ -29,12 +29,13 @@ int main() {
 # a field of a variable by field name (rather than index)
 # to test its MustCall/CalledMethods
 
-# TODO: CLT that generates AST based on test name (for debugging). 
+# TODO: CLT that generates AST based on test name (for debugging).
 # if file name given, pipe into file. if not, log to terminal
 
 import sys
 
 DEBUG = False
+
 
 def logout(x: str):
     if (DEBUG):
@@ -260,8 +261,8 @@ with open(file_to_read) as ast:
         except IndexError:
             # might be a null stement (looks like "<<<NULL>>>" in AST)
 
-            # TODO: write explicit check for null statements; lack of 
-            # documentation on the formatting of 
+            # TODO: write explicit check for null statements; lack of
+            # documentation on the formatting of
             # null statements makes writing explicit checks difficult
 
             cur_field_index = None
