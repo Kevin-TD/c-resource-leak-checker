@@ -5,7 +5,7 @@
 bool TestRunner::runTests(const std::string functionName,
                           const std::string lastBranchName,
                           FullFile expectedResult,
-                          ProgramFunction receivedResult) {
+                          ProgramFunction receivedResult, StructFieldToIndexMap structFieldToIndexMap) {
     bool testPassed = EXIT_SUCCESS;
 
     logout("Function Name Test Running = " << functionName);
@@ -39,9 +39,14 @@ bool TestRunner::runTests(const std::string functionName,
             // this for loop is misleading
             for (ProgramVariable expectedPV : expctedPVAS.getProgramVariables()) {
                 std::string expectedPVName = expectedPV.getCleanedName();
+                std::string expectedPVRefName = expectedPVName;
+
+                if (structFieldToIndexMap.structNameAndFieldIsInMap(expectedPVName)) {
+                    expectedPVRefName = structFieldToIndexMap.get(expectedPVName);
+                }
 
                 PVAliasSet *receivedPVAS =
-                    receivedResultPoint.getPVASRef(expectedPV, true);
+                    receivedResultPoint.getPVASRef(expectedPVRefName, true);
 
                 std::set<std::string> receivedSet =
                     receivedPVAS->getMethodsSet().getMethods();

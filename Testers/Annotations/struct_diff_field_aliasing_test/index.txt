@@ -1,0 +1,2 @@
+MustCall target = STRUCT(M).FIELD(0) methods = free
+MustCall target = STRUCT(M).FIELD(1) methods = free

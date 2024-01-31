@@ -12,6 +12,7 @@
 #include "Debug.h"
 #include "MustCall.h"
 #include "ProgramRepresentation/FullFile.h"
+#include "StructFieldToIndexMap.h"
 #include "RunAnalysis.h"
 #include "TestRunner.h"
 #include "Utils.h"
@@ -35,6 +36,7 @@ bool anyTestFailed = false;
 CalledMethods calledMethods;
 MustCall mustCall;
 AnnotationHandler annotationHandler;
+StructFieldToIndexMap structFieldToIndexMap;
 
 void loadFunctions() {
     // working directory is /build
@@ -514,6 +516,9 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
         mustCall.setExpectedResult(
             TestRunner::buildExpectedResults(testName, mustCall.passName));
         annotationHandler.addAnnotations(annotations);
+
+        structFieldToIndexMap.buildMap(optLoadFileName);
+
         loadAndBuild = true;
     }
 
@@ -598,12 +603,12 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
     bool calledMethodsResult = TestRunner::runTests(
                                    fnName, lastBranchName, calledMethods.getExpectedResult(),
-                                   PostCalledMethods);
+                                   PostCalledMethods, structFieldToIndexMap);
 
     errs() << "\n\nRUNNING MUST CALL TESTS "
            << " TEST NAME - " << testName << "\n\n";
     bool mustCallResult = TestRunner::runTests(
-                              fnName, lastBranchName, mustCall.getExpectedResult(), PostMustCalls);
+                              fnName, lastBranchName, mustCall.getExpectedResult(), PostMustCalls, structFieldToIndexMap);
 
     if (calledMethodsResult == EXIT_FAILURE || mustCallResult == EXIT_FAILURE) {
         anyTestFailed = true;

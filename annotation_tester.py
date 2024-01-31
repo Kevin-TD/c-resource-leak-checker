@@ -10,7 +10,6 @@ tests_that_did_not_run = []
 
 DEBUG = True
 
-
 def logout(x: str):
     if (DEBUG):
         print(x)

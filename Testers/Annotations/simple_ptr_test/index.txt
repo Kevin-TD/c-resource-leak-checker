@@ -1,0 +1,4 @@
+MustCall target = STRUCT(my_struct).FIELD(0) methods = free
+MustCall target = STRUCT(my_struct).FIELD(1) methods = free
+MustCall target = STRUCT(my_struct2).FIELD(0) methods = free
+MustCall target = STRUCT(my_struct2).FIELD(1) methods = free
