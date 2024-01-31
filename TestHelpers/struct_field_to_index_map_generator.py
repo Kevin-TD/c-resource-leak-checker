@@ -259,6 +259,11 @@ with open(file_to_read) as ast:
                 cur_decl_char = expr[start_decl_index]
         except IndexError:
             # might be a null stement (looks like "<<<NULL>>>" in AST)
+
+            # TODO: write explicit check for null statements; lack of 
+            # documentation on the formatting of 
+            # null statements makes writing explicit checks difficult
+
             cur_field_index = None
             continue
 
