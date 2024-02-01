@@ -33,6 +33,7 @@ add_llvm_library(CodeAnalyzer MODULE
   src/DataflowPass.cpp
   src/TestRunner.cpp
   src/StructFieldToIndexMap.cpp
+  src/TempFileManager.cpp
   src/Analysis.cpp
   src/RunAnalysis.cpp
   src/Utils.cpp

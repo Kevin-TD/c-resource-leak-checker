@@ -5,40 +5,23 @@ StructFieldToIndexMap::StructFieldToIndexMap() {
 
 }
 
-void StructFieldToIndexMap::buildMap(const std::string& optLoadFileName) {
-    char astTempTextFile[] = "/tmp/astTempTextFileXXXXXX";
-    int astFD = mkstemp(astTempTextFile);
-
-    if (astFD == -1) {
-        logout("failed to create temp ast text file at buildMap");
-        perror("mkstemp");
-        exit(1);
-    }
-
-    std::string dumpASTCommand =
-        "clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics " +
-        optLoadFileName + "> " + astTempTextFile;
-    system(dumpASTCommand.c_str());
-
-    char mapTempTextFile[] = "/tmp/mapFileXXXXXX";
-    int mapFD = mkstemp(mapTempTextFile);
-
-    if (mapFD == -1) {
-        logout("failed to create temp annotations text file at buildMap");
-        perror("mkstemp");
-        exit(1);
-    }
+void StructFieldToIndexMap::buildMap(const TempFileManager& astFile) {
+    TempFileManager mapTempFile = TempFileManager("mapTempFile");
 
     std::string readASTCommand =
         "python3 ../TestHelpers/struct_field_to_index_map_generator.py " +
-        std::string(astTempTextFile) + " " + std::string(mapTempTextFile);
+        astFile.getFileName() + " " + mapTempFile.getFileName();
 
     int command_exit_status = system(readASTCommand.c_str());
 
-    logout("dump command " << dumpASTCommand);
-    logout("to py run " << readASTCommand);
+    logout("ran command " << readASTCommand);
 
-    std::ifstream mapFile(mapTempTextFile);
+    if (command_exit_status != 0) {
+        errs() << "error occured while building map; early exit\n";
+        std::exit(1);
+    }
+
+    std::ifstream mapFile = mapTempFile.getFileStream();
 
     std::string line;
     if (mapFile.is_open()) {
@@ -49,7 +32,7 @@ void StructFieldToIndexMap::buildMap(const std::string& optLoadFileName) {
 
             auto keyMapPair = rlc_util::splitString(line, '=');
             if (keyMapPair.size() != 2) {
-                logout("unexpected error; key map pair not equal two for line '" << line << "'; early exit");
+                logout("unexpected error; line '" << line << "' does not look like key-pair map in the form 'a=b'; early exit");
                 std::exit(1);
             }
 
@@ -59,11 +42,6 @@ void StructFieldToIndexMap::buildMap(const std::string& optLoadFileName) {
             this->fieldToIndexMap[structNameAndField] = structNameAndIndex;
         }
     }
-
-    close(astFD);
-    close(mapFD);
-    unlink(astTempTextFile);
-    unlink(mapTempTextFile);
 }
 
 std::string StructFieldToIndexMap::get(const std::string& structNameAndField) {
