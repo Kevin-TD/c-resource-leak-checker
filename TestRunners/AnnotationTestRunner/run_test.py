@@ -1,4 +1,9 @@
+import os
 import sys
+
+if os.path.split(os.getcwd())[1] != "build":
+    print(f"WARNING: not in build dir; cwd is {os.getcwd()}")
+    sys.exit(1)
 
 sys.path.insert(0, '..')
 from TestRunners.FlagsManager import FlagsManager

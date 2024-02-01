@@ -34,7 +34,7 @@ int main() {
 
 import sys
 
-DEBUG = True
+DEBUG = False
 
 
 def logout(x: str):

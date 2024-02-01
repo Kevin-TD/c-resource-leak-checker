@@ -1,6 +1,5 @@
 import sys
 import os
-import tempfile
 
 sys.path.insert(0, '..')
 from TestRunners.TestRunner import TestRunner

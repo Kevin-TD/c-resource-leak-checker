@@ -2,10 +2,9 @@ from .TestFile import TestFile
 
 
 class TestFilesManager:
-    """ generic class that provides structure for holding test files and 
-    provides helper functions to filter search certain files or toggle file properties.
-    must use a subclass of TestFile, which is declared by a call to add_file then 
-    subsequently enforced. 
+    """ Holds test files and provides helper functions to filter search 
+    certain files or toggle file properties. Test files must use a subclass of TestFile, 
+    which is declared by a call to add_file then subsequently enforced. 
 
     """
 
@@ -13,13 +12,13 @@ class TestFilesManager:
         self.__test_files: [TestFile] = []
         self.__declared_subclass = None
 
-    def add_file(self, file_object: [TestFile]):
+    def add_file(self, file_object: TestFile):
         """ Stores file_object internally. All insertions must be a subclass of TestFile. 
         The first insertion determines what subclass type is enforced for further 
         insertions. 
 
         Args:
-            file_object (TestFile.TestFile]): must be a subclass of TestFile
+            file_object (TestFile): must be a subclass of TestFile
         """
         if self.__declared_subclass is None:
             file_object_type = type(file_object)
@@ -32,7 +31,7 @@ class TestFilesManager:
         else:
             if not type(file_object) is self.__declared_subclass:
                 raise ValueError(
-                    f"Type of file_object ({type(file_object)}) is equal to {self.__declared_subclass}")
+                    f"Type of file_object ({type(file_object)}) is not equal to {self.__declared_subclass}")
 
         self.__test_files.append(file_object)
 

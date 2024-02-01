@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from .FlagsManager import FlagsManager
 from .TestFilesManager import TestFilesManager
-from .TestFile import TestFile
 from .Utils import *
 from .TestResult import TestResult
 import sys
@@ -54,9 +53,8 @@ class TestRunner(ABC):
 
     @abstractmethod
     def _on_tests_run(self, test_file, test_result: TestResult, test_folder_name: str):
-        # code ran before checking if test will run
-        """Code ran right before there is a check to see if a test will run (i.e., c
-        alling test_file.test_will_run())
+        """Code ran right before there is a check to see if a test will run (i.e., 
+        calling test_file.test_will_run())
 
         Args:
             test_file: file type will be based on type of test_files_manager. E.g., if the type of test_files_manager
@@ -68,20 +66,27 @@ class TestRunner(ABC):
 
     @abstractmethod
     def _on_test_will_run(self, test_file, test_result: TestResult, test_folder_name: str):
-        # code ran if test will run
+        """Code that is ran if test will run 
+
+        Args:
+            test_file: file type will be based on type of test_files_manager. E.g., if the type of test_files_manager
+            is PassTestFilesManager, then test_file will be PassTestFile
+            test_result (TestResult)
+            test_folder_name (str)
+        """
         pass
 
     def manage_input_and_run_tests(self, system_args: "list[str]"):
         """ Handles user input of test folder name and flags as described by 
-        system_args and runs tests accordingly. The following is done in this order:
-        - Checks if test folder input refers to an existing directory and returns the flag manager's to_string if it does not
-        - Checks if input is -h or --help
-        - Applies actions to test files as described by flags 
-        - Calls before_tests_run
-        - Starts iterating over c files in test directory
-        - Calls on_tests_run 
-        - Checks if tests has failed and skips to next test if it has
-        - Calls on_test_will_run if test will run
+        system_args and runs tests accordingly. The method does the following:
+        1) Checks if test folder input refers to an existing directory and returns the flag manager's to_string if it does not
+        2) Checks if input is -h or --help
+        3) Applies actions to test files as described by flags 
+        4) Calls before_tests_run
+        5) Starts iterating over c files in test directory
+        6) Calls on_tests_run 
+        7) Checks if tests has failed and skips to next test if it has
+        8) Calls on_test_will_run if test will run
 
         The exit status is returned, with 0 indicating success and 1 indicating failure
 
@@ -91,11 +96,15 @@ class TestRunner(ABC):
         Returns:
             int: exit staus (0 = success; 1 = failure)
         """
+        if os.path.split(os.getcwd())[1] != "build":
+            print(f"ERROR: not in build dir; cwd is {os.getcwd()}")
+            sys.exit(1)
+
         if len(system_args) == 1:
             print(self._flags_manager.to_string())
             return 1
 
-    # for sys.argv, 0th = ../run_test.py, 1st = folder name, 2 and beyond = user args
+        # for sys.argv, 0th = ../run_test.py, 1st = folder name, 2 and beyond = user args
         test_folder_name = system_args[1]
 
         if (test_folder_name == "-h" or test_folder_name == "--help"):

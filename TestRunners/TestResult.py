@@ -75,4 +75,7 @@ class TestResult:
         notes_str = ("| " if len(self.__test_notes) else "") + \
             (" | ".join(self.__test_notes))
 
-        return f"{TERMINAL_TEXT_STYLES['BOLD_ON']}{self.__object_type}{TERMINAL_TEXT_STYLES['BOLD_OFF']} {self.__file_name} {self.__test_status} {notes_str}"
+        object_type_str = TERMINAL_TEXT_STYLES['BOLD_ON'] + \
+            self.__object_type + TERMINAL_TEXT_STYLES['BOLD_OFF']
+
+        return f"{object_type_str} {self.__file_name} {self.__test_status} {notes_str}"

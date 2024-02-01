@@ -1,16 +1,15 @@
-# TODO: make a run all for pass test and run all for annotation test. ci should just run these tests separaetly
-
 import os
 import sys
+
+if os.path.split(os.getcwd())[1] != "build":
+    print(f"WARNING: not in build dir; cwd is {os.getcwd()}")
+    sys.exit(1)
 
 sys.path.insert(0, '..')
 from TestRunners.FlagsManager import FlagsManager
 from PassTestFilesManager import PassTestFilesManager
 from PassTestRunner import PassTestRunner
 
-if os.path.split(os.getcwd())[1] != "build":
-    print(f"WARNING: not in build dir; cwd is {os.getcwd()}")
-    sys.exit(1)
 
 if __name__ == "__main__":
     '''
