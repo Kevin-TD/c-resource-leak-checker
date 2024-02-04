@@ -42,6 +42,7 @@ int free3(void* p Calls("free3")) {
 
 
 int main () {
+    // entry
     char *str;
     int a = getchar();
 
@@ -49,22 +50,28 @@ int main () {
 
     if (free0(str)) {
 
+        // if.then, preds = {entry}
     } else {
 
     }
 
+    // if.end, preds = {if.else, if.then}
     if (a == -15) {
 
+        // if.then3, preds = {if.end}
     } else if (free1(str)) {
 
+        // if.then7, preds = {if.else4}
     }
 
+    // if.end9, preds = {if.end8, if.then3}
     while (free2(str)) {
 
     }
 
 
 
+    // while.end, preds = {while.cond}
     return(0);
 
 

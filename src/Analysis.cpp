@@ -13,10 +13,12 @@
 #include "MustCall.h"
 #include "ProgramRepresentation/FullFile.h"
 #include "StructFieldToIndexMap.h"
+#include "Debug/BranchLister/ProgramLinesBranchInfo.h"
 #include "RunAnalysis.h"
 #include "TestRunner.h"
 #include "Utils.h"
 
+// TODO: remove predecessors from CFG; unused
 // TODO: handle un-aliasing
 
 
@@ -37,6 +39,8 @@ CalledMethods calledMethods;
 MustCall mustCall;
 AnnotationHandler annotationHandler;
 StructFieldToIndexMap structFieldToIndexMap;
+ProgramLinesBranchInfo programLinesBranchesInfo;
+std::string cFileName;
 
 void loadFunctions() {
     // working directory is /build
@@ -177,58 +181,6 @@ std::vector<std::string> getAnnotationStrings(std::string optLoadFileName) {
     unlink(annotationsTempTextFile);
 
     return annotations;
-}
-
-/**
- * @brief Get the Predecessors of a given instruction in the control-flow graph.
- *
- * @param Inst The instruction to get the predecessors of.
- * @return Vector of all predecessors of Inst.
- */
-std::vector<Instruction *> getPredecessors(Instruction *Inst) {
-    std::vector<Instruction *> Ret;
-    auto Block = Inst->getParent();
-    for (auto Iter = Block->rbegin(), End = Block->rend(); Iter != End; ++Iter) {
-        if (&(*Iter) == Inst) {
-            ++Iter;
-            if (Iter != End) {
-                Ret.push_back(&(*Iter));
-                return Ret;
-            }
-            for (auto Pre = pred_begin(Block), BE = pred_end(Block); Pre != BE;
-                    ++Pre) {
-                Ret.push_back(&(*((*Pre)->rbegin())));
-            }
-            return Ret;
-        }
-    }
-    return Ret;
-}
-
-/**
- * @brief Get the successors of a given instruction in the control-flow graph.
- *
- * @param Inst The instruction to get the successors of.
- * @return Vector of all successors of Inst.
- */
-std::vector<Instruction *> getSuccessors(Instruction *Inst) {
-    std::vector<Instruction *> Ret;
-    auto Block = Inst->getParent();
-    for (auto Iter = Block->begin(), End = Block->end(); Iter != End; ++Iter) {
-        if (&(*Iter) == Inst) {
-            ++Iter;
-            if (Iter != End) {
-                Ret.push_back(&(*Iter));
-                return Ret;
-            }
-            for (auto Succ = succ_begin(Block), BS = succ_end(Block); Succ != BS;
-                    ++Succ) {
-                Ret.push_back(&(*((*Succ)->begin())));
-            }
-            return Ret;
-        }
-    }
-    return Ret;
 }
 
 void doAliasReasoning(Instruction *instruction,
@@ -502,14 +454,21 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
     std::string testName = getTestName(optLoadFileName);
 
+    if (BUILD_PROGRAM_LINES_BRANCH_INFO) {
+        programLinesBranchesInfo.add(F);
+    }
+
     bool functionIsKnown = false;
     logout("opt load file name = " << optLoadFileName);
     logout("Analyzing Function with Name = " << fnName
            << " test_name = " << testName);
 
     if (!loadAndBuild) {
+        cFileName = optLoadFileName;
+
         loadFunctions();
         auto annotations = getAnnotationStrings(optLoadFileName);
+
 
         calledMethods.setExpectedResult(
             TestRunner::buildExpectedResults(testName, calledMethods.passName));
@@ -564,7 +523,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
         std::string branchName = I->getParent()->getName().str();
         doAliasReasoning(&(*I), programFunction, optLoadFileName);
 
-        auto succs = getSuccessors(&(*I));
+        auto succs = rlc_dataflow::getSuccessors(&(*I));
         branchInstructionMap[branchName].branch.insert(&(*I));
         for (auto succ : succs) {
             branchInstructionMap[branchName].successors.insert(succ);
@@ -616,11 +575,15 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 }
 
 void CodeAnalyzer::onEnd() {
+    if (BUILD_PROGRAM_LINES_BRANCH_INFO) {
+        programLinesBranchesInfo.generate(cFileName, true);
+    }
+
     if (anyTestFailed) {
         std::exit(EXIT_FAILURE);
-    } else {
-        std::exit(EXIT_SUCCESS);
     }
+
+    std::exit(EXIT_SUCCESS);
 }
 
 } // namespace rlc_dataflow

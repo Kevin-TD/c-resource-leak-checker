@@ -36,27 +36,34 @@ void free3(void* p Calls("free3")) {
 }
 
 int main () {
+    // entry
     char *str;
     int a = getchar();
 
     str = (char *) malloc(15);
 
     do {
+        // do.body, preds = {do.cond, entry}
         free1(str);
 
         switch (a) {
         case -15:
+            // sw.bb, preds = {do.body}
             free(str);
             break;
         case -10:
+            // sw.bb2, preds = {do.body}
             free(str);
             break;
         default:
+            // sw.default, preds = {do.body}
             free(str);
             break;
         }
+        // sw.epilog, preds = {sw.default, sw.bb2, sw.bb}
     } while (a > 15);
 
+    // do.end, preds = {do.cond}
     return(0);
 
 

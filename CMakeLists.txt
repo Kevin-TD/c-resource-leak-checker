@@ -27,6 +27,8 @@ add_llvm_library(CodeAnalyzer MODULE
   src/ProgramRepresentation/ProgramPoint.cpp
   src/ProgramRepresentation/ProgramFunction.cpp
   src/ProgramRepresentation/FullFile.cpp
+  src/Debug/BranchLister/LineBranchInfo.cpp
+  src/Debug/BranchLister/ProgramLinesBranchInfo.cpp
   src/CFG.cpp
   src/CalledMethods.cpp
   src/MustCall.cpp

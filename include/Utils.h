@@ -28,6 +28,12 @@ StructType *unwrapValuePointerToStruct(Value *value);
 bool IRstructNameEqualsCstructName(std::string &structName,
                                    std::string &optLoadFileName);
 
+// gets the predecessors of a given instruction in the control-flow graph
+std::vector<Instruction *> getPredecessors(Instruction *instruction);
+
+// gets the successors of a given instruction in the control-flow graph
+std::vector<Instruction *> getSuccessors(Instruction *instruction);
+
 } // namespace rlc_dataflow
 
 namespace rlc_util {
