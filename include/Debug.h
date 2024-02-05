@@ -2,6 +2,7 @@
 
 #define DEBUG true
 #define UTIL_VARIABLE_FUNC_DEBUG false
+#define BUILD_PROGRAM_LINES_BRANCH_INFO false
 
 #if DEBUG
 #define logout(x) errs() << x << "\n"

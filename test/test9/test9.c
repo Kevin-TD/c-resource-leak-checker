@@ -36,6 +36,7 @@ void free3(void* p Calls("free3")) {
 }
 
 int main () {
+    // entry
     char *str;
     int a = getchar();
 
@@ -47,33 +48,45 @@ int main () {
     strcat(str, "hello");
     printf("String = %s,  Address = %u\n", str, str);
 
+    // while.cond, preds = {sw.epilog, entry}
     while (a < 10) {
+        // while.body, preds = {while.cond}
         while (a < 15) {
+            // while.body9, preds = {while.cond7}
             free(str);
         }
 
+        // while.end, preds = {while.cond7}
         for (int i = 0; i < 15; i++) {
+            // for.body, preds = {for.cond}
             free(str);
         }
 
+        // for.end, preds = {for.cond}
         if (a == -15) {
+            // if.then, preds = {for.end}
             free(str);
         }
+        // if.end, preds = {if.then, for.end}
         a++;
 
         switch (a) {
         case 0:
+            // sw.bb, preds = {if.end}
             free(str);
             break;
         case 1:
+            // sw.bb13, preds = {if.end}
             free(str);
             break;
         default:
+            // sw.default, preds = {if.end}
             free(str);
         }
 
     }
 
+    // while.end14, preds = {while.cond}
     free0(str);
 
 

@@ -4,10 +4,13 @@
 
 
 int main () {
+    // entry
     char *str = (char *) malloc(15);
     int a = getchar();
 
     if (a == -15) {
+        // if.then, preds = {entry}
         free(str);
     }
+// if.end, preds = {if.then, entry}
 }

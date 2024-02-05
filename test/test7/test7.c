@@ -36,6 +36,7 @@ void free3(void* p Calls("free3")) {
 }
 
 int main () {
+    // entry
     char *str;
     int a = getchar();
 
@@ -47,22 +48,26 @@ int main () {
     strcat(str, "hello");
     printf("String = %s,  Address = %u\n", str, str);
 
-    if (a == -15) { // entry, preds = {}, B0
+    if (a == -15) {
+        // if.then, preds = {entry}
         free0(str);
         free(str);
         char* m;
         m = (char*)malloc(15);
         free(m);
         if (a == -200) {
+            // if.then9, preds = {if.then}
             free0(m);
         } else {
+            // if.else, preds = {if.then}
             free0(m);
         }
+        // if.end, preds = {if.else, if.then9}
     } else {
+        // if.else10, preds = {entry}
         free(str);
     }
 
+    // if.end11, preds = {if.else10, if.end}
     return(0);
-
-
 }

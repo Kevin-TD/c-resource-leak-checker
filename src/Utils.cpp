@@ -82,6 +82,47 @@ bool IRstructNameEqualsCstructName(std::string &structName,
     return false;
 }
 
+std::vector<Instruction *> getPredecessors(Instruction *instruction) {
+    std::vector<Instruction *> Ret;
+    auto Block = instruction->getParent();
+    for (auto Iter = Block->rbegin(), End = Block->rend(); Iter != End; ++Iter) {
+        if (&(*Iter) == instruction) {
+            ++Iter;
+            if (Iter != End) {
+                Ret.push_back(&(*Iter));
+                return Ret;
+            }
+            for (auto Pre = pred_begin(Block), BE = pred_end(Block); Pre != BE;
+                    ++Pre) {
+                Ret.push_back(&(*((*Pre)->rbegin())));
+            }
+            return Ret;
+        }
+    }
+    return Ret;
+}
+
+
+std::vector<Instruction *> getSuccessors(Instruction *instruction) {
+    std::vector<Instruction *> Ret;
+    auto Block = instruction->getParent();
+    for (auto Iter = Block->begin(), End = Block->end(); Iter != End; ++Iter) {
+        if (&(*Iter) == instruction) {
+            ++Iter;
+            if (Iter != End) {
+                Ret.push_back(&(*Iter));
+                return Ret;
+            }
+            for (auto Succ = succ_begin(Block), BS = succ_end(Block); Succ != BS;
+                    ++Succ) {
+                Ret.push_back(&(*((*Succ)->begin())));
+            }
+            return Ret;
+        }
+    }
+    return Ret;
+}
+
 StructType *unwrapValuePointerToStruct(Value *value) {
     PointerType *valuePointer = dyn_cast<PointerType>(value->getType());
     while (valuePointer) {

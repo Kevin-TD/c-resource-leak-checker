@@ -42,16 +42,20 @@ int free3(void* p Calls("free3")) {
 
 
 int main () {
+    // entry
     char *str;
     int a = getchar();
 
     str = (char *) malloc(15);
 
     // int i = 0; i < ... ; i++
+    // for.cond, preds = {for.inc, entry}
     for (free0(str); free1(str); free2(str)) {
 
+        // for.body, preds = {for.cond}
     }
 
+    // for.end, preds = {for.cond}
     return(0);
 
 
