@@ -30,7 +30,7 @@ class AnnotationTestRunner(TestRunner):
 
         print(c_file, test_text_file)
         if not os.path.isfile(test_text_file):
-            test_result.test_is_ignored()
+            test_result.ignore_test()
             test_result.add_note("no test written")
         else:
             with tempfile.NamedTemporaryFile(prefix="temp_ast_input", suffix=".txt", delete=False) as ast_input:
@@ -55,11 +55,11 @@ class AnnotationTestRunner(TestRunner):
 
             if build_status != 0:
                 self._commands_did_not_fail = False
-                test_result.test_has_failed(
+                test_result.fail_test(
                     f"annotation build error - exit status {build_status}")
             elif diff_status != 0:
                 self._commands_did_not_fail = False
-                test_result.test_has_failed(
+                test_result.fail_test(
                     f"diff annotation - output:\n{out}")
             else:
-                test_result.test_has_passed()
+                test_result.pass_test()

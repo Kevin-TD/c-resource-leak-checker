@@ -38,38 +38,43 @@ if __name__ == "__main__":
 
     flags_manager.add_flag(
         "b", "no-build-ir",
-        "Does not build IR for any file. Combined with --only-build-ir-for may result in undesirable output as these commands are opposites. ",
+        "Does not build IR for any file",
         lambda pass_test_files_manager: [file.toggle_ir_generation(
         ) for file in pass_test_files_manager.get_all_files()]
     )
 
     flags_manager.add_flag(
         "f", "no-build-ir-for",
-        "Does not build IR for the specified c file. Can be called multiple times. c file must be specified in the succeeding argument.",
+        "Does not build IR for the specified C file. Can be called multiple times. C file must be specified in the succeeding argument.",
         lambda pass_test_files_manager, file_name: pass_test_files_manager.get_file(
             file_name).toggle_ir_generation()
 
     )
     flags_manager.add_flag(
         "u", "only-build-ir-for",
-        "Only builds ir for specified c file. c file must be specified in the succeeding argument. Note that c files will still be ran unless otherwise disallowed (use -n). Combined with --no-build-ir may result in undesirable output as these commands are opposites.",
+        "Only builds ir for specified C file. c file must be specified in the succeeding argument. Note that c files will still be run unless otherwise disallowed (use -n)",
         lambda pass_test_files_manager, file_name: [file.toggle_ir_generation(
         ) for file in pass_test_files_manager.get_all_files_excluding(file_name)]
     )
 
     flags_manager.add_flag(
         "r", "no-run-for",
-        "Does not specified c file. Can be called multiple times. c file must be specified in the succeeding argument. Combined with --only-run-for may result in undesirable output.",
+        "Does not run specified C file. Can be called multiple times. C file must be specified in the succeeding argument",
         lambda pass_test_files_manager, file_name: pass_test_files_manager.get_file(
             file_name).toggle_test_running()
     )
 
     flags_manager.add_flag(
         "n", "only-run-for",
-        "Only runs specified c file. c file must be specified in the succeeding argument. Note that IR will still generate unless otherwise disallowed (use -u). Combined with --no-run-for may result in undesireable output.",
+        "Only runs specified C file. C file must be specified in the succeeding argument. Note that IR will still generate unless otherwise disallowed (use -u)",
         lambda pass_test_files_manager, file_name: [file.toggle_test_running(
         ) for file in pass_test_files_manager.get_all_files_excluding(file_name)]
     )
+
+    flags_manager.add_error_pair("--no-build-ir", "--only-build-ir-for",
+                                 "Flag effects can undo each other; e.g., `--no-build-ir --only-build-ir-for file.c` will first toggle ir for `file.c` (from --no-build-ir) then toggle ir for `file.c` again (from --only-build-ir-for)")
+    flags_manager.add_error_pair("--no-run-for", "--only-run-for",
+                                 "Flag effects can undo each other; e.g., `--no-run-for fileA.c --only-run-for fileB.c` will first toggle running for `fileA.c` (from --no-run-for) then toggle running for `fileA.c` again (from --only-run-for fileB.c). happens because `--only-run-for fileB.c` toggles running for all files except `fileB.c` ")
 
     pass_test_runner = PassTestRunner(flags_manager, PassTestFilesManager())
 

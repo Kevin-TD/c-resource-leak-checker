@@ -40,7 +40,7 @@ class PassTestRunner(TestRunner):
             if ir_generate_exit_status != 0:
                 self._commands_did_not_fail = False
 
-                test_result.test_has_failed(
+                test_result.fail_test(
                     f"failed @ IR generation - exit status {ir_generate_exit_status}")
 
                 self._results.append(test_result.to_string())
@@ -60,10 +60,10 @@ class PassTestRunner(TestRunner):
         if test_run_exit_status != 0:
             self._commands_did_not_fail = False
 
-            test_result.test_has_failed(
+            test_result.fail_test(
                 f"failed @ running - exit status {test_run_exit_status}")
         else:
             if not os.path.isfile(test_text_file):
-                test_result.test_is_ignored("no test written")
+                test_result.ignore_test("no test written")
             else:
-                test_result.test_has_passed()
+                test_result.pass_test()

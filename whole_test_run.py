@@ -70,11 +70,11 @@ with os.scandir("../test") as entries:
 
                 if exit_status != 0:
                     tests_passed = False
-                    test_result.test_has_failed()
+                    test_result.fail_test()
                 else:
-                    test_result.test_has_passed()
+                    test_result.pass_test()
             else:
-                test_result.test_is_ignored()
+                test_result.ignore_test()
 
             results.append(test_result.to_string())
 

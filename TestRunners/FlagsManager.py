@@ -5,6 +5,28 @@ sys.path.insert(0, '..')
 from TestRunners.Utils import *
 
 
+class _FlagPairError:
+    """private class that is used to store error pairs. users can define a 
+    flag pair error such that an exception is thrown when both flags are 
+    called. this is used to prevent pair calls such as 
+    --no-build-ir and --only-build-ir-for. 
+    """
+
+    def __init__(self, flag1_name: str, flag2_name: str, error_message: str):
+        self.__flag1_name = flag1_name
+        self.__flag2_name = flag2_name
+        self.__error_message = error_message
+
+    def get_flag1_name(self) -> str:
+        return self.__flag1_name
+
+    def get_flag2_name(self) -> str:
+        return self.__flag2_name
+
+    def get_error_message(self) -> str:
+        return self.__error_message
+
+
 class FlagsManager:
     """holds a set of flags the user can call to use as a command line tool
     """
@@ -13,10 +35,11 @@ class FlagsManager:
         """
 
         Args:
-            usage (str): description describing how to use the bundle of flagss
+            usage (str): description describing how to use the bundle of flags
         """
         self.__flags: list[Flag] = []
         self.__usage = usage
+        self.__flag_pair_errors: list[_FlagPairError] = []
 
     def add_flag(self, name: str, alias: str, describe: str, action=lambda x: x):
         """
@@ -47,6 +70,47 @@ class FlagsManager:
                 return flag
 
         raise ValueError(f"flag '{flag_name}' not found")
+
+    def add_error_pair(self, flag1_name: str, flag2_name: str, error_message: str):
+        """defines an error pair such that if flags with name flag1_name 
+        and flag2_name are both called, an exception is thrown with 
+        message error_message
+
+        Args:
+            flag1_name (str): name of first flag (must have prefix '-' if name or '--' if alias)
+            flag2_name (str): name of second flag (must have prefix '-' if name or '--' if alias)
+            error_message (str): message listed when both flags are called.
+            it's recommend you explain why using that pair causes
+            an error or unintuitive output 
+
+        Raises:
+            ValueError: at least one flag not found by flag name
+        """
+
+        if not self.flag_exists(flag1_name):
+            raise ValueError(f"flag '{flag1_name}' not found")
+
+        if not self.flag_exists(flag2_name):
+            raise ValueError(f"flag '{flag2_name}' not found")
+
+        self.__flag_pair_errors.append(_FlagPairError(
+            flag1_name, flag2_name, error_message))
+
+    def check_for_error_pair(self, args: "list[str]"):
+        """checks if an error pair of flags is called in command
+        line arguments and raises an error if it does
+
+        Args:
+            args (list[str]): command line args potentially consisting of
+            flag calls
+
+        Raises:
+            ValueError: error raised because an error pair was detected
+        """
+
+        for error_pair in self.__flag_pair_errors:
+            if error_pair.get_flag1_name() in args and error_pair.get_flag2_name() in args:
+                raise ValueError(error_pair.get_error_message())
 
     __FLAG_NAMES_LEFT_PADDING = 5
     __MAX_DESCRIPTION_LINE_LENGTH = 55

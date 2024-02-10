@@ -4,7 +4,7 @@ from .Utils import TERMINAL_TEXT_STYLES
 class TestResult:
     """Used to generate a string representing a test result, detailing 
     the test name, if it passed, and any additional notes. 
-    test_has_passed, test_has_failed, or test_is_ignored must be 
+    pass_test, fail_test, or ignore_test must be 
     called at least once for a string to generate without error. 
 
     """
@@ -34,26 +34,26 @@ class TestResult:
         """
         self.__object_type = "File"
 
-    def test_has_passed(self, note=""):
+    def pass_test(self, note=""):
         if note != "":
             self.add_note(note)
 
         self.__test_status = self.__TEST_STATUS["PASSED"]
 
-    def test_has_failed(self, note=""):
+    def fail_test(self, note=""):
         if note != "":
             self.add_note(note)
 
         self.__test_status = self.__TEST_STATUS["FAILED"]
 
-    def check_if_test_has_failed(self) -> bool:
-        return self.__test_status == self.__TEST_STATUS["FAILED"]
-
-    def test_is_ignored(self, note=""):
+    def ignore_test(self, note=""):
         if note != "":
             self.add_note(note)
 
         self.__test_status = self.__TEST_STATUS["IGNORED"]
+
+    def has_failed(self) -> bool:
+        return self.__test_status == self.__TEST_STATUS["FAILED"]
 
     def add_note(self, note: str):
         self.__test_notes.append(note)
@@ -63,7 +63,7 @@ class TestResult:
 
         Raises:
             RuntimeError: error raised of test status never updated via 
-            calling test_has_passed, test_has_failed, or test_is_ignored
+            calling pass_test, fail_test, or ignore_test
 
         Returns:
             str

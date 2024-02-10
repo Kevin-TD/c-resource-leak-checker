@@ -2,6 +2,9 @@ import sys
 import os
 
 # Alias for ../TestRunners/PassTestRunners/run_test.py
+# Used only for convience (easier to remember and type out
+# python ../run_pt.py testname than
+# python ../TestRunners/PassTestRunner/run_test.py testname)
 
 # checks if cwd is build
 if os.path.split(os.getcwd())[1] != "build":

@@ -122,6 +122,9 @@ class TestRunner(ABC):
             self._add_c_file(c_file)
 
         sys_arg_iterator = 2
+
+        self._flags_manager.check_for_error_pair(sys.argv[2:])
+
         while sys_arg_iterator < len(sys.argv):
             arg = sys.argv[sys_arg_iterator]
 
@@ -152,14 +155,18 @@ class TestRunner(ABC):
         self._before_tests_run()
 
         for c_file in c_files:
+            # n = 3 for find_nth since c_file is in the format
+            # ../test/{test_name}/{.c file}
+            start_index_of_c_file_name = find_nth(c_file, "/", 3) + 1
+
             f = self._test_files_manager.get_file(
-                c_file[find_nth(c_file, "/", 3) + 1:])
+                c_file[start_index_of_c_file_name:])
 
             test_result = TestResult(c_file)
 
             self._on_tests_run(f, test_result, test_folder_name)
 
-            if test_result.check_if_test_has_failed():
+            if test_result.has_failed():
                 continue
 
             print(f"Running Test: {f.test_will_run()}")
@@ -167,7 +174,7 @@ class TestRunner(ABC):
             if f.test_will_run():
                 self._on_test_will_run(f, test_result, test_folder_name)
             else:
-                test_result.test_is_ignored()
+                test_result.ignore_test()
 
             self._results.append(test_result.to_string())
 
