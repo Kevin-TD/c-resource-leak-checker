@@ -177,40 +177,6 @@ void DataflowPass::transfer(Instruction *instruction,
         }
     } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
 
-        // searches for struct annotations
-        StructType *structType = rlc_dataflow::unwrapValuePointerToStruct(allocate);
-
-        if (!structType) {
-            return;
-        }
-
-        std::string structName = structType->getName();
-        structName = rlc_util::sliceString(
-                         structName, structName.find_last_of('.') + 1, structName.size() - 1);
-        int numFields = structType->getNumElements();
-        for (int i = 0; i < numFields; i++) {
-
-            // TODO: remove this section of finding annotations
-            // (making it a TODO because removing will require some of
-            // the tests to change too so i'll address it in a diff pr)
-
-            Annotation *anno = this->annotations.getStructAnnotation(structName, i);
-            if (StructAnnotation *structAnno =
-                        dynamic_cast<StructAnnotation *>(anno)) {
-                ProgramVariable sourceVar = ProgramVariable(allocate, i);
-
-                if (!sourceVar.isIdentifier()) {
-                    continue;
-                }
-
-                logout("found annotation for struct "
-                       << structAnno->generateStringRep());
-
-                std::string arg = sourceVar.getCleanedName();
-                PVAliasSet *pvas = inputProgramPoint.getPVASRef(sourceVar, false);
-                this->insertAnnotation(structAnno, pvas);
-            }
-        }
     }
 }
 
@@ -335,6 +301,15 @@ void DataflowPass::insertAnnotation(Annotation *anno, PVAliasSet *pvas) {
 
     for (std::string annoMethod : annoMethods) {
         this->onAnnotation(pvas, annoMethod, annoType);
+    }
+}
+
+void DataflowPass::insertAnnotation(Annotation *anno, PVAliasSet *pvas, std::string& invokerFnName) {
+    AnnotationType annoType = anno->getAnnotationType();
+    std::set<std::string> annoMethods = anno->getAnnotationMethods();
+
+    for (std::string annoMethod : annoMethods) {
+        this->onAnnotation(pvas, annoMethod, invokerFnName, annoType);
     }
 }
 
@@ -503,15 +478,14 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
     return false;
 }
 
-bool DataflowPass::handleIfAnnotationExistsForCallInsts(
-    const std::string &fnName, int argIndex, PVAliasSet *pvas) {
+bool DataflowPass::handleIfAnnotationExistsForCallInsts(std::string &fnName, int argIndex, PVAliasSet *pvas) {
     // checks for parameter annotations (no field specified)
     Annotation *mayParameterAnnotation =
         this->annotations.getParameterAnnotation(fnName, argIndex);
     if (ParameterAnnotation *paramAnno =
                 dynamic_cast<ParameterAnnotation *>(mayParameterAnnotation)) {
         logout("found param annotation " << paramAnno->generateStringRep());
-        this->insertAnnotation(paramAnno, pvas);
+        this->insertAnnotation(paramAnno, pvas, fnName);
         return true;
     }
 
@@ -524,7 +498,7 @@ bool DataflowPass::handleIfAnnotationExistsForCallInsts(
                     dynamic_cast<ParameterAnnotation *>(mayParamAnnoWithField)) {
             logout("found param struct annotation "
                    << paramAnno->generateStringRep());
-            this->insertAnnotation(paramAnno, pvas);
+            this->insertAnnotation(paramAnno, pvas, fnName);
             return true;
         }
     }

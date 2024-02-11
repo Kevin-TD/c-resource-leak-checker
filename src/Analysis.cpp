@@ -21,6 +21,7 @@
 
 // TODO: remove predecessors from CFG; unused
 // TODO: handle un-aliasing
+// TODO: better test names in diff pr
 
 
 struct InstructionHolder {

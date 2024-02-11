@@ -11,7 +11,8 @@ class MustCall : public DataflowPass {
     void onUnknownFunctionCall(PVAliasSet* input);
     void onReallocFunctionCall(PVAliasSet* input, std::string &fnName);
     void onSafeFunctionCall(PVAliasSet* input, std::string &fnName);
-    void onAnnotation(PVAliasSet* input, std::string &fnName,
+    void onAnnotation(PVAliasSet* input, std::string &fnName, AnnotationType annotationType);
+    void onAnnotation(PVAliasSet* input, std::string &annoFnName, std::string& invokerFnName,
                       AnnotationType annotationType);
 
   public:

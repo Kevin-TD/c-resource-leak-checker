@@ -1,0 +1,2 @@
+pass=CalledMethods function=main var=s.x methods={free,free1}
+pass=CalledMethods function=main var=s.y methods={free,free1}

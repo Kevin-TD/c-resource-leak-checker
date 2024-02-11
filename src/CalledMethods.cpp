@@ -26,9 +26,16 @@ void CalledMethods::leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSe
     preSet.methodsSetIntersection(curMethodsSet);
 }
 
-void CalledMethods::onAnnotation(PVAliasSet *input, std::string &fnName,
-                                 AnnotationType annotationType) {
+void CalledMethods::onAnnotation(PVAliasSet *input, std::string &fnName, AnnotationType annotationType) {
     if (annotationType == AnnotationType::CallsAnnotation) {
         input->addMethod(fnName);
+    }
+}
+
+void CalledMethods::onAnnotation(PVAliasSet *input, std::string &annoFnName, std::string& invokerFnName,
+                                 AnnotationType annotationType) {
+    if (annotationType == AnnotationType::CallsAnnotation) {
+        input->addMethod(annoFnName);
+        input->addMethod(invokerFnName);
     }
 }

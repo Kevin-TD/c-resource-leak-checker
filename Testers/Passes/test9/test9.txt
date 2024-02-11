@@ -1,2 +1,2 @@
 pass=CalledMethods branch=sw.epilog var=str function=main methods={free}
-pass=CalledMethods branch=while.end14 var=str function=main methods={free0}
+pass=CalledMethods branch=while.end14 var=str function=main methods={free,free0}

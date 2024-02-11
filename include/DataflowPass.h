@@ -20,6 +20,7 @@ class DataflowPass {
                     std::string priorBranch);
     void transfer(Instruction *instruction, ProgramPoint &inputProgramPoint);
     void insertAnnotation(Annotation *annotation, PVAliasSet *pvas);
+    void insertAnnotation(Annotation *annotation, PVAliasSet *pvas, std::string& invokerFnName);
 
     // a helper function that handles functions with Sret attribute.
     // returns true if the function had an Sret attribute and was handled,
@@ -71,7 +72,7 @@ class DataflowPass {
 
     // a helper function that checks for parameter annotations on call
     // instructions. returns true if an annotation was found, and false if not.
-    bool handleIfAnnotationExistsForCallInsts(const std::string &fnName,
+    bool handleIfAnnotationExistsForCallInsts(std::string &fnName,
             int argIndex, PVAliasSet *pvas);
 
   protected:
@@ -91,7 +92,21 @@ class DataflowPass {
     virtual void onReallocFunctionCall(PVAliasSet* input,
                                        std::string &fnName) = 0;
     virtual void onSafeFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
+
     virtual void onAnnotation(PVAliasSet* input, std::string &fnName,
+                              AnnotationType annotationType) = 0;
+
+    // annoFnName is the name of the function inside the annotation
+    // invokerFnName is the name of the function the annotation belongs to
+    /*
+    e.g.,
+    void free0(void* p Calls("free")) {
+      free(p);
+    }
+
+    here, annoFnName = "free" and invokerFnName = "free0"
+    */
+    virtual void onAnnotation(PVAliasSet* input, std::string &annoFnName, std::string& invokerFnName,
                               AnnotationType annotationType) = 0;
 
   public:
