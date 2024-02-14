@@ -15,8 +15,8 @@ jobs:
     
     - name: Install Artistic Style Formatter
       run: |
-        sudo apt search clang-format
         sudo apt-get update
+        sudo apt update
         sudo apt install -y astyle
         astyle --version
         
@@ -28,19 +28,19 @@ jobs:
       run: | 
         pip3 install pycodestyle==2.10.0
         pip3 install autopep8==2.0.0
-
     - name: Check Code Formatting
       run: |
         python3 check_formatting.py
 
-    - name: Run Analysis in Docker
+    - name: Build & Run Analyses in Docker
       run: |
         docker run -v $(pwd):/$(basename $(pwd)) -w /$(basename $(pwd)) cis547/cis547-base:latest \
         bash -c "export LD_LIBRARY_PATH=/opt/mirtk/lib:${LD_LIBRARY_PATH} && \
         rm -rf build && mkdir build && cd build && \
         cmake .. && \
-        python3 ../run_all.py"
+        make && \
+        python3 ../whole_test_run.py PassTestRunner Passes --no-make && \
+        python3 ../whole_test_run.py AnnotationTestRunner Annotations" 
 
     - name: Check Make Exit Status
       run: echo $?
-
