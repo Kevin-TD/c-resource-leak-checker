@@ -1,5 +1,5 @@
 pass=CalledMethods function=main var=var_k.x methods={creates_obligation,free}
-pass=CalledMethods function=main var=var_k.y methods={does_free,free}
+pass=CalledMethods function=main var=var_k.y methods={creates_obligation,does_free,free}
 pass=CalledMethods function=main var=m.x methods={}
 pass=CalledMethods function=main var=m.y methods={does_free,free}
 pass=CalledMethods function=main var=km.x methods={does_free,free}

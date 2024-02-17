@@ -23,11 +23,10 @@
 // TODO: remove predecessors from CFG; unused
 // TODO: handle un-aliasing
 // TODO: better test names in diff pr
-
-// TODO?: when writing tests its hard to write tests if we want to test something at a branch that isnt the start and the end (because we to have dig through the ir to find it.) maybe make tool to make this easier
-// TODO: give tests more descriptive names
 // TODO: write testing for intentional errors (ErrorTestRunner)
-// TODO: write testing for TestRunners/Utils.py
+// TODO: add const to method params where it applies; specifically, specificying more const std::string& type
+// TODO: add flag "-Wno-everything" to AnnotationTestRunner.py (making it "clang -Wno-everything ...")
+// TODO: make onAnnotation take a set of strings (functions inside MC or CM annotation) rather than a single string
 
 struct InstructionHolder {
     SetVector<Instruction *> branch;

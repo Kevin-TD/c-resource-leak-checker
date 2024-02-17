@@ -5,6 +5,6 @@ pass=MustCall function=main var=km.x methods={free}
 pass=MustCall function=main var=y methods={free}
 pass=CalledMethods function=main var=random_var methods={free}
 pass=CalledMethods function=main var=k.x methods={creates_obligation,free}
-pass=CalledMethods function=main var=k.y methods={does_free,free}
+pass=CalledMethods function=main var=k.y methods={creates_obligation,does_free,free}
 pass=CalledMethods function=main var=m.y methods={does_free,free}
 pass=CalledMethods function=main var=km.x methods={does_free,free}
