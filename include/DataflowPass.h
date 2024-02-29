@@ -70,8 +70,7 @@ class DataflowPass {
 
     // a helper function that checks for parameter annotations on call
     // instructions. returns true if an annotation was found, and false if not.
-    bool handleIfAnnotationExistsForCallInsts(const std::string &fnName,
-            int argIndex, PVAliasSet *pvas);
+    bool handleIfAnnotationExistsForCallInsts(const std::string &fnName, CallInst* call, PVAliasSet *pvas);
 
   protected:
     ProgramFunction programFunction;
