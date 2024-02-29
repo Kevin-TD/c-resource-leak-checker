@@ -170,8 +170,13 @@ void DataflowPass::transfer(Instruction *instruction,
             if (handleIfAnnotationExistsForCallInsts(fnName, call, pvas)) {
                 continue;
             }
+            
+            // ! PUT THIS IN DIFF METHOD 
+            if (call->getCalledFunction()->hasParamAttribute(i, Attribute::ByVal)) {
+                logout("index i = " << i << " byval attr");
+            }
 
-            // no annotations found, treat function call as unknown function
+
             logout("no annotations found for " << fnName << " index " << i << " | pvas = " << pvas->toString(false));
             this->onUnknownFunctionCall(pvas, fnName);
         }
