@@ -34,7 +34,7 @@ void CalledMethods::onAnnotation(PVAliasSet* input, Annotation* annotation, cons
             input->addMethod(annoMethod);
 
         }
-        
+
         if (ParameterAnnotation *paramAnno = dynamic_cast<ParameterAnnotation *>(annotation)) {
             input->addMethod(invokerFnName);
         }

@@ -19,7 +19,7 @@ class DataflowPass {
                     ProgramFunction &postProgramFunction,
                     std::string priorBranch);
     void transfer(Instruction *instruction, ProgramPoint &inputProgramPoint);
-    
+
     // a helper function that handles functions with Sret attribute.
     // returns true if the function had an Sret attribute and was handled,
     // and false if not.
