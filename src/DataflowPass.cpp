@@ -171,9 +171,8 @@ void DataflowPass::transfer(Instruction *instruction,
                 continue;
             }
             
-            // ! PUT THIS IN DIFF METHOD 
-            if (call->getCalledFunction()->hasParamAttribute(i, Attribute::ByVal)) {
-                logout("index i = " << i << " byval attr");
+            if (handleIfArgIsStructByval(fnName, call, i, pvas)) {
+                continue; 
             }
 
 
@@ -495,6 +494,16 @@ bool DataflowPass::handleIfAnnotationExistsForCallInsts(const std::string &fnNam
     }
 
     return false;
+}
+
+bool handleIfArgIsStructByval(const std::string& fnName, CallInst* call, unsigned argIndex, PVAliasSet *pvas) {
+    if (!call->getCalledFunction()->hasParamAttribute(argIndex, Attribute::ByVal)) {
+        return false; 
+    }
+
+    logout("index i = " << argIndex << " of call has byval attr");
+
+    return false; 
 }
 
 void DataflowPass::setAnnotations(AnnotationHandler annotations) {

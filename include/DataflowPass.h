@@ -72,6 +72,8 @@ class DataflowPass {
     // instructions. returns true if an annotation was found, and false if not.
     bool handleIfAnnotationExistsForCallInsts(const std::string &fnName, CallInst* call, PVAliasSet *pvas);
 
+    bool handleIfArgIsStructByval(const std::string& fnName, CallInst* call, unsigned argIndex, PVAliasSet *pvas);
+
   protected:
     ProgramFunction programFunction;
     AnnotationHandler annotations;

@@ -25,6 +25,7 @@
 // TODO: better test names in diff pr
 // TODO: write testing for intentional errors (ErrorTestRunner)
 // TODO: add const to method params where it applies; specifically, specificying more const std::string& type
+// TODO: specify `unsigned` instead of `int` where appropriate
 // TODO: add flag "-Wno-everything" to AnnotationTestRunner.py (making it "clang -Wno-everything ...")
 // TODO: make onAnnotation take a set of strings (functions inside MC or CM annotation) rather than a single string
 // TODO: add error pairs to annotation test
