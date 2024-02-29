@@ -11,10 +11,7 @@ class CalledMethods : public DataflowPass {
     void onUnknownFunctionCall(PVAliasSet* input, std::string &fnName);
     void onReallocFunctionCall(PVAliasSet* input, std::string &fnName);
     void onSafeFunctionCall(PVAliasSet* input, std::string &fnName);
-    void onAnnotation(PVAliasSet* input, const std::string &annoFnName, const std::string& invokerFnName,
-                      AnnotationType annotationType);
-    void onAnnotation(PVAliasSet* input, const std::string &annoFnName,
-                      AnnotationType annotationType);
+    void onAnnotation(PVAliasSet* input, Annotation* annotation, const std::string& invokerFnName);
 
   public:
     CalledMethods();

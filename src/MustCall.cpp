@@ -22,15 +22,12 @@ void MustCall::leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSet) {
     preSet.methodsSetUnion(curMethodsSet);
 }
 
-void MustCall::onAnnotation(PVAliasSet* input, const std::string &annoFnName, AnnotationType annotationType) {
-    if (annotationType == AnnotationType::MustCallAnnotation) {
-        input->addMethod(annoFnName);
-    }
-}
+void MustCall::onAnnotation(PVAliasSet* input, Annotation* annotation, const std::string& invokerFnName) {
+    if (annotation->getAnnotationType() == AnnotationType::MustCallAnnotation) {
+        auto annoMethods = annotation->getAnnotationMethods();
+        for (std::string annoMethod : annoMethods) {
+            input->addMethod(annoMethod);
 
-void MustCall::onAnnotation(PVAliasSet *input, const std::string &annoFnName, const std::string& invokerFnName,
-                            AnnotationType annotationType) {
-    if (annotationType == AnnotationType::MustCallAnnotation) {
-        input->addMethod(annoFnName);
+        }
     }
 }
