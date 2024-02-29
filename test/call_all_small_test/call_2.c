@@ -14,10 +14,10 @@ void calls_all(my_struct S Calls("free", "a") Calls("free", "b")) {
 }
 
 int main() {
-    my_struct test; 
+    my_struct test;
     test.a = (char*)malloc(15);
     test.b = (char*)malloc(15);
     calls_all(test);
 
-    return 0; 
+    return 0;
 }
