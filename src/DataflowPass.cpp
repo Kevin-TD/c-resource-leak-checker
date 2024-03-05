@@ -167,7 +167,7 @@ void DataflowPass::transfer(Instruction *instruction,
                 return;
             }
 
-            if (handleIfAnnotationExistsForCallInsts(fnName, i, pvas)) {
+            if (handleIfAnnotationExistsForCallInsts(fnName, call, pvas)) {
                 continue;
             }
 
@@ -462,28 +462,30 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
     return false;
 }
 
-bool DataflowPass::handleIfAnnotationExistsForCallInsts(const std::string &fnName, int argIndex, PVAliasSet *pvas) {
-    // checks for parameter annotations (no field specified)
-    Annotation *mayParameterAnnotation =
-        this->annotations.getParameterAnnotation(fnName, argIndex);
-    if (ParameterAnnotation *paramAnno =
-                dynamic_cast<ParameterAnnotation *>(mayParameterAnnotation)) {
-        logout("found param annotation " << paramAnno->generateStringRep());
-        this->onAnnotation(pvas, paramAnno, fnName);
-        return true;
-    }
-
-    // checks for parameter annotations (field specified)
-    if (pvas->containsStructFieldVar()) {
-        Annotation *mayParamAnnoWithField =
-            this->annotations.getParameterAnnotation(fnName, argIndex,
-                    pvas->getIndex());
+bool DataflowPass::handleIfAnnotationExistsForCallInsts(const std::string &fnName, CallInst* call, PVAliasSet *pvas) {
+    for (unsigned j = 0; j < call->getNumArgOperands(); j++) {
+        // checks for parameter annotations (no field specified)
+        Annotation *mayParameterAnnotation =
+            this->annotations.getParameterAnnotation(fnName, j);
         if (ParameterAnnotation *paramAnno =
-                    dynamic_cast<ParameterAnnotation *>(mayParamAnnoWithField)) {
-            logout("found param annotation for struct "
-                   << paramAnno->generateStringRep());
+                    dynamic_cast<ParameterAnnotation *>(mayParameterAnnotation)) {
+            logout("found param annotation " << paramAnno->generateStringRep());
             this->onAnnotation(pvas, paramAnno, fnName);
             return true;
+        }
+
+        // checks for parameter annotations (field specified)
+        if (pvas->containsStructFieldVar()) {
+            Annotation *mayParamAnnoWithField =
+                this->annotations.getParameterAnnotation(fnName, j,
+                        pvas->getIndex());
+            if (ParameterAnnotation *paramAnno =
+                        dynamic_cast<ParameterAnnotation *>(mayParamAnnoWithField)) {
+                logout("found param annotation for struct "
+                       << paramAnno->generateStringRep());
+                this->onAnnotation(pvas, paramAnno, fnName);
+                return true;
+            }
         }
     }
 
