@@ -183,9 +183,10 @@ def parse_var_decl(var_decl: str, struct_var_manager_holder: StructVarManager, s
 
     struct_name_split = struct_name.split(" ")
 
-    # check if type is formatted like 'my_struct *' (typedef alias in use) 
+    # check if type is formatted like 'my_struct *' (typedef alias in use)
     # instead of 'struct my_struct *' (no typedef alias in use)
-    type_formatted_using_typedef = len(struct_name_split) > 1 and "*" in struct_name_split
+    type_formatted_using_typedef = len(
+        struct_name_split) > 1 and "*" in struct_name_split
 
     if len(struct_name_split) == 2 and "*" in struct_name_split[1]:
         struct_name = struct_name_split[0]
