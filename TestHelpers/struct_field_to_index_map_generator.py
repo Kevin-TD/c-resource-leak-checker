@@ -163,6 +163,7 @@ def parse_var_decl(var_decl: str, struct_var_manager_holder: StructVarManager, s
 
     var_decl_chunks = var_decl.split(" ")
 
+    logout(var_decl)
     logout(var_decl_chunks)
 
     if var_decl_chunks[5] == "used":
@@ -181,12 +182,21 @@ def parse_var_decl(var_decl: str, struct_var_manager_holder: StructVarManager, s
         cur_char = var_decl[start_index]
 
     struct_name_split = struct_name.split(" ")
-    if len(struct_name_split) > 1 and struct_name_split[1] != "":
+
+    # check if type is formatted like 'my_struct *' (typedef alias in use) 
+    # instead of 'struct my_struct *' (no typedef alias in use)
+    type_formatted_using_typedef = len(struct_name_split) > 1 and "*" in struct_name_split
+
+    if len(struct_name_split) == 2 and "*" in struct_name_split[1]:
+        struct_name = struct_name_split[0]
+    elif len(struct_name_split) > 1 and struct_name_split[1] != "" and not type_formatted_using_typedef:
         struct_name = struct_name_split[1]
     else:
         struct_name = struct_name_split[0]
 
     if not structs_manager_holder.struct_exists(struct_name):
+        logout(
+            f"did not find for parsed var_decl var name = {var_name} struct name = '{struct_name}'")
         return
 
     logout(var_decl)
