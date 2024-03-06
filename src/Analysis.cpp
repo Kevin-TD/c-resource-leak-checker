@@ -27,6 +27,7 @@
 // TODO: add const to method params where it applies; specifically, specificying more const std::string& type
 // TODO: add flag "-Wno-everything" to AnnotationTestRunner.py (making it "clang -Wno-everything ...")
 // TODO: make onAnnotation take a set of strings (functions inside MC or CM annotation) rather than a single string
+// TODO: add error pairs to annotation test
 
 struct InstructionHolder {
     SetVector<Instruction *> branch;
