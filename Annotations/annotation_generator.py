@@ -207,10 +207,28 @@ def add_parameter(parm_var_decl: str, param_index: int, func: Specifier):
         return
 
     logout(f"adding param {parm_var_decl}")
+    quote_second_index = find_second_index(parm_var_decl, "'")
 
     param_type = parm_var_decl[
-        parm_var_decl.find("'") + 1: find_second_index(parm_var_decl, "'")
+        parm_var_decl.find("'") + 1: quote_second_index
     ]
+
+    # checks pointer type is specified
+
+    # check if param type is formatted like 'struct_name *'
+    # we extract it into just `struct_name`
+    if "*" in param_type:
+        param_type = param_type[: param_type.find(" ")]
+
+    # check if param type is formatted like 'typedef_name':'struct_name *'
+    # we extract it into just `struct_name`
+    start_of_struct_type_name_index = quote_second_index + 3
+    if len(parm_var_decl) > start_of_struct_type_name_index and "*" in parm_var_decl[start_of_struct_type_name_index:]:
+        param_type = parm_var_decl[start_of_struct_type_name_index: len(
+            parm_var_decl) - 1]
+        param_type = param_type[: param_type.find(" ")]
+
+    logout(f"param added {param_type}")
 
     param = Parameter(param_index, param_type)
     func.add_parameter(param)
