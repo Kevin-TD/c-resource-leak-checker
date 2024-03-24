@@ -28,6 +28,7 @@
 // TODO: add flag "-Wno-everything" to AnnotationTestRunner.py (making it "clang -Wno-everything ...")
 // TODO: make onAnnotation take a set of strings (functions inside MC or CM annotation) rather than a single string
 // TODO: add error pairs to annotation test
+// TODO:  CLT that generates AST based on test name (for debugging). if file name given, pipe into file. if not, log to terminal
 
 // TODO!: includes_test fails because IR does desugaring sometimes and we currently cannot reverse
 // it. to be fixed with AST pass
