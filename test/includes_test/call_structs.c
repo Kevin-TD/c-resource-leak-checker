@@ -42,10 +42,6 @@ my_struct Calls("free", "x") does_something(my_struct S Calls("free", "x")) {
 }
 
 int main() {
-    // should we have to worry about cases where structs are defined
-    // inside a method body? the AST cannot easily extract annotations
-    // when the struct is inside a method body (we to go inside the method).
-
     struct my_struct k;
     my_struct_2 m;
     struct my_struct_3 km;

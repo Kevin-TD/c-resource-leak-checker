@@ -24,10 +24,13 @@
 // TODO: handle un-aliasing
 // TODO: better test names in diff pr
 // TODO: write testing for intentional errors (ErrorTestRunner)
-// TODO: add const to method params where it applies; specifically, specificying more const std::string& type
+// TODO: add const to method params where it applies; specifically, specifying more const std::string& type
 // TODO: add flag "-Wno-everything" to AnnotationTestRunner.py (making it "clang -Wno-everything ...")
 // TODO: make onAnnotation take a set of strings (functions inside MC or CM annotation) rather than a single string
 // TODO: add error pairs to annotation test
+
+// TODO!: includes_test fails because IR does desugaring sometimes and we currently cannot reverse
+// it. to be fixed with AST pass
 
 struct InstructionHolder {
     SetVector<Instruction *> branch;

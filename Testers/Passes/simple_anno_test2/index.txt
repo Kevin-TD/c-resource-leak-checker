@@ -1,2 +1,2 @@
-pass=CalledMethods function=main var=str methods={does_free,free}
+pass=CalledMethods function=main var=str methods={does_free,does_malloc,free}
 pass=MustCall function=main var=str methods={free}

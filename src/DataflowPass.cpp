@@ -62,12 +62,12 @@ void DataflowPass::transfer(Instruction *instruction,
                            dynamic_cast<ReturnAnnotation *>(
                                this->annotations.getReturnAnnotation(fnName))) {
                 logout("found return annotation " << returnAnno->generateStringRep());
-                this->onAnnotation(pvas, returnAnno, fnName);
+                this->onAnnotation(pvas, returnAnno);
             } else if (pvas->containsStructFieldVar()) {
                 if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(
                                                        this->annotations.getReturnAnnotation(fnName,
                                                                pvas->getIndex()))) {
-                    this->onAnnotation(pvas, returnAnno, fnName);
+                    this->onAnnotation(pvas, returnAnno);
                 }
             }
 
@@ -128,7 +128,7 @@ void DataflowPass::transfer(Instruction *instruction,
                                                        this->annotations.getReturnAnnotation(fnName, fieldIndex))) {
                     logout("found annotation from extract value "
                            << returnAnno->generateStringRep());
-                    this->onAnnotation(pvas, returnAnno, fnName);
+                    this->onAnnotation(pvas, returnAnno);
                 }
             }
         }
@@ -152,11 +152,11 @@ void DataflowPass::transfer(Instruction *instruction,
                 continue;
             }
 
+            std::string fnName = call->getCalledFunction()->getName().str();
+
             if (handleIfKnownFunctionForCallInsts(call, pvas)) {
                 continue;
             }
-
-            std::string fnName = call->getCalledFunction()->getName().str();
 
             if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
                     rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
@@ -166,17 +166,23 @@ void DataflowPass::transfer(Instruction *instruction,
             if (handleSretCallForCallInsts(call, i, fnName, arg, inputProgramPoint)) {
                 return;
             }
+            
+            logout("pvas = " << pvas->toString(false));
+            handleIfStructTyAndIfFieldsHaveAnnotations(call, i, fnName, arg, inputProgramPoint, pvas);
 
-            if (handleIfAnnotationExistsForCallInsts(fnName, call, pvas)) {
-                continue;
+            bool funcHasAnnos = handleIfAnnotationExistsForCallInsts(fnName, call, pvas);
+
+            if (!funcHasAnnos) {
+                // no annotations found, treat function call as unknown function
+                logout("no annotations found for " << fnName << " index " << i << " | pvas = " << pvas->toString(false));
+                this->onUnknownFunctionCall(pvas);
             }
 
-            // no annotations found, treat function call as unknown function
-            logout("no annotations found for " << fnName << " index " << i << " | pvas = " << pvas->toString(false));
-            this->onUnknownFunctionCall(pvas, fnName);
-        }
-    } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
+            // need to check if it has been destructured
 
+            this->onFunctionCall(pvas, fnName);
+
+        }
     }
 }
 
@@ -323,7 +329,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                                                        this->annotations.getReturnAnnotation(fnName, fieldIndex))) {
                     logout("found annotation from sret "
                            << returnAnno->generateStringRep());
-                    this->onAnnotation(pvasField, returnAnno, fnName);
+                    this->onAnnotation(pvasField, returnAnno);
                 }
             }
         }
@@ -335,6 +341,15 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
         std::string nextArg = nextArgVar.getCleanedName();
 
         if (nextCallArg->getType()->isPointerTy()) {
+            // these 3 LoC makes it so for each arg in the sret call
+            // (minus the first one) we call onFunctionCall. This is so
+            // for example, if one of the arguments is a some struct my_struct
+            // we do onFunctionCall(my_struct, fnName), but NOT
+            // on its fields (the struct is de-sugared in the succeeding code)
+            PVAliasSet* pvas = programPoint.getPVASRef(nextArg, false);
+            std::string fnNameCopy = fnName;
+            this->onFunctionCall(pvas, fnNameCopy);
+
             Type *pointerType = nextCallArg->getType()->getPointerElementType();
             if (pointerType->isStructTy()) {
                 StructType *structType = cast<StructType>(pointerType);
@@ -357,7 +372,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                             if (paramAnno->getField() == fieldIndex) {
                                 logout("found param annotation for sret annos with fields "
                                        << paramAnno->generateStringRep());
-                                this->onAnnotation(pvasField, paramAnno, fnName);
+                                this->onAnnotation(pvasField, paramAnno);
                             }
                         }
                     }
@@ -379,7 +394,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                                    << paramAnno->generateStringRep() << " for j = " << j
                                    << " and var "
                                    << argVar->toString(true));
-                            this->onAnnotation(argVar, paramAnno, fnName);
+                            this->onAnnotation(argVar, paramAnno);
                         }
                     }
                 }
@@ -410,7 +425,7 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
         errs() << "WARNING: implicitly declared function call on " << location
                << "\n";
 
-        this->onUnknownFunctionCall(pvas, fnName);
+        this->onUnknownFunctionCall(pvas);
         return true;
     }
 
@@ -470,7 +485,7 @@ bool DataflowPass::handleIfAnnotationExistsForCallInsts(const std::string &fnNam
         if (ParameterAnnotation *paramAnno =
                     dynamic_cast<ParameterAnnotation *>(mayParameterAnnotation)) {
             logout("found param annotation " << paramAnno->generateStringRep());
-            this->onAnnotation(pvas, paramAnno, fnName);
+            this->onAnnotation(pvas, paramAnno);
             return true;
         }
 
@@ -483,13 +498,62 @@ bool DataflowPass::handleIfAnnotationExistsForCallInsts(const std::string &fnNam
                         dynamic_cast<ParameterAnnotation *>(mayParamAnnoWithField)) {
                 logout("found param annotation for struct "
                        << paramAnno->generateStringRep());
-                this->onAnnotation(pvas, paramAnno, fnName);
+                this->onAnnotation(pvas, paramAnno);
                 return true;
             }
         }
     }
 
     return false;
+}
+
+void DataflowPass::handleIfStructTyAndIfFieldsHaveAnnotations(CallInst *call, unsigned argIndex, const std::string &fnName, const std::string &argName, ProgramPoint &programPoint, PVAliasSet* pvas) {
+    if (call->getArgOperand(argIndex)->getType()->isPointerTy()) {
+        Type *pointerType =
+            call->getArgOperand(argIndex)->getType()->getPointerElementType();
+        if (pointerType->isStructTy()) {
+            StructType *structType = cast<StructType>(pointerType);
+
+            int numFields = structType->getNumElements();
+
+            for (int fieldIndex = 0; fieldIndex < numFields; fieldIndex++) {
+                /*
+                pvas may look something like {%my_struct_ptr, %1, %2, %3}
+                and we know how many fields the struct has.
+                we iterate through pvas's set, attach the field index to it,
+                and search `programPoint` to find the field.
+
+                all variable names in a function are unique in the IR, so
+                there is no risk of colliding with a completely unrelated
+                variable or field.
+
+                stopping at the first variable we find is safe to do
+                they all refer to the same struct type.
+                we do not have to worry if the number of fields is
+                different for a particular variable.
+                we do not alias cases such as:
+                ```
+                struct A { ... }
+                struct B { ... }
+                A a = { ... }
+                B* b = &a
+                ```
+                `a` and `b` are not considered aliased.
+
+                */
+                for (auto var : pvas->getProgramVariables()) {
+                    std::string fieldArg = var.getCleanedName() + "." + std::to_string(fieldIndex);
+                    PVAliasSet* pvasField = programPoint.getPVASRef(fieldArg, false);
+
+                    if (pvasField) {
+                        logout("found field " << pvasField->toString(true));
+                        handleIfAnnotationExistsForCallInsts(fnName, call, pvasField);
+                        break;
+                    }
+                }
+            }
+        }
+    }
 }
 
 void DataflowPass::setAnnotations(AnnotationHandler annotations) {

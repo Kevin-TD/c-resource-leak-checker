@@ -14,7 +14,7 @@ void MustCall::onAllocationFunctionCall(PVAliasSet *input,
 }
 void MustCall::onDeallocationFunctionCall(PVAliasSet *input,
         std::string &fnName) {}
-void MustCall::onUnknownFunctionCall(PVAliasSet *input, std::string &fnName) {}
+void MustCall::onUnknownFunctionCall(PVAliasSet *input) {}
 void MustCall::onReallocFunctionCall(PVAliasSet *input, std::string &fnName) {}
 void MustCall::onSafeFunctionCall(PVAliasSet *input, std::string &fnName) {}
 
@@ -22,7 +22,7 @@ void MustCall::leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSet) {
     preSet.methodsSetUnion(curMethodsSet);
 }
 
-void MustCall::onAnnotation(PVAliasSet* input, Annotation* annotation, const std::string& invokerFnName) {
+void MustCall::onAnnotation(PVAliasSet* input, Annotation* annotation) {
     if (annotation->getAnnotationType() == AnnotationType::MustCallAnnotation) {
         auto annoMethods = annotation->getAnnotationMethods();
         for (std::string annoMethod : annoMethods) {
@@ -31,3 +31,5 @@ void MustCall::onAnnotation(PVAliasSet* input, Annotation* annotation, const std
         }
     }
 }
+
+void MustCall::onFunctionCall(PVAliasSet* input, std::string &fnName) {}

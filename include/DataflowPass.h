@@ -72,6 +72,9 @@ class DataflowPass {
     // instructions. returns true if an annotation was found, and false if not.
     bool handleIfAnnotationExistsForCallInsts(const std::string &fnName, CallInst* call, PVAliasSet *pvas);
 
+    // if the call argument is a struct ty, this function de-structures it into its fields and looks for annotations on those fields
+    void handleIfStructTyAndIfFieldsHaveAnnotations(CallInst *call, unsigned argIndex, const std::string &fnName, const std::string &argName, ProgramPoint &programPoint, PVAliasSet* pvas);
+
   protected:
     ProgramFunction programFunction;
     AnnotationHandler annotations;
@@ -85,10 +88,11 @@ class DataflowPass {
                                           std::string &fnName) = 0;
     virtual void onDeallocationFunctionCall(PVAliasSet* input,
                                             std::string &fnName) = 0;
-    virtual void onUnknownFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
+    virtual void onUnknownFunctionCall(PVAliasSet* input) = 0;
     virtual void onReallocFunctionCall(PVAliasSet* input,
                                        std::string &fnName) = 0;
     virtual void onSafeFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
+    virtual void onFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
 
     // invokerFnName is the name of the function the annotation belongs to
     /*
@@ -99,7 +103,7 @@ class DataflowPass {
 
     here, invokerFnName = "free0"
     */
-    virtual void onAnnotation(PVAliasSet* input, Annotation* annotation, const std::string& invokerFnName) = 0;
+    virtual void onAnnotation(PVAliasSet* input, Annotation* annotation) = 0;
 
 
   public:

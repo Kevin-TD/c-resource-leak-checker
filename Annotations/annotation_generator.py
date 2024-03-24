@@ -478,6 +478,13 @@ with open(file_to_read) as ast:
             param_index = None
             field_index = None
 
+    if DEBUG:
+        for spec in specifier_manager.specifiers:
+            if type(spec) is Function:
+                for p in spec.parameters:
+                    print(
+                        f"> function name {spec.name} param({p.index}) type ({p.param_type})")
+
     with open(output_file, "w") as output:
         for i in range(len(annotation_manager.annotations)):
             anno = annotation_manager.annotations[i]

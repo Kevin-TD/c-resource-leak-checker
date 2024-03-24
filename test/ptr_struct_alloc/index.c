@@ -9,8 +9,7 @@ typedef struct my_struct {
     char* C;
 } my_struct;
 
-
-void does_free_one_pointer(my_struct* m Calls("free", "A") Calls("free", "B")) {
+void does_free_one_pointer(my_struct* m Calls("free", "A") Calls("free", "B") Calls("free")) {
     free(m->A);
     free(m->B);
     free(m);
