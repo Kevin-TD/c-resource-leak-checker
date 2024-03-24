@@ -166,7 +166,7 @@ void DataflowPass::transfer(Instruction *instruction,
             if (handleSretCallForCallInsts(call, i, fnName, arg, inputProgramPoint)) {
                 return;
             }
-            
+
             logout("pvas = " << pvas->toString(false));
             handleIfStructTyAndIfFieldsHaveAnnotations(call, i, fnName, arg, inputProgramPoint, pvas);
 
