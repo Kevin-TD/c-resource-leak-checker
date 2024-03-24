@@ -10,4 +10,6 @@ struct my_struct {
 
 int main() {
     struct my_struct M;
+    M.x = (char*)malloc(15);
+    M.y = (char*)malloc(15);
 }

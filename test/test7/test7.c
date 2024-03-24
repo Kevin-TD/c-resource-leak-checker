@@ -19,19 +19,19 @@ void* MustCall("free3") malloc3(size_t __size) {
     return malloc(__size);
 }
 
-void free0(void* p Calls("free0")) {
+void free0(void* p Calls("free")) {
     free(p);
 }
 
-void free1(void* p Calls("free1")) {
+void free1(void* p Calls("free")) {
     free(p);
 }
 
-void free2(void* p Calls("free2")) {
+void free2(void* p Calls("free")) {
     free(p);
 }
 
-void free3(void* p Calls("free3")) {
+void free3(void* p Calls("free")) {
     free(p);
 }
 

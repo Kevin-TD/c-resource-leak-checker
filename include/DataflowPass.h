@@ -19,7 +19,6 @@ class DataflowPass {
                     ProgramFunction &postProgramFunction,
                     std::string priorBranch);
     void transfer(Instruction *instruction, ProgramPoint &inputProgramPoint);
-    void insertAnnotation(Annotation *annotation, PVAliasSet *pvas);
 
     // a helper function that handles functions with Sret attribute.
     // returns true if the function had an Sret attribute and was handled,
@@ -71,8 +70,10 @@ class DataflowPass {
 
     // a helper function that checks for parameter annotations on call
     // instructions. returns true if an annotation was found, and false if not.
-    bool handleIfAnnotationExistsForCallInsts(const std::string &fnName,
-            int argIndex, PVAliasSet *pvas);
+    bool handleIfAnnotationExistsForCallInsts(const std::string &fnName, CallInst* call, PVAliasSet *pvas);
+
+    // if the call argument is a struct ty, this function de-structures it into its fields and looks for annotations on those fields
+    void handleIfStructTyAndIfFieldsHaveAnnotations(CallInst *call, unsigned argIndex, const std::string &fnName, const std::string &argName, ProgramPoint &programPoint, PVAliasSet* pvas);
 
   protected:
     ProgramFunction programFunction;
@@ -91,8 +92,19 @@ class DataflowPass {
     virtual void onReallocFunctionCall(PVAliasSet* input,
                                        std::string &fnName) = 0;
     virtual void onSafeFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
-    virtual void onAnnotation(PVAliasSet* input, std::string &fnName,
-                              AnnotationType annotationType) = 0;
+    virtual void onFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
+
+    // invokerFnName is the name of the function the annotation belongs to
+    /*
+    e.g.,
+    void free0(void* p Calls("free")) {
+      free(p);
+    }
+
+    here, invokerFnName = "free0"
+    */
+    virtual void onAnnotation(PVAliasSet* input, Annotation* annotation) = 0;
+
 
   public:
     void setFunctions(std::set<std::string> safeFunctions,

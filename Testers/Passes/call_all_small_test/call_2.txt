@@ -1,0 +1,4 @@
+pass=MustCall function=main var=test.a methods={free}
+pass=MustCall function=main var=test.b methods={free}
+pass=CalledMethods function=main var=test.a methods={calls_all,free}
+pass=CalledMethods function=main var=test.b methods={calls_all,free}

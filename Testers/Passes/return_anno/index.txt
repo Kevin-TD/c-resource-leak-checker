@@ -1,4 +1,4 @@
-pass=CalledMethods function=main var=var1 methods={free}
+pass=CalledMethods function=main var=var1 methods={free,return_calls_free}
 pass=CalledMethods function=main var=var1_freed methods={free}
 pass=CalledMethods function=main var=var2_freed.x methods={free}
-pass=CalledMethods function=main var=var2.x methods={free}
+pass=CalledMethods function=main var=var2.x methods={free,return_calls_free_on_struct}

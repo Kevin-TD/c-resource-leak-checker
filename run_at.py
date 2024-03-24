@@ -2,7 +2,7 @@ import sys
 import os
 
 # Alias for ../TestRunners/AnnotationTestRunner/run_test.py
-# Used for only for convience (easier to remember and type out
+# Used for only for convenience (easier to remember and type out
 # python ../run_at.py testname than
 # python ../TestRunners/AnnotationTestRunner/run_test.py testname)
 

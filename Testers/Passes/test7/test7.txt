@@ -1,3 +1,3 @@
-pass=CalledMethods function=main branch=if.end11 var=str methods={free}
+pass=CalledMethods function=main branch=if.end11 var=str methods={free,strcat}
 pass=CalledMethods function=main branch=if.end var=m methods={free,free0}
-pass=CalledMethods function=main branch=if.end var=str methods={free,free0}
+pass=CalledMethods function=main branch=if.end var=str methods={free,free0,strcat}
