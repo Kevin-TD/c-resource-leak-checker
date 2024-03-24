@@ -1,148 +1,24 @@
-#! python3 annotation_generator.py <ast txt file> <output for annotations file>
-# generate AST text with: clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics <c file> > <ast txt file>
+# clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics ../test/recover_desugar/main.c > testAST.txt ; python3 ../ASTInfoGenerator/ast_info_generator.py testAST.txt testASTOutput.txt
 
-# examples (run in build dir):
-# clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics ../test/test20.c > CodeAnalyzerFiles/test20_AST.txt ; python3 ../Annotations/annotation_generator.py CodeAnalyzerFiles/test20_AST.txt CodeAnalyzerFiles/test20_ANNOTATIONS.txt
+# python3 ../run_pt.py recover_desugar
 
-# clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics ../test/test23/test24.c > CodeAnalyzerFiles/test24_AST.txt ; python3 ../Annotations/annotation_generator.py CodeAnalyzerFiles/test24_AST.txt CodeAnalyzerFiles/test24_ANNOTATIONS.txt
 
+# random_data
+# my_struct
+# |-RecordDecl 0x2413cf8 <../test/recover_desugar/main.c:6:9, line:9:1> line:6:16 struct my_struct definition
 
 import sys
-from abc import ABC as AbstractClass
+sys.path.insert(0, '..')
 
-DEBUG = True
-LOG_ANNOTATIONS = False
-
-
-def logout(x: str):
-    if (DEBUG):
-        print(x)
-
-
-class Annotation:
-    def __init__(self, anno_type: str, target: str, methods: str):
-        self.anno_type = anno_type
-        self.target = target
-        self.methods = methods
-
-    # other: Annotation
-    def __eq__(self, other) -> bool:
-        return self.anno_type == other.anno_type and self.target == other.target
-
-    # other: Annotation
-    def methods_equal(self, other) -> bool:
-        return self.methods == other.methods
-
-    def to_str(self) -> str:
-        return f"{self.anno_type} target = {self.target} methods = {self.methods}"
+from AnnoStructure.AnnotationManager import *
+from Specifiers.FunctionStructure.Function import *
+from Specifiers.StructStructure.Struct import *
+from Specifiers.SpecifierManager import *
+from StructVariables.StructVarManager import *
+from ASTInfoGenerator.Debug import *
 
 
-class AnnotationManager:
-    def __init__(self):
-        self.annotations: list[Annotation] = []
-
-    def add_annotation(self, anno: Annotation):
-        for annotation in self.annotations:
-            if annotation == anno:
-                if not annotation.methods_equal(anno):
-                    raise ValueError(
-                        f"Two annotations with same type ('{annotation.anno_type}') and target ('{annotation.target}') with differing methods ('{annotation.methods}' and '{anno.methods}')"
-                    )
-
-        if anno not in self.annotations:
-            self.annotations.append(anno)
-
-
-class Field:
-    def __init__(self, field_name: str, field_index: int):
-        self.field_name = field_name
-        self.field_index = field_index
-
-
-class Parameter:
-    def __init__(self, index: int, param_type: str):
-        self.index = index
-        self.param_type = param_type
-
-
-class Specifier(AbstractClass):
-    def __init__(self, name: str):
-        self.name = name
-
-    def get_name(self) -> str:
-        return self.name
-
-
-class Function(Specifier):
-    def __init__(self, name: str, return_type: str):
-        self.name = name
-        self.return_type = return_type
-        self.parameters: list[Parameter] = []
-
-    def set_return_type(self, return_type: str) -> None:
-        self.return_type = return_type
-
-    def add_parameter(self, parameter: Parameter) -> None:
-        self.parameters.append(parameter)
-
-
-class Struct(Specifier):
-    def __init__(self, name: str):
-        self.name = name
-        self.fields: list[Field] = []
-
-    def add_field(self, field: Field) -> None:
-        self.fields.append(field)
-
-
-class SpecifierManager:
-    def __init__(self):
-        self.specifiers: list[Specifier] = []
-
-    # if function is not found, a new one is returned with name function_name
-    def get_function(self, function_name: str) -> Function:
-        for specifier in self.specifiers:
-            if specifier.get_name() == function_name:
-                return specifier
-
-        new_function = Function(function_name, None)
-        self.specifiers.append(new_function)
-        return self.specifiers[-1]
-
-    # if struct is not found, a new one is returned with name struct_name
-    def get_struct(self, struct_name: str) -> Struct:
-        for specifier in self.specifiers:
-            if specifier.get_name() == struct_name:
-                return specifier
-
-        new_struct = Struct(struct_name)
-        self.specifiers.append(new_struct)
-        return self.specifiers[-1]
-
-    # if there already exists a function of name function_name, that function is returned.
-    # otherwise, the function is added and returned.
-    def add_function(self, function_name: str, return_type: str) -> Specifier:
-        for specifier in self.specifiers:
-            if specifier.get_name() == function_name:
-                return specifier
-
-        new_specifier = Function(function_name, return_type)
-        self.specifiers.append(new_specifier)
-        return self.specifiers[-1]
-
-    # if there already exists a struct of name struct_name, that struct is returned.
-    # otherwise, the struct is added and returned.
-    def add_struct(self, struct_name: str) -> bool:
-        for specifier in self.specifiers:
-            if specifier.get_name() == struct_name:
-                return specifier
-
-        new_specifier = Struct(struct_name)
-        self.specifiers.append(new_specifier)
-        return self.specifiers[-1]
-
-
-def add_function(function_decl: str, specifier_manger: SpecifierManager) -> Specifier:
+def parse_function_decl(function_decl: str, specifier_manger: SpecifierManager) -> Specifier:
     # Assumption: functions that are extern are not relevant to our analysis
     if function_decl.endswith("extern"):
         return None
@@ -150,11 +26,11 @@ def add_function(function_decl: str, specifier_manger: SpecifierManager) -> Spec
     logout(f"function decl equals {function_decl}")
 
     quote_index = function_decl.find("'")
-    # Assumption: FunctionDecls wrap in quotes ('...') the return type of the function & paramters, and
+    # Assumption: FunctionDecls wrap in quotes ('...') the return type of the function & parameters, and
     # right before the return type is the name of the function.
     # we also assume the function name and return type are separated by a space.
     # e.g., |-FunctionDecl 0x24161a8 <../test/test23/test23.h:27:1, line:28:57> col:5 does_something 'struct my_struct (struct my_struct)'
-    #                                                                                 ^func name     ^return type      ^paramters
+    #                                                                                 ^func name     ^return type      ^parameters
 
     start_index = quote_index - 2
     # quote_index - 2 since we will be traversing FunctionDecl
@@ -195,14 +71,14 @@ def add_function(function_decl: str, specifier_manger: SpecifierManager) -> Spec
     return specifier_manger.add_function(function_name, return_type)
 
 
-def add_struct(record_decl: str, specifier_manger: SpecifierManager):
+def parse_record_decl(record_decl: str, specifier_manger: SpecifierManager):
     record_decl_chunks = record_decl.split(" ")
     struct_name = record_decl_chunks[len(record_decl_chunks) - 2]
 
     return specifier_manger.add_struct(struct_name)
 
 
-def add_parameter(parm_var_decl: str, param_index: int, func: Specifier):
+def parse_parm_var_decl(parm_var_decl: str, param_index: int, func: Specifier):
     if type(func) != Function:
         return
 
@@ -234,7 +110,7 @@ def add_parameter(parm_var_decl: str, param_index: int, func: Specifier):
     func.add_parameter(param)
 
 
-def add_field(field_decl: str, field_index: int, struct: Specifier):
+def parse_field_decl(field_decl: str, field_index: int, struct: Specifier):
     if type(struct) != Struct:
         return
 
@@ -256,8 +132,87 @@ def add_field(field_decl: str, field_index: int, struct: Specifier):
 def find_second_index(string: str, char: str) -> int:
     return string.find(char, string.find(char) + 1)
 
-# param_index, field_index are optional; can be either None or int
+def parse_typedef_decl(specifier_manager_holder: SpecifierManager, typedef_decl: str):
+    if not ("referenced" in typedef_decl and "struct" in typedef_decl):
+        return
 
+    original_name = ""
+    start_index = typedef_decl.find("'") + 1
+    cur_char = typedef_decl[start_index]
+
+    while (cur_char != "'"):
+        original_name += cur_char
+
+        start_index += 1
+        cur_char = typedef_decl[start_index]
+
+    original_name_split = original_name.split(" ")
+    if len(original_name_split) > 1 and original_name_split[1] != "":
+        original_name = original_name_split[1]
+    else:
+        original_name = original_name_split[0]
+
+    typedef_alias_name = ""
+    start_index = typedef_decl.find("referenced") + len("referenced") + 1
+    cur_char = typedef_decl[start_index]
+
+    while (cur_char != " "):
+        typedef_alias_name += cur_char
+
+        start_index += 1
+        cur_char = typedef_decl[start_index]
+
+    if original_name != typedef_alias_name:
+        specifier_manager_holder.get_struct(
+            original_name).add_typedef(typedef_alias_name)
+        logout(f"added typedef '{original_name}' '{typedef_alias_name}'")
+
+def parse_var_decl(var_decl: str, struct_var_manager_holder: StructVarManager, specifier_manager_holder: SpecifierManager):
+
+    var_decl_chunks = var_decl.split(" ")
+
+    logout(var_decl)
+    logout(var_decl_chunks)
+
+    if var_decl_chunks[5] == "used":
+        var_name = var_decl_chunks[6]
+    else:
+        var_name = var_decl_chunks[5]
+
+    struct_name = ""
+    start_index = var_decl.find("'") + 1
+    cur_char = var_decl[start_index]
+
+    while (cur_char != "'"):
+        struct_name += cur_char
+
+        start_index += 1
+        cur_char = var_decl[start_index]
+
+    struct_name_split = struct_name.split(" ")
+
+    # check if type is formatted like 'my_struct *' (typedef alias in use)
+    # instead of 'struct my_struct *' (no typedef alias in use)
+    type_formatted_using_typedef = len(
+        struct_name_split) > 1 and "*" in struct_name_split
+
+    if len(struct_name_split) == 2 and "*" in struct_name_split[1]:
+        struct_name = struct_name_split[0]
+    elif len(struct_name_split) > 1 and struct_name_split[1] != "" and not type_formatted_using_typedef:
+        struct_name = struct_name_split[1]
+    else:
+        struct_name = struct_name_split[0]
+
+    if not specifier_manager_holder.struct_exists(struct_name):
+        logout(
+            f"did not find for parsed var_decl var name = {var_name} struct name = '{struct_name}'")
+        return
+
+    logout(var_decl)
+    logout(
+        f"parsed var_decl var name = {var_name} struct name = '{struct_name}'")
+
+    struct_var_manager_holder.add_struct_var(var_name, struct_name)
 
 def parse_anno(anno: str, spec: Specifier, annotation_manager: AnnotationManager, param_index: int = None, field_index: int = None):
     logout(f"pre is {anno}")
@@ -305,7 +260,7 @@ def parse_anno(anno: str, spec: Specifier, annotation_manager: AnnotationManager
 
         if type(spec) is Function:
             if param_index is None:
-                logout(f"ret type is '{spec.return_type}'")
+                logout(f"ret type is '{spec.get_return_type()}'")
                 # Assumption: spec.return_type looks like 'struct <struct_name> ' or '<struct_name> '
                 # note: it'll look like '<struct_name> ' if a typedef is used
 
@@ -331,16 +286,16 @@ def parse_anno(anno: str, spec: Specifier, annotation_manager: AnnotationManager
                 #                                 ^^^                 ^^^ implying "int" has field "x"
                 # we'll throw "ValueError: Did not find field 'x' for struct 'int', anno Calls target = _.FIELD(x) methods = free"
 
-                return_type_split = spec.return_type.split(" ")
+                return_type_split = spec.get_return_type().split(" ")
                 if return_type_split[1] != "":
                     return_struct_name = return_type_split[1]
                 else:
                     return_struct_name = return_type_split[0]
                 struct = specifier_manager.get_struct(return_struct_name)
 
-                for field in struct.fields:
-                    if anno_unfilled_target_field_name == field.field_name:
-                        anno_unfilled_target_field_name = field.field_index
+                for field in struct.get_fields():
+                    if anno_unfilled_target_field_name == field.get_field_name():
+                        anno_unfilled_target_field_name = field.get_field_index()
                         break
                 else:
                     raise ValueError(
@@ -348,27 +303,29 @@ def parse_anno(anno: str, spec: Specifier, annotation_manager: AnnotationManager
             else:
                 # for the parameter, we need the type (the struct that it is definitely referring to)
                 found_field = False
+                
+                spec_params = spec.get_parameters()
 
-                for param in spec.parameters:
+                for param in spec_params:
                     if (found_field):
                         break
 
-                    if param.index == param_index:
+                    if param.get_index() == param_index:
                         # Assumption: param.param_type looks like 'struct <struct_name>' or '<struct_name>'
                         logout(
-                            f"param_type_struct_name = '{param.param_type}'")
+                            f"param_type_struct_name = '{param.get_param_type()}'")
                         try:
-                            param_type_struct_name = param.param_type.split(" ")[
+                            param_type_struct_name = param.get_param_type().split(" ")[
                                 1]
                         except IndexError:
-                            param_type_struct_name = param.param_type
+                            param_type_struct_name = param.get_param_type()
 
                         struct = specifier_manager.get_struct(
                             param_type_struct_name)
 
-                        for field in struct.fields:
-                            if anno_unfilled_target_field_name == field.field_name:
-                                anno_unfilled_target_field_name = field.field_index
+                        for field in struct.get_fields():
+                            if anno_unfilled_target_field_name == field.get_field_name():
+                                anno_unfilled_target_field_name = field.get_field_index()
                                 found_field = True
                                 break
                         else:
@@ -402,14 +359,13 @@ with open(file_to_read) as ast:
     ast_lines = ast.readlines()
     specifier_manager = SpecifierManager()
     annotation_manager = AnnotationManager()
+    struct_var_manager = StructVarManager()
 
     for expr in ast_lines:
         expr = expr.strip()
-        logout(f"expr = {expr}")
 
-        # gets decl
-        # finds index of first letter
-        start_decl_index = expr.find(next(filter(str.isalpha, expr)))
+        first_letter_index = expr.find(next(filter(str.isalpha, expr)))
+        start_decl_index = first_letter_index
         decl = ""
         cur_decl_char = expr[start_decl_index]
 
@@ -419,8 +375,12 @@ with open(file_to_read) as ast:
                 start_decl_index += 1
                 cur_decl_char = expr[start_decl_index]
         except IndexError:
-            # might be a null stement (looks like "<<<NULL>>>" in AST)
-            param_index = None
+            # might be a null statement (looks like "<<<NULL>>>" in AST)
+
+            # TODO: write explicit check for null statements; lack of
+            # documentation on the formatting of
+            # null statements makes writing explicit checks difficult
+
             field_index = None
             continue
 
@@ -428,13 +388,15 @@ with open(file_to_read) as ast:
             cur_top_decl = expr
             param_index = None
             field_index = None
-            cur_spec = add_function(cur_top_decl, specifier_manager)
+            logout(f"function decl expr = {cur_top_decl}")
+            cur_spec = parse_function_decl(cur_top_decl, specifier_manager)
 
         elif "RecordDecl" == decl:
             cur_top_decl = expr
             param_index = None
             field_index = None
-            cur_spec = add_struct(cur_top_decl, specifier_manager)
+            logout(f"record decl expr = {cur_top_decl}")
+            cur_spec = parse_record_decl(cur_top_decl, specifier_manager)
 
         elif "ParmVarDecl" == decl:
             cur_mid_decl = expr
@@ -444,7 +406,14 @@ with open(file_to_read) as ast:
                 param_index = 0
             else:
                 param_index += 1
-            add_parameter(cur_mid_decl, param_index, cur_spec)
+            logout(f"parm var decl = {cur_mid_decl}")
+            parse_parm_var_decl(cur_mid_decl, param_index, cur_spec)
+        
+        elif "TypedefDecl" == decl:
+            cur_top_decl = expr
+            field_index = None
+            logout(f"type def decl = {cur_top_decl}")
+            parse_typedef_decl(specifier_manager, cur_top_decl)
 
         elif "FieldDecl" == decl:
             cur_mid_decl = expr
@@ -455,13 +424,16 @@ with open(file_to_read) as ast:
             else:
                 field_index += 1
 
-            add_field(cur_mid_decl, field_index, cur_spec)
+            logout(f"field decl = {cur_mid_decl}")
+            parse_field_decl(cur_mid_decl, field_index, cur_spec)
 
         elif "AnnotateAttr" == decl:
             annotation = expr
 
             if cur_mid_decl is None:
                 param_index = None
+            
+            logout(f"annotate attr = {expr}")
 
             logout(
                 f"top: {cur_top_decl}\nmid: {cur_mid_decl}\nanno: {annotation}\nparam_index: {param_index}\nfield_index: {field_index}\n")
@@ -475,30 +447,97 @@ with open(file_to_read) as ast:
                 cur_mid_decl = None
 
         else:
+            if "VarDecl" == decl and "struct" in expr:
+                logout(f"var decl struct = {expr[first_letter_index:]}")
+
+                parse_var_decl(expr[first_letter_index:],
+                               struct_var_manager, specifier_manager)
+                
             param_index = None
             field_index = None
 
     if DEBUG:
         for spec in specifier_manager.specifiers:
             if type(spec) is Function:
-                for p in spec.parameters:
-                    print(
-                        f">(ag) function name {spec.name} ret type '{spec.return_type}' param({p.index}) type ({p.param_type})")
+                print(f"*FUNCTION")
+                print(f"@NAME ({spec.get_name()})")
+                print(f"@RETURN_TYPE ({spec.get_return_type().strip()})")
+
+                # @PARAMETERS [type one,type two,type three]
+
+                param_str = ""
+
+                for (i, parameter) in enumerate(spec.get_parameters()):
+                    param_str += parameter.get_param_type()
+                    if (i != len(spec.get_parameters()) - 1):
+                        param_str += ","
+                
+                if param_str != "":
+                    print(f"@PARAMETERS [{param_str.strip()}]")
+                
+                print()
+
+                    
         
         for spec in specifier_manager.specifiers:
+            # *STRUCT 
+            # @NAME (struct_name)
+            # @FIELDS [name1,name2,name3]
+    
             if type(spec) is Struct:
-                for f in spec.fields:
-                    print(
-                        f">(ag) struct name {spec.name} field({f.field_index} {f.field_name})"
-                    )
+                print(f"*STRUCT")
+                print(f"@NAME ({spec.get_name()})")
+
+                field_str = ""
+
+                for (i, field) in enumerate(spec.get_fields()):
+                    field_str += field.get_field_name()
+                    if (i != len(spec.get_fields()) - 1):
+                        field_str += ","
+                
+                if field_str != "":
+                    print(f"@FIELDS [{field_str.strip()}]")
+                
+                print()
+        
+        for struct_var in struct_var_manager.struct_vars:
+            print("*STRUCT_VARIABLE_DECLARATION")
+            print(f"@NAME ({struct_var.get_var_name()})")
+            print(f"@TYPE ({struct_var.get_type_name()})")
+            print()
+        
+        for anno in annotation_manager.get_annotations():
+            print("*ANNOTATION")
+            print(f"@STRING ({anno.to_str()})")
+            print()
+    
+    '''
+    *FUNCTION 
+    @NAME (function_name)
+    @RETURN_TYPE (return type)
+    @PARAMETERS [type one,type two,type three]
+    
+    *STRUCT 
+    @NAME (struct_name)
+    @FIELDS [name1,name2,name3]
+
+    *STRUCT_VARIABLE_DECLARATION
+    @NAME (var_name)
+    @TYPE (structty)
+
+    *ANNOTATION
+    @STRING (MustCall target = STRUCT(my_struct).FIELD(0) methods = free))
+
+    '''
 
     with open(output_file, "w") as output:
-        for i in range(len(annotation_manager.annotations)):
-            anno = annotation_manager.annotations[i]
+        pass
+        # for i in range(len(annotation_manager.annotations)):
+        #     anno = annotation_manager.annotations[i]
 
-            output.write(anno.to_str())
-            if LOG_ANNOTATIONS:
-                print(anno.to_str())
+        #     output.write(anno.to_str())
+        #     if LOG_ANNOTATIONS:
+        #         print(anno.to_str())
 
-            if i != len(annotation_manager.annotations) - 1:
-                output.write("\n")
+        #     if i != len(annotation_manager.annotations) - 1:
+        #         output.write("\n")

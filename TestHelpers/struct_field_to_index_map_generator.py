@@ -29,13 +29,9 @@ int main() {
 # a field of a variable by field name (rather than index)
 # to test its MustCall/CalledMethods
 
-# TODO: CLT that generates AST based on test name (for debugging).
-# if file name given, pipe into file. if not, log to terminal
-
 import sys
 
-DEBUG = False
-
+DEBUG = True
 
 def logout(x: str):
     if (DEBUG):
@@ -318,6 +314,16 @@ with open(file_to_read) as ast:
 
             cur_field_index = None
 
+    if DEBUG:
+        for struct_var in struct_var_manager.struct_vars:
+            print(f">(sftimg) struct var {struct_var.get_var_name()} {struct_var.get_type_name()}")
+
+        for struct in structs_manager.structs:
+            for f in struct.get_fields():
+                    print(
+                        f">(sftimg) struct name {struct.get_name()} field({f.field_index} {f.field_name})"
+                    )
+    
     with open(output_file, "w") as output:
         for cur_struct_var in struct_var_manager.struct_vars:
             found_struct = structs_manager.get_struct(
