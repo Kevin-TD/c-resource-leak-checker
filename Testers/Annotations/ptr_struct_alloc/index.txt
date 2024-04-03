@@ -1,0 +1,3 @@
+Calls target = FUNCTION(does_free_one_pointer).PARAM(0).FIELD(0) methods = free
+Calls target = FUNCTION(does_free_one_pointer).PARAM(0).FIELD(1) methods = free
+Calls target = FUNCTION(does_free_one_pointer).PARAM(0) methods = free

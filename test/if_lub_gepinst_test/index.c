@@ -8,7 +8,7 @@ struct M {
     char* y MustCall("free");
 };
 
-void free1(void* p Calls("free1")) {
+void free1(void* p Calls("free")) {
     free(p);
 }
 
