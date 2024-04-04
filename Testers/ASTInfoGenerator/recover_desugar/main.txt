@@ -1,7 +1,7 @@
 *FUNCTION
+@PARAMETERS [__uint16_t]
 @NAME (__uint16_identity)
 @RETURN_TYPE (__uint16_t)
-@PARAMETERS [__uint16_t]
 
 *FUNCTION
 @NAME (__uint32_identity)

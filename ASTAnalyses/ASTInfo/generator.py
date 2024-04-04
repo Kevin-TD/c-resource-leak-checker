@@ -1,4 +1,4 @@
-# clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics ../test/recover_desugar/main.c > testAST.txt ; python3 ../ASTInfoGenerator/ast_info_generator.py testAST.txt testASTOutput.txt
+# clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics ../test/recover_desugar/main.c > testAST.txt ; python3 ../ASTAnalyses/ASTInfo/generator.py testAST.txt testASTOutput.txt
 
 # clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics ../test/test12/test12.c > testAST.txt ; python3 ../ASTInfoGenerator/ast_info_generator.py testAST.txt testASTOutput.txt
 
@@ -12,7 +12,7 @@ from Specifiers.FunctionStructure.Function import *
 from Specifiers.StructStructure.Struct import *
 from Specifiers.SpecifierManager import *
 from StructVariables.StructVarManager import *
-from ASTInfoGenerator.Debug import *
+from ASTAnalyses.ASTInfo.Debug import *
 
 from DeclParser.DeclParser import *
 

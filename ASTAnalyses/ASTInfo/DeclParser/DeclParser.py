@@ -1,14 +1,14 @@
 from DeclParser.DeclType import DeclType
-from ASTInfoGenerator.Debug import *
-from ASTInfoGenerator.Specifiers.SpecifierManager import *
+from ASTAnalyses.ASTInfo.Debug import *
+from ASTAnalyses.ASTInfo.Specifiers.SpecifierManager import *
 
-from ASTInfoGenerator.DeclParser.DeclTypes.FunctionDecl import *
-from ASTInfoGenerator.DeclParser.DeclTypes.RecordDecl import *
-from ASTInfoGenerator.DeclParser.DeclTypes.ParmVarDecl import *
-from ASTInfoGenerator.DeclParser.DeclTypes.TypedefDecl import *
-from ASTInfoGenerator.DeclParser.DeclTypes.FieldDecl import *
-from ASTInfoGenerator.DeclParser.DeclTypes.StructVarDecl import *
-from ASTInfoGenerator.DeclParser.DeclTypes.AnnotateAttr import *
+from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.FunctionDecl import *
+from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.RecordDecl import *
+from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.ParmVarDecl import *
+from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.TypedefDecl import *
+from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.FieldDecl import *
+from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.StructVarDecl import *
+from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.AnnotateAttr import *
 
 
 class DeclParser:

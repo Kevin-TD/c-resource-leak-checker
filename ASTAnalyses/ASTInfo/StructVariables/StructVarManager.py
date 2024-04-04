@@ -1,4 +1,4 @@
-from ASTInfoGenerator.StructVariables.StructVar import StructVar
+from ASTAnalyses.ASTInfo.StructVariables.StructVar import StructVar
 
 
 class StructVarManager:
