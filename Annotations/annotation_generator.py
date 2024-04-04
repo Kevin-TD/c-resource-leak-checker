@@ -484,7 +484,7 @@ with open(file_to_read) as ast:
                 for p in spec.parameters:
                     print(
                         f">(ag) function name {spec.name} ret type '{spec.return_type}' param({p.index}) type ({p.param_type})")
-        
+
         for spec in specifier_manager.specifiers:
             if type(spec) is Struct:
                 for f in spec.fields:

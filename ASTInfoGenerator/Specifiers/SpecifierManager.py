@@ -3,10 +3,11 @@ from Specifiers.FunctionStructure.Function import Function
 from Specifiers.StructStructure.Struct import Struct
 from ASTInfoGenerator.Debug import *
 
+
 class SpecifierManager:
     """Manages a list of specifiers
     """
-    
+
     def __init__(self):
         self.__specifiers: list[Specifier] = []
 
@@ -66,6 +67,6 @@ class SpecifierManager:
                     return True
 
         return False
-    
+
     def get_specifiers(self):
         return self.__specifiers

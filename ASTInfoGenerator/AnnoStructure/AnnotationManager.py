@@ -3,12 +3,14 @@ sys.path.insert(0, '..')
 
 from AnnoStructure.Annotation import Annotation
 
+
 class AnnotationManager:
     """Wrapper for list of annotations; checks annotations passed in for consistency
     """
+
     def __init__(self):
         self.__annotations: list[Annotation] = []
-    
+
     def get_annotations(self) -> "list[Annotation]":
         """returns copy of annotation list
         """

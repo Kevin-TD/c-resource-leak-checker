@@ -1,8 +1,10 @@
 from ASTInfoGenerator.StructVariables.StructVar import StructVar
 
+
 class StructVarManager:
     """Wrapper for a collection of struct variables
     """
+
     def __init__(self):
         self.struct_vars: list[StructVar] = []
 

@@ -2,13 +2,13 @@ from DeclParser.DeclType import DeclType
 from ASTInfoGenerator.Debug import *
 from ASTInfoGenerator.Specifiers.SpecifierManager import *
 
-from ASTInfoGenerator.DeclParser.DeclTypes.FunctionDecl import * 
-from ASTInfoGenerator.DeclParser.DeclTypes.RecordDecl import * 
-from ASTInfoGenerator.DeclParser.DeclTypes.ParmVarDecl import * 
-from ASTInfoGenerator.DeclParser.DeclTypes.TypedefDecl import * 
-from ASTInfoGenerator.DeclParser.DeclTypes.FieldDecl import * 
-from ASTInfoGenerator.DeclParser.DeclTypes.StructVarDecl import * 
-from ASTInfoGenerator.DeclParser.DeclTypes.AnnotateAttr import * 
+from ASTInfoGenerator.DeclParser.DeclTypes.FunctionDecl import *
+from ASTInfoGenerator.DeclParser.DeclTypes.RecordDecl import *
+from ASTInfoGenerator.DeclParser.DeclTypes.ParmVarDecl import *
+from ASTInfoGenerator.DeclParser.DeclTypes.TypedefDecl import *
+from ASTInfoGenerator.DeclParser.DeclTypes.FieldDecl import *
+from ASTInfoGenerator.DeclParser.DeclTypes.StructVarDecl import *
+from ASTInfoGenerator.DeclParser.DeclTypes.AnnotateAttr import *
 
 
 class DeclParser:
@@ -65,7 +65,8 @@ class DeclParser:
             start_index += 1
             cur_char = function_decl[start_index]
 
-        logout(f"function name = '{function_name}', return type = '{return_type}'")
+        logout(
+            f"function name = '{function_name}', return type = '{return_type}'")
         return FunctionDecl(function_name, return_type)
 
     def _parse_record_decl(self, record_decl: str):
@@ -75,31 +76,26 @@ class DeclParser:
         return RecordDecl(struct_name)
 
     def _parse_parm_var_decl(self, parm_var_decl: str, param_index: int):
-        quote_second_index = parm_var_decl.find("'", parm_var_decl.find("'") + 1)
+        quote_second_index = parm_var_decl.find(
+            "'", parm_var_decl.find("'") + 1)
 
         param_type = parm_var_decl[
             parm_var_decl.find("'") + 1: quote_second_index
         ]
 
-        # checks pointer type is specified
-
-        # check if param type is formatted like 'struct_name *'
-        # we extract it into just `struct_name`
-        if "*" in param_type:
-            param_type = param_type[: param_type.find(" ")]
-
         # check if param type is formatted like 'typedef_name':'struct_name *'
-        # we extract it into just `struct_name`
+        # we extract it into just `struct_name *`
         start_of_struct_type_name_index = quote_second_index + 3
         if len(parm_var_decl) > start_of_struct_type_name_index and "*" in parm_var_decl[start_of_struct_type_name_index:]:
             param_type = parm_var_decl[start_of_struct_type_name_index: len(
                 parm_var_decl) - 1]
-            param_type = param_type[: param_type.find(" ")]
+            param_type = param_type[: param_type.find("'")]
 
+        param_type = param_type.replace(" ", "")
         logout(f"param added {param_type} for {parm_var_decl}")
 
         return ParmVarDecl(param_index, param_type)
-    
+
     def _parse_typedef_decl(self, typedef_decl: str):
         if not ("referenced" in typedef_decl and "struct" in typedef_decl):
             return None
@@ -131,9 +127,9 @@ class DeclParser:
 
         if original_name != typedef_alias_name:
             return TypedefDecl(original_name, typedef_alias_name)
-        
+
         return None
-    
+
     def _parse_field_decl(self, field_decl: str, field_index: int):
         start_index = field_decl.find("'") - 2
         cur_char = field_decl[start_index]
@@ -144,10 +140,10 @@ class DeclParser:
 
             start_index -= 1
             cur_char = field_decl[start_index]
-        
+
         return FieldDecl(field_name, field_index)
-    
-    # only checks for vars whose type is struct 
+
+    # only checks for vars whose type is struct
     def _parse_var_decl(self, var_decl: str, specifier_manager: SpecifierManager):
         var_decl_chunks = var_decl.split(" ")
 
@@ -156,6 +152,8 @@ class DeclParser:
 
         if var_decl_chunks[5] == "used":
             var_name = var_decl_chunks[6]
+        elif var_decl_chunks[6] == "used":
+            var_name = var_decl_chunks[7]
         else:
             var_name = var_decl_chunks[5]
 
@@ -208,7 +206,8 @@ class DeclParser:
             0: anno_decl.find(" ")
         ]
 
-        anno_methods = anno_decl[anno_decl.rfind("methods = ") + len("methods = ")::]
+        anno_methods = anno_decl[anno_decl.rfind(
+            "methods = ") + len("methods = ")::]
         logout(f"ANNO METHODS = {anno_methods}")
 
         known_target = ""
@@ -285,7 +284,7 @@ class DeclParser:
                 else:
                     # for the parameter, we need the type (the struct that it is definitely referring to)
                     found_field = False
-                    
+
                     spec_params = spec.get_parameters()
 
                     for param in spec_params:
@@ -323,9 +322,8 @@ class DeclParser:
 
         logout(
             f"for anno {anno_decl} known target is {known_target} and {spec.get_name()}")
-        
+
         return AnnotateAttr(anno_type, known_target, anno_methods)
-    
 
     def raw_ast_to_decl_type(self, ast_line: str, spec_manager: SpecifierManager) -> DeclType:
         expr = ast_line.strip()
@@ -347,38 +345,38 @@ class DeclParser:
             # null statements makes writing explicit checks difficult
 
             return None
-        
+
         # reset param index and field index if needed
         if decl_name != "AnnotateAttr":
             if decl_name != "ParmVarDecl":
                 self.__param_index = None
             if decl_name != "FieldDecl":
-                self.__field_index = None 
-        
+                self.__field_index = None
+
         # do parsing
         if decl_name == "FunctionDecl":
             return self._parse_function_decl(expr)
-        
+
         elif decl_name == "RecordDecl":
             return self._parse_record_decl(expr)
-        
+
         elif decl_name == "ParmVarDecl":
-            self.__param_index = 0 if self.__param_index is None else (self.__param_index + 1)
+            self.__param_index = 0 if self.__param_index is None else (
+                self.__param_index + 1)
             return self._parse_parm_var_decl(expr, self.__param_index)
-        
+
         elif decl_name == "FieldDecl":
-            self.__field_index = 0 if self.__field_index is None else (self.__field_index + 1)
+            self.__field_index = 0 if self.__field_index is None else (
+                self.__field_index + 1)
             return self._parse_field_decl(expr, self.__field_index)
-        
+
         elif decl_name == "TypedefDecl":
             return self._parse_typedef_decl(expr)
-        
+
         elif decl_name == "VarDecl":
             return self._parse_var_decl(expr, spec_manager)
-        
+
         elif decl_name == "AnnotateAttr":
             return self._parse_anno(expr, spec_manager, self.__param_index, self.__field_index)
 
-
         return None
-            
