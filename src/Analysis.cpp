@@ -33,6 +33,7 @@
 
 // TODO!: includes_test fails because IR does desugaring sometimes and we currently cannot reverse
 // it. to be fixed with AST pass
+// TODO: remove TestHelpers when AST analyses is done
 
 struct InstructionHolder {
     SetVector<Instruction *> branch;
