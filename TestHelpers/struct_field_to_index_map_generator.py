@@ -33,6 +33,7 @@ import sys
 
 DEBUG = True
 
+
 def logout(x: str):
     if (DEBUG):
         print(x)
@@ -316,14 +317,15 @@ with open(file_to_read) as ast:
 
     if DEBUG:
         for struct_var in struct_var_manager.struct_vars:
-            print(f">(sftimg) struct var {struct_var.get_var_name()} {struct_var.get_type_name()}")
+            print(
+                f">(sftimg) struct var {struct_var.get_var_name()} {struct_var.get_type_name()}")
 
         for struct in structs_manager.structs:
             for f in struct.get_fields():
-                    print(
-                        f">(sftimg) struct name {struct.get_name()} field({f.field_index} {f.field_name})"
-                    )
-    
+                print(
+                    f">(sftimg) struct name {struct.get_name()} field({f.field_index} {f.field_name})"
+                )
+
     with open(output_file, "w") as output:
         for cur_struct_var in struct_var_manager.struct_vars:
             found_struct = structs_manager.get_struct(

@@ -1,0 +1,128 @@
+*FUNCTION
+@NAME (__uint16_identity)
+@RETURN_TYPE (__uint16_t)
+@PARAMETERS [__uint16_t]
+
+*FUNCTION
+@NAME (__uint32_identity)
+@RETURN_TYPE (__uint32_t)
+@PARAMETERS [__uint32_t]
+
+*FUNCTION
+@NAME (__uint64_identity)
+@RETURN_TYPE (__uint64_t)
+@PARAMETERS [__uint64_t]
+
+*FUNCTION
+@NAME (getentropy)
+@RETURN_TYPE (int)
+@PARAMETERS [void*,size_t]
+
+*FUNCTION
+@NAME (return_calls_free)
+@RETURN_TYPE (char *)
+@PARAMETERS [char*]
+
+*FUNCTION
+@NAME (return_calls_free_on_struct)
+@RETURN_TYPE (my_struct)
+@PARAMETERS [my_struct]
+
+*FUNCTION
+@NAME (main)
+@RETURN_TYPE (int)
+
+*STRUCT
+@NAME (__va_list_tag)
+
+*STRUCT
+@NAME (struct)
+@FIELDS [__val]
+
+*STRUCT
+@NAME (_IO_FILE)
+@FIELDS [__count]
+
+*STRUCT
+@NAME (union)
+@FIELDS [__wch,__wchb,__value,__pos,__state,__pos,__state]
+
+*STRUCT
+@NAME (_IO_marker)
+@FIELDS [_next,_sbuf,_pos,_flags,_IO_read_ptr,_IO_read_end,_IO_read_base,_IO_write_base,_IO_write_ptr,_IO_write_end,_IO_buf_base,_IO_buf_end,_IO_save_base,_IO_backup_base,_IO_save_end,_markers,_chain,_fileno,_flags2,_old_offset,_cur_column,_vtable_offset,_shortbuf,_lock,_offset,__pad1,__pad2,__pad3,__pad4,__pad5,_mode,_unused2,quot,rem,quot,rem,quot,rem]
+
+*STRUCT
+@NAME (timeval)
+@FIELDS [tv_sec,tv_usec]
+
+*STRUCT
+@NAME (timespec)
+@FIELDS [tv_sec,tv_nsec,__fds_bits]
+
+*STRUCT
+@NAME (__pthread_rwlock_arch_t)
+@FIELDS [__readers,__writers,__wrphase_futex,__writers_futex,__pad3,__pad4,__cur_writer,__shared,__rwelision,__pad1,__pad2,__flags]
+
+*STRUCT
+@NAME (__pthread_internal_list)
+@FIELDS [__prev,__next]
+
+*STRUCT
+@NAME (__pthread_mutex_s)
+@FIELDS [__lock,__count,__owner,__nusers,__kind,__spins,__elision,__list]
+
+*STRUCT
+@NAME (__pthread_cond_s)
+@FIELDS [__wseq,__low,__high,__wseq32,implicit,__g1_start,__low,__high,__g1_start32,implicit,__g_refs,__g_size,__g1_orig_size,__wrefs,__g_signals,__size,__align,__size,__align]
+
+*STRUCT
+@NAME (pthread_attr_t)
+@FIELDS [__size,__align,__data,__size,__align,__data,__size,__align,__data,__size,__align,__size,__align,__size,__align,__size,__align]
+
+*STRUCT
+@NAME (random_data)
+@FIELDS [fptr,rptr,state,rand_type,rand_deg,rand_sep,end_ptr]
+
+*STRUCT
+@NAME (drand48_data)
+@FIELDS [__x,__old_x,__c,__init,__a]
+
+*STRUCT
+@NAME (my_struct)
+@FIELDS [x]
+
+*STRUCT_VARIABLE
+@NAME (stdin)
+@TYPE (struct)
+
+*STRUCT_VARIABLE
+@NAME (stdout)
+@TYPE (struct)
+
+*STRUCT_VARIABLE
+@NAME (stderr)
+@TYPE (struct)
+
+*STRUCT_VARIABLE
+@NAME (var2)
+@TYPE (my_struct)
+
+*STRUCT_VARIABLE
+@NAME (var2_freed)
+@TYPE (my_struct)
+
+*ANNOTATION
+@STRING (MustCall target = STRUCT(my_struct).FIELD(0) methods = free)
+
+*ANNOTATION
+@STRING (Calls target = FUNCTION(return_calls_free).PARAM(0) methods = free)
+
+*ANNOTATION
+@STRING (Calls target = FUNCTION(return_calls_free).RETURN methods = free)
+
+*ANNOTATION
+@STRING (Calls target = FUNCTION(return_calls_free_on_struct).PARAM(0).FIELD(0) methods = free)
+
+*ANNOTATION
+@STRING (Calls target = FUNCTION(return_calls_free_on_struct).RETURN.FIELD(0) methods = free)
+

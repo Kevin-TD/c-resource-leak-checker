@@ -1,5 +1,6 @@
 from DeclParser.DeclType import DeclType
 
+
 class ParmVarDecl(DeclType):
     def __init__(self, parm_index: int, parm_type: str):
         self.__parm_index = parm_index
@@ -8,6 +9,6 @@ class ParmVarDecl(DeclType):
 
     def get_parm_index(self):
         return self.__parm_index
-    
+
     def get_parm_type(self):
         return self.__parm_type

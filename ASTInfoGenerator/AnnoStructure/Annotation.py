@@ -20,10 +20,10 @@ class Annotation:
 
     def get_methods(self) -> str:
         return self.__methods
-    
+
     def get_anno_type(self) -> str:
         return self.__anno_type
-    
+
     def target_and_anno_type_equal(self, other: "Annotation") -> bool:
         return self.__anno_type == other.get_anno_type() and self.__target == other.get_target()
 
