@@ -268,7 +268,7 @@ class DeclParser:
                         return_struct_name = return_type_split[1]
                     else:
                         return_struct_name = return_type_split[0]
-                    struct = specifier_manager.get_struct(return_struct_name)
+                    struct = specifier_manager.get_or_add_struct(return_struct_name)
 
                     for field in struct.get_fields():
                         if anno_unfilled_target_field_name == field.get_field_name():
@@ -297,7 +297,7 @@ class DeclParser:
                             except IndexError:
                                 param_type_struct_name = param.get_param_type()
 
-                            struct = specifier_manager.get_struct(
+                            struct = specifier_manager.get_or_add_struct(
                                 param_type_struct_name)
 
                             for field in struct.get_fields():
