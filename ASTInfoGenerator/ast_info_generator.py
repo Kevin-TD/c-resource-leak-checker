@@ -1,5 +1,7 @@
 # clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics ../test/recover_desugar/main.c > testAST.txt ; python3 ../ASTInfoGenerator/ast_info_generator.py testAST.txt testASTOutput.txt
 
+# clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics ../test/test12/test12.c > testAST.txt ; python3 ../ASTInfoGenerator/ast_info_generator.py testAST.txt testASTOutput.txt
+
 # python3 ../run_pt.py recover_desugar
 
 import sys
@@ -17,6 +19,16 @@ from DeclParser.DeclParser import *
 file_to_read = sys.argv[1]
 output_file = sys.argv[2]
 
+def is_null_stmt(line_of_ast: str):
+    # checks if end of string is <<<NULLL>>>
+    
+    null_section = line_of_ast.find("<<<NULL>>>")
+    null_part_len = len("<<<NULL>>>")
+
+    if null_section + null_part_len == len(line_of_ast):
+        return True
+    return False
+
 with open(file_to_read) as ast:
     cur_spec = None  # Function or Struct or None
     cur_top_decl = None  # FunctionDecl or RecordDecl (strings)
@@ -31,28 +43,6 @@ with open(file_to_read) as ast:
     decl_parser = DeclParser()
 
     for expr in ast_lines:
-        expr = expr.strip()
-
-        first_letter_index = expr.find(next(filter(str.isalpha, expr)))
-        start_decl_index = first_letter_index
-        decl = ""
-        cur_decl_char = expr[start_decl_index]
-
-        try:
-            while (cur_decl_char != " "):
-                decl += cur_decl_char
-                start_decl_index += 1
-                cur_decl_char = expr[start_decl_index]
-        except IndexError:
-            # might be a null statement (looks like "<<<NULL>>>" in AST)
-
-            # TODO: write explicit check for null statements; lack of
-            # documentation on the formatting of
-            # null statements makes writing explicit checks difficult
-
-            field_index = None
-            continue
-
         type_parsed = decl_parser.raw_ast_to_decl_type(expr, specifier_manager)
         found_type = type(type_parsed)
 
@@ -61,7 +51,7 @@ with open(file_to_read) as ast:
                 type_parsed.get_fn_name(), type_parsed.get_ret_type())
 
         elif found_type is RecordDecl:
-            specifier_manager.add_struct(type_parsed.get_struct_name())
+            specifier_manager.get_or_add_struct(type_parsed.get_struct_name())
 
         elif found_type is FieldDecl:
             spec = specifier_manager.get_specifiers()[-1]
@@ -78,7 +68,7 @@ with open(file_to_read) as ast:
                 spec.add_parameter(param)
 
         elif found_type is TypedefDecl:
-            specifier_manager.get_struct(type_parsed.get_original_type_name()).add_typedef(
+            specifier_manager.get_or_add_struct(type_parsed.get_original_type_name()).add_typedef(
                 type_parsed.get_alias_name())
 
         elif found_type is StructVarDecl:
@@ -90,101 +80,64 @@ with open(file_to_read) as ast:
             ), type_parsed.get_annotation_target(), type_parsed.get_annotation_methods())
             annotation_manager.add_annotation(anno)
 
-    if DEBUG:
-        for spec in specifier_manager.get_specifiers():
-            if type(spec) is Function:
-                print(f"*FUNCTION")
-                print(f"@NAME ({spec.get_name()})")
-                print(f"@RETURN_TYPE ({spec.get_return_type().strip()})")
 
-                # @PARAMETERS [type one,type two,type three]
+    output_str = ""
 
-                param_str = ""
+    # specifiers to AST Info language
 
-                for (i, parameter) in enumerate(spec.get_parameters()):
-                    param_str += parameter.get_param_type()
-                    if (i != len(spec.get_parameters()) - 1):
-                        param_str += ","
+    for spec in specifier_manager.get_specifiers():
+        if type(spec) is Function:
+            output_str += f"*FUNCTION\n"
+            output_str += f"@NAME ({spec.get_name()})\n"
+            output_str += f"@RETURN_TYPE ({spec.get_return_type().strip()})\n"
 
-                if param_str != "":
-                    print(f"@PARAMETERS [{param_str.strip()}]")
+            # @PARAMETERS [type one,type two,type three]
 
-                print()
+            param_str = ""
 
-        for spec in specifier_manager.get_specifiers():
-            # *STRUCT
-            # @NAME (struct_name)
-            # @FIELDS [name1,name2,name3]
+            for (i, parameter) in enumerate(spec.get_parameters()):
+                param_str += parameter.get_param_type()
+                if (i != len(spec.get_parameters()) - 1):
+                    param_str += ","
 
-            if type(spec) is Struct:
-                print(f"*STRUCT")
-                print(f"@NAME ({spec.get_name()})")
+            if param_str != "":
+                output_str += f"@PARAMETERS [{param_str.strip()}]\n"
 
-                field_str = ""
+            output_str += "\n"
 
-                for (i, field) in enumerate(spec.get_fields()):
-                    field_str += field.get_field_name()
-                    if (i != len(spec.get_fields()) - 1):
-                        field_str += ","
+   
 
-                if field_str != "":
-                    print(f"@FIELDS [{field_str.strip()}]")
+    for spec in specifier_manager.get_specifiers():
+        # *STRUCT
+        # @NAME (struct_name)
+        # @FIELDS [name1,name2,name3]
 
-                print()
+        if type(spec) is Struct:
+            output_str += f"*STRUCT\n"
+            output_str += f"@NAME ({spec.get_name()})\n"
 
-        for struct_var in struct_var_manager.struct_vars:
-            print("*STRUCT_VARIABLE")
-            print(f"@NAME ({struct_var.get_var_name()})")
-            print(f"@TYPE ({struct_var.get_type_name()})")
-            print()
+            field_str = ""
 
-        for anno in annotation_manager.get_annotations():
-            print("*ANNOTATION")
-            print(f"@STRING ({anno.to_str()})")
-            print()
+            for (i, field) in enumerate(spec.get_fields()):
+                field_str += field.get_field_name()
+                if (i != len(spec.get_fields()) - 1):
+                    field_str += ","
+
+            if field_str != "":
+                output_str += f"@FIELDS [{field_str.strip()}]\n"
+
+            output_str += "\n"
+
+    for struct_var in struct_var_manager.struct_vars:
+        output_str += "*STRUCT_VARIABLE\n"
+        output_str += f"@NAME ({struct_var.get_var_name()})\n"
+        output_str += f"@TYPE ({struct_var.get_type_name()})\n\n"
+
+    for anno in annotation_manager.get_annotations():
+        output_str += "*ANNOTATION\n"
+        output_str += f"@STRING ({anno.to_str()})\n\n"
+    
+    logout(output_str)
 
     with open(output_file, "w") as output:
-        for spec in specifier_manager.get_specifiers():
-            if type(spec) is Function:
-                output.write(f"*FUNCTION\n")
-                output.write(f"@NAME ({spec.get_name()})\n")
-                output.write(
-                    f"@RETURN_TYPE ({spec.get_return_type().strip()})\n")
-
-                param_str = ""
-
-                for (i, parameter) in enumerate(spec.get_parameters()):
-                    param_str += parameter.get_param_type()
-                    if (i != len(spec.get_parameters()) - 1):
-                        param_str += ","
-
-                if param_str != "":
-                    output.write(f"@PARAMETERS [{param_str.strip()}]\n")
-
-                output.write("\n")
-
-        for spec in specifier_manager.get_specifiers():
-            if type(spec) is Struct:
-                output.write(f"*STRUCT\n")
-                output.write(f"@NAME ({spec.get_name()})\n")
-
-                field_str = ""
-
-                for (i, field) in enumerate(spec.get_fields()):
-                    field_str += field.get_field_name()
-                    if (i != len(spec.get_fields()) - 1):
-                        field_str += ","
-
-                if field_str != "":
-                    output.write(f"@FIELDS [{field_str.strip()}]\n")
-
-                output.write("\n")
-
-        for struct_var in struct_var_manager.struct_vars:
-            output.write("*STRUCT_VARIABLE\n")
-            output.write(f"@NAME ({struct_var.get_var_name()})\n")
-            output.write(f"@TYPE ({struct_var.get_type_name()})\n\n")
-
-        for anno in annotation_manager.get_annotations():
-            output.write("*ANNOTATION\n")
-            output.write(f"@STRING ({anno.to_str()})\n\n")
+        output.write(output_str)

@@ -17,10 +17,6 @@ class DeclParser:
         self.__field_index = None
 
     def _parse_function_decl(self, function_decl: str) -> Specifier:
-        # Assumption: functions that are extern are not relevant to our analysis
-        if function_decl.endswith("extern"):
-            return None
-
         logout(f"function decl equals {function_decl}")
 
         quote_index = function_decl.find("'")
@@ -75,24 +71,24 @@ class DeclParser:
 
         return RecordDecl(struct_name)
 
-    def _parse_parm_var_decl(self, parm_var_decl: str, param_index: int):
-        quote_second_index = parm_var_decl.find(
-            "'", parm_var_decl.find("'") + 1)
+    def _parse_param_var_decl(self, param_var_decl: str, param_index: int):
+        quote_second_index = param_var_decl.find(
+            "'", param_var_decl.find("'") + 1)
 
-        param_type = parm_var_decl[
-            parm_var_decl.find("'") + 1: quote_second_index
+        param_type = param_var_decl[
+            param_var_decl.find("'") + 1: quote_second_index
         ]
 
         # check if param type is formatted like 'typedef_name':'struct_name *'
         # we extract it into just `struct_name *`
         start_of_struct_type_name_index = quote_second_index + 3
-        if len(parm_var_decl) > start_of_struct_type_name_index and "*" in parm_var_decl[start_of_struct_type_name_index:]:
-            param_type = parm_var_decl[start_of_struct_type_name_index: len(
-                parm_var_decl) - 1]
+        if len(param_var_decl) > start_of_struct_type_name_index and "*" in param_var_decl[start_of_struct_type_name_index:]:
+            param_type = param_var_decl[start_of_struct_type_name_index: len(
+                param_var_decl) - 1]
             param_type = param_type[: param_type.find("'")]
 
         param_type = param_type.replace(" ", "")
-        logout(f"param added {param_type} for {parm_var_decl}")
+        logout(f"param added {param_type} for {param_var_decl}")
 
         return ParmVarDecl(param_index, param_type)
 
@@ -324,6 +320,16 @@ class DeclParser:
             f"for anno {anno_decl} known target is {known_target} and {spec.get_name()}")
 
         return AnnotateAttr(anno_type, known_target, anno_methods)
+    
+    def _is_null_stmt(self, line_of_ast: str):
+        # checks if end of string is <<<NULLL>>>
+        
+        null_section = line_of_ast.find("<<<NULL>>>")
+        null_part_len = len("<<<NULL>>>")
+
+        if null_section + null_part_len == len(line_of_ast):
+            return True
+        return False
 
     def raw_ast_to_decl_type(self, ast_line: str, spec_manager: SpecifierManager) -> DeclType:
         expr = ast_line.strip()
@@ -332,19 +338,13 @@ class DeclParser:
         decl_name = ""
         cur_decl_char = expr[start_decl_index]
 
-        try:
-            while (cur_decl_char != " "):
-                decl_name += cur_decl_char
-                start_decl_index += 1
-                cur_decl_char = expr[start_decl_index]
-        except IndexError:
-            # might be a null statement (looks like "<<<NULL>>>" in AST)
-
-            # TODO: write explicit check for null statements; lack of
-            # documentation on the formatting of
-            # null statements makes writing explicit checks difficult
-
+        if self._is_null_stmt(expr):
             return None
+
+        while (cur_decl_char != " "):
+            decl_name += cur_decl_char
+            start_decl_index += 1
+            cur_decl_char = expr[start_decl_index]
 
         # reset param index and field index if needed
         if decl_name != "AnnotateAttr":
@@ -363,7 +363,7 @@ class DeclParser:
         elif decl_name == "ParmVarDecl":
             self.__param_index = 0 if self.__param_index is None else (
                 self.__param_index + 1)
-            return self._parse_parm_var_decl(expr, self.__param_index)
+            return self._parse_param_var_decl(expr, self.__param_index)
 
         elif decl_name == "FieldDecl":
             self.__field_index = 0 if self.__field_index is None else (
