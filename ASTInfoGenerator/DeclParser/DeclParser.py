@@ -146,6 +146,10 @@ class DeclParser:
         logout(var_decl)
         logout(var_decl_chunks)
 
+        # potential structures of a var decl
+        # VarDecl 0x23e1d40 <col:5, col:11> col:11 used str 'char *'
+        # VarDecl 0x23e1dd0 <col:5, col:21> col:9 a 'int' cinit
+
         if var_decl_chunks[5] == "used":
             var_name = var_decl_chunks[6]
         elif var_decl_chunks[6] == "used":
@@ -243,11 +247,8 @@ class DeclParser:
 
                     # we can make this assumption because:
                     # 1. param_index is none, which means we are making an
-                    # annotation for the function itself, and (for now) we assume
+                    # annotation for the function itself, and we assume
                     # that means it's an annotation on its return.
-                    # note: we'll need to update how we treat annotations
-                    # applied to the function itself
-                    # if/when annotations like @Owning and @MustCallAlias are implemented
                     # 2. the ".FIELD" in anno_unfilled_target is specified by the user via
                     # something like
                     '''
@@ -268,7 +269,8 @@ class DeclParser:
                         return_struct_name = return_type_split[1]
                     else:
                         return_struct_name = return_type_split[0]
-                    struct = specifier_manager.get_or_add_struct(return_struct_name)
+                    struct = specifier_manager.get_or_add_struct(
+                        return_struct_name)
 
                     for field in struct.get_fields():
                         if anno_unfilled_target_field_name == field.get_field_name():
@@ -320,10 +322,10 @@ class DeclParser:
             f"for anno {anno_decl} known target is {known_target} and {spec.get_name()}")
 
         return AnnotateAttr(anno_type, known_target, anno_methods)
-    
+
     def _is_null_stmt(self, line_of_ast: str):
         # checks if end of string is <<<NULLL>>>
-        
+
         null_section = line_of_ast.find("<<<NULL>>>")
         null_part_len = len("<<<NULL>>>")
 

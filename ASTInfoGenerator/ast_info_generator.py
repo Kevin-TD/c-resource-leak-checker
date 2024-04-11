@@ -19,15 +19,17 @@ from DeclParser.DeclParser import *
 file_to_read = sys.argv[1]
 output_file = sys.argv[2]
 
+
 def is_null_stmt(line_of_ast: str):
     # checks if end of string is <<<NULLL>>>
-    
+
     null_section = line_of_ast.find("<<<NULL>>>")
     null_part_len = len("<<<NULL>>>")
 
     if null_section + null_part_len == len(line_of_ast):
         return True
     return False
+
 
 with open(file_to_read) as ast:
     cur_spec = None  # Function or Struct or None
@@ -80,7 +82,6 @@ with open(file_to_read) as ast:
             ), type_parsed.get_annotation_target(), type_parsed.get_annotation_methods())
             annotation_manager.add_annotation(anno)
 
-
     output_str = ""
 
     # specifiers to AST Info language
@@ -104,8 +105,6 @@ with open(file_to_read) as ast:
                 output_str += f"@PARAMETERS [{param_str.strip()}]\n"
 
             output_str += "\n"
-
-   
 
     for spec in specifier_manager.get_specifiers():
         # *STRUCT
@@ -136,7 +135,7 @@ with open(file_to_read) as ast:
     for anno in annotation_manager.get_annotations():
         output_str += "*ANNOTATION\n"
         output_str += f"@STRING ({anno.to_str()})\n\n"
-    
+
     logout(output_str)
 
     with open(output_file, "w") as output:
