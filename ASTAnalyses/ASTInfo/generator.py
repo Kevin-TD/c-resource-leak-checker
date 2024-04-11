@@ -19,7 +19,6 @@ from DeclParser.DeclParser import *
 file_to_read = sys.argv[1]
 output_file = sys.argv[2]
 
-
 def is_null_stmt(line_of_ast: str):
     # checks if end of string is <<<NULLL>>>
 
