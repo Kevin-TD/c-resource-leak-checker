@@ -103,6 +103,8 @@ with open(file_to_read) as ast:
 
             if param_str != "":
                 output_str += f"@PARAMETERS [{param_str.strip()}]\n"
+            else: 
+                output_str += "@PARAMETERS []\n"
 
             output_str += "\n"
 
@@ -124,6 +126,8 @@ with open(file_to_read) as ast:
 
             if field_str != "":
                 output_str += f"@FIELDS [{field_str.strip()}]\n"
+            else:
+                output_str += "@FIELDS []\n"
 
             output_str += "\n"
 
