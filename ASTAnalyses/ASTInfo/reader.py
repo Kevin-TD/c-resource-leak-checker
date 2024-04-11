@@ -48,86 +48,87 @@ while char:
 
     if char == "*":
         declaration_type = collect_until(ast_info, "\n")
-        logout(f"'{declaration_type}'")
 
         if declaration_type == "FUNCTION":  
             name_decl = collect_until(ast_info, " ")
-            logout(f"'{name_decl}'")
 
             if name_decl == "@NAME":
                 name_data = collect_until(ast_info, ")")[1:]
-                logout(f"'{name_data}'")
             else: 
                 raise SyntaxError("Expected @NAME decl after *FUNCTION")
             
             return_type_decl = collect_until(ast_info, " ")[1:]
-            logout(f"'{return_type_decl}'")
 
             if return_type_decl == "@RETURN_TYPE":
                 return_type_data = collect_until(ast_info, ")")[1:]
-                logout(f"'{return_type_data}'")
-            
+
             created_function = Function(name_data, return_type_data)
             
             # TODO: get changes from draft pull request into this one. manual copy paste
-            # TODO: int main function takes no args. make it so when arg list is empty it's just PARAMETERS []. same with STRUCT @FIELDS
             # TODO: more errors
 
             parameters_decl = collect_until(ast_info, " ")[1:]
-            logout(f"'{parameters_decl}'")
 
             if parameters_decl == "@PARAMETERS":
                 parameters_data = collect_until(ast_info, "]")[1:].split(",")
-                logout(f"'{parameters_data}'")
                 for (i, param) in enumerate(parameters_data):
                     if param == "":
                         continue
-
+                    
+                    logout(f"FUNC: {name_data}, {return_type_data}, {i}, {param}")
                     created_function.add_parameter(Parameter(i, param))
             
         
 
         elif declaration_type == "STRUCT":
             name_decl = collect_until(ast_info, " ")
-            logout(f"'{name_decl}'")
 
             if name_decl == "@NAME":
                 name_data = collect_until(ast_info, ")")[1:]
-                logout(f"'{name_data}'")
+            
+            created_struct = Struct(name_data)
             
             fields_decl = collect_until(ast_info, " ")[1:]
-            logout(f"'{fields_decl}'")
 
             if fields_decl == "@FIELDS":
                 fields_data = collect_until(ast_info, "]")[1:].split(",")
-                logout(f"'{fields_data}'")
+
+                for (i, field) in enumerate(fields_data):
+                    if field == "":
+                        continue
+                    
+                    logout(f"STRUCT: {name_data}, {return_type_data}, {i}, {field}")
+                    created_struct.add_field(Field(field, i))
         
         elif declaration_type == "STRUCT_VARIABLE":
             name_decl = collect_until(ast_info, " ")
-            logout(f"'{name_decl}'")
 
             if name_decl == "@NAME":
                 name_data = collect_until(ast_info, ")")[1:]
-                logout(f"'{name_data}'")
             
             type_decl = collect_until(ast_info, " ")[1:]
-            logout(f"'{type_decl}'")
 
             if type_decl == "@TYPE":
                 type_data = collect_until(ast_info, ")")[1:]
-                logout(f"'{type_data}'")
+            
+            created_struct_var = StructVar(name_data, type_data)
+            logout(f"STRUCT_VAR: {name_data}, {type_data}")
         
         elif declaration_type == "ANNOTATION":
             string_decl = collect_until(ast_info, " ")
-            logout(f"'{string_decl}'")
 
             if string_decl == "@STRING":
                 string_data = collect_until(ast_info, "\n")[1:]
                 string_data = string_data[:len(string_data) - 1]
-                logout(f"'{string_data}'")
             
-        
-        logout("")
+            # example annotation
+            # Calls target = FUNCTION(does_something).PARAM(0).FIELD(0) methods = free
+            # assumed well-formed
+            anno_chunks = string_data.split(" ")
+            # TODO: instead of annotation being the whole thing, make it a @ANNO_TYPE, @TARGET, @METHODS [...]
+
+            Annotation()
+            
     
     char = ast_info.read(1)
 
