@@ -139,8 +139,7 @@ with open(file_to_read) as ast:
     for anno in annotation_manager.get_annotations():
         output_str += "*ANNOTATION\n"
         output_str += f"@ANNO_TYPE ({anno.get_anno_type()})\n"
-        output_str += f"@TARGET ({anno.get_target()})\n"
-
+        output_str += f"@TARGET <{anno.get_target()}>\n"
         methods_str = anno.get_methods().split(",")
         methods_str = map(lambda x: x.strip(), methods_str)
         methods_str = ",".join(methods_str)
