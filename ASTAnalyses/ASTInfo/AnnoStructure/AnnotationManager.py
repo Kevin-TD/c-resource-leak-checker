@@ -1,7 +1,7 @@
 import sys
 sys.path.insert(0, '..')
 
-from AnnoStructure.Annotation import Annotation
+from ASTAnalyses.ASTInfo.AnnoStructure.Annotation import Annotation
 
 
 class AnnotationManager:

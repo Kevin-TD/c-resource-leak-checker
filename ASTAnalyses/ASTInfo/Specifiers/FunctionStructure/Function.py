@@ -1,5 +1,5 @@
-from Specifiers.FunctionStructure.Parameter import Parameter
-from Specifiers.Specifier import Specifier
+from ASTAnalyses.ASTInfo.Specifiers.FunctionStructure.Parameter import Parameter
+from ASTAnalyses.ASTInfo.Specifiers.Specifier import Specifier
 
 
 class Function(Specifier):

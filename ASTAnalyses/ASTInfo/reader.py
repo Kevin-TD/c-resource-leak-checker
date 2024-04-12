@@ -1,11 +1,11 @@
 import sys
 sys.path.insert(0, '..')
 
-from AnnoStructure.AnnotationManager import *
-from Specifiers.FunctionStructure.Function import *
-from Specifiers.StructStructure.Struct import *
-from Specifiers.SpecifierManager import *
-from StructVariables.StructVarManager import *
+from ASTAnalyses.ASTInfo.AnnoStructure.AnnotationManager import *
+from ASTAnalyses.ASTInfo.Specifiers.FunctionStructure.Function import *
+from ASTAnalyses.ASTInfo.Specifiers.StructStructure.Struct import *
+from ASTAnalyses.ASTInfo.Specifiers.SpecifierManager import *
+from ASTAnalyses.ASTInfo.StructVariables.StructVarManager import *
 from ASTAnalyses.ASTInfo.Debug import *
 
 # (build dir)
