@@ -6,17 +6,12 @@ StructFieldToIndexMap::StructFieldToIndexMap() {
 
 }
 
-void StructFieldToIndexMap::buildMap(const TempFileManager& astFile) {
+void StructFieldToIndexMap::buildMap(const TempFileManager& astInfoFile) {
     TempFileManager mapTempFile = TempFileManager("mapTempFile");
-
-    TempFileManager ASTGeneratedInfo = TempFileManager("ASTGeneratedInfo");
-    std::string generateASTInfoCommand = "python3 " + AST_INFO_GENERATOR_LOCATION + " " +
-                                         astFile.getFileName() + " " + ASTGeneratedInfo.getFileName();
-    system(generateASTInfoCommand.c_str());
 
     std::string readASTCommand =
         "python3 " + AST_FIELD_TO_INDEX_MAP_GENERATOR_LOCATION + " " +
-        ASTGeneratedInfo.getFileName() + " " + mapTempFile.getFileName();
+        astInfoFile.getFileName() + " " + mapTempFile.getFileName();
 
     int command_exit_status = system(readASTCommand.c_str());
 

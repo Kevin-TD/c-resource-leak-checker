@@ -143,18 +143,12 @@ void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
     }
 }
 
-std::vector<std::string> getAnnotationStrings(const TempFileManager& astFile) {
+std::vector<std::string> getAnnotationStrings(const TempFileManager& astInfoFile) {
     TempFileManager annotationsTempFile = TempFileManager("annotationsTempFile");
-
-    // TODO: we should just pass in generatedASTINFO, not ast file. fixing when other passes built.
-    TempFileManager ASTGeneratedInfo = TempFileManager("ASTGeneratedInfo");
-    std::string generateASTInfoCommand = "python3 " + AST_INFO_GENERATOR_LOCATION + " " +
-                                         astFile.getFileName() + " " + ASTGeneratedInfo.getFileName();
-    system(generateASTInfoCommand.c_str());
 
     std::string readASTCommand =
         "python3 " + AST_ANNO_PASS_LOCATION + " " +
-        ASTGeneratedInfo.getFileName() + " " + annotationsTempFile.getFileName();
+        astInfoFile.getFileName() + " " + annotationsTempFile.getFileName();
 
     system(readASTCommand.c_str());
 
@@ -459,10 +453,12 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
         loadFunctions();
 
-        TempFileManager astTempFile("astTempFile");
-        tempfile_util::dumpASTIntoTempFile(optLoadFileName, astTempFile);
+        TempFileManager astInfoTempFile("astInfoTempFile");
+        tempfile_util::dumpASTInfoIntoTempFile(optLoadFileName, astInfoTempFile);
 
-        auto annotations = getAnnotationStrings(astTempFile);
+        TempFileManager annotationsTempFile = TempFileManager("annotationsTempFile");
+
+        auto annotations = getAnnotationStrings(astInfoTempFile); // TODO! FIX THIS
 
 
         calledMethods.setExpectedResult(
@@ -471,7 +467,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
             TestRunner::buildExpectedResults(testName, mustCall.passName));
         annotationHandler.addAnnotations(annotations);
 
-        structFieldToIndexMap.buildMap(astTempFile);
+        structFieldToIndexMap.buildMap(astInfoTempFile); // TODO! FIX THIS
 
         loadAndBuild = true;
     }

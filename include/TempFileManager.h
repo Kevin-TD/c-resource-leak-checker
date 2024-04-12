@@ -29,6 +29,9 @@ namespace tempfile_util {
 // its content into tmp
 void dumpASTIntoTempFile(const std::string& optLoadFileName, TempFileManager& tmp);
 
+// generates the AST and gets the AST Info of it then dumps it into tmp
+void dumpASTInfoIntoTempFile(const std::string& optLoadFileName, TempFileManager& tmp);
+
 }
 
 #endif

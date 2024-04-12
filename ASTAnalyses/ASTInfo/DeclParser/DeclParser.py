@@ -177,7 +177,7 @@ class DeclParser:
             var_name = var_decl_chunks[7]
         else:
             var_name = var_decl_chunks[5]
-        
+
         if "col" and ":" in var_name:
             var_name = var_decl_chunks[6]
 
