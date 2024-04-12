@@ -25,10 +25,10 @@
 // TODO: better test names in diff pr
 // TODO: write testing for intentional errors (ErrorTestRunner)
 // TODO: add const to method params where it applies; specifically, specifying more const std::string& type
-// TODO: make onAnnotation take a set of strings (functions inside MC or CM annotation) rather than a single string
 // TODO: add error pairs to annotation test
 // TODO:  CLT that generates AST based on test name (for debugging). if file name given, pipe into file. if not, log to terminal
 // TODO: see for ast info generator we can filter out functions included from std lib
+// TODO: make test cases for ASTAnalyses and have them ignore functions in stdlib
 
 // TODO!: includes_test fails because IR does desugaring sometimes and we currently cannot reverse
 // it. to be fixed with AST pass
@@ -148,12 +148,12 @@ std::vector<std::string> getAnnotationStrings(const TempFileManager& astFile) {
 
     // TODO: we should just pass in generatedASTINFO, not ast file. fixing when other passes built.
     TempFileManager ASTGeneratedInfo = TempFileManager("ASTGeneratedInfo");
-    std::string generateASTInfoCommand = AST_INFO_GENERATOR_LOCATION + " " +
+    std::string generateASTInfoCommand = "python3 " + AST_INFO_GENERATOR_LOCATION + " " +
                                          astFile.getFileName() + " " + ASTGeneratedInfo.getFileName();
     system(generateASTInfoCommand.c_str());
 
     std::string readASTCommand =
-        AST_ANNO_PASS_FILE_LOCATION + " " +
+        "python3 " + AST_ANNO_PASS_LOCATION + " " +
         ASTGeneratedInfo.getFileName() + " " + annotationsTempFile.getFileName();
 
     system(readASTCommand.c_str());

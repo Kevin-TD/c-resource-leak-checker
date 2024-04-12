@@ -119,16 +119,24 @@ with open(file_to_read) as ast:
             output_str += f"@NAME ({spec.get_name()})\n"
 
             field_str = ""
-
             for (i, field) in enumerate(spec.get_fields()):
                 field_str += field.get_field_name()
                 if (i != len(spec.get_fields()) - 1):
                     field_str += ","
-
             if field_str != "":
                 output_str += f"@FIELDS [{field_str.strip()}]\n"
             else:
                 output_str += "@FIELDS []\n"
+
+            typedef_str = ""
+            for (i, typedef) in enumerate(spec.get_typedefs()):
+                typedef_str += typedef
+                if (i != len(spec.get_typedefs()) - 1):
+                    typedef_str += ","
+            if typedef_str != "":
+                output_str += f"@TYPEDEFS [{typedef_str.strip()}]\n"
+            else:
+                output_str += "@TYPEDEFS []\n"
 
             output_str += "\n"
 

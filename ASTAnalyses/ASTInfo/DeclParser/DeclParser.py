@@ -75,6 +75,8 @@ class DeclParser:
     def _parse_record_decl(self, record_decl: str):
         record_decl_chunks = record_decl.split(" ")
         struct_name = record_decl_chunks[len(record_decl_chunks) - 2]
+        logout(f"record decl {record_decl}")
+        logout(f"struct name parsed = {struct_name}")
 
         return RecordDecl(struct_name)
 
@@ -167,6 +169,7 @@ class DeclParser:
         # potential structures of a var decl
         # VarDecl 0x23e1d40 <col:5, col:11> col:11 used str 'char *'
         # VarDecl 0x23e1dd0 <col:5, col:21> col:9 a 'int' cinit
+        # VarDecl 0x2414f60 <col:5, col:54> col:22 m_var_2 'struct my_struct':'struct my_struct' cinit
 
         if var_decl_chunks[5] == "used":
             var_name = var_decl_chunks[6]
@@ -174,6 +177,9 @@ class DeclParser:
             var_name = var_decl_chunks[7]
         else:
             var_name = var_decl_chunks[5]
+        
+        if "col" and ":" in var_name:
+            var_name = var_decl_chunks[6]
 
         struct_name = ""
         start_index = var_decl.find("'") + 1

@@ -18,7 +18,7 @@ There are 4 types of declaration: FUNCTION, STRUCT, STRUCT_VARIABLE, and ANNOTAT
 
 A function declaration *FUNCTION must be followwed by @NAME (string), @RETURN_TYPE(string), and @PARAMETERS [list of strings]
 
-A struct declaration *STRUCT must be followed by @NAME(string) and @FIELDS [list of strings]
+A struct declaration *STRUCT must be followed by @NAME(string), @FIELDS [list of strings] and @TYPEDEFS [list of strings]
 
 For *STRUCT_VARIABLE, it has @NAME(string) and @TYPE(string)
 
@@ -82,6 +82,7 @@ class ASTReader:
                     self.__collect_and_validate(" ", "@FIELDS")
                     self.__skip("[")
                     fields_data = self.__collect_until("]").split(",")
+                    self.__skip("\n")
 
                     for (i, field) in enumerate(fields_data):
                         if field == "":
@@ -90,6 +91,18 @@ class ASTReader:
                         logout(
                             f"STRUCT: {name_data}, {return_type_data}, {i}, {field}")
                         created_struct.add_field(Field(field, i))
+
+                    self.__collect_and_validate(" ", "@TYPEDEFS")
+                    self.__skip("[")
+                    typedefs_data = self.__collect_until("]").split(",")
+
+                    for (i, typedef) in enumerate(typedefs_data):
+                        if typedef == "":
+                            continue
+
+                        logout(
+                            f"TYPEDEF: {typedef}")
+                        created_struct.add_typedef(typedef)
 
                     self.__structs.append(created_struct)
 

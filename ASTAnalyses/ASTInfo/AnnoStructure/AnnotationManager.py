@@ -33,4 +33,3 @@ class AnnotationManager:
             if anno.target_and_anno_type_equal(annotation):
                 return
         self.__annotations.append(anno)
-        print(f"added anno {anno.to_str()}")
