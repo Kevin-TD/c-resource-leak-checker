@@ -1,5 +1,6 @@
 #include "StructFieldToIndexMap.h"
 #include "Debug.h"
+#include "Constants.h"
 
 StructFieldToIndexMap::StructFieldToIndexMap() {
 
@@ -9,7 +10,7 @@ void StructFieldToIndexMap::buildMap(const TempFileManager& astFile) {
     TempFileManager mapTempFile = TempFileManager("mapTempFile");
 
     std::string readASTCommand =
-        "python3 ../TestHelpers/struct_field_to_index_map_generator.py " +
+        AST_FIELD_TO_INDEX_MAP_GENERATOR_LOCATION + " " +
         astFile.getFileName() + " " + mapTempFile.getFileName();
 
     int command_exit_status = system(readASTCommand.c_str());

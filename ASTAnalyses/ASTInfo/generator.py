@@ -7,14 +7,14 @@
 import sys
 sys.path.insert(0, '..')
 
-from AnnoStructure.AnnotationManager import *
-from Specifiers.FunctionStructure.Function import *
-from Specifiers.StructStructure.Struct import *
-from Specifiers.SpecifierManager import *
-from StructVariables.StructVarManager import *
+from ASTAnalyses.ASTInfo.AnnoStructure.AnnotationManager import *
+from ASTAnalyses.ASTInfo.Specifiers.FunctionStructure.Function import *
+from ASTAnalyses.ASTInfo.Specifiers.StructStructure.Struct import *
+from ASTAnalyses.ASTInfo.Specifiers.SpecifierManager import *
+from ASTAnalyses.ASTInfo.StructVariables.StructVarManager import *
 from ASTAnalyses.ASTInfo.Debug import *
 
-from DeclParser.DeclParser import *
+from ASTAnalyses.ASTInfo.DeclParser.DeclParser import *
 
 file_to_read = sys.argv[1]
 output_file = sys.argv[2]
@@ -32,11 +32,7 @@ def is_null_stmt(line_of_ast: str):
 
 
 with open(file_to_read) as ast:
-    cur_spec = None  # Function or Struct or None
-    cur_top_decl = None  # FunctionDecl or RecordDecl (strings)
-    cur_mid_decl = None  # ParmVarDecl or FieldDecl (strings)
-    param_index = None
-    field_index = None
+    recent_specifier = None  # Function or Struct
 
     ast_lines = ast.readlines()
     specifier_manager = SpecifierManager()
@@ -45,25 +41,29 @@ with open(file_to_read) as ast:
     decl_parser = DeclParser()
 
     for expr in ast_lines:
-        type_parsed = decl_parser.raw_ast_to_decl_type(expr, specifier_manager)
+        type_parsed = decl_parser.raw_ast_to_decl_type(
+            expr, specifier_manager, recent_specifier)
         found_type = type(type_parsed)
 
         if found_type is FunctionDecl:
-            specifier_manager.add_function(
+            func_added = specifier_manager.add_function(
                 type_parsed.get_fn_name(), type_parsed.get_ret_type())
+            recent_specifier = func_added
 
         elif found_type is RecordDecl:
-            specifier_manager.get_or_add_struct(type_parsed.get_struct_name())
+            struct_added = specifier_manager.get_or_add_struct(
+                type_parsed.get_struct_name())
+            recent_specifier = struct_added
 
         elif found_type is FieldDecl:
-            spec = specifier_manager.get_specifiers()[-1]
+            spec = recent_specifier
             if type(spec) is Struct:
                 field = Field(type_parsed.get_field_name(),
                               type_parsed.get_field_index())
                 spec.add_field(field)
 
         elif found_type is ParmVarDecl:
-            spec = specifier_manager.get_specifiers()[-1]
+            spec = recent_specifier
             if type(spec) is Function:
                 param = Parameter(type_parsed.get_parm_index(),
                                   type_parsed.get_parm_type())
@@ -80,6 +80,7 @@ with open(file_to_read) as ast:
         elif found_type is AnnotateAttr:
             anno = Annotation(type_parsed.get_annotation_type(
             ), type_parsed.get_annotation_target(), type_parsed.get_annotation_methods())
+            logout(f"going to add from {expr}")
             annotation_manager.add_annotation(anno)
 
     output_str = ""

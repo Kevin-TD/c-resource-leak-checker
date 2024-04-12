@@ -1,4 +1,4 @@
-from DeclParser.DeclType import DeclType
+from ASTAnalyses.ASTInfo.DeclParser.DeclType import DeclType
 
 
 class StructVarDecl(DeclType):

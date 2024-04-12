@@ -29,5 +29,8 @@ class AnnotationManager:
                         f"Two annotations with same type ('{annotation.anno_type}') and target ('{annotation.target}') with differing methods ('{annotation.methods}' and '{anno.methods}')"
                     )
 
-        if anno not in self.__annotations:
-            self.__annotations.append(anno)
+        for annotation in self.__annotations:
+            if anno.target_and_anno_type_equal(annotation):
+                return
+        self.__annotations.append(anno)
+        print(f"added anno {anno.to_str()}")

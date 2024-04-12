@@ -127,7 +127,7 @@ class ASTReader:
                     for (i, method) in enumerate(methods_data):
                         methods_str += method
                         if (i != len(methods_data) - 1):
-                            methods_str += ","
+                            methods_str += ", "
 
                     created_annotation = Annotation(
                         anno_type_data, target_data, methods_str)

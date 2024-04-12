@@ -25,7 +25,6 @@
 // TODO: better test names in diff pr
 // TODO: write testing for intentional errors (ErrorTestRunner)
 // TODO: add const to method params where it applies; specifically, specifying more const std::string& type
-// TODO: add flag "-Wno-everything" to AnnotationTestRunner.py (making it "clang -Wno-everything ...")
 // TODO: make onAnnotation take a set of strings (functions inside MC or CM annotation) rather than a single string
 // TODO: add error pairs to annotation test
 // TODO:  CLT that generates AST based on test name (for debugging). if file name given, pipe into file. if not, log to terminal
@@ -147,13 +146,19 @@ void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
 std::vector<std::string> getAnnotationStrings(const TempFileManager& astFile) {
     TempFileManager annotationsTempFile = TempFileManager("annotationsTempFile");
 
+    // TODO: we should just pass in generatedASTINFO, not ast file. fixing when other passes built.
+    TempFileManager ASTGeneratedInfo = TempFileManager("ASTGeneratedInfo");
+    std::string generateASTInfoCommand = AST_INFO_GENERATOR_LOCATION + " " +
+                                         astFile.getFileName() + " " + ASTGeneratedInfo.getFileName();
+    system(generateASTInfoCommand.c_str());
+
     std::string readASTCommand =
-        "python3 ../Annotations/annotation_generator.py " +
-        astFile.getFileName() + " " + annotationsTempFile.getFileName();
+        AST_ANNO_PASS_FILE_LOCATION + " " +
+        ASTGeneratedInfo.getFileName() + " " + annotationsTempFile.getFileName();
 
     system(readASTCommand.c_str());
 
-    logout("to py run " << readASTCommand);
+    logout("get anno strings to py run " << readASTCommand);
 
     std::ifstream annotationFile = annotationsTempFile.getFileStream();
     std::vector<std::string> annotations;

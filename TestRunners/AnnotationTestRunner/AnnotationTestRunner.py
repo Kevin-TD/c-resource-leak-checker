@@ -38,7 +38,7 @@ class AnnotationTestRunner(TestRunner):
             with tempfile.NamedTemporaryFile(prefix="temp_anno_output", suffix=".txt", delete=False) as annotations_output:
                 annotations_output_name = annotations_output.name
 
-            command = f"clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics {c_file} > {ast_input_name} ; python3 ../Annotations/annotation_generator.py {ast_input_name} {annotations_output_name}"
+            command = f"clang -Wno-everything -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics {c_file} > {ast_input_name} ; python3 ../ASTAnalyses/ASTPasses/AnnotationPass/anno_pass.py {ast_input_name} {annotations_output_name} -raw"
             print(f"Running build command")
             build_status = os.system(command)
 
