@@ -19,18 +19,6 @@ from ASTAnalyses.ASTInfo.DeclParser.DeclParser import *
 file_to_read = sys.argv[1]
 output_file = sys.argv[2]
 
-
-def is_null_stmt(line_of_ast: str):
-    # checks if end of string is <<<NULLL>>>
-
-    null_section = line_of_ast.find("<<<NULL>>>")
-    null_part_len = len("<<<NULL>>>")
-
-    if null_section + null_part_len == len(line_of_ast):
-        return True
-    return False
-
-
 with open(file_to_read) as ast:
     recent_specifier = None  # Function or Struct
 

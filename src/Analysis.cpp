@@ -458,7 +458,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
         TempFileManager annotationsTempFile = TempFileManager("annotationsTempFile");
 
-        auto annotations = getAnnotationStrings(astInfoTempFile); // TODO! FIX THIS
+        auto annotations = getAnnotationStrings(astInfoTempFile);
 
 
         calledMethods.setExpectedResult(
@@ -467,7 +467,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
             TestRunner::buildExpectedResults(testName, mustCall.passName));
         annotationHandler.addAnnotations(annotations);
 
-        structFieldToIndexMap.buildMap(astInfoTempFile); // TODO! FIX THIS
+        structFieldToIndexMap.buildMap(astInfoTempFile);
 
         loadAndBuild = true;
     }
