@@ -101,6 +101,7 @@ with open(file_to_read) as ast:
         # *STRUCT
         # @NAME (struct_name)
         # @FIELDS [name1,name2,name3]
+        # TYPEDEFS [typedef1,typedef2,typedef3]
 
         if type(spec) is Struct:
             output_str += f"*STRUCT\n"
