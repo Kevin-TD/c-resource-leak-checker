@@ -14,3 +14,4 @@ const std::string LLVM_VAR_ANNOTATION = "llvm.var.annotation";
 const std::string AST_ANNO_PASS_LOCATION = "../ASTAnalyses/ASTPasses/AnnotationPass/anno_pass.py";
 const std::string AST_INFO_GENERATOR_LOCATION = "../ASTAnalyses/ASTInfo/generator.py";
 const std::string AST_FIELD_TO_INDEX_MAP_GENERATOR_LOCATION = "../ASTAnalyses/ASTPasses/FieldToIndexPass/field_to_index_pass.py";
+const std::string AST_FUNCTION_INFO_PASS_LOCATION = "../ASTAnalyses/ASTPasses/FunctionInfoPass/get_function_info.py";

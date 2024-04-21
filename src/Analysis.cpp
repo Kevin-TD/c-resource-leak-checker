@@ -18,6 +18,7 @@
 #include "RunAnalysis.h"
 #include "TestRunner.h"
 #include "TempFileManager.h"
+#include "FunctionInfosManager.h"
 #include "Utils.h"
 
 // TODO: remove predecessors from CFG; unused
@@ -29,6 +30,10 @@
 // TODO:  CLT that generates AST based on test name (for debugging). if file name given, pipe into file. if not, log to terminal
 // TODO: see for ast info generator we can filter out functions included from std lib
 // TODO: make test cases for ASTAnalyses and have them ignore functions in stdlib
+// TODO: getAnnotationStrings, FunctionInfosManager, StructFieldToIndexMap share code. consolidate into class & subclasses (ASTReaders)
+// TODO: write test code for FI pass
+// TODO: implement FI in DataflowPass.cpp
+// TODO: document FunctionInfo and FunctionInfosManager and get_function_info.py
 
 // TODO!: includes_test fails because IR does desugaring sometimes and we currently cannot reverse
 // it. to be fixed with AST pass
@@ -51,6 +56,7 @@ CalledMethods calledMethods;
 MustCall mustCall;
 AnnotationHandler annotationHandler;
 StructFieldToIndexMap structFieldToIndexMap;
+FunctionInfosManager functionInfosManager;
 ProgramLinesBranchInfo programLinesBranchesInfo;
 std::string cFileName;
 
@@ -468,6 +474,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
         annotationHandler.addAnnotations(annotations);
 
         structFieldToIndexMap.buildMap(astInfoTempFile);
+        functionInfosManager.buildFunctionInfo(astInfoTempFile);
 
         loadAndBuild = true;
     }
@@ -509,6 +516,15 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
     ProgramFunction programFunction(fnName);
     std::map<std::string, InstructionHolder> branchInstructionMap;
+
+    auto fi = functionInfosManager.getFunction(fnName);
+    if (fi) {
+        logout("info about function " << fnName);
+        logout("param count " << fi->getNumberOfParameters());
+        for (unsigned i = 0; i < fi->getNumberOfParameters(); i++) {
+            logout(i << "th param type = " << fi->getNthParamType(i));
+        }
+    }
 
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
         std::string branchName = I->getParent()->getName().str();
