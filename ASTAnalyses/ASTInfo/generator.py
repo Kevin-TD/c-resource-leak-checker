@@ -13,6 +13,7 @@ from ASTAnalyses.ASTInfo.Specifiers.StructStructure.Struct import *
 from ASTAnalyses.ASTInfo.Specifiers.SpecifierManager import *
 from ASTAnalyses.ASTInfo.StructVariables.StructVarManager import *
 from ASTAnalyses.ASTInfo.Debug import *
+from ASTAnalyses.ASTInfo.ast_info_fmt_specifier import * 
 
 from ASTAnalyses.ASTInfo.DeclParser.DeclParser import *
 
