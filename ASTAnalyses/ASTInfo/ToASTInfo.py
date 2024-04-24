@@ -7,11 +7,12 @@ from ASTAnalyses.ASTInfo.Specifiers.StructStructure.Struct import *
 from ASTAnalyses.ASTInfo.Specifiers.SpecifierManager import *
 from ASTAnalyses.ASTInfo.StructVariables.StructVarManager import *
 from ASTAnalyses.ASTInfo.Debug import *
-from ASTAnalyses.ASTInfo.ast_info_fmt_specifier import * 
+from ASTAnalyses.ASTInfo.ast_info_fmt_specifier import *
 from ASTAnalyses.ASTInfo.DeclParser.DeclParser import *
 
+
 class ASTConverter():
-    
+
     def convert_function_spec_to_ast_info(struct_spec: Function) -> str:
         output_str = f"*FUNCTION\n"
         output_str += f"@NAME ({struct_spec.get_name()})\n"
@@ -32,7 +33,7 @@ class ASTConverter():
         output_str += "\n"
 
         return output_str
-    
+
     def convert_ast_info_func_to_function_spec(self, file_stream) -> Function:
         char = file_stream.read(1)
         if char == "*":
@@ -53,7 +54,8 @@ class ASTConverter():
 
                 self.__collect_and_validate(file_stream, " ", "@PARAMETERS")
                 self.__skip(file_stream, "[")
-                parameters_data = self.__collect_until(file_stream, "]").split(",")
+                parameters_data = self.__collect_until(
+                    file_stream, "]").split(",")
 
                 for (i, param) in enumerate(parameters_data):
                     if param == "":
@@ -64,7 +66,7 @@ class ASTConverter():
                     created_function.add_parameter(Parameter(i, param))
 
                 self.__functions.append(created_function)
-    
+
     def __skip(self, file_stream, char):
         """
         Reads current character and errors if what is read is not equal to char
