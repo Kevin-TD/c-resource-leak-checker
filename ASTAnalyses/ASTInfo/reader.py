@@ -16,13 +16,13 @@ syntax description
 
 There are 4 types of declaration: FUNCTION, STRUCT, STRUCT_VARIABLE, and ANNOTATION. An asterik is put before the name to indicate that it's a declaration; e.g., *FUNCTION. 
 
-A function declaration *FUNCTION must be followwed by @NAME (string), @RETURN_TYPE(string), and @PARAMETERS [list of strings]
+A function declaration *FUNCTION must be followwed by @NAME (string), @RETURN_TYPE (string), and @PARAMETERS [list of strings]
 
-A struct declaration *STRUCT must be followed by @NAME(string), @FIELDS [list of strings] and @TYPEDEFS [list of strings]
+A struct declaration *STRUCT must be followed by @NAME (string), @FIELDS [list of strings] and @TYPEDEFS [list of strings]
 
-For *STRUCT_VARIABLE, it has @NAME(string) and @TYPE(string)
+For *STRUCT_VARIABLE, it has @NAME (string) and @TYPE (string)
 
-For *ANNOTATION, it has @ANNO_TYPE(string), @TARGET<string>, and @METHODS [list of strings]
+For *ANNOTATION, it has @ANNO_TYPE (string), @TARGET <string>, and @METHODS [list of strings]
 '''
 
 
