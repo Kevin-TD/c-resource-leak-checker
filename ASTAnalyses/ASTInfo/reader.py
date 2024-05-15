@@ -7,6 +7,7 @@ from ASTAnalyses.ASTInfo.Specifiers.StructStructure.Struct import *
 from ASTAnalyses.ASTInfo.Specifiers.SpecifierManager import *
 from ASTAnalyses.ASTInfo.StructVariables.StructVarManager import *
 from ASTAnalyses.ASTInfo.Debug import *
+from ASTAnalyses.ASTInfo.ast_info_tokens import *
 
 # (build dir)
 # python3 ../ASTAnalyses/ASTInfo/reader.py testASTOutput.txt
@@ -41,25 +42,32 @@ class ASTReader:
 
         char = self.__file_stream.read(1)
         while char:
-            if char == "*":
-                declaration_type = self.__collect_until("\n")
-                if declaration_type == "FUNCTION":
+            if char == AST_INFO_TOKENS['DeclStart']:
+                declaration_type = self.__collect_until(
+                    AST_INFO_TOKENS['EndOfLineChar'])
+                if declaration_type == AST_INFO_TOKENS['FunctionDecl']:
 
-                    self.__collect_and_validate(" ", "@NAME")
-                    self.__skip("(")
-                    name_data = self.__collect_until(")")
-                    self.__skip("\n")
+                    self.__collect_and_validate(
+                        AST_INFO_TOKENS['AttrValueSeparation'], AST_INFO_TOKENS['NameAttr'])
+                    self.__skip(AST_INFO_TOKENS['ValueOpenChar'])
+                    name_data = self.__collect_until(
+                        AST_INFO_TOKENS['ValueCloseChar'])
+                    self.__skip(AST_INFO_TOKENS['EndOfLineChar'])
 
-                    self.__collect_and_validate(" ", "@RETURN_TYPE")
-                    self.__skip("(")
-                    return_type_data = self.__collect_until(")")
-                    self.__skip("\n")
+                    self.__collect_and_validate(
+                        AST_INFO_TOKENS['AttrValueSeparation'], AST_INFO_TOKENS['ReturnTypeAttr'])
+                    self.__skip(AST_INFO_TOKENS['ValueOpenChar'])
+                    return_type_data = self.__collect_until(
+                        AST_INFO_TOKENS['ValueCloseChar'])
+                    self.__skip(AST_INFO_TOKENS['EndOfLineChar'])
 
                     created_function = Function(name_data, return_type_data)
 
-                    self.__collect_and_validate(" ", "@PARAMETERS")
-                    self.__skip("[")
-                    parameters_data = self.__collect_until("]").split(",")
+                    self.__collect_and_validate(
+                        AST_INFO_TOKENS['AttrValueSeparation'], AST_INFO_TOKENS['ParamsAttr'])
+                    self.__skip(AST_INFO_TOKENS['ValuesOpenChar'])
+                    parameters_data = self.__collect_until(
+                        AST_INFO_TOKENS['ValuesCloseChar']).split(AST_INFO_TOKENS['ValuesDelimeter'])
 
                     for (i, param) in enumerate(parameters_data):
                         if param == "":
@@ -71,18 +79,22 @@ class ASTReader:
 
                     self.__functions.append(created_function)
 
-                elif declaration_type == "STRUCT":
-                    self.__collect_and_validate(" ", "@NAME")
-                    self.__skip("(")
-                    name_data = self.__collect_until(")")
-                    self.__skip("\n")
+                elif declaration_type == AST_INFO_TOKENS["StructDecl"]:
+                    self.__collect_and_validate(
+                        AST_INFO_TOKENS["AttrValueSeparation"], AST_INFO_TOKENS["NameAttr"])
+                    self.__skip(AST_INFO_TOKENS["ValueOpenChar"])
+                    name_data = self.__collect_until(
+                        AST_INFO_TOKENS["ValueCloseChar"])
+                    self.__skip(AST_INFO_TOKENS["EndOfLineChar"])
 
                     created_struct = Struct(name_data)
 
-                    self.__collect_and_validate(" ", "@FIELDS")
-                    self.__skip("[")
-                    fields_data = self.__collect_until("]").split(",")
-                    self.__skip("\n")
+                    self.__collect_and_validate(
+                        AST_INFO_TOKENS["AttrValueSeparation"], AST_INFO_TOKENS["FieldsAttr"])
+                    self.__skip(AST_INFO_TOKENS["ValuesOpenChar"])
+                    fields_data = self.__collect_until(AST_INFO_TOKENS["ValuesCloseChar"]).split(
+                        AST_INFO_TOKENS["ValuesDelimeter"])
+                    self.__skip(AST_INFO_TOKENS["EndOfLineChar"])
 
                     for (i, field) in enumerate(fields_data):
                         if field == "":
@@ -92,9 +104,11 @@ class ASTReader:
                             f"STRUCT: {name_data}, {return_type_data}, {i}, {field}")
                         created_struct.add_field(Field(field, i))
 
-                    self.__collect_and_validate(" ", "@TYPEDEFS")
-                    self.__skip("[")
-                    typedefs_data = self.__collect_until("]").split(",")
+                    self.__collect_and_validate(
+                        AST_INFO_TOKENS["AttrValueSeparation"], AST_INFO_TOKENS["TypedefsAttr"])
+                    self.__skip(AST_INFO_TOKENS["ValuesOpenChar"])
+                    typedefs_data = self.__collect_until(AST_INFO_TOKENS["ValuesCloseChar"]).split(
+                        AST_INFO_TOKENS["ValuesDelimeter"])
 
                     for (i, typedef) in enumerate(typedefs_data):
                         if typedef == "":
@@ -106,37 +120,49 @@ class ASTReader:
 
                     self.__structs.append(created_struct)
 
-                elif declaration_type == "STRUCT_VARIABLE":
-                    self.__collect_and_validate(" ", "@NAME")
-                    self.__skip("(")
-                    name_data = self.__collect_until(")")
+                elif declaration_type == AST_INFO_TOKENS["StructVarDecl"]:
+                    self.__collect_and_validate(
+                        AST_INFO_TOKENS["AttrValueSeparation"], AST_INFO_TOKENS["NameAttr"])
+                    self.__skip(AST_INFO_TOKENS["ValueOpenChar"])
+                    name_data = self.__collect_until(
+                        AST_INFO_TOKENS["ValueCloseChar"])
                     self.__skip("\n")
 
-                    self.__collect_and_validate(" ", "@TYPE")
-                    self.__skip("(")
-                    type_data = self.__collect_until(")")
+                    self.__collect_and_validate(
+                        AST_INFO_TOKENS["AttrValueSeparation"], AST_INFO_TOKENS["TypeAttr"])
+                    self.__skip(AST_INFO_TOKENS["ValueOpenChar"])
+                    type_data = self.__collect_until(
+                        AST_INFO_TOKENS["ValueCloseChar"])
 
                     created_struct_var = StructVar(name_data, type_data)
                     logout(f"STRUCT_VAR: {name_data}, {type_data}")
 
                     self.__struct_vars.append(created_struct_var)
 
-                elif declaration_type == "ANNOTATION":
-                    self.__collect_and_validate(" ", "@ANNO_TYPE")
-                    self.__skip("(")
-                    anno_type_data = self.__collect_until(")")
-                    self.__skip("\n")
+                elif declaration_type == AST_INFO_TOKENS["AnnoDecl"]:
+                    self.__collect_and_validate(
+                        AST_INFO_TOKENS["AttrValueSeparation"], AST_INFO_TOKENS["AnnoTypeAttr"])
+                    self.__skip(AST_INFO_TOKENS["ValueOpenChar"])
+                    anno_type_data = self.__collect_until(
+                        AST_INFO_TOKENS["ValueCloseChar"])
+                    self.__skip(AST_INFO_TOKENS["EndOfLineChar"])
 
-                    self.__collect_and_validate(" ", "@TARGET")
-                    self.__skip("<")
-                    target_data = self.__collect_until(">")
-                    self.__skip("\n")
+                    self.__collect_and_validate(
+                        AST_INFO_TOKENS["AttrValueSeparation"], AST_INFO_TOKENS["TargetAttr"])
+                    self.__skip(AST_INFO_TOKENS["TargetOpenChar"])
+                    target_data = self.__collect_until(
+                        AST_INFO_TOKENS["TargetCloseChar"])
+                    self.__skip(AST_INFO_TOKENS["EndOfLineChar"])
 
-                    self.__collect_and_validate(" ", "@METHODS")
-                    self.__skip("[")
-                    methods_data = self.__collect_until("]").split(",")
+                    self.__collect_and_validate(
+                        AST_INFO_TOKENS["AttrValueSeparation"], AST_INFO_TOKENS["MethodsAttr"])
+                    self.__skip(AST_INFO_TOKENS["ValuesOpenChar"])
+                    methods_data = self.__collect_until(AST_INFO_TOKENS["ValuesCloseChar"]).split(
+                        AST_INFO_TOKENS["ValuesDelimeter"])
                     methods_str = ""
 
+                    # NOTE: do not update section using AST_INFO_TOKENS.
+                    # methods_str and Annotation refer to different API
                     for (i, method) in enumerate(methods_data):
                         methods_str += method
                         if (i != len(methods_data) - 1):

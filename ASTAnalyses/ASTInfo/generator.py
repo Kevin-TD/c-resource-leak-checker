@@ -13,9 +13,8 @@ from ASTAnalyses.ASTInfo.Specifiers.StructStructure.Struct import *
 from ASTAnalyses.ASTInfo.Specifiers.SpecifierManager import *
 from ASTAnalyses.ASTInfo.StructVariables.StructVarManager import *
 from ASTAnalyses.ASTInfo.Debug import *
-from ASTAnalyses.ASTInfo.ast_info_fmt_specifier import *
-
 from ASTAnalyses.ASTInfo.DeclParser.DeclParser import *
+from ASTAnalyses.ASTInfo.ast_info_tokens import *
 
 file_to_read = sys.argv[1]
 output_file = sys.argv[2]
@@ -78,9 +77,25 @@ with open(file_to_read) as ast:
 
     for spec in specifier_manager.get_specifiers():
         if type(spec) is Function:
-            output_str += f"*FUNCTION\n"
-            output_str += f"@NAME ({spec.get_name()})\n"
-            output_str += f"@RETURN_TYPE ({spec.get_return_type().strip()})\n"
+            output_str += (
+                AST_INFO_TOKENS['DeclStart'] +
+                AST_INFO_TOKENS['FunctionDecl'] +
+                AST_INFO_TOKENS['EndOfLineChar']
+            )
+
+            output_str += (
+                AST_INFO_TOKENS['NameAttr'] +
+                AST_INFO_TOKENS['AttrValueSeparation'] +
+                wrap_value_in_open_close(spec.get_name()) +
+                AST_INFO_TOKENS['EndOfLineChar']
+            )
+
+            output_str += (
+                AST_INFO_TOKENS['ReturnTypeAttr'] +
+                AST_INFO_TOKENS['AttrValueSeparation'] +
+                wrap_value_in_open_close(spec.get_return_type().strip()) +
+                AST_INFO_TOKENS['EndOfLineChar']
+            )
 
             # @PARAMETERS [type one,type two,type three]
 
@@ -89,14 +104,24 @@ with open(file_to_read) as ast:
             for (i, parameter) in enumerate(spec.get_parameters()):
                 param_str += parameter.get_param_type()
                 if (i != len(spec.get_parameters()) - 1):
-                    param_str += ","
+                    param_str += AST_INFO_TOKENS['ValuesDelimeter']
 
             if param_str != "":
-                output_str += f"@PARAMETERS [{param_str.strip()}]\n"
+                output_str += (
+                    AST_INFO_TOKENS['ParamsAttr'] +
+                    AST_INFO_TOKENS['AttrValueSeparation'] +
+                    wrap_value_list_in_open_close(param_str.strip()) +
+                    AST_INFO_TOKENS['EndOfLineChar']
+                )
             else:
-                output_str += "@PARAMETERS []\n"
+                output_str += (
+                    AST_INFO_TOKENS['ParamsAttr'] +
+                    AST_INFO_TOKENS['AttrValueSeparation'] +
+                    wrap_value_list_in_open_close("") +
+                    AST_INFO_TOKENS['EndOfLineChar']
+                )
 
-            output_str += "\n"
+            output_str += AST_INFO_TOKENS['EndOfLineChar']
 
     for spec in specifier_manager.get_specifiers():
         # *STRUCT
@@ -105,45 +130,115 @@ with open(file_to_read) as ast:
         # TYPEDEFS [typedef1,typedef2,typedef3]
 
         if type(spec) is Struct:
-            output_str += f"*STRUCT\n"
-            output_str += f"@NAME ({spec.get_name()})\n"
+            output_str += (
+                AST_INFO_TOKENS['DeclStart'] +
+                AST_INFO_TOKENS['StructDecl'] +
+                AST_INFO_TOKENS['EndOfLineChar']
+            )
+
+            output_str += (
+                AST_INFO_TOKENS['NameAttr'] +
+                AST_INFO_TOKENS['AttrValueSeparation'] +
+                wrap_value_in_open_close(spec.get_name()) +
+                AST_INFO_TOKENS['EndOfLineChar']
+            )
 
             field_str = ""
             for (i, field) in enumerate(spec.get_fields()):
                 field_str += field.get_field_name()
                 if (i != len(spec.get_fields()) - 1):
-                    field_str += ","
+                    field_str += AST_INFO_TOKENS['ValuesDelimeter']
             if field_str != "":
-                output_str += f"@FIELDS [{field_str.strip()}]\n"
+                output_str += (
+                    AST_INFO_TOKENS['FieldsAttr'] +
+                    AST_INFO_TOKENS['AttrValueSeparation'] +
+                    wrap_value_list_in_open_close(field_str.strip()) +
+                    AST_INFO_TOKENS['EndOfLineChar']
+                )
             else:
-                output_str += "@FIELDS []\n"
+                output_str += (
+                    AST_INFO_TOKENS['FieldsAttr'] +
+                    AST_INFO_TOKENS['AttrValueSeparation'] +
+                    wrap_value_list_in_open_close("") +
+                    AST_INFO_TOKENS['EndOfLineChar']
+                )
 
             typedef_str = ""
             for (i, typedef) in enumerate(spec.get_typedefs()):
                 typedef_str += typedef
                 if (i != len(spec.get_typedefs()) - 1):
-                    typedef_str += ","
+                    typedef_str += AST_INFO_TOKENS['ValuesDelimeter']
             if typedef_str != "":
-                output_str += f"@TYPEDEFS [{typedef_str.strip()}]\n"
+                output_str += (
+                    AST_INFO_TOKENS['TypedefsAttr'] +
+                    AST_INFO_TOKENS['AttrValueSeparation'] +
+                    wrap_value_list_in_open_close(typedef_str.strip()) +
+                    AST_INFO_TOKENS['EndOfLineChar']
+                )
             else:
-                output_str += "@TYPEDEFS []\n"
+                output_str += (
+                    AST_INFO_TOKENS['TypedefsAttr'] +
+                    AST_INFO_TOKENS['AttrValueSeparation'] +
+                    wrap_value_list_in_open_close("") +
+                    AST_INFO_TOKENS['EndOfLineChar']
+                )
 
-            output_str += "\n"
+            output_str += AST_INFO_TOKENS['EndOfLineChar']
 
     for struct_var in struct_var_manager.struct_vars:
-        output_str += "*STRUCT_VARIABLE\n"
-        output_str += f"@NAME ({struct_var.get_var_name()})\n"
-        output_str += f"@TYPE ({struct_var.get_type_name()})\n\n"
+        output_str += (
+            AST_INFO_TOKENS['DeclStart'] +
+            AST_INFO_TOKENS['StructVarDecl'] +
+            AST_INFO_TOKENS['EndOfLineChar']
+        )
+
+        output_str += (
+            AST_INFO_TOKENS['NameAttr'] +
+            AST_INFO_TOKENS['AttrValueSeparation'] +
+            wrap_value_in_open_close(struct_var.get_var_name()) +
+            AST_INFO_TOKENS['EndOfLineChar']
+        )
+
+        output_str += (
+            AST_INFO_TOKENS['TypeAttr'] +
+            AST_INFO_TOKENS['AttrValueSeparation'] +
+            wrap_value_in_open_close(struct_var.get_type_name()) +
+            AST_INFO_TOKENS['EndOfLineChar'] + AST_INFO_TOKENS['EndOfLineChar']
+        )
 
     for anno in annotation_manager.get_annotations():
-        output_str += "*ANNOTATION\n"
-        output_str += f"@ANNO_TYPE ({anno.get_anno_type()})\n"
-        output_str += f"@TARGET <{anno.get_target()}>\n"
+        output_str += (
+            AST_INFO_TOKENS['DeclStart'] +
+            AST_INFO_TOKENS['AnnoDecl'] +
+            AST_INFO_TOKENS['EndOfLineChar']
+        )
+
+        output_str += (
+            AST_INFO_TOKENS['AnnoTypeAttr'] +
+            AST_INFO_TOKENS['AttrValueSeparation'] +
+            wrap_value_in_open_close(anno.get_anno_type()) +
+            AST_INFO_TOKENS['EndOfLineChar']
+        )
+
+        output_str += (
+            AST_INFO_TOKENS['TargetAttr'] +
+            AST_INFO_TOKENS['AttrValueSeparation'] +
+            AST_INFO_TOKENS['TargetOpenChar'] +
+            anno.get_target() +
+            AST_INFO_TOKENS['TargetCloseChar'] +
+            AST_INFO_TOKENS['EndOfLineChar']
+        )
+
         methods_str = anno.get_methods().split(",")
         methods_str = map(lambda x: x.strip(), methods_str)
-        methods_str = ",".join(methods_str)
+        methods_str = AST_INFO_TOKENS['ValuesDelimeter'].join(methods_str)
 
-        output_str += f"@METHODS [{methods_str}]\n\n"
+        output_str += (
+            AST_INFO_TOKENS['MethodsAttr'] +
+            AST_INFO_TOKENS['AttrValueSeparation'] +
+            wrap_value_list_in_open_close(methods_str) +
+            AST_INFO_TOKENS['EndOfLineChar'] + AST_INFO_TOKENS['EndOfLineChar']
+        )
 
     logout(output_str)
 
