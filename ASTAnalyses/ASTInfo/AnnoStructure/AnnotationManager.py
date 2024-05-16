@@ -1,7 +1,7 @@
 import sys
 sys.path.insert(0, '..')
 
-from AnnoStructure.Annotation import Annotation
+from ASTAnalyses.ASTInfo.AnnoStructure.Annotation import Annotation
 
 
 class AnnotationManager:
@@ -29,5 +29,7 @@ class AnnotationManager:
                         f"Two annotations with same type ('{annotation.anno_type}') and target ('{annotation.target}') with differing methods ('{annotation.methods}' and '{anno.methods}')"
                     )
 
-        if anno not in self.__annotations:
-            self.__annotations.append(anno)
+        for annotation in self.__annotations:
+            if anno.target_and_anno_type_equal(annotation):
+                return
+        self.__annotations.append(anno)

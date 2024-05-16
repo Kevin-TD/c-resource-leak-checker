@@ -1,7 +1,7 @@
-from Specifiers.Specifier import Specifier
-from Specifiers.FunctionStructure.Function import Function
-from Specifiers.StructStructure.Struct import Struct
-from ASTInfoGenerator.Debug import *
+from ASTAnalyses.ASTInfo.Specifiers.Specifier import Specifier
+from ASTAnalyses.ASTInfo.Specifiers.FunctionStructure.Function import Function
+from ASTAnalyses.ASTInfo.Specifiers.StructStructure.Struct import Struct
+from ASTAnalyses.ASTInfo.Debug import *
 
 
 class SpecifierManager:

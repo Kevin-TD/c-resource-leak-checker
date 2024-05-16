@@ -1,5 +1,5 @@
-from Specifiers.StructStructure.Field import Field
-from Specifiers.Specifier import Specifier
+from ASTAnalyses.ASTInfo.Specifiers.StructStructure.Field import Field
+from ASTAnalyses.ASTInfo.Specifiers.Specifier import Specifier
 
 
 class Struct(Specifier):

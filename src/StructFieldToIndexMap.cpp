@@ -1,16 +1,17 @@
 #include "StructFieldToIndexMap.h"
 #include "Debug.h"
+#include "Constants.h"
 
 StructFieldToIndexMap::StructFieldToIndexMap() {
 
 }
 
-void StructFieldToIndexMap::buildMap(const TempFileManager& astFile) {
+void StructFieldToIndexMap::buildMap(const TempFileManager& astInfoFile) {
     TempFileManager mapTempFile = TempFileManager("mapTempFile");
 
     std::string readASTCommand =
-        "python3 ../TestHelpers/struct_field_to_index_map_generator.py " +
-        astFile.getFileName() + " " + mapTempFile.getFileName();
+        "python3 " + AST_FIELD_TO_INDEX_MAP_GENERATOR_LOCATION + " " +
+        astInfoFile.getFileName() + " " + mapTempFile.getFileName();
 
     int command_exit_status = system(readASTCommand.c_str());
 

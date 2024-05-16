@@ -25,11 +25,10 @@
 // TODO: better test names in diff pr
 // TODO: write testing for intentional errors (ErrorTestRunner)
 // TODO: add const to method params where it applies; specifically, specifying more const std::string& type
-// TODO: add flag "-Wno-everything" to AnnotationTestRunner.py (making it "clang -Wno-everything ...")
-// TODO: make onAnnotation take a set of strings (functions inside MC or CM annotation) rather than a single string
 // TODO: add error pairs to annotation test
 // TODO:  CLT that generates AST based on test name (for debugging). if file name given, pipe into file. if not, log to terminal
 // TODO: see for ast info generator we can filter out functions included from std lib
+// TODO: make test cases for ASTAnalyses and have them ignore functions in stdlib
 
 // TODO!: includes_test fails because IR does desugaring sometimes and we currently cannot reverse
 // it. to be fixed with AST pass
@@ -143,16 +142,16 @@ void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
     }
 }
 
-std::vector<std::string> getAnnotationStrings(const TempFileManager& astFile) {
+std::vector<std::string> getAnnotationStrings(const TempFileManager& astInfoFile) {
     TempFileManager annotationsTempFile = TempFileManager("annotationsTempFile");
 
     std::string readASTCommand =
-        "python3 ../Annotations/annotation_generator.py " +
-        astFile.getFileName() + " " + annotationsTempFile.getFileName();
+        "python3 " + AST_ANNO_PASS_LOCATION + " " +
+        astInfoFile.getFileName() + " " + annotationsTempFile.getFileName();
 
     system(readASTCommand.c_str());
 
-    logout("to py run " << readASTCommand);
+    logout("get anno strings to py run " << readASTCommand);
 
     std::ifstream annotationFile = annotationsTempFile.getFileStream();
     std::vector<std::string> annotations;
@@ -453,10 +452,12 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
         loadFunctions();
 
-        TempFileManager astTempFile("astTempFile");
-        tempfile_util::dumpASTIntoTempFile(optLoadFileName, astTempFile);
+        TempFileManager astInfoTempFile("astInfoTempFile");
+        tempfile_util::dumpASTInfoIntoTempFile(optLoadFileName, astInfoTempFile);
 
-        auto annotations = getAnnotationStrings(astTempFile);
+        TempFileManager annotationsTempFile = TempFileManager("annotationsTempFile");
+
+        auto annotations = getAnnotationStrings(astInfoTempFile);
 
 
         calledMethods.setExpectedResult(
@@ -465,7 +466,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
             TestRunner::buildExpectedResults(testName, mustCall.passName));
         annotationHandler.addAnnotations(annotations);
 
-        structFieldToIndexMap.buildMap(astTempFile);
+        structFieldToIndexMap.buildMap(astInfoTempFile);
 
         loadAndBuild = true;
     }

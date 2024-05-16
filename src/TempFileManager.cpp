@@ -1,5 +1,6 @@
 #include "TempFileManager.h"
 #include "Debug.h"
+#include "Constants.h"
 
 TempFileManager::TempFileManager(const std::string& fileName) {
     tempFileName = "/tmp/" + std::string(fileName) + "XXXXXX";
@@ -40,6 +41,18 @@ void dumpASTIntoTempFile(const std::string& optLoadFileName, TempFileManager& tm
         "clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics " +
         optLoadFileName + "> " + tmp.getFileName();
     system(dumpASTCommand.c_str());
+}
+
+void dumpASTInfoIntoTempFile(const std::string& optLoadFileName, TempFileManager& tmp) {
+    TempFileManager astTmpFile = TempFileManager("astToDump");
+    std::string dumpASTCommand =
+        "clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics " +
+        optLoadFileName + "> " + astTmpFile.getFileName();
+    system(dumpASTCommand.c_str());
+
+    std::string dumpASTInfoCommand = "python3 " + AST_INFO_GENERATOR_LOCATION + " " +
+                                     astTmpFile.getFileName() + " " + tmp.getFileName();
+    system(dumpASTInfoCommand.c_str());
 }
 
 }
