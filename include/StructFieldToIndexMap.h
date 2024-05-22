@@ -40,7 +40,7 @@ class StructFieldToIndexMap {
     StructFieldToIndexMap();
 
     // builds the map based off a tmp file which consists of the AST of a C program
-    void buildMap(const TempFileManager& astFile);
+    void buildMap(const TempFileManager& astInfoFile);
 
     // returns the corresponding struct name and index based on structNameAndField
     std::string get(const std::string& structNameAndField);
