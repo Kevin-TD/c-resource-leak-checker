@@ -7,10 +7,13 @@ class Annotation:
         """
 
         Args:
-            anno_type (str): CalledMethods or MustCall
+            anno_type (str): Calls or MustCall
             target (str): name of function/struct 
             methods (str): list of methods (as a str) specified in the annotation
         """
+        if anno_type != "Calls" and anno_type != "MustCall":
+            raise ValueError(f"Annotation type '{anno_type}' unrecognized")
+
         self.__anno_type = anno_type
         self.__target = target
         self.__methods = methods

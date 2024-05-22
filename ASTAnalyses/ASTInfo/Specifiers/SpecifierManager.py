@@ -11,7 +11,7 @@ class SpecifierManager:
     def __init__(self):
         self.__specifiers: list[Specifier] = []
 
-    # if struct is not found, a new one is returned with name struct_name if error_if_not_found is false
+    # if struct is not found, a new one is returned with name struct_name
     def get_or_add_struct(self, struct_name: str) -> Struct:
         for specifier in self.__specifiers:
             if type(specifier) is Struct:
