@@ -24,6 +24,10 @@ class Function(Specifier):
         self.return_type = return_type
 
     def add_parameter(self, parameter: Parameter) -> None:
+        for param in self.__parameters:
+            if param.get_index() == parameter.get_index():
+                return
+
         self.__parameters.append(parameter)
 
     def equals(self, function_name: str):
