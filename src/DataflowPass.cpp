@@ -169,10 +169,10 @@ void DataflowPass::transfer(Instruction *instruction,
                 this->onUnknownFunctionCall(pvas);
             }
 
-            // need to check if it has been destructured. if it is, we skip 
+            // need to check if it has been destructured. if it is, we skip
             // onFunctionCall
             auto fi = this->functionInfosManager.getFunction(fnName);
-            bool skipTheOnFunctionCall = false; 
+            bool skipTheOnFunctionCall = false;
 
             if (fi) {
                 if (fi->getNumberOfParameters() != call->getNumArgOperands()) {
@@ -180,13 +180,13 @@ void DataflowPass::transfer(Instruction *instruction,
                     logout("param count " << fi->getNumberOfParameters());
 
                     for (int k = 0; k < fi->getNumberOfParameters(); k++) {
-                         logout(k << " kth param type = " << fi->getNthParamType(k));
-                    }  
+                        logout(k << " kth param type = " << fi->getNthParamType(k));
+                    }
 
                     logout(i << "th param type = " << fi->getNthParamType(i));
 
                     if (fi->getNthParamType(i) == "") {
-                        skipTheOnFunctionCall = true; 
+                        skipTheOnFunctionCall = true;
                     }
 
                     // check if param type is a struct
@@ -197,18 +197,18 @@ void DataflowPass::transfer(Instruction *instruction,
 
                     for (const auto &structType : module->getIdentifiedStructTypes()) {
                         // ASSUMPTION: llvm struct names being with "struct."
-                        
+
                         if (
-                            "struct." + fi->getNthParamType(i) == structType->getName()  || 
+                            "struct." + fi->getNthParamType(i) == structType->getName()  ||
 
                             rlc_util::startsWith(fi->getNthParamType(i), "struct ") &&
                             "struct." + rlc_util::splitString(fi->getNthParamType(i), ' ')[1] == structType->getName()
-                    
+
                         ) {
 
                             logout("found struct " << structType->getName());
                             logout("struct has this many fields: " << structType->getNumElements());
-                            skipTheOnFunctionCall = true; 
+                            skipTheOnFunctionCall = true;
                         }
                     }
                 }
@@ -606,9 +606,9 @@ void DataflowPass::setProgramFunction(ProgramFunction programFunction) {
 }
 
 void DataflowPass::setFunctionInfosManager(FunctionInfosManager functionInfosManager) {
-    this->functionInfosManager = functionInfosManager; 
+    this->functionInfosManager = functionInfosManager;
 }
 
 void DataflowPass::setOptLoadFileName(const std::string& optLoadFileName) {
-    this->optLoadFileName = optLoadFileName; 
+    this->optLoadFileName = optLoadFileName;
 }

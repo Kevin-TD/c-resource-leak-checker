@@ -39,9 +39,9 @@
 // TODO!: includes_test fails because IR does desugaring sometimes and we currently cannot reverse
 // it. to be fixed with AST pass
 
-// IMPORTANT: 
-// TODO: when doing something like func(thing) make sure called methods is applied on thing when it gets desugared. 
-// update tests accordingly 
+// IMPORTANT:
+// TODO: when doing something like func(thing) make sure called methods is applied on thing when it gets desugared.
+// update tests accordingly
 
 struct InstructionHolder {
     SetVector<Instruction *> branch;
