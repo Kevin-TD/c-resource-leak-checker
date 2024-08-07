@@ -14,7 +14,7 @@ void FunctionInfosManager::buildFunctionInfo(const TempFileManager& astInfoFile)
     logout("ran command " << readASTCommand);
 
     if (command_exit_status != 0) {
-        errs() << "error occured while building map; early exit\n";
+        errs() << "error occurred while building map; early exit\n";
         std::exit(1);
     }
 
@@ -33,7 +33,7 @@ void FunctionInfosManager::buildFunctionInfo(const TempFileManager& astInfoFile)
             auto fiChunks = rlc_util::splitString(line, '|');
 
             if (fiChunks.size() < 2) {
-                errs() << "error 0 occured while reading function info: malformed '" << line << "'. early exit\n";
+                errs() << "error 0 occurred while reading function info: malformed '" << line << "'. early exit\n";
                 std::exit(1);
             }
 
@@ -42,11 +42,11 @@ void FunctionInfosManager::buildFunctionInfo(const TempFileManager& astInfoFile)
             // FUNCTION=_IO_vfscanf
             auto functionChunks = rlc_util::splitString(fiChunks[0], '=');
             if (functionChunks.size() != 2) {
-                errs() << "error 1 occured while reading function info: bad function declaration '" << line << "'. early exit\n";
+                errs() << "error 1 occurred while reading function info: bad function declaration '" << line << "'. early exit\n";
                 std::exit(1);
             }
             if (functionChunks[0] != "FUNCTION") {
-                errs() << "error 2 occured while reading function info: function declaration missing \"FUNCTION\" '" << line << "'. early exit\n";
+                errs() << "error 2 occurred while reading function info: function declaration missing \"FUNCTION\" '" << line << "'. early exit\n";
                 std::exit(1);
             }
             functionName = functionChunks[1];
@@ -55,11 +55,11 @@ void FunctionInfosManager::buildFunctionInfo(const TempFileManager& astInfoFile)
             // RETURNS=int
             auto returnTypeChunks = rlc_util::splitString(fiChunks[1], '=');
             if (returnTypeChunks.size() != 2) {
-                errs() << "error 3 occured while reading function info: bad return declaration '" << line << "'. early exit\n";
+                errs() << "error 3 occurred while reading function info: bad return declaration '" << line << "'. early exit\n";
                 std::exit(1);
             }
             if (returnTypeChunks[0] != "RETURNS") {
-                errs() << "error 4 occured while reading function info: function declaration missing \"RETURNS\" '" << line << "'. early exit\n";
+                errs() << "error 4 occurred while reading function info: function declaration missing \"RETURNS\" '" << line << "'. early exit\n";
                 std::exit(1);
             }
             returnType = returnTypeChunks[1];
@@ -75,7 +75,7 @@ void FunctionInfosManager::buildFunctionInfo(const TempFileManager& astInfoFile)
             }
 
             if (fiChunks[2] != "PARAMS") {
-                errs() << "error 5 occured while reading function info: PARAMS missing at '" << line << "'. early exit\n";
+                errs() << "error 5 occurred while reading function info: PARAMS missing at '" << line << "'. early exit\n";
                 std::exit(1);
             }
 
@@ -84,7 +84,7 @@ void FunctionInfosManager::buildFunctionInfo(const TempFileManager& astInfoFile)
             while (paramIterator < fiChunks.size()) {
                 unsigned paramIndex = std::stoi(fiChunks[paramIterator]);
                 if (paramIndex + 1 >= fiChunks.size()) {
-                    errs() << "error 6 occured while reading function info: param index missing type declarartion at '" << line << "'. early exit\n";
+                    errs() << "error 6 occurred while reading function info: param index missing type declaration at '" << line << "'. early exit\n";
                     std::exit(1);
                 }
 

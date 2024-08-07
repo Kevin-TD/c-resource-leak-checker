@@ -9,6 +9,7 @@
 #include "Annotations/ReturnAnnotation.h"
 #include "Annotations/StructAnnotation.h"
 #include "CFG.h"
+#include "FunctionInfosManager.h"
 #include "ProgramRepresentation/FullFile.h"
 #include "RunAnalysis.h"
 #include "Utils.h"
@@ -78,8 +79,9 @@ class DataflowPass {
   protected:
     ProgramFunction programFunction;
     AnnotationHandler annotations;
-    std::string testName;
+    std::string optLoadFileName;
     CFG *cfg;
+    FunctionInfosManager functionInfosManager;
     FullFile expectedResult;
 
     virtual void leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSet) = 0;
@@ -123,6 +125,8 @@ class DataflowPass {
     void setExpectedResult(FullFile expectedResult);
     void setProgramFunction(ProgramFunction programFunction);
     void setAnnotations(AnnotationHandler annotations);
+    void setFunctionInfosManager(FunctionInfosManager functionInfosManager);
+    void setOptLoadFileName(const std::string& optLoadFileName);
 
     FullFile getExpectedResult();
 };

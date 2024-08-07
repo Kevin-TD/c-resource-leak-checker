@@ -15,9 +15,9 @@ from ASTAnalyses.ASTInfo.ast_info_tokens import *
 '''
 syntax description 
 
-There are 4 types of declaration: FUNCTION, STRUCT, STRUCT_VARIABLE, and ANNOTATION. An asterik is put before the name to indicate that it's a declaration; e.g., *FUNCTION. 
+There are 4 types of declaration: FUNCTION, STRUCT, STRUCT_VARIABLE, and ANNOTATION. An asterisk is put before the name to indicate that it's a declaration; e.g., *FUNCTION. 
 
-A function declaration *FUNCTION must be followwed by @NAME (string), @RETURN_TYPE (string), and @PARAMETERS [list of strings]
+A function declaration *FUNCTION must be followed by @NAME (string), @RETURN_TYPE(string), and @PARAMETERS [list of strings]
 
 A struct declaration *STRUCT must be followed by @NAME (string), @FIELDS [list of strings] and @TYPEDEFS [list of strings]
 

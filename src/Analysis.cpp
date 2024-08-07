@@ -39,6 +39,10 @@
 // TODO!: includes_test fails because IR does desugaring sometimes and we currently cannot reverse
 // it. to be fixed with AST pass
 
+// IMPORTANT: 
+// TODO: when doing something like func(thing) make sure called methods is applied on thing when it gets desugared. 
+// update tests accordingly 
+
 struct InstructionHolder {
     SetVector<Instruction *> branch;
     SetVector<Instruction *> successors;
@@ -517,15 +521,6 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     ProgramFunction programFunction(fnName);
     std::map<std::string, InstructionHolder> branchInstructionMap;
 
-    auto fi = functionInfosManager.getFunction(fnName);
-    if (fi) {
-        logout("info about function " << fnName);
-        logout("param count " << fi->getNumberOfParameters());
-        for (unsigned i = 0; i < fi->getNumberOfParameters(); i++) {
-            logout(i << "th param type = " << fi->getNthParamType(i));
-        }
-    }
-
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
         std::string branchName = I->getParent()->getName().str();
         doAliasReasoning(&(*I), programFunction, optLoadFileName);
@@ -544,11 +539,15 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
                                annotationHandler);
     calledMethods.setCFG(&cfg);
     calledMethods.setProgramFunction(programFunction);
+    calledMethods.setFunctionInfosManager(functionInfosManager);
+    calledMethods.setOptLoadFileName(optLoadFileName);
 
     mustCall.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
                           annotationHandler);
     mustCall.setCFG(&cfg);
     mustCall.setProgramFunction(programFunction);
+    mustCall.setFunctionInfosManager(functionInfosManager);
+    mustCall.setOptLoadFileName(optLoadFileName);
 
     ProgramFunction PostCalledMethods = calledMethods.generatePassResults();
     ProgramFunction PostMustCalls = mustCall.generatePassResults();
