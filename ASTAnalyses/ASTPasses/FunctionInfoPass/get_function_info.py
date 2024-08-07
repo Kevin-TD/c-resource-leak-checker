@@ -20,7 +20,7 @@ with open(file_to_write_to, "w") as output:
     for func in ast_info.get_functions():
         output_str += f"FUNCTION={func.get_name()}|RETURNS={func.get_return_type()}"
 
-        if len(func.get_parameters()) != 0: 
+        if len(func.get_parameters()) != 0:
             output_str += "|PARAMS|"
 
         for (i, param) in enumerate(func.get_parameters()):
@@ -28,8 +28,8 @@ with open(file_to_write_to, "w") as output:
 
             if (i != len(func.get_parameters()) - 1):
                 output_str += "|"
-                
+
         output_str += "\n"
-    
+
     logout(output_str)
     output.write(f"{output_str}")
