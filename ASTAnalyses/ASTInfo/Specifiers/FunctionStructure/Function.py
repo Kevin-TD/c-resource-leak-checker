@@ -27,7 +27,7 @@ class Function(Specifier):
         for param in self.__parameters:
             if param.get_index() == parameter.get_index():
                 return
-        
+
         self.__parameters.append(parameter)
 
     def equals(self, function_name: str):
