@@ -30,7 +30,7 @@ class DeclParser:
         # e.g., |-FunctionDecl 0x24161a8 <../test/test23/test23.h:27:1, line:28:57> col:5 does_something 'struct my_struct (struct my_struct)'
         #                                                                                 ^func name     ^return type      ^parameters
 
-        # may also loook like
+        # may also look like
         # |-FunctionDecl 0x24164a0 <../test/includes_test/call_structs.h:23:1, line:25:57> line:24:1 used creates_obligation 'char *(char *, struct my_struct)'
 
         start_index = quote_index - 2

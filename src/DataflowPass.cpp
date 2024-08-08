@@ -133,15 +133,6 @@ void DataflowPass::transfer(Instruction *instruction,
             }
         }
 
-        /*
-        LLVM identifiers either start with @ (global identifier) or % (local
-        identifier) Docs: https://llvm.org/docs/LangRef.html#identifiers For
-        (temporary decision) simplicity sake, @'s will be replaced with %, though in
-        the future the variable naming system may entirely change to remove %'s and
-        @'s
-
-        */
-
     } else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
         for (unsigned i = 0; i < call->getNumArgOperands(); ++i) {
             ProgramVariable argumentVar = ProgramVariable(call->getArgOperand(i));
@@ -178,9 +169,55 @@ void DataflowPass::transfer(Instruction *instruction,
                 this->onUnknownFunctionCall(pvas);
             }
 
-            // need to check if it has been destructured
+            // need to check if it has been destructured. if it is, we skip
+            // onFunctionCall
+            auto fi = this->functionInfosManager.getFunction(fnName);
+            bool skipTheOnFunctionCall = false;
 
-            this->onFunctionCall(pvas, fnName);
+            if (fi) {
+                if (fi->getNumberOfParameters() != call->getNumArgOperands()) {
+                    logout("info about function " << fnName);
+                    logout("param count " << fi->getNumberOfParameters());
+
+                    for (int k = 0; k < fi->getNumberOfParameters(); k++) {
+                        logout(k << " kth param type = " << fi->getNthParamType(k));
+                    }
+
+                    logout(i << "th param type = " << fi->getNthParamType(i));
+
+                    if (fi->getNthParamType(i) == "") {
+                        skipTheOnFunctionCall = true;
+                    }
+
+                    // check if param type is a struct
+                    LLVMContext context;
+                    SMDiagnostic error;
+                    std::string IRFileName = rlc_util::sliceString(optLoadFileName, 0, optLoadFileName.size() - 3) + ".ll";
+                    std::unique_ptr<Module> module = parseIRFile(IRFileName, error, context);
+
+                    for (const auto &structType : module->getIdentifiedStructTypes()) {
+                        // ASSUMPTION: llvm struct names being with "struct."
+
+                        if (
+                            "struct." + fi->getNthParamType(i) == structType->getName()  ||
+
+                            rlc_util::startsWith(fi->getNthParamType(i), "struct ") &&
+                            "struct." + rlc_util::splitString(fi->getNthParamType(i), ' ')[1] == structType->getName()
+
+                        ) {
+
+                            logout("found struct " << structType->getName());
+                            logout("struct has this many fields: " << structType->getNumElements());
+                            skipTheOnFunctionCall = true;
+                        }
+                    }
+                }
+            }
+
+            if (!skipTheOnFunctionCall) {
+                logout("adding " << fnName << " to " << pvas->toString(false));
+                this->onFunctionCall(pvas, fnName);
+            }
 
         }
     }
@@ -451,7 +488,7 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
       for deallocation functions, the arguments matter since they will contain
       the pointers/var names to memory. for allocation functions, the arguments
       do not matter since they are typically numbers. the variable that is
-      receiving the memory is handled elswhere (in the handling of store
+      receiving the memory is handled elsewhere (in the handling of store
       insts)
     */
 
@@ -566,4 +603,12 @@ FullFile DataflowPass::getExpectedResult() {
 
 void DataflowPass::setProgramFunction(ProgramFunction programFunction) {
     this->programFunction = programFunction;
+}
+
+void DataflowPass::setFunctionInfosManager(FunctionInfosManager functionInfosManager) {
+    this->functionInfosManager = functionInfosManager;
+}
+
+void DataflowPass::setOptLoadFileName(const std::string& optLoadFileName) {
+    this->optLoadFileName = optLoadFileName;
 }

@@ -18,6 +18,7 @@
 #include "RunAnalysis.h"
 #include "TestRunner.h"
 #include "TempFileManager.h"
+#include "FunctionInfosManager.h"
 #include "Utils.h"
 
 // TODO: remove predecessors from CFG; unused
@@ -30,9 +31,17 @@
 // TODO: see for ast info generator we can filter out functions included from std lib
 // TODO: make test cases for ASTAnalyses and have them ignore functions in stdlib
 // TODO: add testing to ast_info_tokens/generator/reader to ensure that tweaking format doesn't change pass results
+// TODO: getAnnotationStrings, FunctionInfosManager, StructFieldToIndexMap share code. consolidate into class & subclasses (ASTReaders)
+// TODO: write test code for FI pass
+// TODO: implement FI in DataflowPass.cpp
+// TODO: document FunctionInfo and FunctionInfosManager and get_function_info.py
 
 // TODO!: includes_test fails because IR does desugaring sometimes and we currently cannot reverse
 // it. to be fixed with AST pass
+
+// IMPORTANT:
+// TODO: when doing something like func(thing) make sure called methods is applied on thing when it gets desugared.
+// update tests accordingly
 
 struct InstructionHolder {
     SetVector<Instruction *> branch;
@@ -51,6 +60,7 @@ CalledMethods calledMethods;
 MustCall mustCall;
 AnnotationHandler annotationHandler;
 StructFieldToIndexMap structFieldToIndexMap;
+FunctionInfosManager functionInfosManager;
 ProgramLinesBranchInfo programLinesBranchesInfo;
 std::string cFileName;
 
@@ -468,6 +478,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
         annotationHandler.addAnnotations(annotations);
 
         structFieldToIndexMap.buildMap(astInfoTempFile);
+        functionInfosManager.buildFunctionInfo(astInfoTempFile);
 
         loadAndBuild = true;
     }
@@ -528,11 +539,15 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
                                annotationHandler);
     calledMethods.setCFG(&cfg);
     calledMethods.setProgramFunction(programFunction);
+    calledMethods.setFunctionInfosManager(functionInfosManager);
+    calledMethods.setOptLoadFileName(optLoadFileName);
 
     mustCall.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
                           annotationHandler);
     mustCall.setCFG(&cfg);
     mustCall.setProgramFunction(programFunction);
+    mustCall.setFunctionInfosManager(functionInfosManager);
+    mustCall.setOptLoadFileName(optLoadFileName);
 
     ProgramFunction PostCalledMethods = calledMethods.generatePassResults();
     ProgramFunction PostMustCalls = mustCall.generatePassResults();

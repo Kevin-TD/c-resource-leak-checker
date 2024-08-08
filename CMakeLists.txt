@@ -36,6 +36,8 @@ add_llvm_library(CodeAnalyzer MODULE
   src/TestRunner.cpp
   src/StructFieldToIndexMap.cpp
   src/TempFileManager.cpp
+  src/FunctionInfo.cpp
+  src/FunctionInfosManager.cpp
   src/Analysis.cpp
   src/RunAnalysis.cpp
   src/Utils.cpp
