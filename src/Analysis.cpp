@@ -5,6 +5,8 @@
 #include "Annotations/ParameterAnnotation.h"
 #include "Annotations/ReturnAnnotation.h"
 #include "Annotations/StructAnnotation.h"
+#include "UtilFunctionTesters/UtilFunctionTester.h"
+#include "UtilFunctionTesters/RLCDataflow/VariableTester.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "Constants.h"
@@ -580,10 +582,28 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     }
 }
 
+// assumes utilFunctionTester is actually an extended class and not UtilFunctionTester
+// (e.g., an instance of VariableTester)
+void runUtilFunctionTester(UtilFunctionTester* utilFunctionTester, const std::string& functionName) {
+    errs() << "RUNNING UTIL FUNCTION TEST: " << functionName << "\n";
+    if (!utilFunctionTester->runTest()) {
+        errs() << "UTIL FUNCTION TEST FAIL: " << functionName << "\n";
+        std::exit(EXIT_FAILURE);
+    }
+
+    errs() << "UTIL FUNCTION TEST PASS: " << functionName << "\n";
+}
+
 void CodeAnalyzer::onEnd() {
     if (BUILD_PROGRAM_LINES_BRANCH_INFO) {
         programLinesBranchesInfo.generate(cFileName, true);
     }
+
+    // rlc_dataflow function testers
+    VariableTester vt = VariableTester();
+    runUtilFunctionTester(&vt, "rlc_dataflow::variable");
+
+    // rlc_util function testers
 
     if (anyTestFailed) {
         std::exit(EXIT_FAILURE);
