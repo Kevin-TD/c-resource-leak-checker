@@ -127,7 +127,7 @@ bool GetSuccessorsTester::runTest() {
                 if (!expectedEqResult) {
                     return false;
                 }
-                
+
                 instructionNumber++;
             }
         }

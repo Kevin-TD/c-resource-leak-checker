@@ -4,7 +4,7 @@ UnwrapValuePointerToStructTester::UnwrapValuePointerToStructTester() {}
 
 bool UnwrapValuePointerToStructTester::runTest() {
     llvm::LLVMContext context;
-    
+
     // based on a version of the IR for test/long_struct/index.c
     std::string irCode = R"(
         ; ModuleID = '../test/long_struct/index.c'
@@ -431,7 +431,7 @@ bool UnwrapValuePointerToStructTester::runTest() {
     instructionNumToExpectedResultOfIfUnwrapIsNull[115] = true;
     instructionNumToExpectedResultOfIfUnwrapIsNull[116] = true;
     instructionNumToExpectedResultOfIfUnwrapIsNull[117] = true;
-    
+
 
     auto memBuffer = llvm::MemoryBuffer::getMemBuffer(irCode);
     llvm::SMDiagnostic error;
@@ -449,11 +449,11 @@ bool UnwrapValuePointerToStructTester::runTest() {
                 if (!expectedEqResult) {
                     return false;
                 }
-                instructionNumber++; 
+                instructionNumber++;
             }
         }
     }
 
 
-    return true; 
+    return true;
 }
