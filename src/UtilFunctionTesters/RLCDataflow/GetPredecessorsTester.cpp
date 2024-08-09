@@ -91,7 +91,7 @@ bool GetPredecessorsTester::runTest() {
         !27 = !DILocation(line: 14, column: 5, scope: !25)
         !28 = !DILocation(line: 16, column: 1, scope: !10)
     )";
-    std::map<unsigned, unsigned> instructionNumToExpectedNumberOfPredsMap; 
+    std::map<unsigned, unsigned> instructionNumToExpectedNumberOfPredsMap;
     instructionNumToExpectedNumberOfPredsMap[0] = 0;
     instructionNumToExpectedNumberOfPredsMap[1] = 1;
     instructionNumToExpectedNumberOfPredsMap[2] = 1;

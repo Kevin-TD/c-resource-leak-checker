@@ -312,7 +312,7 @@ bool UnwrapValuePointerToStructTester::runTest() {
     )";
 
 
-    std::map<unsigned, bool> instructionNumToExpectedResultOfIfUnwrapIsNull; 
+    std::map<unsigned, bool> instructionNumToExpectedResultOfIfUnwrapIsNull;
     instructionNumToExpectedResultOfIfUnwrapIsNull[0] = true;
     instructionNumToExpectedResultOfIfUnwrapIsNull[1] = true;
     instructionNumToExpectedResultOfIfUnwrapIsNull[2] = true;

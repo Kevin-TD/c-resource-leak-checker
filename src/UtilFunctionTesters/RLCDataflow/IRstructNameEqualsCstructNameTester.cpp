@@ -10,13 +10,13 @@ bool IRstructNameEqualsCstructNameTester::runTest() {
     std::string cFileToTest = "../test/call_all_small_test/call_2.c";
     
     if (!rlc_dataflow::IRstructNameEqualsCstructName(structName1, cFileToTest)) {
-        return false; 
+        return false;
     }
 
     if (rlc_dataflow::IRstructNameEqualsCstructName(structName2, cFileToTest)) {
-        return false; 
+        return false;
     }
 
 
-    return true; 
+    return true;
 }

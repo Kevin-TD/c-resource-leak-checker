@@ -91,7 +91,7 @@ bool GetSuccessorsTester::runTest() {
         !27 = !DILocation(line: 14, column: 5, scope: !25)
         !28 = !DILocation(line: 16, column: 1, scope: !10)
     )";
-    std::map<unsigned, unsigned> instructionNumToExpectedNumberOfSuccsMap; 
+    std::map<unsigned, unsigned> instructionNumToExpectedNumberOfSuccsMap;
     instructionNumToExpectedNumberOfSuccsMap[0] = 1;
     instructionNumToExpectedNumberOfSuccsMap[1] = 1;
     instructionNumToExpectedNumberOfSuccsMap[2] = 1;
