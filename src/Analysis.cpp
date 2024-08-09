@@ -9,6 +9,7 @@
 #include "UtilFunctionTesters/RLCDataflow/VariableTester.h"
 #include "UtilFunctionTesters/RLCDataflow/UnwrapValuePointerToStructTester.h"
 #include "UtilFunctionTesters/RLCDataflow/IRstructNameEqualsCstructNameTester.h"
+#include "UtilFunctionTesters/RLCDataflow/GetPredecessorsTester.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "Constants.h"
@@ -610,6 +611,9 @@ void CodeAnalyzer::onEnd() {
 
     IRstructNameEqualsCstructNameTester irsnecsnt = IRstructNameEqualsCstructNameTester(); 
     runUtilFunctionTester(&irsnecsnt, "rlc_dataflow::IRstructNameEqualsCstructName");
+
+    GetPredecessorsTester getPredsTester = GetPredecessorsTester();
+    runUtilFunctionTester(&getPredsTester, "rlc_dataflow::getPredecessors");
 
 
     // rlc_util function testers

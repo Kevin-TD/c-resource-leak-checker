@@ -23,6 +23,7 @@ add_llvm_library(CodeAnalyzer MODULE
   src/UtilFunctionTesters/RLCDataflow/VariableTester.cpp
   src/UtilFunctionTesters/RLCDataflow/UnwrapValuePointerToStructTester.cpp
   src/UtilFunctionTesters/RLCDataflow/IRStructNameEqualsCstructNameTester.cpp
+  src/UtilFunctionTesters/RLCDataflow/GetPredecessorsTester.cpp
   src/ProgramRepresentation/MethodsSet.cpp
   src/ProgramRepresentation/ProgramVariable.cpp
   src/ProgramRepresentation/PVAliasSet.cpp
