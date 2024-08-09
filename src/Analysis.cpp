@@ -7,6 +7,7 @@
 #include "Annotations/StructAnnotation.h"
 #include "UtilFunctionTesters/UtilFunctionTester.h"
 #include "UtilFunctionTesters/RLCDataflow/VariableTester.h"
+#include "UtilFunctionTesters/RLCDataflow/UnwrapValuePointerToStructTester.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "Constants.h"
@@ -591,7 +592,7 @@ void runUtilFunctionTester(UtilFunctionTester* utilFunctionTester, const std::st
         std::exit(EXIT_FAILURE);
     }
 
-    errs() << "UTIL FUNCTION TEST PASS: " << functionName << "\n";
+    errs() << "UTIL FUNCTION TEST PASS: " << functionName << "\n\n";
 }
 
 void CodeAnalyzer::onEnd() {
@@ -602,6 +603,9 @@ void CodeAnalyzer::onEnd() {
     // rlc_dataflow function testers
     VariableTester vt = VariableTester();
     runUtilFunctionTester(&vt, "rlc_dataflow::variable");
+
+    UnwrapValuePointerToStructTester uvptst = UnwrapValuePointerToStructTester();
+    runUtilFunctionTester(&uvptst, "rlc_dataflow::unwrapValuePointerToStruct");
 
     // rlc_util function testers
 

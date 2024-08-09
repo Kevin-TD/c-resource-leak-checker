@@ -8,3 +8,4 @@ llvm.sh
 *.tmp
 *.pyc
 *__pycache__
+.cache

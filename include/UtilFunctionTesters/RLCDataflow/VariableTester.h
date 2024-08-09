@@ -1,8 +1,6 @@
 #ifndef VARIABLE_TESTER_H
 #define VARIABLE_TESTER_H
 
-#include "RunAnalysis.h"
-#include "Utils.h"
 #include "UtilFunctionTesters/UtilFunctionTester.h"
 
 // tests the rlc_dataflow::variable function by internally generating an IR file,
@@ -11,8 +9,6 @@
 class VariableTester : public UtilFunctionTester {
   public:
     VariableTester();
-
-    // returns true iff test passed and false iff otherwise
     bool runTest();
 };
 

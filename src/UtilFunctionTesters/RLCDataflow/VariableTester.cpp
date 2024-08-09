@@ -98,8 +98,8 @@ bool VariableTester::runTest() {
     for (auto &F : *parsedModule) {
         for (auto &BB : F) {
             for (auto &instruction : BB) {
-                bool varEqsExpectedVar = instructionNumToExpectedVariableMap[instructionNumber] == rlc_dataflow::variable(&instruction);
-                if (!varEqsExpectedVar) {
+                bool expectedEqResult = instructionNumToExpectedVariableMap[instructionNumber] == rlc_dataflow::variable(&instruction);
+                if (!expectedEqResult) {
                     return false;
                 }
                 instructionNumber++;
