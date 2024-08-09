@@ -8,6 +8,7 @@
 #include "UtilFunctionTesters/UtilFunctionTester.h"
 #include "UtilFunctionTesters/RLCDataflow/VariableTester.h"
 #include "UtilFunctionTesters/RLCDataflow/UnwrapValuePointerToStructTester.h"
+#include "UtilFunctionTesters/RLCDataflow/IRstructNameEqualsCstructNameTester.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "Constants.h"
@@ -606,6 +607,10 @@ void CodeAnalyzer::onEnd() {
 
     UnwrapValuePointerToStructTester uvptst = UnwrapValuePointerToStructTester();
     runUtilFunctionTester(&uvptst, "rlc_dataflow::unwrapValuePointerToStruct");
+
+    IRstructNameEqualsCstructNameTester irsnecsnt = IRstructNameEqualsCstructNameTester(); 
+    runUtilFunctionTester(&irsnecsnt, "rlc_dataflow::IRstructNameEqualsCstructName");
+
 
     // rlc_util function testers
 

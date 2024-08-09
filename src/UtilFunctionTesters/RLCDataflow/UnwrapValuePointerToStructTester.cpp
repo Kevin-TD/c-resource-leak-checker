@@ -1,6 +1,4 @@
 #include "UtilFunctionTesters/RLCDataflow/UnwrapValuePointerToStructTester.h"
-#include "Utils.h"
-#include <cstddef>
 
 UnwrapValuePointerToStructTester::UnwrapValuePointerToStructTester() {}
 
