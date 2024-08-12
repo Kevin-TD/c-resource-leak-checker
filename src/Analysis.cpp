@@ -14,6 +14,7 @@
 #include "UtilFunctionTesters/RLCUtil/IsNumberTester.h"
 #include "UtilFunctionTesters/RLCUtil/SplitStringTester.h"
 #include "UtilFunctionTesters/RLCUtil/RemoveWhitespaceTester.h"
+#include "UtilFunctionTesters/RLCUtil/SliceStringTester.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "Constants.h"
@@ -44,9 +45,7 @@
 // TODO: write test code for FI pass
 // TODO: implement FI in DataflowPass.cpp
 // TODO: document FunctionInfo and FunctionInfosManager and get_function_info.py
-
-// TODO!: includes_test fails because IR does desugaring sometimes and we currently cannot reverse
-// it. to be fixed with AST pass
+// TODO: make sliceString params use unsigned instead of signed int
 
 // IMPORTANT:
 // TODO: when doing something like func(thing) make sure called methods is applied on thing when it gets desugared.
@@ -630,7 +629,10 @@ void CodeAnalyzer::onEnd() {
     runUtilFunctionTester(&splitStringTester, "rlc_util::splitString");
 
     RemoveWhitespaceTester removeWhitespaceTester = RemoveWhitespaceTester();
-    runUtilFunctionTester(&removeWhitespaceTester, "rlc_util::removeWhitespaceTester");
+    runUtilFunctionTester(&removeWhitespaceTester, "rlc_util::removeWhitespace");
+
+    SliceStringTester sliceStringTester = SliceStringTester();
+    runUtilFunctionTester(&sliceStringTester, "rlc_util::sliceString");
 
     if (anyTestFailed) {
         std::exit(EXIT_FAILURE);
