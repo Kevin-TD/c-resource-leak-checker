@@ -42,3 +42,16 @@ std::string LineBranchInfo::toString() const {
 
     return branchName + branchPredsString;
 }
+
+std::set<std::string> LineBranchInfo::getPreds() const {
+    std::set<std::string> branchPreds;
+
+    for (auto pred : this->branchPredecessors) {
+        std::string predName = pred->getParent()->getName().str();
+        if (predName != this->branchName) {
+            branchPreds.insert(predName);
+        }
+    }
+
+    return branchPreds;
+}
