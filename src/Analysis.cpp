@@ -12,6 +12,7 @@
 #include "UtilFunctionTesters/RLCDataflow/GetPredecessorsTester.h"
 #include "UtilFunctionTesters/RLCDataflow/GetSuccessorsTester.h"
 #include "UtilFunctionTesters/RLCUtil/IsNumberTester.h"
+#include "UtilFunctionTesters/RLCUtil/SplitStringTester.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "Constants.h"
@@ -623,6 +624,9 @@ void CodeAnalyzer::onEnd() {
     // rlc_util function testers
     IsNumberTester isNumTester = IsNumberTester();
     runUtilFunctionTester(&isNumTester, "rlc_util::isNumber");
+
+    SplitStringTester splitStringTester = SplitStringTester();
+    runUtilFunctionTester(&splitStringTester, "rlc_util::splitString");
 
     if (anyTestFailed) {
         std::exit(EXIT_FAILURE);

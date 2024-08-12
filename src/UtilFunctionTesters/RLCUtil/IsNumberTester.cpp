@@ -1,5 +1,4 @@
 #include "UtilFunctionTesters/RLCUtil/IsNumberTester.h"
-#include "Utils.h"
 
 IsNumberTester::IsNumberTester() {}
 

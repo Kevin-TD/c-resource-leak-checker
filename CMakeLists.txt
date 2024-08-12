@@ -26,6 +26,7 @@ add_llvm_library(CodeAnalyzer MODULE
   src/UtilFunctionTesters/RLCDataflow/GetPredecessorsTester.cpp
   src/UtilFunctionTesters/RLCDataflow/GetSuccessorsTester.cpp
   src/UtilFunctionTesters/RLCUtil/IsNumberTester.cpp
+  src/UtilFunctionTesters/RLCUtil/SplitStringTester.cpp
   src/ProgramRepresentation/MethodsSet.cpp
   src/ProgramRepresentation/ProgramVariable.cpp
   src/ProgramRepresentation/PVAliasSet.cpp
