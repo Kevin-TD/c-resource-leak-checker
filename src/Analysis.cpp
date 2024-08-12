@@ -15,6 +15,7 @@
 #include "UtilFunctionTesters/RLCUtil/SplitStringTester.h"
 #include "UtilFunctionTesters/RLCUtil/RemoveWhitespaceTester.h"
 #include "UtilFunctionTesters/RLCUtil/SliceStringTester.h"
+#include "UtilFunctionTesters/RLCUtil/IsValidCVariableNameTester.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "Constants.h"
@@ -633,6 +634,9 @@ void CodeAnalyzer::onEnd() {
 
     SliceStringTester sliceStringTester = SliceStringTester();
     runUtilFunctionTester(&sliceStringTester, "rlc_util::sliceString");
+
+    IsValidCVariableNameTester isValidCVarNameTestesr = IsValidCVariableNameTester();
+    runUtilFunctionTester(&isValidCVarNameTestesr, "rlc_util::isValidCVariableName");
 
     if (anyTestFailed) {
         std::exit(EXIT_FAILURE);
