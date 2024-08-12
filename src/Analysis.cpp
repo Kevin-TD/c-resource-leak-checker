@@ -18,6 +18,7 @@
 #include "UtilFunctionTesters/RLCUtil/IsValidCVariableNameTester.h"
 #include "UtilFunctionTesters/RLCUtil/HasOnlyOneBalancedParenthesesTester.h"
 #include "UtilFunctionTesters/RLCUtil/StartsWithTester.h"
+#include "UtilFunctionTesters/RLCUtil/SetToStringTester.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "Constants.h"
@@ -645,6 +646,9 @@ void CodeAnalyzer::onEnd() {
 
     StartsWithTester startsWithTester = StartsWithTester();
     runUtilFunctionTester(&startsWithTester, "rlc_util::startsWith");
+
+    SetToStringTester setToStringTester = SetToStringTester();
+    runUtilFunctionTester(&setToStringTester, "rlc_util::setToString");
 
     if (anyTestFailed) {
         std::exit(EXIT_FAILURE);

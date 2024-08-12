@@ -32,6 +32,7 @@ add_llvm_library(CodeAnalyzer MODULE
   src/UtilFunctionTesters/RLCUtil/IsValidCVariableNameTester.cpp
   src/UtilFunctionTesters/RLCUtil/HasOnlyOneBalancedParenthesesTester.cpp
   src/UtilFunctionTesters/RLCUtil/StartsWithTester.cpp
+  src/UtilFunctionTesters/RLCUtil/SetToStringTester.cpp
   src/ProgramRepresentation/MethodsSet.cpp
   src/ProgramRepresentation/ProgramVariable.cpp
   src/ProgramRepresentation/PVAliasSet.cpp
