@@ -3,7 +3,7 @@
 
 #include "UtilFunctionTesters/UtilFunctionTester.h"
 
-// tests rlc_dataflow::getPredecessors by checking the number of
+// tests rlc_dataflow::getSuccessors by checking the number of
 // successors for each instruction of an IR file for accuracy
 
 class GetSuccessorsTester : public UtilFunctionTester {
