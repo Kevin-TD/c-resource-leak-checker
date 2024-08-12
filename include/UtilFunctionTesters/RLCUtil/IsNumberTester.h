@@ -4,7 +4,7 @@
 #include "UtilFunctionTesters/UtilFunctionTester.h"
 #include "Utils.h"
 
-// tests rlc_util::isNumber 
+// tests rlc_util::isNumber
 class IsNumberTester : public UtilFunctionTester {
   public:
     IsNumberTester();
