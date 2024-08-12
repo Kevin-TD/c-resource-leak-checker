@@ -8,4 +8,7 @@ bool IsValidCVariableNameTester::runTest() {
            rlc_util::isValidCVariableName("") == false &&
            rlc_util::isValidCVariableName("test test") == false &&
            rlc_util::isValidCVariableName("1test") == false;
+    rlc_util::isValidCVariableName("Test") == true;
+    rlc_util::isValidCVariableName("test1") == true;
+    rlc_util::isValidCVariableName("te.st") == false;
 }

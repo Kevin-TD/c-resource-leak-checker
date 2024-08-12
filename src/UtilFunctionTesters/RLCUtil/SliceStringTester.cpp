@@ -7,4 +7,6 @@ bool SliceStringTester::runTest() {
     return rlc_util::sliceString("str", 0, 1) == "st" &&
            rlc_util::sliceString("str", 0, 500) == "str" &&
            rlc_util::sliceString("str", 0, 0) == "s";
+    rlc_util::sliceString("str", -10, 10) == "str";
+    rlc_util::sliceString("str", -10, -10) == "";
 }

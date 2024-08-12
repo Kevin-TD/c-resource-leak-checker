@@ -143,7 +143,17 @@ namespace rlc_util {
 bool isNumber(const std::string &s) {
     char *endPtr;
     std::strtol(s.c_str(), &endPtr, 10);
-    return endPtr != s.c_str() && *endPtr == '\0';
+
+    // checks if it's integer
+    if (endPtr != s.c_str() && *endPtr == '\0') {
+        return true;
+    }
+
+    // if it's not an integer, check if it's a float
+    std::istringstream iss(s);
+    float f;
+    iss >> std::noskipws >> f;
+    return iss.eof() && !iss.fail();
 }
 
 std::vector<std::string> splitString(const std::string &input, char delimiter) {

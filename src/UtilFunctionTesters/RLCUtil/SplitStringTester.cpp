@@ -1,4 +1,5 @@
 #include "UtilFunctionTesters/RLCUtil/SplitStringTester.h"
+#include "Utils.h"
 
 SplitStringTester::SplitStringTester() {}
 
@@ -22,6 +23,7 @@ bool SplitStringTester::runTest() {
 
     return testSplitString("one two", ' ', 2, {"one", "two"}) &&
            testSplitString("tttt", 't', 4, {"", "", "", ""}) &&
-           testSplitString("test", '\'', 1, {"test"});
+           testSplitString("test", '\'', 1, {"test"}) &&
+           testSplitString("", ' ', 0, {});
 
 }

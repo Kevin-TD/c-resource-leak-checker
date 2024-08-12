@@ -1,4 +1,5 @@
 #include "UtilFunctionTesters/RLCUtil/IsNumberTester.h"
+#include "Utils.h"
 
 IsNumberTester::IsNumberTester() {}
 
@@ -8,6 +9,11 @@ bool IsNumberTester::runTest() {
     expectedResultMap["1 "] = false;
     expectedResultMap[""] = false;
     expectedResultMap["1234567890123456789012345678901234567890"] = true;
+    expectedResultMap["-1"] = true;
+    expectedResultMap["1-"] = false;
+    expectedResultMap["1.1"] = true;
+    expectedResultMap["-1.1"] = true;
+    expectedResultMap["1.1-"] = false;
 
     for (auto pair : expectedResultMap) {
         auto testString = pair.first;

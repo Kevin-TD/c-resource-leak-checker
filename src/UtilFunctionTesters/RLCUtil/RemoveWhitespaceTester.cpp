@@ -7,13 +7,19 @@ bool RemoveWhitespaceTester::runTest() {
         "x",
         "x, y, z",
         "x,y",
-        "x, y,z"
+        "x, y,z",
+        " x",
+        "x ",
+        " x "
     };
     std::vector<std::string> expectedOutputs = {
         "x",
         "x,y,z",
         "x,y",
-        "x,y,z"
+        "x,y,z",
+        "x",
+        "x",
+        "x"
     };
 
     if (testStrings.size() != expectedOutputs.size()) {

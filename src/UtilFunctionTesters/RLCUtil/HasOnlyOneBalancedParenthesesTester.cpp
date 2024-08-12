@@ -10,5 +10,6 @@ bool HasOnlyOneBalancedParenthesesTester::runTest() {
            rlc_util::hasOnlyOneBalancedParentheses("(test)") == true &&
            rlc_util::hasOnlyOneBalancedParentheses(")()") == false &&
            rlc_util::hasOnlyOneBalancedParentheses("(a)b") == true &&
-           rlc_util::hasOnlyOneBalancedParentheses("()b") == true;
+           rlc_util::hasOnlyOneBalancedParentheses("()b") == true &&
+           rlc_util::hasOnlyOneBalancedParentheses("") == false;
 }

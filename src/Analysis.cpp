@@ -34,6 +34,7 @@
 #include "TempFileManager.h"
 #include "FunctionInfosManager.h"
 #include "Utils.h"
+#include <cstdlib>
 
 // TODO: remove predecessors from CFG; unused
 // TODO: handle un-aliasing
@@ -592,9 +593,15 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     }
 }
 
-// assumes utilFunctionTester is actually an extended class and not UtilFunctionTester
+// utilFunctionTester is an extended class of UtilFunctionTester
 // (e.g., an instance of VariableTester)
 void runUtilFunctionTester(UtilFunctionTester* utilFunctionTester, const std::string& functionName) {
+    if (dynamic_cast<UtilFunctionTester*>(utilFunctionTester) == nullptr) {
+        errs() << "ERROR: utilFunctionTester must be extended type of UtilFunctionTester\n";
+        std::exit(EXIT_FAILURE);
+    }
+
+
     errs() << "RUNNING UTIL FUNCTION TEST: " << functionName << "\n";
     if (!utilFunctionTester->runTest()) {
         errs() << "UTIL FUNCTION TEST FAIL: " << functionName << "\n";
@@ -610,45 +617,47 @@ void CodeAnalyzer::onEnd() {
     }
 
     // rlc_dataflow function testers
-    VariableTester vt = VariableTester();
-    runUtilFunctionTester(&vt, "rlc_dataflow::variable");
+    if (RUN_UTIL_FUNCTION_TESTS) {
+        VariableTester vt = VariableTester();
+        runUtilFunctionTester(&vt, "rlc_dataflow::variable");
 
-    UnwrapValuePointerToStructTester uvptst = UnwrapValuePointerToStructTester();
-    runUtilFunctionTester(&uvptst, "rlc_dataflow::unwrapValuePointerToStruct");
+        UnwrapValuePointerToStructTester uvptst = UnwrapValuePointerToStructTester();
+        runUtilFunctionTester(&uvptst, "rlc_dataflow::unwrapValuePointerToStruct");
 
-    IRstructNameEqualsCstructNameTester irsnecsnt = IRstructNameEqualsCstructNameTester();
-    runUtilFunctionTester(&irsnecsnt, "rlc_dataflow::IRstructNameEqualsCstructName");
+        IRstructNameEqualsCstructNameTester irsnecsnt = IRstructNameEqualsCstructNameTester();
+        runUtilFunctionTester(&irsnecsnt, "rlc_dataflow::IRstructNameEqualsCstructName");
 
-    GetPredecessorsTester getPredsTester = GetPredecessorsTester();
-    runUtilFunctionTester(&getPredsTester, "rlc_dataflow::getPredecessors");
+        GetPredecessorsTester getPredsTester = GetPredecessorsTester();
+        runUtilFunctionTester(&getPredsTester, "rlc_dataflow::getPredecessors");
 
-    GetSuccessorsTester getSuccsTester = GetSuccessorsTester();
-    runUtilFunctionTester(&getSuccsTester, "rlc_dataflow::getSuccessors");
+        GetSuccessorsTester getSuccsTester = GetSuccessorsTester();
+        runUtilFunctionTester(&getSuccsTester, "rlc_dataflow::getSuccessors");
 
-    // rlc_util function testers
-    IsNumberTester isNumTester = IsNumberTester();
-    runUtilFunctionTester(&isNumTester, "rlc_util::isNumber");
+        // rlc_util function testers
+        IsNumberTester isNumTester = IsNumberTester();
+        runUtilFunctionTester(&isNumTester, "rlc_util::isNumber");
 
-    SplitStringTester splitStringTester = SplitStringTester();
-    runUtilFunctionTester(&splitStringTester, "rlc_util::splitString");
+        SplitStringTester splitStringTester = SplitStringTester();
+        runUtilFunctionTester(&splitStringTester, "rlc_util::splitString");
 
-    RemoveWhitespaceTester removeWhitespaceTester = RemoveWhitespaceTester();
-    runUtilFunctionTester(&removeWhitespaceTester, "rlc_util::removeWhitespace");
+        RemoveWhitespaceTester removeWhitespaceTester = RemoveWhitespaceTester();
+        runUtilFunctionTester(&removeWhitespaceTester, "rlc_util::removeWhitespace");
 
-    SliceStringTester sliceStringTester = SliceStringTester();
-    runUtilFunctionTester(&sliceStringTester, "rlc_util::sliceString");
+        SliceStringTester sliceStringTester = SliceStringTester();
+        runUtilFunctionTester(&sliceStringTester, "rlc_util::sliceString");
 
-    IsValidCVariableNameTester isValidCVarNameTestesr = IsValidCVariableNameTester();
-    runUtilFunctionTester(&isValidCVarNameTestesr, "rlc_util::isValidCVariableName");
+        IsValidCVariableNameTester isValidCVarNameTestesr = IsValidCVariableNameTester();
+        runUtilFunctionTester(&isValidCVarNameTestesr, "rlc_util::isValidCVariableName");
 
-    HasOnlyOneBalancedParenthesesTester hasOnlyOneBalParenTeseter = HasOnlyOneBalancedParenthesesTester();
-    runUtilFunctionTester(&hasOnlyOneBalParenTeseter, "rlc_util::hasOnlyOneBalancedParentheses");
+        HasOnlyOneBalancedParenthesesTester hasOnlyOneBalParenTeseter = HasOnlyOneBalancedParenthesesTester();
+        runUtilFunctionTester(&hasOnlyOneBalParenTeseter, "rlc_util::hasOnlyOneBalancedParentheses");
 
-    StartsWithTester startsWithTester = StartsWithTester();
-    runUtilFunctionTester(&startsWithTester, "rlc_util::startsWith");
+        StartsWithTester startsWithTester = StartsWithTester();
+        runUtilFunctionTester(&startsWithTester, "rlc_util::startsWith");
 
-    SetToStringTester setToStringTester = SetToStringTester();
-    runUtilFunctionTester(&setToStringTester, "rlc_util::setToString");
+        SetToStringTester setToStringTester = SetToStringTester();
+        runUtilFunctionTester(&setToStringTester, "rlc_util::setToString");
+    }
 
     if (anyTestFailed) {
         std::exit(EXIT_FAILURE);
