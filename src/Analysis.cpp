@@ -17,6 +17,7 @@
 #include "UtilFunctionTesters/RLCUtil/SliceStringTester.h"
 #include "UtilFunctionTesters/RLCUtil/IsValidCVariableNameTester.h"
 #include "UtilFunctionTesters/RLCUtil/HasOnlyOneBalancedParenthesesTester.h"
+#include "UtilFunctionTesters/RLCUtil/StartsWithTester.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "Constants.h"
@@ -641,6 +642,9 @@ void CodeAnalyzer::onEnd() {
 
     HasOnlyOneBalancedParenthesesTester hasOnlyOneBalParenTeseter = HasOnlyOneBalancedParenthesesTester();
     runUtilFunctionTester(&hasOnlyOneBalParenTeseter, "rlc_util::hasOnlyOneBalancedParentheses");
+
+    StartsWithTester startsWithTester = StartsWithTester();
+    runUtilFunctionTester(&startsWithTester, "rlc_util::startsWith");
 
     if (anyTestFailed) {
         std::exit(EXIT_FAILURE);
