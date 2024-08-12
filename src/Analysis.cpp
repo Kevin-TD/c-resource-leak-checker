@@ -447,9 +447,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
     std::string testName = getTestName(optLoadFileName);
 
-    if (BUILD_PROGRAM_LINES_BRANCH_INFO) {
-        programLinesBranchesInfo.add(F);
-    }
+    programLinesBranchesInfo.add(F);
 
     bool functionIsKnown = false;
     logout("opt load file name = " << optLoadFileName);
