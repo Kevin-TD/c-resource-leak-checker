@@ -13,6 +13,7 @@
 #include "UtilFunctionTesters/RLCDataflow/GetSuccessorsTester.h"
 #include "UtilFunctionTesters/RLCUtil/IsNumberTester.h"
 #include "UtilFunctionTesters/RLCUtil/SplitStringTester.h"
+#include "UtilFunctionTesters/RLCUtil/RemoveWhitespaceTester.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "Constants.h"
@@ -627,6 +628,9 @@ void CodeAnalyzer::onEnd() {
 
     SplitStringTester splitStringTester = SplitStringTester();
     runUtilFunctionTester(&splitStringTester, "rlc_util::splitString");
+
+    RemoveWhitespaceTester removeWhitespaceTester = RemoveWhitespaceTester();
+    runUtilFunctionTester(&removeWhitespaceTester, "rlc_util::removeWhitespaceTester");
 
     if (anyTestFailed) {
         std::exit(EXIT_FAILURE);
