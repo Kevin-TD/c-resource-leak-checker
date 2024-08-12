@@ -16,6 +16,7 @@
 #include "UtilFunctionTesters/RLCUtil/RemoveWhitespaceTester.h"
 #include "UtilFunctionTesters/RLCUtil/SliceStringTester.h"
 #include "UtilFunctionTesters/RLCUtil/IsValidCVariableNameTester.h"
+#include "UtilFunctionTesters/RLCUtil/HasOnlyOneBalancedParenthesesTester.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "Constants.h"
@@ -637,6 +638,9 @@ void CodeAnalyzer::onEnd() {
 
     IsValidCVariableNameTester isValidCVarNameTestesr = IsValidCVariableNameTester();
     runUtilFunctionTester(&isValidCVarNameTestesr, "rlc_util::isValidCVariableName");
+
+    HasOnlyOneBalancedParenthesesTester hasOnlyOneBalParenTeseter = HasOnlyOneBalancedParenthesesTester();
+    runUtilFunctionTester(&hasOnlyOneBalParenTeseter, "rlc_util::hasOnlyOneBalancedParentheses");
 
     if (anyTestFailed) {
         std::exit(EXIT_FAILURE);
