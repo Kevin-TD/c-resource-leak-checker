@@ -3,6 +3,7 @@
 
 #include "UtilFunctionTesters/UtilFunctionTester.h"
 
+// test rlc_util::setToString
 class SetToStringTester : public UtilFunctionTester {
   public:
     SetToStringTester();
