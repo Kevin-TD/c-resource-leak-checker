@@ -1,5 +1,4 @@
 #include "UtilFunctionTesters/RLCDataflow/GetPredecessorsTester.h"
-#include "Utils.h"
 
 GetPredecessorsTester::GetPredecessorsTester() {}
 

@@ -11,6 +11,7 @@
 #include "UtilFunctionTesters/RLCDataflow/IRstructNameEqualsCstructNameTester.h"
 #include "UtilFunctionTesters/RLCDataflow/GetPredecessorsTester.h"
 #include "UtilFunctionTesters/RLCDataflow/GetSuccessorsTester.h"
+#include "UtilFunctionTesters/RLCUtil/IsNumberTester.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "Constants.h"
@@ -619,8 +620,9 @@ void CodeAnalyzer::onEnd() {
     GetSuccessorsTester getSuccsTester = GetSuccessorsTester();
     runUtilFunctionTester(&getSuccsTester, "rlc_dataflow::getSuccessors");
 
-
     // rlc_util function testers
+    IsNumberTester isNumTester = IsNumberTester();
+    runUtilFunctionTester(&isNumTester, "rlc_util::isNumber");
 
     if (anyTestFailed) {
         std::exit(EXIT_FAILURE);

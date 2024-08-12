@@ -1,5 +1,4 @@
 #include "UtilFunctionTesters/RLCDataflow/IRstructNameEqualsCstructNameTester.h"
-#include "Utils.h"
 
 IRstructNameEqualsCstructNameTester::IRstructNameEqualsCstructNameTester() {}
 
