@@ -1,6 +1,7 @@
 #include "TestRunner.h"
 #include "Debug.h"
 #include "Utils.h"
+#include "Constants.h"
 
 bool TestRunner::runTests(const std::string functionName,
                           const std::string lastBranchName,
@@ -73,7 +74,7 @@ bool TestRunner::runTests(const std::string functionName,
 FullFile TestRunner::buildExpectedResults(std::string testName,
         std::string passName) {
 
-    std::ifstream testFile("../Testers/Passes/" + testName + ".txt");
+    std::ifstream testFile(PASS_TEST_DIRNAME + "/" + testName + ".txt");
     std::string line;
     FullFile expectedResult(testName);
 

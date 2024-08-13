@@ -23,6 +23,7 @@ class LineBranchInfo {
     std::string getBranchName() const;
     std::string getFunctionName() const;
     unsigned getLineNumber() const;
+    std::set<std::string> getPreds() const;
 
     std::string toString() const;
 };

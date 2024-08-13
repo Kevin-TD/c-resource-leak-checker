@@ -17,6 +17,7 @@
 #include "Debug/BranchLister/ProgramLinesBranchInfo.h"
 #include "RunAnalysis.h"
 #include "TestRunner.h"
+#include "BranchListerTester.h"
 #include "TempFileManager.h"
 #include "FunctionInfosManager.h"
 #include "Utils.h"
@@ -35,9 +36,6 @@
 // TODO: write test code for FI pass
 // TODO: implement FI in DataflowPass.cpp
 // TODO: document FunctionInfo and FunctionInfosManager and get_function_info.py
-
-// TODO!: includes_test fails because IR does desugaring sometimes and we currently cannot reverse
-// it. to be fixed with AST pass
 
 // IMPORTANT:
 // TODO: when doing something like func(thing) make sure called methods is applied on thing when it gets desugared.
@@ -449,9 +447,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
     std::string testName = getTestName(optLoadFileName);
 
-    if (BUILD_PROGRAM_LINES_BRANCH_INFO) {
-        programLinesBranchesInfo.add(F);
-    }
+    programLinesBranchesInfo.add(F);
 
     bool functionIsKnown = false;
     logout("opt load file name = " << optLoadFileName);
@@ -578,11 +574,18 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     if (calledMethodsResult == EXIT_FAILURE || mustCallResult == EXIT_FAILURE) {
         anyTestFailed = true;
     }
+
+    if (BranchListerTester::runTest(testName, programLinesBranchesInfo) == EXIT_FAILURE) {
+        logout("**BRANCH LISTER TESTER FAILED");
+        anyTestFailed = true;
+    } else {
+        logout("BRANCH LISTER TESTER PASSED");
+    }
 }
 
 void CodeAnalyzer::onEnd() {
     if (BUILD_PROGRAM_LINES_BRANCH_INFO) {
-        programLinesBranchesInfo.generate(cFileName, true);
+        programLinesBranchesInfo.generate(cFileName, false);
     }
 
     if (anyTestFailed) {
