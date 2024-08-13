@@ -5,6 +5,20 @@
 #include "Annotations/ParameterAnnotation.h"
 #include "Annotations/ReturnAnnotation.h"
 #include "Annotations/StructAnnotation.h"
+#include "UtilFunctionTesters/UtilFunctionTester.h"
+#include "UtilFunctionTesters/RLCDataflow/VariableTester.h"
+#include "UtilFunctionTesters/RLCDataflow/UnwrapValuePointerToStructTester.h"
+#include "UtilFunctionTesters/RLCDataflow/IRstructNameEqualsCstructNameTester.h"
+#include "UtilFunctionTesters/RLCDataflow/GetPredecessorsTester.h"
+#include "UtilFunctionTesters/RLCDataflow/GetSuccessorsTester.h"
+#include "UtilFunctionTesters/RLCUtil/IsNumberTester.h"
+#include "UtilFunctionTesters/RLCUtil/SplitStringTester.h"
+#include "UtilFunctionTesters/RLCUtil/RemoveWhitespaceTester.h"
+#include "UtilFunctionTesters/RLCUtil/SliceStringTester.h"
+#include "UtilFunctionTesters/RLCUtil/IsValidCVariableNameTester.h"
+#include "UtilFunctionTesters/RLCUtil/HasOnlyOneBalancedParenthesesTester.h"
+#include "UtilFunctionTesters/RLCUtil/StartsWithTester.h"
+#include "UtilFunctionTesters/RLCUtil/SetToStringTester.h"
 #include "CFG.h"
 #include "CalledMethods.h"
 #include "Constants.h"
@@ -21,6 +35,7 @@
 #include "TempFileManager.h"
 #include "FunctionInfosManager.h"
 #include "Utils.h"
+#include <cstdlib>
 
 // TODO: remove predecessors from CFG; unused
 // TODO: handle un-aliasing
@@ -36,6 +51,8 @@
 // TODO: write test code for FI pass
 // TODO: implement FI in DataflowPass.cpp
 // TODO: document FunctionInfo and FunctionInfosManager and get_function_info.py
+// TODO: make sliceString params use unsigned instead of signed int
+
 
 // IMPORTANT:
 // TODO: when doing something like func(thing) make sure called methods is applied on thing when it gets desugared.
@@ -583,9 +600,70 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     }
 }
 
+// utilFunctionTester is an extended class of UtilFunctionTester
+// (e.g., an instance of VariableTester)
+void runUtilFunctionTester(UtilFunctionTester* utilFunctionTester, const std::string& functionName) {
+    if (dynamic_cast<UtilFunctionTester*>(utilFunctionTester) == nullptr) {
+        errs() << "ERROR: utilFunctionTester must be extended type of UtilFunctionTester\n";
+        std::exit(EXIT_FAILURE);
+    }
+
+
+    errs() << "RUNNING UTIL FUNCTION TEST: " << functionName << "\n";
+    if (!utilFunctionTester->runTest()) {
+        errs() << "UTIL FUNCTION TEST FAIL: " << functionName << "\n";
+        std::exit(EXIT_FAILURE);
+    }
+
+    errs() << "UTIL FUNCTION TEST PASS: " << functionName << "\n\n";
+}
+
 void CodeAnalyzer::onEnd() {
     if (BUILD_PROGRAM_LINES_BRANCH_INFO) {
         programLinesBranchesInfo.generate(cFileName, false);
+    }
+
+    // rlc_dataflow function testers
+    if (RUN_UTIL_FUNCTION_TESTS) {
+        VariableTester vt = VariableTester();
+        runUtilFunctionTester(&vt, "rlc_dataflow::variable");
+
+        UnwrapValuePointerToStructTester uvptst = UnwrapValuePointerToStructTester();
+        runUtilFunctionTester(&uvptst, "rlc_dataflow::unwrapValuePointerToStruct");
+
+        IRstructNameEqualsCstructNameTester irsnecsnt = IRstructNameEqualsCstructNameTester();
+        runUtilFunctionTester(&irsnecsnt, "rlc_dataflow::IRstructNameEqualsCstructName");
+
+        GetPredecessorsTester getPredsTester = GetPredecessorsTester();
+        runUtilFunctionTester(&getPredsTester, "rlc_dataflow::getPredecessors");
+
+        GetSuccessorsTester getSuccsTester = GetSuccessorsTester();
+        runUtilFunctionTester(&getSuccsTester, "rlc_dataflow::getSuccessors");
+
+        // rlc_util function testers
+        IsNumberTester isNumTester = IsNumberTester();
+        runUtilFunctionTester(&isNumTester, "rlc_util::isNumber");
+
+        SplitStringTester splitStringTester = SplitStringTester();
+        runUtilFunctionTester(&splitStringTester, "rlc_util::splitString");
+
+        RemoveWhitespaceTester removeWhitespaceTester = RemoveWhitespaceTester();
+        runUtilFunctionTester(&removeWhitespaceTester, "rlc_util::removeWhitespace");
+
+        SliceStringTester sliceStringTester = SliceStringTester();
+        runUtilFunctionTester(&sliceStringTester, "rlc_util::sliceString");
+
+        IsValidCVariableNameTester isValidCVarNameTestesr = IsValidCVariableNameTester();
+        runUtilFunctionTester(&isValidCVarNameTestesr, "rlc_util::isValidCVariableName");
+
+        HasOnlyOneBalancedParenthesesTester hasOnlyOneBalParenTeseter = HasOnlyOneBalancedParenthesesTester();
+        runUtilFunctionTester(&hasOnlyOneBalParenTeseter, "rlc_util::hasOnlyOneBalancedParentheses");
+
+        StartsWithTester startsWithTester = StartsWithTester();
+        runUtilFunctionTester(&startsWithTester, "rlc_util::startsWith");
+
+        SetToStringTester setToStringTester = SetToStringTester();
+        runUtilFunctionTester(&setToStringTester, "rlc_util::setToString");
     }
 
     if (anyTestFailed) {

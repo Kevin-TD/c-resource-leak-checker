@@ -20,6 +20,19 @@ add_llvm_library(CodeAnalyzer MODULE
   src/Annotations/StructAnnotation.cpp
   src/Annotations/ReturnAnnotation.cpp 
   src/Annotations/ErrorAnnotation.cpp
+  src/UtilFunctionTesters/RLCDataflow/VariableTester.cpp
+  src/UtilFunctionTesters/RLCDataflow/UnwrapValuePointerToStructTester.cpp
+  src/UtilFunctionTesters/RLCDataflow/IRstructNameEqualsCstructNameTester.cpp
+  src/UtilFunctionTesters/RLCDataflow/GetPredecessorsTester.cpp
+  src/UtilFunctionTesters/RLCDataflow/GetSuccessorsTester.cpp
+  src/UtilFunctionTesters/RLCUtil/IsNumberTester.cpp
+  src/UtilFunctionTesters/RLCUtil/SplitStringTester.cpp
+  src/UtilFunctionTesters/RLCUtil/RemoveWhitespaceTester.cpp
+  src/UtilFunctionTesters/RLCUtil/SliceStringTester.cpp
+  src/UtilFunctionTesters/RLCUtil/IsValidCVariableNameTester.cpp
+  src/UtilFunctionTesters/RLCUtil/HasOnlyOneBalancedParenthesesTester.cpp
+  src/UtilFunctionTesters/RLCUtil/StartsWithTester.cpp
+  src/UtilFunctionTesters/RLCUtil/SetToStringTester.cpp
   src/ProgramRepresentation/MethodsSet.cpp
   src/ProgramRepresentation/ProgramVariable.cpp
   src/ProgramRepresentation/PVAliasSet.cpp

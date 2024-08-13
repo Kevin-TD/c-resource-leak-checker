@@ -1,6 +1,7 @@
 .vscode
 build
 *.ll
+!src/UtilFunctionTesters/RLCDataflow/irStructNameFiles/*/*.ll
 *.DS_Store
 .DS_Store
 /test/experiments
@@ -8,3 +9,4 @@ llvm.sh
 *.tmp
 *.pyc
 *__pycache__
+.cache
