@@ -14,13 +14,13 @@ class ProgramLinesBranchInfo {
     // and function name as otherLBI
     bool exists(const LineBranchInfo otherLBI) const;
 
+  public:
+    ProgramLinesBranchInfo();
+
     // gets a stored LBI based on given line number. if there is no such
     // LBI with line number lineNumber, NULL is returned. otherwise,
     // a reference to the LBI is returned.
     LineBranchInfo* getLBI(unsigned lineNumber);
-
-  public:
-    ProgramLinesBranchInfo();
 
     // analyzes the branches of a function and stores all line branch information from it.
     // comments are generated only if a function has more than 1 branch. for full program

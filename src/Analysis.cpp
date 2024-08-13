@@ -31,6 +31,7 @@
 #include "Debug/BranchLister/ProgramLinesBranchInfo.h"
 #include "RunAnalysis.h"
 #include "TestRunner.h"
+#include "BranchListerTester.h"
 #include "TempFileManager.h"
 #include "FunctionInfosManager.h"
 #include "Utils.h"
@@ -51,6 +52,7 @@
 // TODO: implement FI in DataflowPass.cpp
 // TODO: document FunctionInfo and FunctionInfosManager and get_function_info.py
 // TODO: make sliceString params use unsigned instead of signed int
+
 
 // IMPORTANT:
 // TODO: when doing something like func(thing) make sure called methods is applied on thing when it gets desugared.
@@ -462,9 +464,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
     std::string testName = getTestName(optLoadFileName);
 
-    if (BUILD_PROGRAM_LINES_BRANCH_INFO) {
-        programLinesBranchesInfo.add(F);
-    }
+    programLinesBranchesInfo.add(F);
 
     bool functionIsKnown = false;
     logout("opt load file name = " << optLoadFileName);
@@ -591,6 +591,13 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     if (calledMethodsResult == EXIT_FAILURE || mustCallResult == EXIT_FAILURE) {
         anyTestFailed = true;
     }
+
+    if (BranchListerTester::runTest(testName, programLinesBranchesInfo) == EXIT_FAILURE) {
+        logout("**BRANCH LISTER TESTER FAILED");
+        anyTestFailed = true;
+    } else {
+        logout("BRANCH LISTER TESTER PASSED");
+    }
 }
 
 // utilFunctionTester is an extended class of UtilFunctionTester
@@ -613,7 +620,7 @@ void runUtilFunctionTester(UtilFunctionTester* utilFunctionTester, const std::st
 
 void CodeAnalyzer::onEnd() {
     if (BUILD_PROGRAM_LINES_BRANCH_INFO) {
-        programLinesBranchesInfo.generate(cFileName, true);
+        programLinesBranchesInfo.generate(cFileName, false);
     }
 
     // rlc_dataflow function testers

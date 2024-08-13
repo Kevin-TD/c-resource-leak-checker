@@ -104,6 +104,12 @@ void ProgramLinesBranchInfo::generate(std::string cFileName, bool overwrite) {
         cLineNumber++;
     }
 
+    for (unsigned i = 1; i <= lineCount + 1; i++) {
+        if (auto lbi = this->getLBI(i)) {
+            logout("line #" << i << ": " << lbi->toString());
+        }
+    }
+
     if (overwrite) {
         std::ofstream cFileToOverwrite(cFileName, std::ios::trunc);
 
