@@ -9,13 +9,14 @@ struct M {
 };
 
 int main() {
-    struct M s;
+    struct M s, s1;
 
     s.x = (char*)malloc(15);
 
     s.y = s.x; // aliased
+    s1.y = s.x; // aliased
 
-    s.y = (char*)malloc(15); // no longer aliased
+    s.y = (char*)malloc(15); // s.y no longer aliased with s.x and s1.y
 
-    free(s.x); // s.x freed, s.y not freed
+    free(s.x); // s.x and s1.y freed, s.y not freed
 }

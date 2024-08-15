@@ -33,6 +33,8 @@ class ProgramVariable {
     // otherwise, it is equal to -1
     int index;
 
+    unsigned setNumber;
+
   public:
     ProgramVariable();
     ProgramVariable(Value *value);
@@ -62,6 +64,9 @@ class ProgramVariable {
 
     // checks if value's name (maybe with % or @) equals other name
     bool equalsRawName(std::string otherRawName);
+
+    unsigned getSetNumber(); 
+    void setSetNumber(unsigned setNumber);
 
     bool isIdentifier();
 };

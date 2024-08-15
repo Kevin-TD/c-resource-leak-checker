@@ -28,6 +28,8 @@ StructType *unwrapValuePointerToStruct(Value *value);
 bool IRstructNameEqualsCstructName(std::string &structName,
                                    std::string &optLoadFileName);
 
+bool varNameEqualsCvarName(const std::string &varName, const std::string &optLoadFileName);
+
 // gets the predecessors of a given instruction in the control-flow graph
 std::vector<Instruction *> getPredecessors(Instruction *instruction);
 

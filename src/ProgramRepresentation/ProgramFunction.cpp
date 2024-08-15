@@ -80,7 +80,7 @@ void ProgramFunction::logoutProgramFunction(ProgramFunction &programFunction,
     for (auto point : programFunction.getProgramPoints()) {
         logout("\n**point name " << point.getPointName());
         for (auto aliasSet : point.getProgramVariableAliasSets().getSets()) {
-            logout("> alias set = " << aliasSet.toString(false));
+            logout("> alias set = " << aliasSet.toString(false, false));
 
             if (logMethods) {
                 logout("--> methods set = " << aliasSet.getMethodsString());

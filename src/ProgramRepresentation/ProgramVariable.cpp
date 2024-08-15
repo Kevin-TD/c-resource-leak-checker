@@ -1,11 +1,14 @@
 #include "ProgramRepresentation/ProgramVariable.h"
 #include "Debug.h"
 
-ProgramVariable::ProgramVariable() {}
+ProgramVariable::ProgramVariable() {
+    this->setNumber = 0;
+}
 
 ProgramVariable::ProgramVariable(std::string cleanedName) {
     this->cleanedName = cleanedName;
     this->index = -1;
+    this->setNumber = 0;
 }
 
 ProgramVariable::ProgramVariable(Value *value) {
@@ -13,6 +16,7 @@ ProgramVariable::ProgramVariable(Value *value) {
     this->rawName = rlc_dataflow::variable(value);
     this->cleanedName = this->rawName;
     this->index = -1;
+    this->setNumber = 0;
     this->fixNameAndIdentifier();
 }
 
@@ -21,6 +25,7 @@ ProgramVariable::ProgramVariable(Value *value, int index) {
     this->rawName = rlc_dataflow::variable(value) + "." + std::to_string(index);
     this->index = index;
     this->cleanedName = this->rawName;
+    this->setNumber = 0;
     this->fixNameAndIdentifier();
 }
 
@@ -71,4 +76,12 @@ bool ProgramVariable::equalsCleanedName(std::string otherName) {
 
 bool ProgramVariable::equalsRawName(std::string otherRawName) {
     return this->rawName.compare(otherRawName) == 0;
+}
+
+unsigned ProgramVariable::getSetNumber() {
+    return this->setNumber;
+}
+
+void ProgramVariable::setSetNumber(unsigned setNumber) {
+    this->setNumber = setNumber; 
 }

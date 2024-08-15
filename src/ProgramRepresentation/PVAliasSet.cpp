@@ -1,4 +1,6 @@
 #include "ProgramRepresentation/PVAliasSet.h"
+#include "Constants.h"
+#include "Debug.h"
 
 PVAliasSet::PVAliasSet() {}
 
@@ -83,7 +85,7 @@ void PVAliasSet::clearMethods() {
     this->methods.clearMethods();
 }
 
-std::string PVAliasSet::toString(bool cleanNames) const {
+std::string PVAliasSet::toString(bool cleanNames, bool includeSetNumber) const {
     std::string result = "{";
     int pvSize = programVariables.size();
 
@@ -94,6 +96,11 @@ std::string PVAliasSet::toString(bool cleanNames) const {
         } else {
             result += pv.getRawName();
         }
+
+        if (includeSetNumber) {
+            result += "-" + std::to_string(pv.getSetNumber());
+        }
+
         if (iterator != pvSize - 1) {
             result += ", ";
         }
@@ -118,6 +125,23 @@ int PVAliasSet::getIndex() {
     return -1;
 }
 
+bool PVAliasSet::containsCallInstVar() {
+    for (ProgramVariable pv : programVariables) {
+        if (CallInst* call = dyn_cast<CallInst>(pv.getValue())) {
+            std::string fnName = call->getCalledFunction()->getName().str();
+
+             if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
+                 rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
+                continue; 
+            }
+
+            return true; 
+        }
+    }
+
+    return false; 
+}
+
 bool PVAliasSet::containsStructFieldVar() {
     for (ProgramVariable pv : programVariables) {
         if (pv.containsStructFieldVar()) {
@@ -126,4 +150,34 @@ bool PVAliasSet::containsStructFieldVar() {
     }
 
     return false;
+}
+
+void PVAliasSet::setSetNumber(unsigned setNumber) {
+    for (ProgramVariable& pv : programVariables) {
+        pv.setSetNumber(setNumber);
+    }
+}
+
+ProgramVariable* PVAliasSet::mostRecentWithIndex() {
+    ProgramVariable* pvResult = NULL; 
+
+    for (ProgramVariable& pv : programVariables) {
+        if (pv.getIndex() != -1) {
+            pvResult = &pv; 
+        }
+    }
+
+    return pvResult; 
+}
+
+unsigned PVAliasSet::getMaxSetNumber() {
+    unsigned maxSetNumber = 0; 
+
+    for (ProgramVariable& pv : programVariables) {
+        if (pv.getSetNumber() > maxSetNumber) {
+            maxSetNumber = pv.getSetNumber(); 
+        }
+    }
+
+    return maxSetNumber; 
 }

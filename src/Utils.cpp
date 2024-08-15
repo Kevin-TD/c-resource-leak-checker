@@ -2,6 +2,8 @@
 #include "Debug.h"
 #include "RunAnalysis.h"
 
+#include "llvm/IR/IntrinsicInst.h"
+
 const char *WHITESPACES = " \t\n\r";
 
 namespace rlc_dataflow {
@@ -78,6 +80,49 @@ bool IRstructNameEqualsCstructName(std::string &structName,
             return true;
         }
     }
+
+    return false;
+}
+
+bool varNameEqualsCvarName(const std::string &varName, const std::string &optLoadFileName) {
+    LLVMContext context;
+    SMDiagnostic error;
+
+    // Derive the IR file name from the provided file name.
+    std::string IRFileName =
+        optLoadFileName.substr(0, optLoadFileName.size() - 2) + ".ll";
+
+    // Parse the IR file.
+    std::unique_ptr<Module> module = parseIRFile(IRFileName, error, context);
+    if (!module) {
+        errs() << "Error: IR file '" + IRFileName + "' not found\n";
+        std::exit(EXIT_FAILURE);
+        return false;
+    }
+
+    DebugInfoFinder debugInfoFinder;
+    debugInfoFinder.processModule(*module);
+
+    for (auto &F : *module) {
+        for (auto &BB : F) {
+            for (auto &I : BB) {
+                if (DbgDeclareInst *DbgDeclare = dyn_cast<DbgDeclareInst>(&I)) {
+                    if (DILocalVariable *LocalVar = DbgDeclare->getVariable()) {
+                        if (LocalVar->getName() == varName) {
+                            return true;
+                        }
+                    }
+                } else if (DbgValueInst *DbgValue = dyn_cast<DbgValueInst>(&I)) {
+                    if (DILocalVariable *LocalVar = DbgValue->getVariable()) {
+                        if (LocalVar->getName() == varName) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     return false;
 }

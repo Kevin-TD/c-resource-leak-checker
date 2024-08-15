@@ -79,6 +79,8 @@ class ProgramPoint {
 
     // checks if programVar is in any of these sets
     bool varExists(ProgramVariable programVar);
+
+    void fragment(PVAliasSet* pvas, ProgramVariable* groupBy, Value* replaceInstruction);
 };
 
 #endif

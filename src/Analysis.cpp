@@ -35,7 +35,6 @@
 #include "TempFileManager.h"
 #include "FunctionInfosManager.h"
 #include "Utils.h"
-#include <cstdlib>
 
 // TODO: remove predecessors from CFG; unused
 // TODO: handle un-aliasing
@@ -122,6 +121,27 @@ void loadFunctions() {
     safeFunctionsFile.close();
     memoryFunctionsFile.close();
     reallocFunctionsFile.close();
+}
+
+// TODO: if works out, move to util func
+// TODO: add field map as param to doAnalysis / alias reasoning 
+std::string getNthLine(const std::string& filePath, unsigned n) {
+    std::ifstream file(filePath);
+    std::string line;
+
+    if (!file.is_open()) {
+        logout("ERROR: Could not open file " << filePath);
+        std::exit(EXIT_FAILURE);
+    }
+
+    for (unsigned i = 1; i <= n; ++i) {
+        if (!std::getline(file, line)) {
+            logout ("ERROR: Line number out of range");
+            std::exit(EXIT_FAILURE);
+        }
+    }
+
+    return line;
 }
 
 // for some .c file ../test/<dir>/<file_name>.c, <dir>/<file_name> is returned.
@@ -246,6 +266,44 @@ void doAliasReasoning(Instruction *instruction,
         if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
             ProgramVariable callVar = ProgramVariable(call);
             logout("add alias for analysis storeinst call inst");
+            
+            if (auto pvasRef = programPoint->getPVASRef(receivingVar, false)) {
+                if (pvasRef->containsCallInstVar()) {
+                    logout("pointer (re)assignment? inst " << *instruction << " test '" << optLoadFileName << "'");
+
+                    logout(callVar.getRawName()
+                        << " alias to " 
+                        << pvasRef->toString(false, true));
+                    
+
+                    const DebugLoc &debugLoc = call->getDebugLoc();
+                    auto m = getNthLine(optLoadFileName, debugLoc.getLine());
+                    rlc_util::removeWhitespace(m); 
+                    auto k = rlc_util::splitString(m, '=');
+                    auto k1 = k[0]; 
+                    logout("k1: '" << k1 << "'");
+
+                    if (structFieldToIndexMap.get(k1) != "") {
+                        auto structName = structFieldToIndexMap.get(k1);
+                        logout(programPoint->getPVASRef(structName, false)->toString(false, true));
+                    }
+                    
+
+                    // check if most recent is var 
+                    if (rlc_dataflow::varNameEqualsCvarName(receivingVar.getCleanedName(), optLoadFileName)) {
+                        logout("is var " << receivingVar.getRawName());
+                        programPoint->fragment(pvasRef, &receivingVar, call);
+                    } else {
+                        if (auto k = pvasRef->mostRecentWithIndex()) {
+                            logout("is struct " << k->getRawName());
+                            programPoint->fragment(pvasRef, k, call);
+                        }
+                    }
+
+                }
+            }
+
+            
             programPoint->addAlias(callVar, receivingVar);
             return;
         }

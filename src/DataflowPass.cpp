@@ -110,7 +110,7 @@ void DataflowPass::transfer(Instruction *instruction,
                 return;
             }
 
-            logout("found pv " << pvas->toString(true)
+            logout("found pv " << pvas->toString(true, false)
                    << " with index " << pvas->getIndex());
 
             if (CallInst *call = dyn_cast<CallInst>(extractValue->getOperand(0))) {
@@ -158,14 +158,14 @@ void DataflowPass::transfer(Instruction *instruction,
                 return;
             }
 
-            logout("pvas = " << pvas->toString(false));
+            logout("pvas = " << pvas->toString(false, false));
             handleIfStructTyAndIfFieldsHaveAnnotations(call, i, fnName, arg, inputProgramPoint, pvas);
 
             bool funcHasAnnos = handleIfAnnotationExistsForCallInsts(fnName, call, pvas);
 
             if (!funcHasAnnos) {
                 // no annotations found, treat function call as unknown function
-                logout("no annotations found for " << fnName << " index " << i << " | pvas = " << pvas->toString(false));
+                logout("no annotations found for " << fnName << " index " << i << " | pvas = " << pvas->toString(false, false));
                 this->onUnknownFunctionCall(pvas);
             }
 
@@ -215,7 +215,7 @@ void DataflowPass::transfer(Instruction *instruction,
             }
 
             if (!skipTheOnFunctionCall) {
-                logout("adding " << fnName << " to " << pvas->toString(false));
+                logout("adding " << fnName << " to " << pvas->toString(false, false));
                 this->onFunctionCall(pvas, fnName);
             }
 
@@ -360,7 +360,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                 std::string fieldArg = argName + "." + std::to_string(fieldIndex);
                 PVAliasSet *pvasField = programPoint.getPVASRef(fieldArg, false);
 
-                logout("found field " << pvasField->toString(true));
+                logout("found field " << pvasField->toString(true, false));
 
                 if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(
                                                        this->annotations.getReturnAnnotation(fnName, fieldIndex))) {
@@ -398,7 +398,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                     PVAliasSet *pvasField = programPoint.getPVASRef(fieldArg, false);
 
                     logout("found next arg fields "
-                           << pvasField->toString(true)
+                           << pvasField->toString(true, false)
                            << " for j = " << j);
 
                     auto allAnnotationsWithFields =
@@ -430,7 +430,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                             logout("found param annotation for j "
                                    << paramAnno->generateStringRep() << " for j = " << j
                                    << " and var "
-                                   << argVar->toString(true));
+                                   << argVar->toString(true, false));
                             this->onAnnotation(argVar, paramAnno);
                         }
                     }
@@ -583,7 +583,7 @@ void DataflowPass::handleIfStructTyAndIfFieldsHaveAnnotations(CallInst *call, un
                     PVAliasSet* pvasField = programPoint.getPVASRef(fieldArg, false);
 
                     if (pvasField) {
-                        logout("found field " << pvasField->toString(true));
+                        logout("found field " << pvasField->toString(true, false));
                         handleIfAnnotationExistsForCallInsts(fnName, call, pvasField);
                         break;
                     }
