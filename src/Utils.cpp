@@ -2,8 +2,6 @@
 #include "Debug.h"
 #include "RunAnalysis.h"
 
-#include "llvm/IR/IntrinsicInst.h"
-
 const char *WHITESPACES = " \t\n\r";
 
 namespace rlc_dataflow {
