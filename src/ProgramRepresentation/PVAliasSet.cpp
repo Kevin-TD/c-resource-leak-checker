@@ -130,16 +130,16 @@ bool PVAliasSet::containsCallInstVar() {
         if (CallInst* call = dyn_cast<CallInst>(pv.getValue())) {
             std::string fnName = call->getCalledFunction()->getName().str();
 
-             if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
-                 rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
-                continue; 
+            if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
+                    rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
+                continue;
             }
 
-            return true; 
+            return true;
         }
     }
 
-    return false; 
+    return false;
 }
 
 bool PVAliasSet::containsStructFieldVar() {
@@ -158,26 +158,46 @@ void PVAliasSet::setSetNumber(unsigned setNumber) {
     }
 }
 
-ProgramVariable* PVAliasSet::mostRecentWithIndex() {
-    ProgramVariable* pvResult = NULL; 
-
-    for (ProgramVariable& pv : programVariables) {
-        if (pv.getIndex() != -1) {
-            pvResult = &pv; 
-        }
-    }
-
-    return pvResult; 
-}
-
 unsigned PVAliasSet::getMaxSetNumber() {
-    unsigned maxSetNumber = 0; 
+    unsigned maxSetNumber = 0;
 
     for (ProgramVariable& pv : programVariables) {
         if (pv.getSetNumber() > maxSetNumber) {
-            maxSetNumber = pv.getSetNumber(); 
+            maxSetNumber = pv.getSetNumber();
         }
     }
 
-    return maxSetNumber; 
+    return maxSetNumber;
+}
+
+PVAliasSet PVAliasSet::moveOut(unsigned setNumber) {
+    PVAliasSet removedVariables;
+
+    auto it = programVariables.begin();
+    while (it != programVariables.end()) {
+        if (it->getSetNumber() == setNumber) {
+            removedVariables.add(*it);
+            it = programVariables.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    return removedVariables;
+}
+
+ProgramVariable PVAliasSet::moveOut(ProgramVariable pv) {
+    ProgramVariable removedPV;
+
+    auto it = programVariables.begin();
+    while (it != programVariables.end()) {
+        if (it->getRawName() == pv.getRawName()) {
+            removedPV = *it;
+            it = programVariables.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    return removedPV;
 }

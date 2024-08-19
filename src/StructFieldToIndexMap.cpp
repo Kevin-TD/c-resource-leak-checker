@@ -50,5 +50,5 @@ std::string StructFieldToIndexMap::get(const std::string& structNameAndField) {
 }
 
 bool StructFieldToIndexMap::structNameAndFieldIsInMap(const std::string& structNameAndField) {
-    return this->fieldToIndexMap.count(structNameAndField);
+    return this->fieldToIndexMap.count(structNameAndField) && this->fieldToIndexMap[structNameAndField] != "";
 }

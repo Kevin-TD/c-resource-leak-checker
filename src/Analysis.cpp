@@ -51,6 +51,8 @@
 // TODO: implement FI in DataflowPass.cpp
 // TODO: document FunctionInfo and FunctionInfosManager and get_function_info.py
 // TODO: make sliceString params use unsigned instead of signed int
+// TODO: write testing for getTestName
+// TODO: write testing for getNthLine
 
 
 // IMPORTANT:
@@ -123,41 +125,6 @@ void loadFunctions() {
     reallocFunctionsFile.close();
 }
 
-// TODO: if works out, move to util func
-// TODO: add field map as param to doAnalysis / alias reasoning 
-std::string getNthLine(const std::string& filePath, unsigned n) {
-    std::ifstream file(filePath);
-    std::string line;
-
-    if (!file.is_open()) {
-        logout("ERROR: Could not open file " << filePath);
-        std::exit(EXIT_FAILURE);
-    }
-
-    for (unsigned i = 1; i <= n; ++i) {
-        if (!std::getline(file, line)) {
-            logout ("ERROR: Line number out of range");
-            std::exit(EXIT_FAILURE);
-        }
-    }
-
-    return line;
-}
-
-// for some .c file ../test/<dir>/<file_name>.c, <dir>/<file_name> is returned.
-// e.g., ../test/simple_layer_test/layer/test1_again.c ->
-// simple_layer_test/layer/test1_again
-std::string getTestName(std::string optLoadFileName) {
-    std::string startsWith = "../test";
-    std::string endsWith = ".c";
-    optLoadFileName.replace(0, startsWith.length() + 1, "");
-    optLoadFileName.erase(optLoadFileName.length() - 2);
-
-    logout("RES = " << optLoadFileName);
-
-    return optLoadFileName;
-}
-
 void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
               std::map<std::string, InstructionHolder> branchInstMap) {
     topCFG = CFG(FIRST_BRANCH_NAME);
@@ -215,7 +182,8 @@ std::vector<std::string> getAnnotationStrings(const TempFileManager& astInfoFile
 
 void doAliasReasoning(Instruction *instruction,
                       ProgramFunction &programFunction,
-                      std::string optLoadFileName) {
+                      std::string optLoadFileName,
+                      StructFieldToIndexMap structFieldToIndexMap) {
     bool includes = false;
     std::string branchName = instruction->getParent()->getName().str();
     for (auto branch : realBranchOrder) {
@@ -266,44 +234,47 @@ void doAliasReasoning(Instruction *instruction,
         if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
             ProgramVariable callVar = ProgramVariable(call);
             logout("add alias for analysis storeinst call inst");
-            
+
             if (auto pvasRef = programPoint->getPVASRef(receivingVar, false)) {
                 if (pvasRef->containsCallInstVar()) {
-                    logout("pointer (re)assignment? inst " << *instruction << " test '" << optLoadFileName << "'");
+                    logout("pointer reassignment inst " << *instruction);
+                    logout("receiving var " << receivingVar.getRawName());
 
                     logout(callVar.getRawName()
-                        << " alias to " 
-                        << pvasRef->toString(false, true));
-                    
+                           << " alias to "
+                           << pvasRef->toString(false, true));
+
 
                     const DebugLoc &debugLoc = call->getDebugLoc();
-                    auto m = getNthLine(optLoadFileName, debugLoc.getLine());
-                    rlc_util::removeWhitespace(m); 
-                    auto k = rlc_util::splitString(m, '=');
-                    auto k1 = k[0]; 
-                    logout("k1: '" << k1 << "'");
 
-                    if (structFieldToIndexMap.get(k1) != "") {
-                        auto structName = structFieldToIndexMap.get(k1);
-                        logout(programPoint->getPVASRef(structName, false)->toString(false, true));
-                    }
-                    
 
-                    // check if most recent is var 
-                    if (rlc_dataflow::varNameEqualsCvarName(receivingVar.getCleanedName(), optLoadFileName)) {
-                        logout("is var " << receivingVar.getRawName());
-                        programPoint->fragment(pvasRef, &receivingVar, call);
-                    } else {
-                        if (auto k = pvasRef->mostRecentWithIndex()) {
-                            logout("is struct " << k->getRawName());
-                            programPoint->fragment(pvasRef, k, call);
+                    std::string line = rlc_util::getNthLine(optLoadFileName, debugLoc.getLine());
+                    rlc_util::removeWhitespace(line);
+                    auto lineChunks = rlc_util::splitString(line, '=');
+                    if (lineChunks.size() > 0) {
+                        std::string leftHandSide = lineChunks[0];
+
+                        // tests if line looks s.y = (char*)malloc(15) or s = (char*)malloc(15)
+                        std::string potentialStructName = structFieldToIndexMap.get(leftHandSide);
+                        if (potentialStructName != "") {
+                            leftHandSide = potentialStructName;
                         }
-                    }
 
+                        logout("LHS = " << leftHandSide);
+                        PVAliasSet* LHSpvas = programPoint->getPVASRef(leftHandSide, false);
+
+                        if (LHSpvas) {
+                            programPoint->unalias(pvasRef, leftHandSide, call, receivingVar);
+                            return;
+
+
+                        }
+
+                    }
                 }
             }
 
-            
+
             programPoint->addAlias(callVar, receivingVar);
             return;
         }
@@ -520,7 +491,7 @@ void doAliasReasoning(Instruction *instruction,
 void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     std::string fnName = F.getName().str();
 
-    std::string testName = getTestName(optLoadFileName);
+    std::string testName = rlc_util::getTestName(optLoadFileName);
 
     programLinesBranchesInfo.add(F);
 
@@ -594,7 +565,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
         std::string branchName = I->getParent()->getName().str();
-        doAliasReasoning(&(*I), programFunction, optLoadFileName);
+        doAliasReasoning(&(*I), programFunction, optLoadFileName, structFieldToIndexMap);
 
         auto succs = rlc_dataflow::getSuccessors(&(*I));
         branchInstructionMap[branchName].branch.insert(&(*I));

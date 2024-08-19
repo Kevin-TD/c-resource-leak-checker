@@ -57,7 +57,7 @@ class PVAliasSet {
     void clearMethods();
 
     // generates the set of program variables represented by, if cleanNames is true, their clean name
-    // or, if cleanNames if false, their raw name. if includeSetNumber is true, the set number is 
+    // or, if cleanNames if false, their raw name. if includeSetNumber is true, the set number is
     // displayed via appending a -[setNumber]
     std::string toString(bool cleanNames, bool includeSetNumber) const;
 
@@ -83,17 +83,26 @@ class PVAliasSet {
     // returns true iff any of this program variables contains an index, meaning it refers to
     // a struct's field. returns false iff there is no program variable with an index
     bool containsStructFieldVar();
-    
+
     // returns true iff any of this program variables value refers to a call instruction;
-    // true is not returned if the function call is an llvm ptr annotation or 
+    // true is not returned if the function call is an llvm ptr annotation or
     // llvm var annotation call. returns false otherwise
-    bool containsCallInstVar(); 
+    bool containsCallInstVar();
 
     void setSetNumber(unsigned setNumber);
 
-    ProgramVariable* mostRecentWithIndex(); 
+    // scans through every program variable stored and returns the max set
+    // number found
+    unsigned getMaxSetNumber();
 
-    unsigned getMaxSetNumber(); 
+    // removes (from this set of program variables) and returns
+    // every program variable with set number setNumber. an empty
+    // PVAliasSet is returned if no program variables are found
+    PVAliasSet moveOut(unsigned setNumber);
+
+    // removes (from this set of program variables) and returns
+    // the program variable that equals pv
+    ProgramVariable moveOut(ProgramVariable pv);
 
     friend class DisjointPVAliasSets;
     friend class TestRunner;

@@ -83,5 +83,5 @@ unsigned ProgramVariable::getSetNumber() {
 }
 
 void ProgramVariable::setSetNumber(unsigned setNumber) {
-    this->setNumber = setNumber; 
+    this->setNumber = setNumber;
 }

@@ -10,9 +10,11 @@ int main() {
     char* s3;
 
     s1 = (char*)malloc(15);
-    s2 = s1; 
-    s3 = s2; 
+    s2 = s1;
+    s3 = s2;
 
     s2 = (char*)malloc(15);
+
+    free(s1);
 
 }

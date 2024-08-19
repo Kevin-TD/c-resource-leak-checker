@@ -84,49 +84,6 @@ bool IRstructNameEqualsCstructName(std::string &structName,
     return false;
 }
 
-bool varNameEqualsCvarName(const std::string &varName, const std::string &optLoadFileName) {
-    LLVMContext context;
-    SMDiagnostic error;
-
-    // Derive the IR file name from the provided file name.
-    std::string IRFileName =
-        optLoadFileName.substr(0, optLoadFileName.size() - 2) + ".ll";
-
-    // Parse the IR file.
-    std::unique_ptr<Module> module = parseIRFile(IRFileName, error, context);
-    if (!module) {
-        errs() << "Error: IR file '" + IRFileName + "' not found\n";
-        std::exit(EXIT_FAILURE);
-        return false;
-    }
-
-    DebugInfoFinder debugInfoFinder;
-    debugInfoFinder.processModule(*module);
-
-    for (auto &F : *module) {
-        for (auto &BB : F) {
-            for (auto &I : BB) {
-                if (DbgDeclareInst *DbgDeclare = dyn_cast<DbgDeclareInst>(&I)) {
-                    if (DILocalVariable *LocalVar = DbgDeclare->getVariable()) {
-                        if (LocalVar->getName() == varName) {
-                            return true;
-                        }
-                    }
-                } else if (DbgValueInst *DbgValue = dyn_cast<DbgValueInst>(&I)) {
-                    if (DILocalVariable *LocalVar = DbgValue->getVariable()) {
-                        if (LocalVar->getName() == varName) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
-    return false;
-}
-
 std::vector<Instruction *> getPredecessors(Instruction *instruction) {
     std::vector<Instruction *> Ret;
     auto Block = instruction->getParent();
@@ -279,6 +236,36 @@ std::string setToString(std::set<std::string> &setString) {
 
 bool startsWith(std::string str, std::string starts) {
     return str.rfind(starts, 0) == 0;
+}
+
+std::string getNthLine(const std::string& filePath, unsigned n) {
+    std::ifstream file(filePath);
+    std::string line;
+
+    if (!file.is_open()) {
+        logout("ERROR: Could not open file " << filePath);
+        std::exit(EXIT_FAILURE);
+    }
+
+    for (unsigned i = 1; i <= n; ++i) {
+        if (!std::getline(file, line)) {
+            logout ("ERROR: Line number out of range");
+            std::exit(EXIT_FAILURE);
+        }
+    }
+
+    return line;
+}
+
+std::string getTestName(std::string optLoadFileName) {
+    std::string startsWith = "../test";
+    std::string endsWith = ".c";
+    optLoadFileName.replace(0, startsWith.length() + 1, "");
+    optLoadFileName.erase(optLoadFileName.length() - 2);
+
+    logout("RES = " << optLoadFileName);
+
+    return optLoadFileName;
 }
 
 } // namespace rlc_util

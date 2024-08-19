@@ -33,6 +33,13 @@ class ProgramVariable {
     // otherwise, it is equal to -1
     int index;
 
+    // represents an alias set the program variable is apart of. e.g.,
+    // if we have two sets {a, b, c} and {x, y, z}, all elements have
+    // set number zero. but if we join them together,
+    // a, b, c will have set number 0, but x, y, z will have set number 1.
+    // all elements are still aliased. this is useful for if we need to
+    // perform unaliasing, turning {a, b, c, x, y, z} back into
+    // {a, b, c} and {x, y, z}
     unsigned setNumber;
 
   public:
@@ -65,7 +72,7 @@ class ProgramVariable {
     // checks if value's name (maybe with % or @) equals other name
     bool equalsRawName(std::string otherRawName);
 
-    unsigned getSetNumber(); 
+    unsigned getSetNumber();
     void setSetNumber(unsigned setNumber);
 
     bool isIdentifier();

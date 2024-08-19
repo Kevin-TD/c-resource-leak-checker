@@ -172,7 +172,31 @@ void ProgramPoint::add(ProgramPoint *programPoint) {
     }
 }
 
-void ProgramPoint::fragment(PVAliasSet* pvas, ProgramVariable* groupBy, Value* replaceInstruction) {
-    logout("set number " << groupBy->getSetNumber());
-    
+void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable pvCallInst, ProgramVariable callInstAlias) {
+    for (ProgramVariable& pv : pvas->getProgramVariables()) {
+        if (pv.equalsCleanedName(cleanedNameOfPVToUnalias)) {
+            if (pv.getIndex() != -1) {
+                PVAliasSet grabbedSet = pvas->moveOut(pv.getSetNumber());
+                grabbedSet.add(pvCallInst);
+
+                if (pvas->getProgramVariables().size() > 0) {
+                    ProgramVariable pvToMove = pvas->moveOut(callInstAlias);
+                    if (pvToMove.getCleanedName() != "") {
+                        grabbedSet.add(pvToMove);
+                    }
+                }
+
+                addPVAS(grabbedSet);
+                break;
+            } else {
+                ProgramVariable pvToMove = pvas->moveOut(pv);
+                PVAliasSet newSet;
+                newSet.add(pvToMove);
+                newSet.add(pvCallInst);
+                addPVAS(newSet);
+                break;
+            }
+        }
+    }
 }
+

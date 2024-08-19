@@ -82,7 +82,7 @@ void DisjointPVAliasSets::addAlias(ProgramVariable element1,
 
     // case: both sets exist
     if (element1Set && element2Set) {
-        element2Set->setSetNumber(element1Set->getMaxSetNumber() + 1); 
+        element2Set->setSetNumber(element1Set->getMaxSetNumber() + 1);
         this->unionSets(element1, element2);
         return;
     }

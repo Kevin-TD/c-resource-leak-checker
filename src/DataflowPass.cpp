@@ -507,7 +507,7 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
     // llvm.dbg.declare are function calls made by the IR to set debug
     // information. this function does not have annotations, as it's a function
     // by the IR, not the C code. thus, we do not check it for annotations.
-    if (fnName == "llvm.dbg.declare") {
+    if (fnName == LLVM_DBG_DECLARE) {
         return true;
     }
 

@@ -9,15 +9,15 @@ struct M {
 };
 
 int main() {
-    struct M s; 
-    char* s1; 
+    struct M s;
+    char* s1;
 
     s.x = (char*)malloc(15);
 
-    s.y = s.x; // aliased
-    s1 = s.x; // aliased
+    s.y = s.x;
+    s1 = s.x; // s1, s.x, s.y aliased
 
-    s1 = (char*)malloc(15); // s.1 no longer aliased with s.x and s.y
+    s1 = (char*)malloc(15);
 
-    free(s.x); // s.x and s.y freed, s1 not freed
+    free(s.x); // s.x, s.y freed. s1 not
 }
