@@ -9,7 +9,7 @@ struct M {
 };
 
 void reassignPointer(char* s MustCall("free")) {
-    s = (char*)malloc(15); 
+    s = (char*)malloc(15);
 }
 
 int main() {
@@ -21,8 +21,8 @@ int main() {
     s.y = s.x;
     s1 = s.x; // s1, s.x, s.y aliased
 
-    printf("%s", s.y); 
-    
+    printf("%s", s.y);
+
     reassignPointer(s.y); // s.y no longer aliased
 
     free(s.x); // s1, s.y freed. s.y not

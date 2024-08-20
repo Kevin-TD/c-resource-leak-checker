@@ -9,7 +9,7 @@ struct M {
 };
 
 void reassignPointer(char* s MustCall("free"), struct M m MustCall("free", "y")) {
-    s = (char*)malloc(15); 
+    s = (char*)malloc(15);
     m.y = (char*)malloc(15);
 }
 
@@ -21,9 +21,9 @@ int main() {
 
     s.y = s.x;
     s1.y = s.x;
-    s2.y = s.x; 
-    s3 = s.x; 
-    
+    s2.y = s.x;
+    s3 = s.x;
+
     reassignPointer(s.y, s1);
 
     free(s.x);

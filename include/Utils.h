@@ -34,8 +34,9 @@ std::vector<Instruction *> getPredecessors(Instruction *instruction);
 // gets the successors of a given instruction in the control-flow graph
 std::vector<Instruction *> getSuccessors(Instruction *instruction);
 
-// returns the LLVM struct type corresponding to structTypeName
-StructType* getLLVMStructType(const std::string& optLoadFileName, const std::string& structTypeName);
+// returns the number of fields of struct structTypeName. returns -1 if the struct
+// is not found
+int getStructNumberOfFields(const std::string& optLoadFileName, const std::string& structTypeName);
 
 // returns the arguments passed into a call as strings
 std::vector<std::string> getFunctionArgs(const std::string& optLoadFileName, CallInst* call);

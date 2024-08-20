@@ -51,8 +51,7 @@
 // TODO: implement FI in DataflowPass.cpp
 // TODO: document FunctionInfo and FunctionInfosManager and get_function_info.py
 // TODO: make sliceString params use unsigned instead of signed int
-// TODO: write testing for getTestName
-// TODO: write testing for getNthLine
+// TODO: write testing for getTestName, getNthLine, getLLVMStructType, getFunctionArgs
 
 
 // IMPORTANT:
@@ -479,67 +478,41 @@ void doAliasReasoning(Instruction *instruction,
             ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
             logout("add alias for analysis callinst llvm annotation");
             programPoint->addAlias(sourceVar, destinationVar);
-            return; 
+            return;
         }
 
         auto fi = functionInfosManager.getFunction(fnName);
         if (fi && fi->getNumberOfParameters() != call->getNumArgOperands()) {
-            // from something like reassignPointer(a, b, c), we extrapolate the argument name ("a" or "b" or "c")
-            const DebugLoc &debugLoc = call->getDebugLoc();
-            std::string line = rlc_util::getNthLine(optLoadFileName, debugLoc.getLine());
-            rlc_util::removeWhitespace(line);
-            line = rlc_util::sliceString(line, line.find_first_of('(') + 1, line.find_first_of(')') - 1); 
-            auto args = rlc_util::splitString(line, ',');
+            auto args = getFunctionArgs(optLoadFileName, call);
 
             for (unsigned i = 0; i < fi->getNumberOfParameters(); i++) {
                 ProgramVariable argumentVar = ProgramVariable(call->getArgOperand(i));
                 std::string arg = argumentVar.getCleanedName();
                 PVAliasSet *pvas = programPoint->getPVASRef(argumentVar, false);
 
-                LLVMContext context;
-                SMDiagnostic error;
-                std::string IRFileName = rlc_util::sliceString(optLoadFileName, 0, optLoadFileName.size() - 3) + ".ll";
-                std::unique_ptr<Module> module = parseIRFile(IRFileName, error, context);
-                
-                bool isStructTy = false; 
+                int numFields = rlc_dataflow::getStructNumberOfFields(optLoadFileName, fi->getNthParamType(i));
 
-                for (const auto &structType : module->getIdentifiedStructTypes()) {
-                    // ASSUMPTION: llvm struct names being with "struct."
+                if (numFields != -1) {
+                    for (unsigned j = 0; j < numFields; j++) {
+                        std::string targetArg = args[i] + "." + std::to_string(j);
 
-                    if (
-                        "struct." + fi->getNthParamType(i) == structType->getName()  ||
-                        rlc_util::startsWith(fi->getNthParamType(i), "struct ") &&
-                        "struct." + rlc_util::splitString(fi->getNthParamType(i), ' ')[1] == structType->getName()
+                        logout("target arg1 " << targetArg);
 
-                    ) {
-
-                        logout("-found struct " << structType->getName() << " for i = " << i);
-                        logout("struct has this many fields: " << structType->getNumElements());
-
-                        isStructTy = true; 
-
-                        for (unsigned j = 0; j < structType->getNumElements(); j++) {
-                            std::string targetArg = args[i] + "." + std::to_string(j); 
-
-                            logout("target arg " << targetArg);
-
-                            argumentVar = ProgramVariable(call->getArgOperand(i + j));
-                            logout("argument var " << argumentVar.getRawName());
-
-                            PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false); 
-
-                            if (targetArgPvas) {
-                                logout("found target " << targetArg);
-                                programPoint->unalias(targetArgPvas, targetArg, argumentVar);
-                            }
-                    
+                        if (i + j >= call->getNumArgOperands()) {
+                            continue;
                         }
 
-                        break; 
-                    }
-                }
+                        argumentVar = ProgramVariable(call->getArgOperand(i + j));
+                        logout("argument var " << argumentVar.getRawName());
 
-                if (!isStructTy) {
+                        PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
+
+                        if (targetArgPvas) {
+                            logout("found target " << targetArg);
+                            programPoint->unalias(targetArgPvas, targetArg, argumentVar);
+                        }
+                    }
+                } else {
                     std::string targetArg = args[i];
 
                     std::string potentialStructAndFieldName = structFieldToIndexMap.get(targetArg);
@@ -547,23 +520,17 @@ void doAliasReasoning(Instruction *instruction,
                         targetArg = potentialStructAndFieldName;
                     }
 
-                    logout("target arg " << targetArg);
+                    logout("target arg2 " << targetArg);
 
-                    PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false); 
-            
+                    PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
+
                     if (targetArgPvas) {
                         programPoint->unalias(pvas, targetArg, argumentVar);
                     }
                 }
-
             }
-            
-
-            return; 
+            return;
         }
-
-
-
 
         for (unsigned i = 0; i < call->getNumArgOperands(); ++i) {
             ProgramVariable argumentVar = ProgramVariable(call->getArgOperand(i));
@@ -574,32 +541,28 @@ void doAliasReasoning(Instruction *instruction,
                 logout("at call " << *call << " param " << i << " pvas contains call inst var");
 
                 if (SafeFunctions.count(fnName)) {
-                    logout("safe function -> skip"); 
-                    continue; 
+                    logout("safe function -> skip");
+                    continue;
                 }
-                
-                bool doContinue = false; 
+
+                bool doContinue = false;
                 for (auto pair : MemoryFunctions) {
                     if (fnName == pair.second) {
                         logout("mem freeing function -> skip");
                         doContinue = true;
-                        break; 
+                        break;
                     }
-                }            
+                }
 
                 if (doContinue) {
-                    continue; 
+                    continue;
                 }
-                
+
                 logout("not skipped i = " << i);
 
                 logout(pvas->toString(false, true));
 
-                const DebugLoc &debugLoc = call->getDebugLoc();
-                std::string line = rlc_util::getNthLine(optLoadFileName, debugLoc.getLine());
-                rlc_util::removeWhitespace(line);
-                line = rlc_util::sliceString(line, line.find_first_of('(') + 1, line.find_first_of(')') - 1); 
-                auto args = rlc_util::splitString(line, ',');
+                auto args = getFunctionArgs(optLoadFileName, call);
 
                 if (i < arg.size()) {
                     std::string targetArg = args[i];
@@ -612,8 +575,8 @@ void doAliasReasoning(Instruction *instruction,
                     logout("target arg " << targetArg << " for i = " << i);
                     logout(argumentVar.getRawName());
 
-                    PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false); 
-                    
+                    PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
+
                     if (targetArgPvas) {
                         programPoint->unalias(pvas, targetArg, argumentVar);
                     }

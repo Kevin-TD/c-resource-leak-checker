@@ -153,12 +153,12 @@ ProgramVariable PVAliasSet::getCallInstVar(unsigned setNumber) {
             }
 
             if (pv.getSetNumber() == setNumber) {
-                return pv; 
+                return pv;
             }
         }
     }
 
-    return ProgramVariable(); 
+    return ProgramVariable();
 }
 
 bool PVAliasSet::containsStructFieldVar() {

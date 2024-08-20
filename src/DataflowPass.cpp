@@ -189,10 +189,11 @@ void DataflowPass::transfer(Instruction *instruction,
                         skipTheOnFunctionCall = true;
                     }
 
-                    // check if param type is a struct
-                    if (auto structType = rlc_dataflow::getLLVMStructType(optLoadFileName, fi->getNthParamType(i))) {
-                        logout("found struct " << structType->getName());
-                        logout("struct has this many fields: " << structType->getNumElements());
+                    int numFields = rlc_dataflow::getStructNumberOfFields(optLoadFileName, fi->getNthParamType(i));
+
+                    if (numFields != -1) {
+                        logout("found struct");
+                        logout("struct has this many fields: " << numFields);
                         skipTheOnFunctionCall = true;
                     }
                 }

@@ -136,13 +136,13 @@ StructType *unwrapValuePointerToStruct(Value *value) {
     return NULL;
 }
 
-StructType* getLLVMStructType(const std::string& optLoadFileName, const std::string& structTypeName) {
+int getStructNumberOfFields(const std::string& optLoadFileName, const std::string& structTypeName) {
     LLVMContext context;
     SMDiagnostic error;
     std::string IRFileName = rlc_util::sliceString(optLoadFileName, 0, optLoadFileName.size() - 3) + ".ll";
     std::unique_ptr<Module> module = parseIRFile(IRFileName, error, context);
 
-    for (const auto &structType : module->getIdentifiedStructTypes()) {
+    for (auto structType : module->getIdentifiedStructTypes()) {
         // ASSUMPTION: llvm struct names being with "struct."
 
         if (
@@ -152,18 +152,18 @@ StructType* getLLVMStructType(const std::string& optLoadFileName, const std::str
             "struct." + rlc_util::splitString(structTypeName, ' ')[1] == structType->getName()
 
         ) {
-            return structType; 
+            return structType->getNumElements();
         }
     }
 
-    return NULL; 
+    return -1;
 }
 
 std::vector<std::string> getFunctionArgs(const std::string& optLoadFileName, CallInst* call) {
     const DebugLoc &debugLoc = call->getDebugLoc();
     std::string line = rlc_util::getNthLine(optLoadFileName, debugLoc.getLine());
     rlc_util::removeWhitespace(line);
-    line = rlc_util::sliceString(line, line.find_first_of('(') + 1, line.find_first_of(')') - 1); 
+    line = rlc_util::sliceString(line, line.find_first_of('(') + 1, line.find_first_of(')') - 1);
     return rlc_util::splitString(line, ',');
 }
 
