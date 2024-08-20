@@ -200,3 +200,29 @@ void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVT
     }
 }
 
+void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar) {
+    for (ProgramVariable& pv : pvas->getProgramVariables()) {
+        if (pv.equalsCleanedName(cleanedNameOfPVToUnalias)) {
+            if (pv.getIndex() != -1) {
+                PVAliasSet grabbedSet = pvas->moveOut(pv.getSetNumber());
+
+                ProgramVariable argVarPV = pvas->moveOut(argumentVar);
+                grabbedSet.add(argVarPV);
+
+                addPVAS(grabbedSet);
+                break;
+            } else {
+                PVAliasSet newSet;
+
+                ProgramVariable pvToMove = pvas->moveOut(pv);
+                newSet.add(pvToMove);
+
+                ProgramVariable argVarPV = pvas->moveOut(argumentVar);
+                newSet.add(argVarPV);
+
+                addPVAS(newSet);
+                break;
+            }
+        }
+    }
+}

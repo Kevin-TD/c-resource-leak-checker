@@ -247,7 +247,6 @@ void doAliasReasoning(Instruction *instruction,
 
                     const DebugLoc &debugLoc = call->getDebugLoc();
 
-
                     std::string line = rlc_util::getNthLine(optLoadFileName, debugLoc.getLine());
                     rlc_util::removeWhitespace(line);
                     auto lineChunks = rlc_util::splitString(line, '=');
@@ -266,14 +265,10 @@ void doAliasReasoning(Instruction *instruction,
                         if (LHSpvas) {
                             programPoint->unalias(pvasRef, leftHandSide, call, receivingVar);
                             return;
-
-
                         }
-
                     }
                 }
             }
-
 
             programPoint->addAlias(callVar, receivingVar);
             return;
@@ -484,6 +479,139 @@ void doAliasReasoning(Instruction *instruction,
             ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
             logout("add alias for analysis callinst llvm annotation");
             programPoint->addAlias(sourceVar, destinationVar);
+            return; 
+        }
+
+        auto fi = functionInfosManager.getFunction(fnName);
+        if (fi && fi->getNumberOfParameters() != call->getNumArgOperands()) {
+            // from something like reassignPointer(a, b, c), we extrapolate the argument name ("a" or "b" or "c")
+            const DebugLoc &debugLoc = call->getDebugLoc();
+            std::string line = rlc_util::getNthLine(optLoadFileName, debugLoc.getLine());
+            rlc_util::removeWhitespace(line);
+            line = rlc_util::sliceString(line, line.find_first_of('(') + 1, line.find_first_of(')') - 1); 
+            auto args = rlc_util::splitString(line, ',');
+
+            for (unsigned i = 0; i < fi->getNumberOfParameters(); i++) {
+                ProgramVariable argumentVar = ProgramVariable(call->getArgOperand(i));
+                std::string arg = argumentVar.getCleanedName();
+                PVAliasSet *pvas = programPoint->getPVASRef(argumentVar, false);
+
+                LLVMContext context;
+                SMDiagnostic error;
+                std::string IRFileName = rlc_util::sliceString(optLoadFileName, 0, optLoadFileName.size() - 3) + ".ll";
+                std::unique_ptr<Module> module = parseIRFile(IRFileName, error, context);
+                
+                bool isStructTy = false; 
+
+                for (const auto &structType : module->getIdentifiedStructTypes()) {
+                    // ASSUMPTION: llvm struct names being with "struct."
+
+                    if (
+                        "struct." + fi->getNthParamType(i) == structType->getName()  ||
+                        rlc_util::startsWith(fi->getNthParamType(i), "struct ") &&
+                        "struct." + rlc_util::splitString(fi->getNthParamType(i), ' ')[1] == structType->getName()
+
+                    ) {
+
+                        logout("-found struct " << structType->getName() << " for i = " << i);
+                        logout("struct has this many fields: " << structType->getNumElements());
+
+                        isStructTy = true; 
+
+                        for (unsigned j = 0; j < structType->getNumElements(); j++) {
+                            std::string targetArg = args[i] + "." + std::to_string(j); 
+
+                            logout("target arg " << targetArg);
+                            logout("argument var " << argumentVar.getRawName());
+
+                            PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false); 
+
+                            if (targetArgPvas) {
+                                logout("found target");
+                                programPoint->unalias(targetArgPvas, targetArg, argumentVar);
+                            }
+                    
+                        }
+
+                        break; 
+                    }
+                }
+
+                if (!isStructTy) {
+                    std::string targetArg = args[i];
+
+                    PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false); 
+            
+                    if (targetArgPvas) {
+                        programPoint->unalias(pvas, targetArg, argumentVar);
+                    }
+                }
+
+            }
+            
+
+            return; 
+        }
+
+
+
+
+        for (unsigned i = 0; i < call->getNumArgOperands(); ++i) {
+            ProgramVariable argumentVar = ProgramVariable(call->getArgOperand(i));
+            std::string arg = argumentVar.getCleanedName();
+            PVAliasSet *pvas = programPoint->getPVASRef(argumentVar, false);
+
+            if (pvas && pvas->containsCallInstVar()) {
+                logout("at call " << *call << " param " << i << " pvas contains call inst var");
+
+                if (SafeFunctions.count(fnName)) {
+                    logout("safe function -> skip"); 
+                    continue; 
+                }
+                
+                bool doContinue = false; 
+                for (auto pair : MemoryFunctions) {
+                    if (fnName == pair.second) {
+                        logout("mem freeing function -> skip");
+                        doContinue = true;
+                        break; 
+                    }
+                }            
+
+                if (doContinue) {
+                    continue; 
+                }
+                
+                logout("not skipped i = " << i);
+
+                logout(pvas->toString(false, true));
+
+                const DebugLoc &debugLoc = call->getDebugLoc();
+                std::string line = rlc_util::getNthLine(optLoadFileName, debugLoc.getLine());
+                rlc_util::removeWhitespace(line);
+                line = rlc_util::sliceString(line, line.find_first_of('(') + 1, line.find_first_of(')') - 1); 
+                auto args = rlc_util::splitString(line, ',');
+
+                if (i < arg.size()) {
+                    std::string targetArg = args[i];
+
+                    std::string potentialStructName = structFieldToIndexMap.get(targetArg);
+                    if (potentialStructName != "") {
+                        targetArg = potentialStructName;
+                    }
+
+                    logout("target arg " << targetArg << " for i = " << i);
+                    logout(argumentVar.getRawName());
+
+                    PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false); 
+                    
+                    if (targetArgPvas) {
+                        programPoint->unalias(pvas, targetArg, argumentVar);
+                    }
+                } else {
+                    logout("missed out on " << arg << " for i = " << i);
+                }
+            }
         }
     }
 }

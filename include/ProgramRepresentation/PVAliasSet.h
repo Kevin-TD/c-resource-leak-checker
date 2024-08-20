@@ -89,6 +89,8 @@ class PVAliasSet {
     // llvm var annotation call. returns false otherwise
     bool containsCallInstVar();
 
+    ProgramVariable getCallInstVar(unsigned setNumber);
+
     void setSetNumber(unsigned setNumber);
 
     // scans through every program variable stored and returns the max set
