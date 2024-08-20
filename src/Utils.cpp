@@ -136,6 +136,37 @@ StructType *unwrapValuePointerToStruct(Value *value) {
     return NULL;
 }
 
+StructType* getLLVMStructType(const std::string& optLoadFileName, const std::string& structTypeName) {
+    LLVMContext context;
+    SMDiagnostic error;
+    std::string IRFileName = rlc_util::sliceString(optLoadFileName, 0, optLoadFileName.size() - 3) + ".ll";
+    std::unique_ptr<Module> module = parseIRFile(IRFileName, error, context);
+
+    for (const auto &structType : module->getIdentifiedStructTypes()) {
+        // ASSUMPTION: llvm struct names being with "struct."
+
+        if (
+            "struct." + structTypeName == structType->getName()  ||
+
+            rlc_util::startsWith(structTypeName, "struct ") &&
+            "struct." + rlc_util::splitString(structTypeName, ' ')[1] == structType->getName()
+
+        ) {
+            return structType; 
+        }
+    }
+
+    return NULL; 
+}
+
+std::vector<std::string> getFunctionArgs(const std::string& optLoadFileName, CallInst* call) {
+    const DebugLoc &debugLoc = call->getDebugLoc();
+    std::string line = rlc_util::getNthLine(optLoadFileName, debugLoc.getLine());
+    rlc_util::removeWhitespace(line);
+    line = rlc_util::sliceString(line, line.find_first_of('(') + 1, line.find_first_of(')') - 1); 
+    return rlc_util::splitString(line, ',');
+}
+
 } // namespace rlc_dataflow
 
 namespace rlc_util {

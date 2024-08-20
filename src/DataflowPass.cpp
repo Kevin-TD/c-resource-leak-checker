@@ -190,26 +190,10 @@ void DataflowPass::transfer(Instruction *instruction,
                     }
 
                     // check if param type is a struct
-                    LLVMContext context;
-                    SMDiagnostic error;
-                    std::string IRFileName = rlc_util::sliceString(optLoadFileName, 0, optLoadFileName.size() - 3) + ".ll";
-                    std::unique_ptr<Module> module = parseIRFile(IRFileName, error, context);
-
-                    for (const auto &structType : module->getIdentifiedStructTypes()) {
-                        // ASSUMPTION: llvm struct names being with "struct."
-
-                        if (
-                            "struct." + fi->getNthParamType(i) == structType->getName()  ||
-
-                            rlc_util::startsWith(fi->getNthParamType(i), "struct ") &&
-                            "struct." + rlc_util::splitString(fi->getNthParamType(i), ' ')[1] == structType->getName()
-
-                        ) {
-
-                            logout("found struct " << structType->getName());
-                            logout("struct has this many fields: " << structType->getNumElements());
-                            skipTheOnFunctionCall = true;
-                        }
+                    if (auto structType = rlc_dataflow::getLLVMStructType(optLoadFileName, fi->getNthParamType(i))) {
+                        logout("found struct " << structType->getName());
+                        logout("struct has this many fields: " << structType->getNumElements());
+                        skipTheOnFunctionCall = true;
                     }
                 }
             }

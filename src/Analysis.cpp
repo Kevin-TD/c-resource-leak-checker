@@ -522,12 +522,14 @@ void doAliasReasoning(Instruction *instruction,
                             std::string targetArg = args[i] + "." + std::to_string(j); 
 
                             logout("target arg " << targetArg);
+
+                            argumentVar = ProgramVariable(call->getArgOperand(i + j));
                             logout("argument var " << argumentVar.getRawName());
 
                             PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false); 
 
                             if (targetArgPvas) {
-                                logout("found target");
+                                logout("found target " << targetArg);
                                 programPoint->unalias(targetArgPvas, targetArg, argumentVar);
                             }
                     
@@ -539,6 +541,13 @@ void doAliasReasoning(Instruction *instruction,
 
                 if (!isStructTy) {
                     std::string targetArg = args[i];
+
+                    std::string potentialStructAndFieldName = structFieldToIndexMap.get(targetArg);
+                    if (potentialStructAndFieldName != "") {
+                        targetArg = potentialStructAndFieldName;
+                    }
+
+                    logout("target arg " << targetArg);
 
                     PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false); 
             
@@ -595,9 +604,9 @@ void doAliasReasoning(Instruction *instruction,
                 if (i < arg.size()) {
                     std::string targetArg = args[i];
 
-                    std::string potentialStructName = structFieldToIndexMap.get(targetArg);
-                    if (potentialStructName != "") {
-                        targetArg = potentialStructName;
+                    std::string potentialStructAndFieldName = structFieldToIndexMap.get(targetArg);
+                    if (potentialStructAndFieldName != "") {
+                        targetArg = potentialStructAndFieldName;
                     }
 
                     logout("target arg " << targetArg << " for i = " << i);

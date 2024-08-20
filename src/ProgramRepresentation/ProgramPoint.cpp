@@ -207,7 +207,9 @@ void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVT
                 PVAliasSet grabbedSet = pvas->moveOut(pv.getSetNumber());
 
                 ProgramVariable argVarPV = pvas->moveOut(argumentVar);
-                grabbedSet.add(argVarPV);
+                if (argVarPV.getCleanedName() != "") {
+                    grabbedSet.add(argVarPV);
+                }
 
                 addPVAS(grabbedSet);
                 break;

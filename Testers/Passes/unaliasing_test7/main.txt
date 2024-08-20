@@ -5,6 +5,6 @@ pass=MustCall function=main var=s2.y methods={free}
 pass=MustCall function=main var=s3 methods={free}
 pass=CalledMethods function=main var=s.x methods={free}
 pass=CalledMethods function=main var=s.y methods={reassignPointer}
-pass=CalledMethods function=main var=s1.y methods={reassignPointer}
+pass=CalledMethods function=main var=s1.y methods={}
 pass=CalledMethods function=main var=s2.y methods={free}
 pass=CalledMethods function=main var=s3 methods={free}
