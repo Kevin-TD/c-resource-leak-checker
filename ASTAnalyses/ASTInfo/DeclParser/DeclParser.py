@@ -170,6 +170,7 @@ class DeclParser:
         # VarDecl 0x23e1d40 <col:5, col:11> col:11 used str 'char *'
         # VarDecl 0x23e1dd0 <col:5, col:21> col:9 a 'int' cinit
         # VarDecl 0x2414f60 <col:5, col:54> col:22 m_var_2 'struct my_struct':'struct my_struct' cinit
+        # VarDecl 0x24141a0 <col:5, col:31> col:24 used K12 'struct my_struct2 *' cinit
 
         if var_decl_chunks[5] == "used":
             var_name = var_decl_chunks[6]
@@ -178,7 +179,7 @@ class DeclParser:
         else:
             var_name = var_decl_chunks[5]
 
-        if "col" and ":" in var_name:
+        if "col" in var_name and ":" in var_name:
             var_name = var_decl_chunks[6]
 
         struct_name = ""
@@ -204,6 +205,9 @@ class DeclParser:
             struct_name = struct_name_split[1]
         else:
             struct_name = struct_name_split[0]
+
+        if struct_name == "struct" and len(struct_name_split) > 2:
+            struct_name = struct_name_split[1]
 
         if not specifier_manager.struct_exists(struct_name):
             logout(
