@@ -59,8 +59,6 @@
 // TODO: when doing something like func(thing) make sure called methods is applied on thing when it gets desugared.
 // update tests accordingly
 
-// TODO!: fix struct field to index map for simple_ptr_test
-
 
 struct InstructionHolder {
     SetVector<Instruction *> branch;
