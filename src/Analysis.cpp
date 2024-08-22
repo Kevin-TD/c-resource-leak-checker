@@ -592,12 +592,14 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
         anyTestFailed = true;
     }
 
-    if (BranchListerTester::runTest(testName, programLinesBranchesInfo) == EXIT_FAILURE) {
+    if (BranchListerTester::runTest(testName, fnName, programLinesBranchesInfo) == EXIT_FAILURE) {
         logout("**BRANCH LISTER TESTER FAILED");
         anyTestFailed = true;
     } else {
         logout("BRANCH LISTER TESTER PASSED");
     }
+
+    realBranchOrder.clear();
 }
 
 // utilFunctionTester is an extended class of UtilFunctionTester

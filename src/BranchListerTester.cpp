@@ -3,7 +3,7 @@
 #include "Utils.h"
 #include "Debug.h"
 
-bool BranchListerTester::runTest(const std::string& testName, ProgramLinesBranchInfo& programLinesBranchInfo) {
+bool BranchListerTester::runTest(const std::string& testName, const std::string& fnName, ProgramLinesBranchInfo& programLinesBranchInfo) {
     bool testPassed = EXIT_SUCCESS;
     std::ifstream testFile(BRANCH_LISTER_TEST_DIRNAME + "/" + testName + ".txt");
     std::string line;
@@ -68,6 +68,10 @@ bool BranchListerTester::runTest(const std::string& testName, ProgramLinesBranch
                 logout("**BRANCH LISTER TESTER ERROR: Branch name argument missing on line '"
                        << line << "'");
                 std::exit(EXIT_FAILURE);
+            }
+
+            if (functionName != fnName) {
+                continue;
             }
 
             if (auto lbi = programLinesBranchInfo.getLBI(lineNumber)) {
