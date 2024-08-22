@@ -128,6 +128,12 @@ class ProgramPoint {
     */
     void unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable pvCallInst, ProgramVariable callInstAlias);
 
+    /* moves the pv corresponding to cleanedNameOfPVToUnalias (and potential aliases) out of
+    pvas and into a new alias set. should only be called when pvas already has a call inst stored
+    (checked with PVAliasSet::containsCallInstVar) and a function call is made, potentially
+    assigning a pointer to a new resource.
+    argumentVar is alias information related to the pointer being assigned a new resource
+    */
     void unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar);
 };
 

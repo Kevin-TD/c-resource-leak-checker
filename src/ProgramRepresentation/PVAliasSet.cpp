@@ -142,25 +142,6 @@ bool PVAliasSet::containsCallInstVar() {
     return false;
 }
 
-ProgramVariable PVAliasSet::getCallInstVar(unsigned setNumber) {
-    for (ProgramVariable pv : programVariables) {
-        if (CallInst* call = dyn_cast<CallInst>(pv.getValue())) {
-            std::string fnName = call->getCalledFunction()->getName().str();
-
-            if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
-                    rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
-                continue;
-            }
-
-            if (pv.getSetNumber() == setNumber) {
-                return pv;
-            }
-        }
-    }
-
-    return ProgramVariable();
-}
-
 bool PVAliasSet::containsStructFieldVar() {
     for (ProgramVariable pv : programVariables) {
         if (pv.containsStructFieldVar()) {

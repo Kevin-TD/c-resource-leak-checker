@@ -182,7 +182,8 @@ std::vector<std::string> getAnnotationStrings(const TempFileManager& astInfoFile
 void doAliasReasoning(Instruction *instruction,
                       ProgramFunction &programFunction,
                       std::string optLoadFileName,
-                      StructFieldToIndexMap structFieldToIndexMap) {
+                      StructFieldToIndexMap structFieldToIndexMap,
+                      FunctionInfosManager functionInfosManager) {
     bool includes = false;
     std::string branchName = instruction->getParent()->getName().str();
     for (auto branch : realBranchOrder) {
@@ -234,6 +235,7 @@ void doAliasReasoning(Instruction *instruction,
             ProgramVariable callVar = ProgramVariable(call);
             logout("add alias for analysis storeinst call inst");
 
+            // check for pointer reassignment; if so, the resource becomes un-aliased
             if (auto pvasRef = programPoint->getPVASRef(receivingVar, false)) {
                 if (pvasRef->containsCallInstVar()) {
                     logout("pointer reassignment inst " << *instruction);
@@ -471,7 +473,6 @@ void doAliasReasoning(Instruction *instruction,
         (https://llvm.org/docs/LangRef.html#llvm-annotation-intrinsic)
         but we wont need to worry about them; they hold no aliasing information
         */
-
         if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
                 rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
             ProgramVariable sourceVar = ProgramVariable(call);
@@ -480,6 +481,8 @@ void doAliasReasoning(Instruction *instruction,
             programPoint->addAlias(sourceVar, destinationVar);
             return;
         }
+
+        // now we check for un-aliasing
 
         auto fi = functionInfosManager.getFunction(fnName);
         if (fi && fi->getNumberOfParameters() != call->getNumArgOperands()) {
@@ -665,7 +668,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
         std::string branchName = I->getParent()->getName().str();
-        doAliasReasoning(&(*I), programFunction, optLoadFileName, structFieldToIndexMap);
+        doAliasReasoning(&(*I), programFunction, optLoadFileName, structFieldToIndexMap, functionInfosManager);
 
         auto succs = rlc_dataflow::getSuccessors(&(*I));
         branchInstructionMap[branchName].branch.insert(&(*I));
