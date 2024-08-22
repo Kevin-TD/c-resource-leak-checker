@@ -1,0 +1,10 @@
+var_k.x=var_k.0
+var_k.y=var_k.1
+m.x=m.0
+m.y=m.1
+km.x=km.0
+km.y=km.1
+m_var_1.x=m_var_1.0
+m_var_1.y=m_var_1.1
+m_var_2.x=m_var_2.0
+m_var_2.y=m_var_2.1

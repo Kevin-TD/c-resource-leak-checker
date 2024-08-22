@@ -1,0 +1,2 @@
+my_struct_ptr.A=my_struct_ptr.0
+my_struct_ptr.B=my_struct_ptr.1

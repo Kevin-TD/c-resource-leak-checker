@@ -1,0 +1,2 @@
+var2.x=var2.0
+var2_freed.x=var2_freed.0

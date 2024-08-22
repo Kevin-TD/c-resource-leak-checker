@@ -48,6 +48,7 @@ add_llvm_library(CodeAnalyzer MODULE
   src/DataflowPass.cpp
   src/TestRunner.cpp
   src/BranchListerTester.cpp
+  src/StructFieldToIndexTester.cpp
   src/StructFieldToIndexMap.cpp
   src/TempFileManager.cpp
   src/FunctionInfo.cpp
