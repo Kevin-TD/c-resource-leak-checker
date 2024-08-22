@@ -598,6 +598,8 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     } else {
         logout("BRANCH LISTER TESTER PASSED");
     }
+
+    realBranchOrder.clear();
 }
 
 // utilFunctionTester is an extended class of UtilFunctionTester
