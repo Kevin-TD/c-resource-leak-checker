@@ -33,6 +33,7 @@
 #include "TestRunner.h"
 #include "BranchListerTester.h"
 #include "StructFieldToIndexTester.h"
+#include "FunctionInfoTester.h"
 #include "TempFileManager.h"
 #include "FunctionInfosManager.h"
 #include "Utils.h"
@@ -547,6 +548,13 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
         }
     }
 
+    if (auto f = functionInfosManager.getFunction(fnName)) {
+        logout("got ret type '" << f->getReturnType() << "' for " << fnName);
+        for (int i = 0; i < f->getNumberOfParameters(); i++) {
+            logout(i << ": '" << f->getNthParamType(i) << "'");
+        }
+    }
+
     CFG cfg;
     buildCFG(cfg, realBranchOrder, branchInstructionMap);
 
@@ -608,6 +616,13 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
         logout("STRUCT FIELD TO INDEX TESTER PASSED");
     }
 
+    if (FunctionInfoTester::runTest(testName, functionInfosManager) == EXIT_FAILURE) {
+        logout("**FUNCTION INFO TESTER FAILED");
+        anyTestFailed = true;
+    } else {
+        logout("FUNCTION INFO TESTER PASSED");
+    }
+    
     realBranchOrder.clear();
 }
 

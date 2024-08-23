@@ -1,0 +1,2 @@
+function=calls_all|return=void|params={struct my_struct}
+function=main|return=int|params={}

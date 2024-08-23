@@ -1,0 +1,2 @@
+function=does_free|return=void|params={char*,char*}
+function=main|return=int|params={}
