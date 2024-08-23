@@ -548,13 +548,6 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
         }
     }
 
-    if (auto f = functionInfosManager.getFunction(fnName)) {
-        logout("got ret type '" << f->getReturnType() << "' for " << fnName);
-        for (int i = 0; i < f->getNumberOfParameters(); i++) {
-            logout(i << ": '" << f->getNthParamType(i) << "'");
-        }
-    }
-
     CFG cfg;
     buildCFG(cfg, realBranchOrder, branchInstructionMap);
 
