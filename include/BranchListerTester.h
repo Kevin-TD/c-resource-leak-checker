@@ -9,7 +9,7 @@ class BranchListerTester {
     // returns EXIT_SUCCESS if tests passed and EXIT_FAILURE if failed.
     // testName should simply refer to the name of a folder in the
     // test directory. e.g., "if_lub_test".
-    static bool runTest(const std::string& testName, ProgramLinesBranchInfo& programLinesBranchInfo);
+    static bool runTest(const std::string& testName, const std::string& fnName, ProgramLinesBranchInfo& programLinesBranchInfo);
 };
 
 #endif
