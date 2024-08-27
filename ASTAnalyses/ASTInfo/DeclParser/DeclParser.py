@@ -73,6 +73,8 @@ class DeclParser:
             return_type = return_type[:len(return_type) - 1]
 
         # if return type looks like "int *", change it to "int*"
+        # or if it looks like "int **", change it to "int**"
+        # (we assume asterisks are grouped together)
         potential_space_char_index = return_type.find("*") - 1
         if return_type[len(return_type) - 1] == "*" and return_type[potential_space_char_index] == " ":
             return_type = return_type[:potential_space_char_index] + \
