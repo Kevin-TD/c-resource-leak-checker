@@ -1,0 +1,4 @@
+function=struct_no_ptr_params|return=void|params={struct my_struct}
+function=does_free_one_pointer|return=void|params={struct my_struct}
+function=absurd_pointer|return=void|params={struct my_struct****}
+function=main|return=int|params={}

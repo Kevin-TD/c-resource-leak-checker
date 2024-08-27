@@ -1,0 +1,3 @@
+function=does_malloc|return=void|params={char*}
+function=does_free|return=void|params={char*}
+function=main|return=int|params={}

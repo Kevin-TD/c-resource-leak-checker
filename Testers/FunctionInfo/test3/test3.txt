@@ -1,0 +1,2 @@
+function=strcpy|return=char*|params={char*,const char*}
+function=main|return=int|params={}

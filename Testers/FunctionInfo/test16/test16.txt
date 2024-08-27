@@ -1,0 +1,5 @@
+function=does_free|return=void|params={char*}
+function=creates_obligation|return=char*|params={char*,struct my_struct}
+function=does_something|return=struct my_struct|params={struct my_struct}
+function=does_something_simpler|return=char*|params={char*}
+function=main|return=int|params={}

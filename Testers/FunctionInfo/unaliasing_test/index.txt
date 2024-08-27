@@ -1,0 +1,2 @@
+function=free1|return=void|params={void*}
+function=main|return=int|params={}

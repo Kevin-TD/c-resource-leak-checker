@@ -1,0 +1,2 @@
+function=does_free_one_pointer|return=void|params={struct my_struct*}
+function=main|return=int|params={}

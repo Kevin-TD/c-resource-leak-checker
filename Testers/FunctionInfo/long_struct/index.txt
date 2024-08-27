@@ -1,0 +1,5 @@
+function=does_something_a|return=struct my_struct|params={struct my_struct}
+function=does_something_b|return=struct my_struct|params={struct my_struct}
+function=does_something_c|return=struct my_struct|params={struct my_struct}
+function=does_something_d|return=struct my_struct|params={int,struct my_struct,struct my_struct,int,char*}
+function=main|return=int|params={}

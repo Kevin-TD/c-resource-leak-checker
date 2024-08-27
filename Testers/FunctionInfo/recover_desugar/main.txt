@@ -1,0 +1,3 @@
+function=does_free|return=void|params={char*}
+function=does_something|return=struct my_struct|params={struct my_struct}
+function=main|return=int|params={}

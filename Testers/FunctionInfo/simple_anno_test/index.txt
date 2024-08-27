@@ -1,0 +1,3 @@
+function=malloc0|return=void*|params={size_t}
+function=free0|return=void|params={void*}
+function=main|return=int|params={}

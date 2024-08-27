@@ -61,12 +61,24 @@ class DeclParser:
             # e.g., 'int ()' is a function that returns int with no parameters
 
             # e.g., 'void (int, int, char *)' is a function that returns void with
-            # 3 parameters (in the order as it appears in C code), int, int, and char *
+            # 3 parameters (in the order as it appears in C code), int, int, and char*
 
             return_type += cur_char
 
             start_index += 1
             cur_char = function_decl[start_index]
+
+        # if return type looks like "int ", change it to "int"
+        if return_type[len(return_type) - 1] == " ":
+            return_type = return_type[:len(return_type) - 1]
+
+        # if return type looks like "int *", change it to "int*"
+        # or if it looks like "int **", change it to "int**"
+        # (we assume asterisks are grouped together)
+        potential_space_char_index = return_type.find("*") - 1
+        if return_type[len(return_type) - 1] == "*" and return_type[potential_space_char_index] == " ":
+            return_type = return_type[:potential_space_char_index] + \
+                return_type[potential_space_char_index + 1:]
 
         logout(
             f"function name = '{function_name}', return type = '{return_type}'")
@@ -101,8 +113,11 @@ class DeclParser:
             param_type = param_type[: param_type.find("'")]
 
         logout(f"'{param_type}'")
-        if "*" in param_type:
-            param_type = param_type.replace(" ", "").replace("*", "")
+
+        potential_space_char_index = param_type.find("*") - 1
+        if param_type[len(param_type) - 1] == "*" and param_type[potential_space_char_index] == " ":
+            param_type = param_type[:potential_space_char_index] + \
+                param_type[potential_space_char_index + 1:]
         else:
             # param_type might look like "my_struct " or "struct my_struct"
             if param_type[-1] == " ":
@@ -293,7 +308,7 @@ class DeclParser:
                     # we'll throw "ValueError: Did not find field 'x' for struct 'int', anno Calls target = _.FIELD(x) methods = free"
 
                     return_type_split = spec.get_return_type().split(" ")
-                    if return_type_split[1] != "":
+                    if len(return_type_split) > 1 and return_type_split[1] != "":
                         return_struct_name = return_type_split[1]
                     else:
                         return_struct_name = return_type_split[0]
@@ -326,6 +341,10 @@ class DeclParser:
                                     1]
                             except IndexError:
                                 param_type_struct_name = param.get_param_type()
+
+                            # removes "*" only for searching purposes
+                            param_type_struct_name = param_type_struct_name.replace(
+                                "*", "")
 
                             struct = specifier_manager.get_or_add_struct(
                                 param_type_struct_name)
