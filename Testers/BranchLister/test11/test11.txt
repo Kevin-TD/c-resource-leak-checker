@@ -1,0 +1,7 @@
+function=main line=46 branch=entry preds={}
+function=main line=54 branch=if.then preds={entry}
+function=main line=59 branch=if.end preds={if.else,if.then}
+function=main line=62 branch=if.then3 preds={if.end}
+function=main line=65 branch=if.then7 preds={if.else4}
+function=main line=68 branch=if.end9 preds={if.end8,if.then3}
+function=main line=75 branch=while.end preds={while.cond}

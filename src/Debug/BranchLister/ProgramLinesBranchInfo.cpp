@@ -106,7 +106,7 @@ void ProgramLinesBranchInfo::generate(std::string cFileName, bool overwrite) {
 
     for (unsigned i = 1; i <= lineCount + 1; i++) {
         if (auto lbi = this->getLBI(i)) {
-            logout("line #" << i << ": " << lbi->toString());
+            logout("line=" << i << " branch=" << lbi->toString());
         }
     }
 

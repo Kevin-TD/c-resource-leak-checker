@@ -6,7 +6,7 @@
 
 class BranchListerTester {
   public:
-    static bool runTest(const std::string& testName, ProgramLinesBranchInfo& programLinesBranchInfo);
+    static bool runTest(const std::string& testName, const std::string& fnName, ProgramLinesBranchInfo& programLinesBranchInfo);
 };
 
 #endif

@@ -1,0 +1,7 @@
+function=main line=40 branch=entry preds={}
+function=main line=47 branch=do.body preds={do.cond,entry}
+function=main line=52 branch=sw.bb preds={do.body}
+function=main line=56 branch=sw.bb2 preds={do.body}
+function=main line=60 branch=sw.default preds={do.body}
+function=main line=64 branch=sw.epilog preds={sw.default,sw.bb2,sw.bb}
+function=main line=67 branch=do.end preds={do.cond}
