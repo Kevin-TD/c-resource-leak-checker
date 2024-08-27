@@ -13,6 +13,7 @@ const std::string LLVM_VAR_ANNOTATION = "llvm.var.annotation";
 // relative to build dir
 const std::string PASS_TEST_DIRNAME = "../Testers/Passes";
 const std::string BRANCH_LISTER_TEST_DIRNAME = "../Testers/BranchLister";
+const std::string STRUCT_FIELD_TO_INDEX_TEST_DIRNAME = "../Testers/StructFieldToIndex";
 
 const std::string AST_ANNO_PASS_LOCATION = "../ASTAnalyses/ASTPasses/AnnotationPass/anno_pass.py";
 const std::string AST_INFO_GENERATOR_LOCATION = "../ASTAnalyses/ASTInfo/generator.py";

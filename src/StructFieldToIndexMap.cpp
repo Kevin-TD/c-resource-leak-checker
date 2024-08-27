@@ -19,7 +19,7 @@ void StructFieldToIndexMap::buildMap(const TempFileManager& astInfoFile) {
 
     if (command_exit_status != 0) {
         errs() << "error occured while building map; early exit\n";
-        std::exit(1);
+        std::exit(EXIT_FAILURE);
     }
 
     std::ifstream mapFile = mapTempFile.getFileStream();
@@ -34,7 +34,7 @@ void StructFieldToIndexMap::buildMap(const TempFileManager& astInfoFile) {
             auto keyMapPair = rlc_util::splitString(line, '=');
             if (keyMapPair.size() != 2) {
                 logout("unexpected error; line '" << line << "' does not look like key-pair map in the form 'a=b'; early exit");
-                std::exit(1);
+                std::exit(EXIT_FAILURE);
             }
 
             auto structNameAndField = keyMapPair[0];

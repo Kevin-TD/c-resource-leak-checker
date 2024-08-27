@@ -32,6 +32,7 @@
 #include "RunAnalysis.h"
 #include "TestRunner.h"
 #include "BranchListerTester.h"
+#include "StructFieldToIndexTester.h"
 #include "TempFileManager.h"
 #include "FunctionInfosManager.h"
 #include "Utils.h"
@@ -57,6 +58,7 @@
 // IMPORTANT:
 // TODO: when doing something like func(thing) make sure called methods is applied on thing when it gets desugared.
 // update tests accordingly
+
 
 struct InstructionHolder {
     SetVector<Instruction *> branch;
@@ -597,6 +599,13 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
         anyTestFailed = true;
     } else {
         logout("BRANCH LISTER TESTER PASSED");
+    }
+
+    if (StructFieldToIndexTester::runTest(testName, structFieldToIndexMap) == EXIT_FAILURE) {
+        logout("**STRUCT FIELD TO INDEX TESTER FAILED");
+        anyTestFailed = true;
+    } else {
+        logout("STRUCT FIELD TO INDEX TESTER PASSED");
     }
 
     realBranchOrder.clear();
