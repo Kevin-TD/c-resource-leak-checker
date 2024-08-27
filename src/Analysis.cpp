@@ -607,7 +607,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     } else {
         logout("STRUCT FIELD TO INDEX TESTER PASSED");
     }
-    
+
     realBranchOrder.clear();
 }
 
