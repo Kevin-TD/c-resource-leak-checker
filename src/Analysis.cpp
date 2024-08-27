@@ -615,7 +615,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     } else {
         logout("FUNCTION INFO TESTER PASSED");
     }
-    
+
     realBranchOrder.clear();
 }
 
