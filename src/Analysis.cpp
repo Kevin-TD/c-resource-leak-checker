@@ -28,6 +28,7 @@
 #include "StructFieldToIndexMap.h"
 #include "ProgramRepresentation/FullFile.h"
 #include "StructFieldToIndexMap.h"
+#include "LineNumberToLValueMap.h"
 #include "Debug/BranchLister/ProgramLinesBranchInfo.h"
 #include "RunAnalysis.h"
 #include "TestRunner.h"
@@ -75,6 +76,7 @@ CalledMethods calledMethods;
 MustCall mustCall;
 AnnotationHandler annotationHandler;
 StructFieldToIndexMap structFieldToIndexMap;
+LineNumberToLValueMap lineNumberToLValueMap;
 FunctionInfosManager functionInfosManager;
 ProgramLinesBranchInfo programLinesBranchesInfo;
 std::string cFileName;
@@ -183,7 +185,8 @@ void doAliasReasoning(Instruction *instruction,
                       ProgramFunction &programFunction,
                       std::string optLoadFileName,
                       StructFieldToIndexMap structFieldToIndexMap,
-                      FunctionInfosManager functionInfosManager) {
+                      FunctionInfosManager functionInfosManager,
+                      LineNumberToLValueMap lineNumberToLValueMap) {
     bool includes = false;
     std::string branchName = instruction->getParent()->getName().str();
     for (auto branch : realBranchOrder) {
@@ -248,15 +251,9 @@ void doAliasReasoning(Instruction *instruction,
 
                     const DebugLoc &debugLoc = call->getDebugLoc();
 
-                    std::string line = rlc_util::getNthLine(optLoadFileName, debugLoc.getLine());
-                    logout("line = " << line);
+                    if (lineNumberToLValueMap.lineNumberIsInMap(debugLoc.getLine())) {
+                        std::string leftHandSide = lineNumberToLValueMap.get(debugLoc.getLine());
 
-                    rlc_util::removeWhitespace(line);
-                    auto lineChunks = rlc_util::splitString(line, '=');
-                    if (lineChunks.size() > 0) {
-                        std::string leftHandSide = lineChunks[0];
-
-                        // tests if line looks s.y = (char*)malloc(15) or s = (char*)malloc(15)
                         std::string potentialStructName = structFieldToIndexMap.get(leftHandSide);
                         if (potentialStructName != "") {
                             leftHandSide = potentialStructName;
@@ -625,6 +622,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
         annotationHandler.addAnnotations(annotations);
 
         structFieldToIndexMap.buildMap(astInfoTempFile);
+        lineNumberToLValueMap.buildMap(astInfoTempFile);
         functionInfosManager.buildFunctionInfo(astInfoTempFile);
 
         loadAndBuild = true;
@@ -670,7 +668,9 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
         std::string branchName = I->getParent()->getName().str();
-        doAliasReasoning(&(*I), programFunction, optLoadFileName, structFieldToIndexMap, functionInfosManager);
+        doAliasReasoning(&(*I), programFunction, optLoadFileName,
+                         structFieldToIndexMap, functionInfosManager,
+                         lineNumberToLValueMap);
 
         auto succs = rlc_dataflow::getSuccessors(&(*I));
         branchInstructionMap[branchName].branch.insert(&(*I));

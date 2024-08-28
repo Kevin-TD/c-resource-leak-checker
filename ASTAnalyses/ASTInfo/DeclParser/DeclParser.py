@@ -12,6 +12,9 @@ from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.TypedefDecl import *
 from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.FieldDecl import *
 from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.StructVarDecl import *
 from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.AnnotateAttr import *
+from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.BinaryOperatorDecl import *
+from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.MemberExprDecl import *
+from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.DeclRefExprDecl import *
 
 
 class DeclParser:
@@ -347,6 +350,67 @@ class DeclParser:
 
         return AnnotateAttr(anno_type, known_target, anno_methods)
 
+    def _parse_binary_operator_decl(self, binary_operator_decl: str):
+        # may look like:
+        # |-BinaryOperator 0x24128c0 <line:15:5, col:27> 'char *' '='
+        # BinaryOperator 0x2412b58 <line:20:5, line:25:29> 'char *' '='
+        # BinaryOperator 0x23e2c48 <col:21, col:25> 'int' '<'
+        # we assume the binary operator is listed at the end
+
+        decl_line_and_op_specification = binary_operator_decl[binary_operator_decl.find(
+            "<"):]
+        line_chunks = decl_line_and_op_specification.split(" ")
+
+        if line_chunks[0].startswith("<col:"):
+            return None
+
+        # suitable if it looks like <line:15:5, col:27>
+        line_number = int(line_chunks[0].split(":")[1])
+
+        # check if it looks like <line:20:5, line:25:29>
+        if line_chunks[1].startswith("line:"):
+            line_number = int(line_chunks[1].split(":")[1])
+
+        operator_type = line_chunks[len(line_chunks) - 1].replace("'", "")
+
+        logout(f"op type '{operator_type}' line number '{line_number}'")
+
+        if not BinaryOperatorDecl.is_valid_operator_type(operator_type):
+            return None
+
+        return BinaryOperatorDecl(operator_type, line_number)
+
+    def _parse_member_expr_decl(self, member_expr_decl: str):
+        # may look like:
+        # |   `-MemberExpr 0x24129f8 <col:10, col:12> 'char *' lvalue .x 0x2412340
+
+        l_value_section = member_expr_decl[member_expr_decl.find("lvalue"):]
+        line_chunks = l_value_section.split(" ")
+
+        field_specified = line_chunks[1]
+
+        logout(f"lvalue field specified '{field_specified}'")
+
+        return MemberExprDecl(field_specified)
+
+    def _parse_decl_ref_expr(self, decl_ref_expr_decl: str):
+        # may look like:
+        # `-DeclRefExpr 0x2412930 <col:11> 'struct M':'struct M' lvalue Var 0x2412650 's' 'struct M':'struct M'
+        # |-DeclRefExpr 0x24129b8 <col:5> 'char *' lvalue Var 0x24126e0 's1' 'char *'
+        # `-DeclRefExpr 0x2386cc8 <col:10> '__uint16_t':'unsigned short' lvalue ParmVar 0x2386b40 '__x' '__uint16_t':'unsigned short'
+
+        if decl_ref_expr_decl.find("lvalue") == -1:
+            return None
+
+        var_section = decl_ref_expr_decl[decl_ref_expr_decl.find("lvalue"):]
+        line_chunks = var_section.split(" ")
+
+        var_name = line_chunks[3].replace("'", "")
+
+        logout(f"decl ref expr var name = '{var_name}'")
+
+        return DeclRefExprDecl(var_name)
+
     def _is_null_stmt(self, line_of_ast: str):
         # checks if end of string is <<<NULLL>>>
 
@@ -423,5 +487,14 @@ class DeclParser:
 
         elif decl_name == "AnnotateAttr":
             return self._parse_anno(expr, spec_manager, recent_spec, self.__param_index, self.__field_index)
+
+        elif decl_name == "BinaryOperator":
+            return self._parse_binary_operator_decl(expr)
+
+        elif decl_name == "MemberExpr":
+            return self._parse_member_expr_decl(expr)
+
+        elif decl_name == "DeclRefExpr":
+            return self._parse_decl_ref_expr(expr)
 
         return None
