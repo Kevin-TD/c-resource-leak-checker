@@ -249,6 +249,8 @@ void doAliasReasoning(Instruction *instruction,
                     const DebugLoc &debugLoc = call->getDebugLoc();
 
                     std::string line = rlc_util::getNthLine(optLoadFileName, debugLoc.getLine());
+                    logout("line = " << line);
+
                     rlc_util::removeWhitespace(line);
                     auto lineChunks = rlc_util::splitString(line, '=');
                     if (lineChunks.size() > 0) {

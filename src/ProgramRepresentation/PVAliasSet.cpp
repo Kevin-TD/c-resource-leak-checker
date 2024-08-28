@@ -152,9 +152,9 @@ bool PVAliasSet::containsStructFieldVar() {
     return false;
 }
 
-void PVAliasSet::setSetNumber(unsigned setNumber) {
+void PVAliasSet::changeSetNumbersBy(unsigned changeAmount) {
     for (ProgramVariable& pv : programVariables) {
-        pv.setSetNumber(setNumber);
+        pv.setSetNumber(pv.getSetNumber() + changeAmount);
     }
 }
 

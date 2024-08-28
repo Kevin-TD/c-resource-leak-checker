@@ -8,10 +8,6 @@ struct M {
     char* y MustCall("free");
 };
 
-void reassignPointer(char* s MustCall("free")) {
-    s = (char*)malloc(15);
-}
-
 int main() {
     struct M s;
     char* s1;
@@ -21,9 +17,12 @@ int main() {
     s.y = s.x;
     s1 = s.x; // s1, s.x, s.y aliased
 
-    printf("%s", s.y);
+    s1
 
-    reassignPointer(s.y); // s.y no longer aliased
 
-    free(s.x); // s.x, s1 freed. s.y not
+        =
+
+            (char*)malloc(15);
+
+    free(s.x); // s.x, s.y freed. s1 not
 }
