@@ -6,16 +6,18 @@ AST_INFO_TOKENS = {
     "StructDecl": "STRUCT",
     "StructVarDecl": "STRUCT_VARIABLE",
     "AnnoDecl": "ANNOTATION",
+    "LValueDecl": "LVALUE_DECLARATION",
 
     "NameAttr": "@NAME",
     "ReturnTypeAttr": "@RETURN_TYPE",
-    "ParamsAttr": "@PARAfMETERS",
+    "ParamsAttr": "@PARAMETERS",
     "FieldsAttr": "@FIELDS",
     "TypedefsAttr": "@TYPEDEFS",
     "TypeAttr": "@TYPE",
     "AnnoTypeAttr": "@ANNO_TYPE",
     "MethodsAttr": "@METHODS",
     "TargetAttr": "@TARGET",
+    "LineNumberAttr": "@LINE_NUMBER",
 
     # separation between attr and the start of its declaration
     # e.g., for AttrValueSeparation = " ",
