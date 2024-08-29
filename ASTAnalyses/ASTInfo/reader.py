@@ -6,6 +6,7 @@ from ASTAnalyses.ASTInfo.Specifiers.FunctionStructure.Function import *
 from ASTAnalyses.ASTInfo.Specifiers.StructStructure.Struct import *
 from ASTAnalyses.ASTInfo.Specifiers.SpecifierManager import *
 from ASTAnalyses.ASTInfo.StructVariables.StructVarManager import *
+from ASTAnalyses.ASTInfo.LValues.LValueManager import *
 from ASTAnalyses.ASTInfo.Debug import *
 from ASTAnalyses.ASTInfo.ast_info_tokens import *
 
@@ -39,6 +40,7 @@ class ASTReader:
         self.__structs: list[Struct] = []
         self.__struct_vars: list[StructVar] = []
         self.__annotations: list[Annotation] = []
+        self.__l_values: list[LValue] = []
 
         char = self.__file_stream.read(1)
         while char:
@@ -175,6 +177,30 @@ class ASTReader:
 
                     self.__annotations.append(created_annotation)
 
+                elif declaration_type == AST_INFO_TOKENS["LValueDecl"]:
+                    self.__collect_and_validate(
+                        AST_INFO_TOKENS['AttrValueSeparation'],
+                        AST_INFO_TOKENS['NameAttr']
+                    )
+                    self.__skip(AST_INFO_TOKENS['ValueOpenChar'])
+                    name_data = self.__collect_until(
+                        AST_INFO_TOKENS['ValueCloseChar'])
+                    self.__skip(AST_INFO_TOKENS['EndOfLineChar'])
+
+                    self.__collect_and_validate(
+                        AST_INFO_TOKENS['AttrValueSeparation'],
+                        AST_INFO_TOKENS['LineNumberAttr']
+                    )
+                    self.__skip(AST_INFO_TOKENS['ValueOpenChar'])
+                    line_number_data = self.__collect_until(
+                        AST_INFO_TOKENS['ValueCloseChar'])
+                    self.__skip(AST_INFO_TOKENS['EndOfLineChar'])
+
+                    created_l_value = LValue(name_data, int(line_number_data))
+                    logout(f"LVALUE DECL: {name_data}, {line_number_data}")
+
+                    self.__l_values.append(created_l_value)
+
             char = self.__file_stream.read(1)
 
         self.__file_stream.close()
@@ -227,3 +253,6 @@ class ASTReader:
 
     def get_annotations(self):
         return self.__annotations
+
+    def get_l_values(self):
+        return self.__l_values

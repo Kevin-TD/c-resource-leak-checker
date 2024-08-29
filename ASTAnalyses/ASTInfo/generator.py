@@ -12,6 +12,7 @@ from ASTAnalyses.ASTInfo.Specifiers.FunctionStructure.Function import *
 from ASTAnalyses.ASTInfo.Specifiers.StructStructure.Struct import *
 from ASTAnalyses.ASTInfo.Specifiers.SpecifierManager import *
 from ASTAnalyses.ASTInfo.StructVariables.StructVarManager import *
+from ASTAnalyses.ASTInfo.LValues.LValueManager import *
 from ASTAnalyses.ASTInfo.Debug import *
 from ASTAnalyses.ASTInfo.DeclParser.DeclParser import *
 from ASTAnalyses.ASTInfo.ast_info_tokens import *
@@ -20,12 +21,13 @@ file_to_read = sys.argv[1]
 output_file = sys.argv[2]
 
 with open(file_to_read) as ast:
-    recent_specifier = None  # Function or Struct
+    recent_specifier = None  # Function or Struct or BinaryOperator
 
     ast_lines = ast.readlines()
     specifier_manager = SpecifierManager()
     annotation_manager = AnnotationManager()
     struct_var_manager = StructVarManager()
+    l_values_manager = LValueManager()
     decl_parser = DeclParser()
 
     for expr in ast_lines:
@@ -70,6 +72,30 @@ with open(file_to_read) as ast:
             ), type_parsed.get_annotation_target(), type_parsed.get_annotation_methods())
             logout(f"going to add from {expr}")
             annotation_manager.add_annotation(anno)
+
+        elif found_type is BinaryOperatorDecl:
+            recent_specifier = type_parsed
+
+        elif found_type is MemberExprDecl:
+            if type(recent_specifier) is BinaryOperatorDecl and recent_specifier.get_operator_type() == "=":
+                logout(
+                    f"partial add lvalue {type_parsed.get_field_specified()} {recent_specifier.get_line_number()}")
+                l_values_manager.add_l_value(type_parsed.get_field_specified(),
+                                             recent_specifier.get_line_number())
+
+        elif found_type is DeclRefExprDecl:
+            if type(recent_specifier) is BinaryOperatorDecl and recent_specifier.get_operator_type() == "=":
+                l_value = l_values_manager.get_l_value(
+                    recent_specifier.get_line_number())
+
+                if l_value is None:
+                    l_values_manager.add_l_value(type_parsed.get_var_name(),
+                                                 recent_specifier.get_line_number())
+                else:
+                    l_value.set_lhs_name(
+                        type_parsed.get_var_name() + l_value.get_lhs_name())
+
+                recent_specifier = None
 
     output_str = ""
 
@@ -239,6 +265,29 @@ with open(file_to_read) as ast:
             wrap_value_list_in_open_close(methods_str) +
             AST_INFO_TOKENS['EndOfLineChar'] + AST_INFO_TOKENS['EndOfLineChar']
         )
+
+    for l_value in l_values_manager.l_values:
+        output_str += (
+            AST_INFO_TOKENS['DeclStart'] +
+            AST_INFO_TOKENS['LValueDecl'] +
+            AST_INFO_TOKENS['EndOfLineChar']
+        )
+
+        output_str += (
+            AST_INFO_TOKENS['NameAttr'] +
+            AST_INFO_TOKENS['AttrValueSeparation'] +
+            wrap_value_in_open_close(l_value.get_lhs_name()) +
+            AST_INFO_TOKENS['EndOfLineChar']
+        )
+
+        output_str += (
+            AST_INFO_TOKENS['LineNumberAttr'] +
+            AST_INFO_TOKENS['AttrValueSeparation'] +
+            wrap_value_in_open_close(str(l_value.get_line_number())) +
+            AST_INFO_TOKENS['EndOfLineChar']
+        )
+
+        output_str += AST_INFO_TOKENS['EndOfLineChar']
 
     logout(output_str)
 

@@ -16,7 +16,7 @@ void ProgramPoint::logoutProgramPoint(const ProgramPoint &point,
                                       bool logMethods) {
     logout("\n**point name " << point.getPointName());
     for (auto aliasSet : point.getProgramVariableAliasSets().getSets()) {
-        logout("> alias set = " << aliasSet.toString(false));
+        logout("> alias set = " << aliasSet.toString(false, false));
 
         if (logMethods) {
             logout("--> methods set = " << aliasSet.getMethodsString());
@@ -28,7 +28,7 @@ void ProgramPoint::logoutProgramPoint(const ProgramPoint *point,
                                       bool logMethods) {
     logout("\n**point name " << point->getPointName());
     for (auto aliasSet : point->getProgramVariableAliasSets().getSets()) {
-        logout("> alias set = " << aliasSet.toString(false));
+        logout("> alias set = " << aliasSet.toString(false, false));
 
         if (logMethods) {
             logout("--> methods set = " << aliasSet.getMethodsString());
@@ -169,5 +169,62 @@ void ProgramPoint::add(ProgramPoint *programPoint) {
     for (PVAliasSet pvas :
             programPoint->getProgramVariableAliasSets().getSets()) {
         this->programVariableAliasSets.mergeSet(pvas);
+    }
+}
+
+void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable pvCallInst, ProgramVariable callInstAlias) {
+    for (ProgramVariable& pv : pvas->getProgramVariables()) {
+        if (pv.equalsCleanedName(cleanedNameOfPVToUnalias)) {
+            if (pv.getIndex() != -1) {
+                PVAliasSet grabbedSet = pvas->moveOut(pv.getSetNumber());
+                grabbedSet.add(pvCallInst);
+
+                if (pvas->getProgramVariables().size() > 0) {
+                    ProgramVariable pvToMove = pvas->moveOut(callInstAlias);
+                    if (pvToMove.getCleanedName() != "") {
+                        grabbedSet.add(pvToMove);
+                    }
+                }
+
+                addPVAS(grabbedSet);
+                break;
+            } else {
+                ProgramVariable pvToMove = pvas->moveOut(pv);
+                PVAliasSet newSet;
+                newSet.add(pvToMove);
+                newSet.add(pvCallInst);
+                addPVAS(newSet);
+                break;
+            }
+        }
+    }
+}
+
+void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar) {
+    for (ProgramVariable& pv : pvas->getProgramVariables()) {
+        if (pv.equalsCleanedName(cleanedNameOfPVToUnalias)) {
+            if (pv.getIndex() != -1) {
+                PVAliasSet grabbedSet = pvas->moveOut(pv.getSetNumber());
+
+                ProgramVariable argVarPV = pvas->moveOut(argumentVar);
+                if (argVarPV.getCleanedName() != "") {
+                    grabbedSet.add(argVarPV);
+                }
+
+                addPVAS(grabbedSet);
+                break;
+            } else {
+                PVAliasSet newSet;
+
+                ProgramVariable pvToMove = pvas->moveOut(pv);
+                newSet.add(pvToMove);
+
+                ProgramVariable argVarPV = pvas->moveOut(argumentVar);
+                newSet.add(argVarPV);
+
+                addPVAS(newSet);
+                break;
+            }
+        }
     }
 }

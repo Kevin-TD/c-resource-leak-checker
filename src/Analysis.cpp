@@ -28,6 +28,7 @@
 #include "StructFieldToIndexMap.h"
 #include "ProgramRepresentation/FullFile.h"
 #include "StructFieldToIndexMap.h"
+#include "LineNumberToLValueMap.h"
 #include "Debug/BranchLister/ProgramLinesBranchInfo.h"
 #include "RunAnalysis.h"
 #include "TestRunner.h"
@@ -37,7 +38,6 @@
 #include "TempFileManager.h"
 #include "FunctionInfosManager.h"
 #include "Utils.h"
-#include <cstdlib>
 
 // TODO: remove predecessors from CFG; unused
 // TODO: handle un-aliasing
@@ -54,6 +54,7 @@
 // TODO: implement FI in DataflowPass.cpp
 // TODO: document FunctionInfo and FunctionInfosManager and get_function_info.py
 // TODO: make sliceString params use unsigned instead of signed int
+// TODO: write testing for getTestName, getNthLine, getLLVMStructType, getFunctionArgs
 
 
 // IMPORTANT:
@@ -78,6 +79,7 @@ CalledMethods calledMethods;
 MustCall mustCall;
 AnnotationHandler annotationHandler;
 StructFieldToIndexMap structFieldToIndexMap;
+LineNumberToLValueMap lineNumberToLValueMap;
 FunctionInfosManager functionInfosManager;
 ProgramLinesBranchInfo programLinesBranchesInfo;
 std::string cFileName;
@@ -125,20 +127,6 @@ void loadFunctions() {
     safeFunctionsFile.close();
     memoryFunctionsFile.close();
     reallocFunctionsFile.close();
-}
-
-// for some .c file ../test/<dir>/<file_name>.c, <dir>/<file_name> is returned.
-// e.g., ../test/simple_layer_test/layer/test1_again.c ->
-// simple_layer_test/layer/test1_again
-std::string getTestName(std::string optLoadFileName) {
-    std::string startsWith = "../test";
-    std::string endsWith = ".c";
-    optLoadFileName.replace(0, startsWith.length() + 1, "");
-    optLoadFileName.erase(optLoadFileName.length() - 2);
-
-    logout("RES = " << optLoadFileName);
-
-    return optLoadFileName;
 }
 
 void buildCFG(CFG &topCFG, std::vector<std::string> branchOrder,
@@ -198,7 +186,10 @@ std::vector<std::string> getAnnotationStrings(const TempFileManager& astInfoFile
 
 void doAliasReasoning(Instruction *instruction,
                       ProgramFunction &programFunction,
-                      std::string optLoadFileName) {
+                      std::string optLoadFileName,
+                      StructFieldToIndexMap structFieldToIndexMap,
+                      FunctionInfosManager functionInfosManager,
+                      LineNumberToLValueMap lineNumberToLValueMap) {
     bool includes = false;
     std::string branchName = instruction->getParent()->getName().str();
     for (auto branch : realBranchOrder) {
@@ -249,6 +240,39 @@ void doAliasReasoning(Instruction *instruction,
         if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
             ProgramVariable callVar = ProgramVariable(call);
             logout("add alias for analysis storeinst call inst");
+
+            // check for pointer reassignment; if so, the resource becomes un-aliased
+            if (auto pvasRef = programPoint->getPVASRef(receivingVar, false)) {
+                if (pvasRef->containsCallInstVar()) {
+                    logout("pointer reassignment inst " << *instruction);
+                    logout("receiving var " << receivingVar.getRawName());
+
+                    logout(callVar.getRawName()
+                           << " alias to "
+                           << pvasRef->toString(false, true));
+
+
+                    const DebugLoc &debugLoc = call->getDebugLoc();
+
+                    if (lineNumberToLValueMap.lineNumberIsInMap(debugLoc.getLine())) {
+                        std::string leftHandSide = lineNumberToLValueMap.get(debugLoc.getLine());
+
+                        std::string potentialStructName = structFieldToIndexMap.get(leftHandSide);
+                        if (potentialStructName != "") {
+                            leftHandSide = potentialStructName;
+                        }
+
+                        logout("LHS = " << leftHandSide);
+                        PVAliasSet* LHSpvas = programPoint->getPVASRef(leftHandSide, false);
+
+                        if (LHSpvas) {
+                            programPoint->unalias(pvasRef, leftHandSide, call, receivingVar);
+                            return;
+                        }
+                    }
+                }
+            }
+
             programPoint->addAlias(callVar, receivingVar);
             return;
         }
@@ -451,13 +475,120 @@ void doAliasReasoning(Instruction *instruction,
         (https://llvm.org/docs/LangRef.html#llvm-annotation-intrinsic)
         but we wont need to worry about them; they hold no aliasing information
         */
-
         if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
                 rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
             ProgramVariable sourceVar = ProgramVariable(call);
             ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
             logout("add alias for analysis callinst llvm annotation");
             programPoint->addAlias(sourceVar, destinationVar);
+            return;
+        }
+
+        // now we check for un-aliasing
+
+        auto fi = functionInfosManager.getFunction(fnName);
+        if (fi && fi->getNumberOfParameters() != call->getNumArgOperands()) {
+            auto args = getFunctionArgs(optLoadFileName, call);
+
+            for (unsigned i = 0; i < fi->getNumberOfParameters(); i++) {
+                ProgramVariable argumentVar = ProgramVariable(call->getArgOperand(i));
+                std::string arg = argumentVar.getCleanedName();
+                PVAliasSet *pvas = programPoint->getPVASRef(argumentVar, false);
+
+                int numFields = rlc_dataflow::getStructNumberOfFields(optLoadFileName, fi->getNthParamType(i));
+
+                if (numFields != -1) {
+                    for (unsigned j = 0; j < numFields; j++) {
+                        std::string targetArg = args[i] + "." + std::to_string(j);
+
+                        logout("target arg1 " << targetArg);
+
+                        if (i + j >= call->getNumArgOperands()) {
+                            continue;
+                        }
+
+                        argumentVar = ProgramVariable(call->getArgOperand(i + j));
+                        logout("argument var " << argumentVar.getRawName());
+
+                        PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
+
+                        if (targetArgPvas) {
+                            logout("found target " << targetArg);
+                            programPoint->unalias(targetArgPvas, targetArg, argumentVar);
+                        }
+                    }
+                } else {
+                    std::string targetArg = args[i];
+
+                    std::string potentialStructAndFieldName = structFieldToIndexMap.get(targetArg);
+                    if (potentialStructAndFieldName != "") {
+                        targetArg = potentialStructAndFieldName;
+                    }
+
+                    logout("target arg2 " << targetArg);
+
+                    PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
+
+                    if (targetArgPvas) {
+                        programPoint->unalias(pvas, targetArg, argumentVar);
+                    }
+                }
+            }
+            return;
+        }
+
+        for (unsigned i = 0; i < call->getNumArgOperands(); ++i) {
+            ProgramVariable argumentVar = ProgramVariable(call->getArgOperand(i));
+            std::string arg = argumentVar.getCleanedName();
+            PVAliasSet *pvas = programPoint->getPVASRef(argumentVar, false);
+
+            if (pvas && pvas->containsCallInstVar()) {
+                logout("at call " << *call << " param " << i << " pvas contains call inst var");
+
+                if (SafeFunctions.count(fnName)) {
+                    logout("safe function -> skip");
+                    continue;
+                }
+
+                bool doContinue = false;
+                for (auto pair : MemoryFunctions) {
+                    if (fnName == pair.second) {
+                        logout("mem freeing function -> skip");
+                        doContinue = true;
+                        break;
+                    }
+                }
+
+                if (doContinue) {
+                    continue;
+                }
+
+                logout("not skipped i = " << i);
+
+                logout(pvas->toString(false, true));
+
+                auto args = getFunctionArgs(optLoadFileName, call);
+
+                if (i < arg.size()) {
+                    std::string targetArg = args[i];
+
+                    std::string potentialStructAndFieldName = structFieldToIndexMap.get(targetArg);
+                    if (potentialStructAndFieldName != "") {
+                        targetArg = potentialStructAndFieldName;
+                    }
+
+                    logout("target arg " << targetArg << " for i = " << i);
+                    logout(argumentVar.getRawName());
+
+                    PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
+
+                    if (targetArgPvas) {
+                        programPoint->unalias(pvas, targetArg, argumentVar);
+                    }
+                } else {
+                    logout("missed out on " << arg << " for i = " << i);
+                }
+            }
         }
     }
 }
@@ -465,7 +596,7 @@ void doAliasReasoning(Instruction *instruction,
 void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     std::string fnName = F.getName().str();
 
-    std::string testName = getTestName(optLoadFileName);
+    std::string testName = rlc_util::getTestName(optLoadFileName);
 
     programLinesBranchesInfo.add(F);
 
@@ -494,6 +625,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
         annotationHandler.addAnnotations(annotations);
 
         structFieldToIndexMap.buildMap(astInfoTempFile);
+        lineNumberToLValueMap.buildMap(astInfoTempFile);
         functionInfosManager.buildFunctionInfo(astInfoTempFile);
 
         loadAndBuild = true;
@@ -539,7 +671,9 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
 
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
         std::string branchName = I->getParent()->getName().str();
-        doAliasReasoning(&(*I), programFunction, optLoadFileName);
+        doAliasReasoning(&(*I), programFunction, optLoadFileName,
+                         structFieldToIndexMap, functionInfosManager,
+                         lineNumberToLValueMap);
 
         auto succs = rlc_dataflow::getSuccessors(&(*I));
         branchInstructionMap[branchName].branch.insert(&(*I));

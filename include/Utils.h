@@ -34,6 +34,13 @@ std::vector<Instruction *> getPredecessors(Instruction *instruction);
 // gets the successors of a given instruction in the control-flow graph
 std::vector<Instruction *> getSuccessors(Instruction *instruction);
 
+// returns the number of fields of struct structTypeName. returns -1 if the struct
+// is not found
+int getStructNumberOfFields(const std::string& optLoadFileName, const std::string& structTypeName);
+
+// returns the arguments passed into a call as strings
+std::vector<std::string> getFunctionArgs(const std::string& optLoadFileName, CallInst* call);
+
 } // namespace rlc_dataflow
 
 namespace rlc_util {
@@ -59,6 +66,14 @@ bool startsWith(std::string str, std::string starts);
 
 // for debugging; just an easier way to get a string rep of a set
 std::string setToString(std::set<std::string> &setString);
+
+// opens file with name filePath and returns the nth line of it
+std::string getNthLine(const std::string& filePath, unsigned n);
+
+// for some .c file ../test/<dir>/<file_name>.c, <dir>/<file_name> is returned.
+// e.g., ../test/simple_layer_test/layer/test1_again.c ->
+// simple_layer_test/layer/test1_again
+std::string getTestName(std::string optLoadFileName);
 
 } // namespace rlc_util
 

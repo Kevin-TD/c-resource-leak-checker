@@ -52,6 +52,8 @@ class DisjointPVAliasSets {
     // aliases element1 and element2 by putting them into the same set. if one of
     // the elements already belongs in an existing set, both elements will be in
     // that set. otherwise, they will be put into a new set.
+    // additionally, if both sets (set1 and set2) exist, the set numbers
+    // of set2 will be changed by set1's maximum set number plus 1.
     void addAlias(ProgramVariable element1, ProgramVariable element2);
 
     // removes all sets

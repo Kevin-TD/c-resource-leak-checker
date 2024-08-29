@@ -79,6 +79,62 @@ class ProgramPoint {
 
     // checks if programVar is in any of these sets
     bool varExists(ProgramVariable programVar);
+
+    /* moves the pv corresponding to cleanedNameOfPVToUnalias (and potential aliases) out of
+    pvas and into a new alias set. should only be called when pvas already has a call inst stored
+    (checked with PVAliasSet::containsCallInstVar) and a new call inst (pvCallInst) is being stored;
+    this means a pointer has been assigned a new resource. e.g.,
+
+    struct M {
+        char* x MustCall("free");
+        char* y MustCall("free");
+    };
+
+    int main() {
+        struct M s;
+
+        s.x = (char*)malloc(15); // pvas of s.x now contains a call inst var
+
+        s.y = s.x; // aliased
+
+        s.y = (char*)malloc(15); // s.x and s.y no longer aliased; pvas of s.y contains a call
+                                    instruction, so a new resource is being assigned. thus,
+                                    we must unalias s.y with s.x and store the new call inst
+                                    into s.y's alias set
+
+    }
+
+    pvCallInst is call inst that triggers the unaliasing, and callInstAlias is any extra
+    alias information to pvCallInst.
+
+    e.g., for line "s.y = (char*)malloc(15)",
+    pvas is the alias set of s.y, cleanedNameOfPVToUnalias is s.1 (since struct fields
+    get converted to indices internally), and since its corresponding instruction is
+    "store i8* %call2, i8** %12, align 8, !dbg !28",
+    %call2 is pvCallInst, and %12 is callInstAlias (which is stored with
+    %call2 in the new pvas set only if cleanedNameOfPVToUnalias refers to a struct. otherwise,
+    it is not stored in the new pvas set. this is because when it is not a struct,
+    the pv corresponding to cleanedNameOfPVToUnalias and callInstAlias are the same,
+    so we do not need to add it twice; the line may look like
+    "s2 = (char*)malloc(15)" with corresponding instruction "store i8* %call1, i8** %s2")
+
+    potential aliases of cleanedNameOfPVToUnalias are found as follows:
+    -if the pv corresponding to cleanedNameOfPVToUnalias is a struct, then
+    everything with the same set number as that pv are aliases
+    -if the pv corresponding to cleanedNameOfPVToUnalias is not a struct, then there are no
+    other aliases to worry about. we assume this is safe to do since if pv is getting
+    overwritten, then we assume all other previous aliased pv's won't
+    get mentioned again by the IR
+    */
+    void unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable pvCallInst, ProgramVariable callInstAlias);
+
+    /* moves the pv corresponding to cleanedNameOfPVToUnalias (and potential aliases) out of
+    pvas and into a new alias set. should only be called when pvas already has a call inst stored
+    (checked with PVAliasSet::containsCallInstVar) and a function call is made, potentially
+    assigning a pointer to a new resource.
+    argumentVar is alias information related to the pointer being assigned a new resource
+    */
+    void unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar);
 };
 
 #endif

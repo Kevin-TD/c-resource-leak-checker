@@ -1,0 +1,6 @@
+pass=MustCall function=main var=s.x methods={free}
+pass=MustCall function=main var=s.y methods={free}
+pass=MustCall function=main var=s1 methods={free}
+pass=CalledMethods function=main var=s.x methods={free}
+pass=CalledMethods function=main var=s.y methods={reassignPointer}
+pass=CalledMethods function=main var=s1 methods={free}

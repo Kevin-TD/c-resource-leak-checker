@@ -110,7 +110,7 @@ void DataflowPass::transfer(Instruction *instruction,
                 return;
             }
 
-            logout("found pv " << pvas->toString(true)
+            logout("found pv " << pvas->toString(true, false)
                    << " with index " << pvas->getIndex());
 
             if (CallInst *call = dyn_cast<CallInst>(extractValue->getOperand(0))) {
@@ -158,14 +158,14 @@ void DataflowPass::transfer(Instruction *instruction,
                 return;
             }
 
-            logout("pvas = " << pvas->toString(false));
+            logout("pvas = " << pvas->toString(false, false));
             handleIfStructTyAndIfFieldsHaveAnnotations(call, i, fnName, arg, inputProgramPoint, pvas);
 
             bool funcHasAnnos = handleIfAnnotationExistsForCallInsts(fnName, call, pvas);
 
             if (!funcHasAnnos) {
                 // no annotations found, treat function call as unknown function
-                logout("no annotations found for " << fnName << " index " << i << " | pvas = " << pvas->toString(false));
+                logout("no annotations found for " << fnName << " index " << i << " | pvas = " << pvas->toString(false, false));
                 this->onUnknownFunctionCall(pvas);
             }
 
@@ -189,33 +189,18 @@ void DataflowPass::transfer(Instruction *instruction,
                         skipTheOnFunctionCall = true;
                     }
 
-                    // check if param type is a struct
-                    LLVMContext context;
-                    SMDiagnostic error;
-                    std::string IRFileName = rlc_util::sliceString(optLoadFileName, 0, optLoadFileName.size() - 3) + ".ll";
-                    std::unique_ptr<Module> module = parseIRFile(IRFileName, error, context);
+                    int numFields = rlc_dataflow::getStructNumberOfFields(optLoadFileName, fi->getNthParamType(i));
 
-                    for (const auto &structType : module->getIdentifiedStructTypes()) {
-                        // ASSUMPTION: llvm struct names being with "struct."
-
-                        if (
-                            "struct." + fi->getNthParamType(i) == structType->getName()  ||
-
-                            rlc_util::startsWith(fi->getNthParamType(i), "struct ") &&
-                            "struct." + rlc_util::splitString(fi->getNthParamType(i), ' ')[1] == structType->getName()
-
-                        ) {
-
-                            logout("found struct " << structType->getName());
-                            logout("struct has this many fields: " << structType->getNumElements());
-                            skipTheOnFunctionCall = true;
-                        }
+                    if (numFields != -1) {
+                        logout("found struct");
+                        logout("struct has this many fields: " << numFields);
+                        skipTheOnFunctionCall = true;
                     }
                 }
             }
 
             if (!skipTheOnFunctionCall) {
-                logout("adding " << fnName << " to " << pvas->toString(false));
+                logout("adding " << fnName << " to " << pvas->toString(false, false));
                 this->onFunctionCall(pvas, fnName);
             }
 
@@ -360,7 +345,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                 std::string fieldArg = argName + "." + std::to_string(fieldIndex);
                 PVAliasSet *pvasField = programPoint.getPVASRef(fieldArg, false);
 
-                logout("found field " << pvasField->toString(true));
+                logout("found field " << pvasField->toString(true, false));
 
                 if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(
                                                        this->annotations.getReturnAnnotation(fnName, fieldIndex))) {
@@ -398,7 +383,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                     PVAliasSet *pvasField = programPoint.getPVASRef(fieldArg, false);
 
                     logout("found next arg fields "
-                           << pvasField->toString(true)
+                           << pvasField->toString(true, false)
                            << " for j = " << j);
 
                     auto allAnnotationsWithFields =
@@ -430,7 +415,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                             logout("found param annotation for j "
                                    << paramAnno->generateStringRep() << " for j = " << j
                                    << " and var "
-                                   << argVar->toString(true));
+                                   << argVar->toString(true, false));
                             this->onAnnotation(argVar, paramAnno);
                         }
                     }
@@ -507,7 +492,7 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
     // llvm.dbg.declare are function calls made by the IR to set debug
     // information. this function does not have annotations, as it's a function
     // by the IR, not the C code. thus, we do not check it for annotations.
-    if (fnName == "llvm.dbg.declare") {
+    if (fnName == LLVM_DBG_DECLARE) {
         return true;
     }
 
@@ -583,7 +568,7 @@ void DataflowPass::handleIfStructTyAndIfFieldsHaveAnnotations(CallInst *call, un
                     PVAliasSet* pvasField = programPoint.getPVASRef(fieldArg, false);
 
                     if (pvasField) {
-                        logout("found field " << pvasField->toString(true));
+                        logout("found field " << pvasField->toString(true, false));
                         handleIfAnnotationExistsForCallInsts(fnName, call, pvasField);
                         break;
                     }
