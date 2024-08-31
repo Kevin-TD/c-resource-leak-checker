@@ -56,12 +56,6 @@
 // TODO: make sliceString params use unsigned instead of signed int
 // TODO: write testing for getTestName, getNthLine, getLLVMStructType, getFunctionArgs
 
-
-// IMPORTANT:
-// TODO: when doing something like func(thing) make sure called methods is applied on thing when it gets desugared.
-// update tests accordingly
-
-
 struct InstructionHolder {
     SetVector<Instruction *> branch;
     SetVector<Instruction *> successors;
