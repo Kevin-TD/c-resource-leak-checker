@@ -52,6 +52,7 @@ add_llvm_library(CodeAnalyzer MODULE
   src/FunctionInfoTester.cpp
   src/StructFieldToIndexMap.cpp
   src/LineNumberToLValueMap.cpp
+  src/LineNumberToLValueTester.cpp
   src/TempFileManager.cpp
   src/FunctionInfo.cpp
   src/FunctionInfosManager.cpp

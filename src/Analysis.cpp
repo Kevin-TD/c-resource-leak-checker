@@ -29,6 +29,7 @@
 #include "ProgramRepresentation/FullFile.h"
 #include "StructFieldToIndexMap.h"
 #include "LineNumberToLValueMap.h"
+#include "LineNumberToLValueTester.h"
 #include "Debug/BranchLister/ProgramLinesBranchInfo.h"
 #include "RunAnalysis.h"
 #include "TestRunner.h"
@@ -748,6 +749,13 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
         anyTestFailed = true;
     } else {
         logout("FUNCTION INFO TESTER PASSED");
+    }
+
+    if (LineNumberToLValueTester::runTest(testName, lineNumberToLValueMap) == EXIT_FAILURE) {
+        logout("**LINE NUMBER TO L-VALUE TESTER FAILED");
+        anyTestFailed = true;
+    } else {
+        logout("LINE NUMBER TO L-VALUE TESTER PASSED");
     }
 
     realBranchOrder.clear();
