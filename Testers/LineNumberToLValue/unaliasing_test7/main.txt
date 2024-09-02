@@ -1,0 +1,7 @@
+line=12 lvalue=s
+line=13 lvalue=m.y
+line=20 lvalue=s.x
+line=22 lvalue=s.y
+line=23 lvalue=s1.y
+line=24 lvalue=s2.y
+line=25 lvalue=s3

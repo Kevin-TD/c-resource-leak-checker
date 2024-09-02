@@ -1,0 +1,4 @@
+line=14 lvalue=s.x
+line=16 lvalue=s.y
+line=17 lvalue=s1.y
+line=19 lvalue=s.y

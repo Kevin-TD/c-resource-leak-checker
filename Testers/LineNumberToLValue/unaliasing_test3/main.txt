@@ -1,0 +1,4 @@
+line=12 lvalue=s1
+line=13 lvalue=s2
+line=14 lvalue=s3
+line=16 lvalue=s2
