@@ -17,13 +17,13 @@ void does_free_one_pointer(my_struct* m Calls("free", "A") Calls("free", "B") Ca
 
 
 int main() {
-    my_struct* my_struct_ptr = malloc(sizeof(my_struct));
+    my_struct* my_struct_ptr = (my_struct*)malloc(sizeof(my_struct));
     my_struct_ptr->A = (char*)malloc(15);
     my_struct_ptr->B = (char*)malloc(15);
 
     does_free_one_pointer(my_struct_ptr);
 
-    my_struct* my_struct_ptr_normal_free = malloc(sizeof(my_struct));
+    my_struct* my_struct_ptr_normal_free = (my_struct*)malloc(sizeof(my_struct));
     my_struct_ptr_normal_free->A = (char*)malloc(15);
     my_struct_ptr_normal_free->B = (char*)malloc(15);
 

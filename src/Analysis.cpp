@@ -41,27 +41,17 @@
 #include "Utils.h"
 
 // TODO: remove predecessors from CFG; unused
-// TODO: handle un-aliasing
 // TODO: better test names in diff pr
 // TODO: write testing for intentional errors (ErrorTestRunner)
 // TODO: add const to method params where it applies; specifically, specifying more const std::string& type
 // TODO: add error pairs to annotation test
-// TODO:  CLT that generates AST based on test name (for debugging). if file name given, pipe into file. if not, log to terminal
 // TODO: see for ast info generator we can filter out functions included from std lib
 // TODO: make test cases for ASTAnalyses and have them ignore functions in stdlib
 // TODO: add testing to ast_info_tokens/generator/reader to ensure that tweaking format doesn't change pass results
 // TODO: getAnnotationStrings, FunctionInfosManager, StructFieldToIndexMap share code. consolidate into class & subclasses (ASTReaders)
-// TODO: write test code for FI pass
-// TODO: implement FI in DataflowPass.cpp
 // TODO: document FunctionInfo and FunctionInfosManager and get_function_info.py
 // TODO: make sliceString params use unsigned instead of signed int
 // TODO: write testing for getTestName, getNthLine, getLLVMStructType, getFunctionArgs
-
-
-// IMPORTANT:
-// TODO: when doing something like func(thing) make sure called methods is applied on thing when it gets desugared.
-// update tests accordingly
-
 
 struct InstructionHolder {
     SetVector<Instruction *> branch;
