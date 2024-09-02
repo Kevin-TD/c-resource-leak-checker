@@ -105,6 +105,8 @@ class PVAliasSet {
     // the program variable that equals pv
     ProgramVariable moveOut(ProgramVariable pv);
 
+    int getRetvalNumberOfFields();
+
     friend class DisjointPVAliasSets;
     friend class TestRunner;
 };

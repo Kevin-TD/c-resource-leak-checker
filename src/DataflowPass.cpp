@@ -205,6 +205,64 @@ void DataflowPass::transfer(Instruction *instruction,
             }
 
         }
+    } else if (llvm::ReturnInst *returnInst =
+                   dyn_cast<llvm::ReturnInst>(instruction)) {
+
+        if (!returnInst->getReturnValue()) {
+            return;
+        }
+
+        ProgramVariable returnVar = ProgramVariable(returnInst->getReturnValue());
+        PVAliasSet* pvas = inputProgramPoint.getPVASRef(returnVar, false);
+
+        if (!pvas) {
+            return;
+        }
+
+        std::string fnName = this->programFunction.getFunctionName();
+
+        // verify that annotation methods of return is a subset of annotation
+        // methods specified on the method
+
+        // NOTE: for now, only a warning is generated and the test passes even if the
+        // annotation verifier notices an error. this will be changed to properly
+        // error once error handling is implemented
+
+        // TODO: error message needs to specify that it is for return
+        // and (if applicable) the struct field.
+        // perhaps instead of inserting fnName, we can do messageInfo, e.g.,
+        // "function m_init return anno at field 0"
+        // "function m_init return anno"
+
+        // handle if retval is struct
+        int retvalNumberOfFields = pvas->getRetvalNumberOfFields();
+        if (retvalNumberOfFields != -1) {
+            logout("retval is struct with number of fields " << retvalNumberOfFields);
+
+            for (int i = 0; i < retvalNumberOfFields; i++) {
+                PVAliasSet* retvalPvas = inputProgramPoint.getPVASRef(RETVAL_NAME + "." + std::to_string(i), false);
+                if (retvalPvas) {
+                    if (ReturnAnnotation* returnAnno = dynamic_cast<ReturnAnnotation*>(this->annotations.getReturnAnnotation(fnName, i))) {
+                        this->checkIfInputIsSubtypeOfAnnotation(retvalPvas, returnAnno, fnName);
+                    } else {
+                        this->checkIfInputIsSubtypeOfSet(retvalPvas, {}, fnName);
+                    }
+                }
+            }
+
+        }
+
+
+        std::vector<Annotation*> returnAnnotations = this->annotations.getAllReturnAnnotationsWithoutFields(fnName);
+        if (returnAnnotations.size() == 0) {
+            this->checkIfInputIsSubtypeOfSet(pvas, {}, fnName);
+        } else {
+            for (Annotation* anno : returnAnnotations) {
+                if (ReturnAnnotation* returnAnno = dynamic_cast<ReturnAnnotation*>(anno)) {
+                    this->checkIfInputIsSubtypeOfAnnotation(pvas, returnAnno, fnName);
+                }
+            }
+        }
     }
 }
 

@@ -51,7 +51,7 @@
 // TODO: getAnnotationStrings, FunctionInfosManager, StructFieldToIndexMap share code. consolidate into class & subclasses (ASTReaders)
 // TODO: document FunctionInfo and FunctionInfosManager and get_function_info.py
 // TODO: make sliceString params use unsigned instead of signed int
-// TODO: write testing for getTestName, getNthLine, getLLVMStructType, getFunctionArgs
+// TODO: write testing for getTestName, getNthLine, getLLVMStructType, getFunctionArgs, formatSet
 
 struct InstructionHolder {
     SetVector<Instruction *> branch;

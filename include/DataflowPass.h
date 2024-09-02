@@ -95,17 +95,9 @@ class DataflowPass {
                                        std::string &fnName) = 0;
     virtual void onSafeFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
     virtual void onFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
-
-    // invokerFnName is the name of the function the annotation belongs to
-    /*
-    e.g.,
-    void free0(void* p Calls("free")) {
-      free(p);
-    }
-
-    here, invokerFnName = "free0"
-    */
     virtual void onAnnotation(PVAliasSet* input, Annotation* annotation) = 0;
+    virtual void checkIfInputIsSubtypeOfAnnotation(PVAliasSet* input, Annotation* annotation, const std::string& fnName) = 0;
+    virtual void checkIfInputIsSubtypeOfSet(PVAliasSet* input, std::set<std::string> setToCompareWith, const std::string& fnName) = 0;
 
 
   public:

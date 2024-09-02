@@ -33,3 +33,22 @@ void MustCall::onAnnotation(PVAliasSet* input, Annotation* annotation) {
 }
 
 void MustCall::onFunctionCall(PVAliasSet* input, std::string &fnName) {}
+
+void MustCall::checkIfInputIsSubtypeOfAnnotation(PVAliasSet* input, Annotation* annotation, const std::string& fnName) {
+    if (annotation->getAnnotationType() == AnnotationType::MustCallAnnotation) {
+        std::set<std::string> annoMethods = annotation->getAnnotationMethods();
+        this->checkIfInputIsSubtypeOfSet(input, annoMethods, fnName);
+    }
+}
+
+void MustCall::checkIfInputIsSubtypeOfSet(PVAliasSet* input, std::set<std::string> setToCompareWith, const std::string& fnName) {
+    std::set<std::string> pvasMethods = input->getMethodsSet().getMethods();
+
+    if (pvasMethods > setToCompareWith) {
+        std::set<std::string> setDifference = rlc_util::getSetDifference(pvasMethods, setToCompareWith);
+
+        logout("ERROR: Input methods is not subtype for MustCall. Missing for function " << fnName << ": ");
+        logout(rlc_util::formatSet("MustCall(\"{}\")\n", setDifference));
+
+    }
+}
