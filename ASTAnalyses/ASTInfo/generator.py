@@ -21,7 +21,8 @@ file_to_read = sys.argv[1]
 output_file = sys.argv[2]
 
 with open(file_to_read) as ast:
-    recent_specifier = None  # Function or Struct or BinaryOperator
+    recent_specifier = None  # Function or Struct
+    recent_binary_operator = None
 
     ast_lines = ast.readlines()
     specifier_manager = SpecifierManager()
@@ -74,28 +75,28 @@ with open(file_to_read) as ast:
             annotation_manager.add_annotation(anno)
 
         elif found_type is BinaryOperatorDecl:
-            recent_specifier = type_parsed
+            recent_binary_operator = type_parsed
 
         elif found_type is MemberExprDecl:
-            if type(recent_specifier) is BinaryOperatorDecl and recent_specifier.get_operator_type() == "=":
+            if type(recent_binary_operator) is BinaryOperatorDecl and recent_binary_operator.get_operator_type() == "=":
                 logout(
-                    f"partial add lvalue {type_parsed.get_field_specified()} {recent_specifier.get_line_number()}")
+                    f"partial add lvalue {type_parsed.get_field_specified()} {recent_binary_operator.get_line_number()}")
                 l_values_manager.add_l_value(type_parsed.get_field_specified(),
-                                             recent_specifier.get_line_number())
+                                             recent_binary_operator.get_line_number())
 
         elif found_type is DeclRefExprDecl:
-            if type(recent_specifier) is BinaryOperatorDecl and recent_specifier.get_operator_type() == "=":
+            if type(recent_binary_operator) is BinaryOperatorDecl and recent_binary_operator.get_operator_type() == "=":
                 l_value = l_values_manager.get_l_value(
-                    recent_specifier.get_line_number())
+                    recent_binary_operator.get_line_number())
 
                 if l_value is None:
                     l_values_manager.add_l_value(type_parsed.get_var_name(),
-                                                 recent_specifier.get_line_number())
+                                                 recent_binary_operator.get_line_number())
                 else:
                     l_value.set_lhs_name(
                         type_parsed.get_var_name() + l_value.get_lhs_name())
 
-                recent_specifier = None
+                recent_binary_operator = None
 
     output_str = ""
 
