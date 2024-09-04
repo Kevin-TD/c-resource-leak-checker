@@ -263,14 +263,10 @@ void DataflowPass::transfer(Instruction *instruction,
             return;
         }
 
-        // verify that annotation methods of return is a subset of annotation
-        // methods specified on the method
-
         // NOTE: for now, only a warning is generated and the test passes even if the
         // annotation verifier notices an error. this will be changed to properly
         // error once error handling is implemented
 
-        // handle if retval is struct
         int retvalNumberOfFields = pvas->getRetvalNumberOfFields();
         if (retvalNumberOfFields != -1) {
             logout("retval is struct with number of fields " << retvalNumberOfFields);

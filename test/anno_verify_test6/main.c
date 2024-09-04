@@ -4,13 +4,11 @@
 #include <string.h>
 #include "../../Annotations/Annotations.h"
 
-char* MustCall("free") foo() { // no warning
-    char* x = (char*)malloc(15);
-    char* y = (char*)malloc(15);
-
+char* foo1() { // warning -- missing MustCall("free")
+    char* retval = (char*)malloc(15);
     if (getchar()) {
-        return x;
+        return retval;
     } else {
-        return y;
+        return retval;
     }
 }

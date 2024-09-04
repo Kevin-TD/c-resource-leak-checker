@@ -387,10 +387,7 @@ void doAliasReasoning(Instruction *instruction,
                     // void @m_init() { ... }
                     // to:
                     // void @m_init(%struct.M* noalias sret %agg.result) { ... }
-                    // note: the handling of this case is rather naive and
-                    // should be susceptible to change.
-                    // relevant in test/anno_verify_test5
-                    if (structPV.getRawName().find("agg.result") != std::string::npos) {
+                    if (structPV.getRawName().find(AGG_RESULT_NAME) != std::string::npos) {
                         ProgramVariable structVar = ProgramVariable(structPV.getValue(), index);
                         programPoint->addVariable(structPV);
                         programPoint->addAlias(sourceVar, structVar);

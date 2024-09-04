@@ -105,8 +105,17 @@ class PVAliasSet {
     // the program variable that equals pv
     ProgramVariable moveOut(ProgramVariable pv);
 
+    // looks for a program variable with the name "retval" and, if it is a struct type,
+    // returns the number of fields it has. returns -1 if retval is not found or if
+    // retval is not a struct.
+    // NOTE: we assume retval is always an IR defined variable. it has been tested
+    // that if the user defines a variable "retval", it is named to "retval1" in the IR,
+    // with retval still existing and referring to the function's return
     int getRetvalNumberOfFields();
 
+    // looks for a program variable with the name "agg.result" and, if it is a struct type,
+    // returns the number of fields it has. returns -1 if agg.result is not found or if
+    // agg.result is not a struct
     int getAggResultNumberOfFields();
 
     friend class DisjointPVAliasSets;
