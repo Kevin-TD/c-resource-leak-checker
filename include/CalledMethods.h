@@ -13,8 +13,8 @@ class CalledMethods : public DataflowPass {
     void onSafeFunctionCall(PVAliasSet* input, std::string &fnName);
     void onAnnotation(PVAliasSet* input, Annotation* annotation);
     void onFunctionCall(PVAliasSet* input, std::string &fnName);
-    void checkIfInputIsSubtypeOfAnnotation(PVAliasSet* input, Annotation* annotation, const std::string& fnName);
-    void checkIfInputIsSubtypeOfSet(PVAliasSet* input, std::set<std::string> setToCompareWith, const std::string& fnName);
+    void checkIfInputIsSubtypeOfAnnotation(PVAliasSet* input, Annotation* annotation, const std::string& infoOutputIfFail);
+    void checkIfInputIsSubtypeOfSet(PVAliasSet* input, std::set<std::string> setToCompareWith, const std::string& infoOutputIfFail);
 
   public:
     CalledMethods();

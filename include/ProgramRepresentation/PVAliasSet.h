@@ -107,6 +107,8 @@ class PVAliasSet {
 
     int getRetvalNumberOfFields();
 
+    int getAggResultNumberOfFields();
+
     friend class DisjointPVAliasSets;
     friend class TestRunner;
 };

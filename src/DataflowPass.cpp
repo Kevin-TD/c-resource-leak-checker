@@ -208,7 +208,51 @@ void DataflowPass::transfer(Instruction *instruction,
     } else if (llvm::ReturnInst *returnInst =
                    dyn_cast<llvm::ReturnInst>(instruction)) {
 
+        std::string fnName = this->programFunction.getFunctionName();
+
+        if (fnName == "main") {
+            return;
+        }
+
+        auto fi = this->functionInfosManager.getFunction(fnName);
+
         if (!returnInst->getReturnValue()) {
+
+            if (fi->getReturnType() == "void") {
+                return;
+            }
+
+            // ASSUMPTION: ir optimization has been triggered
+            // and the return is now wrapped in the IR variable
+            // %agg.result
+            PVAliasSet* pvas = inputProgramPoint.getPVASRef(AGG_RESULT_NAME, false);
+            if (!pvas) {
+                logout("agg result name not found");
+                std::exit(1);
+            }
+
+            int aggResultNumberOfFields = pvas->getAggResultNumberOfFields();
+            if (aggResultNumberOfFields != -1) {
+                logout("agg.result is struct with number of fields " << aggResultNumberOfFields);
+
+                ProgramPoint::logoutProgramPoint(inputProgramPoint, false);
+
+                for (int i = 0; i < aggResultNumberOfFields; i++) {
+                    PVAliasSet* retvalPvas = inputProgramPoint.getPVASRef(AGG_RESULT_NAME + "." + std::to_string(i), false);
+                    if (retvalPvas) {
+                        if (ReturnAnnotation* returnAnno = dynamic_cast<ReturnAnnotation*>(this->annotations.getReturnAnnotation(fnName, i))) {
+                            this->checkIfInputIsSubtypeOfAnnotation(retvalPvas, returnAnno,
+                                                                    fnName + " for index " + std::to_string(i) + " of return struct");
+                        } else {
+                            this->checkIfInputIsSubtypeOfSet(retvalPvas, {},
+                                                             fnName + " for index " + std::to_string(i) + " of return struct");
+                        }
+                    }
+                }
+
+            }
+
+
             return;
         }
 
@@ -218,8 +262,6 @@ void DataflowPass::transfer(Instruction *instruction,
         if (!pvas) {
             return;
         }
-
-        std::string fnName = this->programFunction.getFunctionName();
 
         // verify that annotation methods of return is a subset of annotation
         // methods specified on the method
@@ -237,9 +279,11 @@ void DataflowPass::transfer(Instruction *instruction,
                 PVAliasSet* retvalPvas = inputProgramPoint.getPVASRef(RETVAL_NAME + "." + std::to_string(i), false);
                 if (retvalPvas) {
                     if (ReturnAnnotation* returnAnno = dynamic_cast<ReturnAnnotation*>(this->annotations.getReturnAnnotation(fnName, i))) {
-                        this->checkIfInputIsSubtypeOfAnnotation(retvalPvas, returnAnno, fnName);
+                        this->checkIfInputIsSubtypeOfAnnotation(retvalPvas, returnAnno,
+                                                                fnName + " for index " + std::to_string(i) + " of return struct");
                     } else {
-                        this->checkIfInputIsSubtypeOfSet(retvalPvas, {}, fnName);
+                        this->checkIfInputIsSubtypeOfSet(retvalPvas, {},
+                                                         fnName + " for index " + std::to_string(i) + " of return struct");
                     }
                 }
             }
@@ -249,11 +293,11 @@ void DataflowPass::transfer(Instruction *instruction,
 
         std::vector<Annotation*> returnAnnotations = this->annotations.getAllReturnAnnotationsWithoutFields(fnName);
         if (returnAnnotations.size() == 0) {
-            this->checkIfInputIsSubtypeOfSet(pvas, {}, fnName);
+            this->checkIfInputIsSubtypeOfSet(pvas, {}, fnName + " at return");
         } else {
             for (Annotation* anno : returnAnnotations) {
                 if (ReturnAnnotation* returnAnno = dynamic_cast<ReturnAnnotation*>(anno)) {
-                    this->checkIfInputIsSubtypeOfAnnotation(pvas, returnAnno, fnName);
+                    this->checkIfInputIsSubtypeOfAnnotation(pvas, returnAnno, fnName + " at return");
                 }
             }
         }

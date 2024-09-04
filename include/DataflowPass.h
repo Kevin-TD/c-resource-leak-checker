@@ -96,8 +96,8 @@ class DataflowPass {
     virtual void onSafeFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
     virtual void onFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
     virtual void onAnnotation(PVAliasSet* input, Annotation* annotation) = 0;
-    virtual void checkIfInputIsSubtypeOfAnnotation(PVAliasSet* input, Annotation* annotation, const std::string& fnName) = 0;
-    virtual void checkIfInputIsSubtypeOfSet(PVAliasSet* input, std::set<std::string> setToCompareWith, const std::string& fnName) = 0;
+    virtual void checkIfInputIsSubtypeOfAnnotation(PVAliasSet* input, Annotation* annotation, const std::string& infoOutputIfFail) = 0;
+    virtual void checkIfInputIsSubtypeOfSet(PVAliasSet* input, std::set<std::string> setToCompareWith, const std::string& infoOutputIfFail) = 0;
 
 
   public:

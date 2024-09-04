@@ -52,6 +52,7 @@
 // TODO: document FunctionInfo and FunctionInfosManager and get_function_info.py
 // TODO: make sliceString params use unsigned instead of signed int
 // TODO: write testing for getTestName, getNthLine, getLLVMStructType, getFunctionArgs, formatSet
+// TODO: write pass to convert struct (and aliases) fields into indicies (so when anno verify errors it is more specific on what field to specify, if needed)
 
 struct InstructionHolder {
     SetVector<Instruction *> branch;
@@ -378,6 +379,24 @@ void doAliasReasoning(Instruction *instruction,
                     }
 
                     ProgramVariable structPV = ProgramVariable(pointerOperand);
+
+                    // the IR may do an optimization if the return type is
+                    // too large and thus, puts a aggregate type in the
+                    // parameter of the function (only visible in the IR).
+                    // so a function's parameters may go from:
+                    // void @m_init() { ... }
+                    // to:
+                    // void @m_init(%struct.M* noalias sret %agg.result) { ... }
+                    // note: the handling of this case is rather naive and
+                    // should be susceptible to change.
+                    // relevant in test/anno_verify_test5
+                    if (structPV.getRawName().find("agg.result") != std::string::npos) {
+                        ProgramVariable structVar = ProgramVariable(structPV.getValue(), index);
+                        programPoint->addVariable(structPV);
+                        programPoint->addAlias(sourceVar, structVar);
+
+                        return;
+                    }
 
                     PVAliasSet *originalStructPVASRef =
                         programPoint->getPVASRef(structPV, false);

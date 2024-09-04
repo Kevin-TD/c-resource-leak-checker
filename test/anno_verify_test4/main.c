@@ -16,3 +16,11 @@ M m_init() { // warning - missing MustCall("free", "x"), MustCall("free", "y")
 
     return m;
 }
+
+M MustCall("free", "x") m_init2() { // warning - missing MustCall("free", "y")
+    M m;
+    m.x = (char*)malloc(15);
+    m.y = (char*)malloc(15);
+
+    return m;
+}

@@ -6,6 +6,10 @@ const std::string FIRST_BRANCH_NAME = "entry";
 // we assume LLVM IR labels the return of a function as "retval"
 const std::string RETVAL_NAME = "retval";
 
+// we assume LLVM IR labels the return of a function as "agg.result" in cases where
+// compiler optimization is triggered
+const std::string AGG_RESULT_NAME = "agg.result";
+
 const std::string CALLED_METHODS_PASS_NAME = "CalledMethods";
 const std::string MUST_CALL_PASS_NAME = "MustCall";
 const std::string GENERATED_DIR_NAME = "CodeAnalyzerFiles";
