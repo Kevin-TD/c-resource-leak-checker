@@ -228,12 +228,6 @@ void DataflowPass::transfer(Instruction *instruction,
         // annotation verifier notices an error. this will be changed to properly
         // error once error handling is implemented
 
-        // TODO: error message needs to specify that it is for return
-        // and (if applicable) the struct field.
-        // perhaps instead of inserting fnName, we can do messageInfo, e.g.,
-        // "function m_init return anno at field 0"
-        // "function m_init return anno"
-
         // handle if retval is struct
         int retvalNumberOfFields = pvas->getRetvalNumberOfFields();
         if (retvalNumberOfFields != -1) {
