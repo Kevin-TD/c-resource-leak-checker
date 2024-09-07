@@ -14,5 +14,11 @@ M* m_init() { // warning - missing MustCall("free", "x"), MustCall("free", "y"),
     m->x = (char*)malloc(15);
     m->y = (char*)malloc(15);
 
-    return m;
+    if (getchar()) {
+        return m;
+    } else {
+        return
+
+            m;
+    }
 }

@@ -22,7 +22,7 @@ output_file = sys.argv[2]
 
 with open(file_to_read) as ast:
     recent_specifier = None  # Function or Struct
-    recent_binary_operator = None
+    recent_lvalue_decl = None  # BinaryOperatorDecl or ReturnStmtDecl
 
     ast_lines = ast.readlines()
     specifier_manager = SpecifierManager()
@@ -75,28 +75,31 @@ with open(file_to_read) as ast:
             annotation_manager.add_annotation(anno)
 
         elif found_type is BinaryOperatorDecl:
-            recent_binary_operator = type_parsed
+            recent_lvalue_decl = type_parsed
+
+        elif found_type is ReturnStmtDecl:
+            recent_lvalue_decl = type_parsed
 
         elif found_type is MemberExprDecl:
-            if type(recent_binary_operator) is BinaryOperatorDecl and recent_binary_operator.get_operator_type() == "=":
+            if type(recent_lvalue_decl) is BinaryOperatorDecl and recent_lvalue_decl.get_operator_type() == "=":
                 logout(
-                    f"partial add lvalue {type_parsed.get_field_specified()} {recent_binary_operator.get_line_number()}")
+                    f"partial add lvalue {type_parsed.get_field_specified()} {recent_lvalue_decl.get_line_number()}")
                 l_values_manager.add_l_value(type_parsed.get_field_specified(),
-                                             recent_binary_operator.get_line_number())
+                                             recent_lvalue_decl.get_line_number())
 
         elif found_type is DeclRefExprDecl:
-            if type(recent_binary_operator) is BinaryOperatorDecl and recent_binary_operator.get_operator_type() == "=":
+            if (type(recent_lvalue_decl) is BinaryOperatorDecl and recent_lvalue_decl.get_operator_type() == "=") or type(recent_lvalue_decl) is ReturnStmtDecl:
                 l_value = l_values_manager.get_l_value(
-                    recent_binary_operator.get_line_number())
+                    recent_lvalue_decl.get_line_number())
 
                 if l_value is None:
                     l_values_manager.add_l_value(type_parsed.get_var_name(),
-                                                 recent_binary_operator.get_line_number())
+                                                 recent_lvalue_decl.get_line_number())
                 else:
                     l_value.set_lhs_name(
                         type_parsed.get_var_name() + l_value.get_lhs_name())
 
-                recent_binary_operator = None
+                recent_lvalue_decl = None
 
     output_str = ""
 
