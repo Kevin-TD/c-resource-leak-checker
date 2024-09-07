@@ -52,7 +52,9 @@
 // TODO: document FunctionInfo and FunctionInfosManager and get_function_info.py
 // TODO: make sliceString params use unsigned instead of signed int
 // TODO: write testing for getTestName, getNthLine, getLLVMStructType, getFunctionArgs, formatSet
+
 // TODO: write pass to convert struct (and aliases) fields into indicies (so when anno verify errors it is more specific on what field to specify, if needed)
+// TODO: make return lvalue pass - given line number, what is the lvalue return statement (if any)
 
 struct InstructionHolder {
     SetVector<Instruction *> branch;
