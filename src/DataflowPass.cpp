@@ -284,7 +284,7 @@ void DataflowPass::transfer(Instruction *instruction,
                 }
             }
         }
-        
+
         std::vector<Annotation*> returnAnnotations = this->annotations.getAllReturnAnnotationsWithoutFields(fnName);
         if (returnAnnotations.size() == 0) {
             this->checkIfInputIsSubtypeOfSet(pvas, {}, fnName + " at return");

@@ -1,5 +1,5 @@
 class LValue:
-    """Represents an l-value reference in the C code 
+    """Represents an l-value reference in the C code for LHS assignments or return statements
     """
 
     def __init__(self, lhs_name: str, line_number: int):
