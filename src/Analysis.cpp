@@ -453,6 +453,7 @@ void doAliasReasoning(Instruction *instruction,
             exit(1);
         }
 
+        // TODO: remove this assumption that struct fields are also created
         int numFields = structType->getNumElements();
         for (int i = 0; i < numFields; i++) {
             ProgramVariable sourceVar = ProgramVariable(allocate, i);
@@ -700,6 +701,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     calledMethods.setProgramFunction(programFunction);
     calledMethods.setFunctionInfosManager(functionInfosManager);
     calledMethods.setOptLoadFileName(optLoadFileName);
+    calledMethods.setLineNumberToLValueMap(lineNumberToLValueMap);
 
     mustCall.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
                           annotationHandler);
@@ -707,6 +709,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     mustCall.setProgramFunction(programFunction);
     mustCall.setFunctionInfosManager(functionInfosManager);
     mustCall.setOptLoadFileName(optLoadFileName);
+    mustCall.setLineNumberToLValueMap(lineNumberToLValueMap);
 
     ProgramFunction PostCalledMethods = calledMethods.generatePassResults();
     ProgramFunction PostMustCalls = mustCall.generatePassResults();

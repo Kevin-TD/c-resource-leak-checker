@@ -257,9 +257,44 @@ void DataflowPass::transfer(Instruction *instruction,
         }
 
         ProgramVariable returnVar = ProgramVariable(returnInst->getReturnValue());
-        PVAliasSet* pvas = inputProgramPoint.getPVASRef(returnVar, false);
+
+        const DebugLoc &debugLoc = returnInst->getDebugLoc();
+        unsigned lineNumber = debugLoc.getLine();
+
+        // we search backward in map since IR says the return is on the line where the
+        // closing curly brace of the function is. e.g.,
+        /*
+        1: int foo() {
+        2:    return 1;
+        3: } <-- Where IR reports the return is (line 3)
+
+        unless the result is wrapped in an agg.result variable, in which case
+        the return line is the line where the return keyword is.
+        we do not worry about this case here since it should already handled if needed
+
+        */
+        while (!this->lineNumberToLValueMap.lineNumberIsInMap(lineNumber) && lineNumber > 0) {
+            lineNumber--;
+        }
+
+        std::string lvalue = this->lineNumberToLValueMap.get(lineNumber);
+
+        PVAliasSet* pvas = inputProgramPoint.getPVASRef(lvalue, false);
+        PVAliasSet* pvasForNumberOfFields = inputProgramPoint.getPVASRef(returnVar, false);
+
 
         if (!pvas) {
+            lvalue = RETVAL_NAME;
+            pvas = inputProgramPoint.getPVASRef(lvalue, false);
+
+            if (!pvas) {
+                logout("pvas not found");
+                return;
+            }
+        }
+
+        if (!pvasForNumberOfFields) {
+            logout("pvas for struct info not found");
             return;
         }
 
@@ -267,12 +302,13 @@ void DataflowPass::transfer(Instruction *instruction,
         // annotation verifier notices an error. this will be changed to properly
         // error once error handling is implemented
 
-        int retvalNumberOfFields = pvas->getRetvalNumberOfFields();
+        int retvalNumberOfFields = pvasForNumberOfFields->getRetvalNumberOfFields();
         if (retvalNumberOfFields != -1) {
             logout("retval is struct with number of fields " << retvalNumberOfFields);
 
             for (int i = 0; i < retvalNumberOfFields; i++) {
-                PVAliasSet* retvalPvas = inputProgramPoint.getPVASRef(RETVAL_NAME + "." + std::to_string(i), false);
+                PVAliasSet* retvalPvas = inputProgramPoint.getPVASRef(lvalue + "." + std::to_string(i), false);
+
                 if (retvalPvas) {
                     if (ReturnAnnotation* returnAnno = dynamic_cast<ReturnAnnotation*>(this->annotations.getReturnAnnotation(fnName, i))) {
                         this->checkIfInputIsSubtypeOfAnnotation(retvalPvas, returnAnno,
@@ -686,4 +722,8 @@ void DataflowPass::setFunctionInfosManager(FunctionInfosManager functionInfosMan
 
 void DataflowPass::setOptLoadFileName(const std::string& optLoadFileName) {
     this->optLoadFileName = optLoadFileName;
+}
+
+void DataflowPass::setLineNumberToLValueMap(LineNumberToLValueMap lineNumberToLValueMap) {
+    this->lineNumberToLValueMap = lineNumberToLValueMap;
 }

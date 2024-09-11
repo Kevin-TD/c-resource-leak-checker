@@ -13,6 +13,7 @@
 #include "ProgramRepresentation/FullFile.h"
 #include "RunAnalysis.h"
 #include "Utils.h"
+#include "LineNumberToLValueMap.h"
 
 class DataflowPass {
   private:
@@ -82,6 +83,7 @@ class DataflowPass {
     std::string optLoadFileName;
     CFG *cfg;
     FunctionInfosManager functionInfosManager;
+    LineNumberToLValueMap lineNumberToLValueMap;
     FullFile expectedResult;
 
     virtual void leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSet) = 0;
@@ -119,6 +121,7 @@ class DataflowPass {
     void setAnnotations(AnnotationHandler annotations);
     void setFunctionInfosManager(FunctionInfosManager functionInfosManager);
     void setOptLoadFileName(const std::string& optLoadFileName);
+    void setLineNumberToLValueMap(LineNumberToLValueMap lineNumberToLValueMap);
 
     FullFile getExpectedResult();
 };
