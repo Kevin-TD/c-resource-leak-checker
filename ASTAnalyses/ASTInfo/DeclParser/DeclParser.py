@@ -439,9 +439,13 @@ class DeclParser:
         # may look like:
         # `-ReturnStmt 0x2423968 <line:18:9, col:16>
         #  `-ReturnStmt 0x24239c8 <line:20:9, line:22:9>
+        # `-ReturnStmt 0x24231c8 <col:42, col:49>
 
         return_stmt_section = return_stmt_decl[return_stmt_decl.find("<"):]
         line_chunks = return_stmt_section.split(" ")
+
+        if line_chunks[0].startswith("<col:"):
+            return None
 
         # suitable if it looks like <line:18:9, col:16>
         line_number = int(line_chunks[0].split(":")[1])
