@@ -154,6 +154,19 @@ void DataflowPass::transfer(Instruction *instruction,
                 return;
             }
 
+            // pseudo assignment annotation verification
+            const DebugLoc &debugLoc = call->getDebugLoc();
+            unsigned lineNumber = debugLoc.getLine();
+
+            if (ParameterAnnotation* paramAnno = dynamic_cast<ParameterAnnotation*>(this->annotations.getParameterAnnotation(fnName, i))) {
+                this->checkIfInputIsSubtypeOfAnnotation(pvas, paramAnno,
+                                                        fnName + " invoked by arg #" + std::to_string(i) + " on line " + std::to_string(lineNumber));
+            } else {
+                this->checkIfInputIsSubtypeOfSet(pvas, {},
+                                                    fnName + " invoked by arg #" + std::to_string(i) + " on line " + std::to_string(lineNumber));
+            }
+
+
             if (handleSretCallForCallInsts(call, i, fnName, arg, inputProgramPoint)) {
                 return;
             }
@@ -174,28 +187,26 @@ void DataflowPass::transfer(Instruction *instruction,
             auto fi = this->functionInfosManager.getFunction(fnName);
             bool skipTheOnFunctionCall = false;
 
-            if (fi) {
-                if (fi->getNumberOfParameters() != call->getNumArgOperands()) {
-                    logout("info about function " << fnName);
-                    logout("param count " << fi->getNumberOfParameters());
+            if (fi && fi->getNumberOfParameters() != call->getNumArgOperands()) {
+                logout("info about function " << fnName);
+                logout("param count " << fi->getNumberOfParameters());
 
-                    for (int k = 0; k < fi->getNumberOfParameters(); k++) {
-                        logout(k << " kth param type = " << fi->getNthParamType(k));
-                    }
+                for (int k = 0; k < fi->getNumberOfParameters(); k++) {
+                    logout(k << " kth param type = " << fi->getNthParamType(k));
+                }
 
-                    logout(i << "th param type = " << fi->getNthParamType(i));
+                logout(i << "th param type = " << fi->getNthParamType(i));
 
-                    if (fi->getNthParamType(i) == "") {
-                        skipTheOnFunctionCall = true;
-                    }
+                if (fi->getNthParamType(i) == "") {
+                    skipTheOnFunctionCall = true;
+                }
 
-                    int numFields = rlc_dataflow::getStructNumberOfFields(optLoadFileName, fi->getNthParamType(i));
+                int numFields = rlc_dataflow::getStructNumberOfFields(optLoadFileName, fi->getNthParamType(i));
 
-                    if (numFields != -1) {
-                        logout("found struct");
-                        logout("struct has this many fields: " << numFields);
-                        skipTheOnFunctionCall = true;
-                    }
+                if (numFields != -1) {
+                    logout("found struct");
+                    logout("struct has this many fields: " << numFields);
+                    skipTheOnFunctionCall = true;
                 }
             }
 
