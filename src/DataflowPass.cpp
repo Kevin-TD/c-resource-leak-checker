@@ -158,12 +158,12 @@ void DataflowPass::transfer(Instruction *instruction,
             const DebugLoc &debugLoc = call->getDebugLoc();
             unsigned lineNumber = debugLoc.getLine();
 
-            if (ParameterAnnotation* paramAnno = dynamic_cast<ParameterAnnotation*>(this->annotations.getParameterAnnotation(fnName, i))) {
-                this->checkIfInputIsSubtypeOfAnnotation(pvas, paramAnno,
-                                                        fnName + " invoked by arg #" + std::to_string(i) + " on line " + std::to_string(lineNumber));
-            } else {
-                this->checkIfInputIsSubtypeOfSet(pvas, {},
-                                                    fnName + " invoked by arg #" + std::to_string(i) + " on line " + std::to_string(lineNumber));
+            auto annos = this->annotations.getAllParameterAnnotationsWithoutFields(fnName);
+            for (auto anno : annos) {
+                if (ParameterAnnotation* paramAnno = dynamic_cast<ParameterAnnotation*>(anno)) {
+                    this->checkIfInputIsSubtypeOfAnnotation(pvas, paramAnno,
+                                                            fnName + " invoked by arg #" + std::to_string(i) + " on line " + std::to_string(lineNumber));
+                }
             }
 
 
@@ -179,6 +179,10 @@ void DataflowPass::transfer(Instruction *instruction,
             if (!funcHasAnnos) {
                 // no annotations found, treat function call as unknown function
                 logout("no annotations found for " << fnName << " index " << i << " | pvas = " << pvas->toString(false, false));
+
+                // pseudo assignment annotation verification
+                this->checkIfInputIsSubtypeOfSet(pvas, {}, fnName + " invoked by arg #" + std::to_string(i) + " on line " + std::to_string(lineNumber));
+
                 this->onUnknownFunctionCall(pvas);
             }
 
@@ -637,6 +641,9 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
 }
 
 bool DataflowPass::handleIfAnnotationExistsForCallInsts(const std::string &fnName, CallInst* call, PVAliasSet *pvas) {
+    const DebugLoc &debugLoc = call->getDebugLoc();
+    unsigned lineNumber = debugLoc.getLine();
+
     for (unsigned j = 0; j < call->getNumArgOperands(); j++) {
         // checks for parameter annotations (no field specified)
         Annotation *mayParameterAnnotation =
@@ -644,6 +651,10 @@ bool DataflowPass::handleIfAnnotationExistsForCallInsts(const std::string &fnNam
         if (ParameterAnnotation *paramAnno =
                     dynamic_cast<ParameterAnnotation *>(mayParameterAnnotation)) {
             logout("found param annotation " << paramAnno->generateStringRep());
+
+            // pseudo assignment annotation verification
+            this->checkIfInputIsSubtypeOfAnnotation(pvas, paramAnno, fnName + " invoked by arg #" + std::to_string(j) + " on line " + std::to_string(lineNumber));
+
             this->onAnnotation(pvas, paramAnno);
             return true;
         }
@@ -657,6 +668,10 @@ bool DataflowPass::handleIfAnnotationExistsForCallInsts(const std::string &fnNam
                         dynamic_cast<ParameterAnnotation *>(mayParamAnnoWithField)) {
                 logout("found param annotation for struct "
                        << paramAnno->generateStringRep());
+
+                // pseudo assignment annotation verification
+                this->checkIfInputIsSubtypeOfAnnotation(pvas, paramAnno, fnName + " invoked by arg #" + std::to_string(j) + " index " + std::to_string(pvas->getIndex()) + " on line " + std::to_string(lineNumber));
+
                 this->onAnnotation(pvas, paramAnno);
                 return true;
             }
