@@ -24,12 +24,12 @@ int main() {
     struct A a;
     struct B b;
 
-    a.a = set_mc1(a.a);
-    a.a = set_mc2(a.a); // Warning -- missing CalledMethods("set_mc1") on param 0 & missing MustCall("foo1") on param 0
+    a.a = set_mc1(a.a); // Warning -- missing MustCall("foo1") on param 0 of set_mc1
+    a.a = set_mc2(a.a); // Warning -- missing MustCall("foo1") on param 0 of set_mc2 + Warning -- MustCall("foo1") (LHS) not superset of MustCall("foo2") (RHS)
 
-    b.a = set_mc1(b.a);
+    b.a = set_mc1(b.a); // Warning -- missing MustCall("foo1, foo2") on param 0 of set_mc1
 
-    b.a = a.a; // Warning -- a.a input set larger than b.a input set. missing MustCall("foo2") on b.a
+    b.a = a.a;
 
 
 }

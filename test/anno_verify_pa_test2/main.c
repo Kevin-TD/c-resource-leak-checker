@@ -33,7 +33,7 @@ void foo(my_struct S MustCall("foo_a", "a")) {}
 
 int main() {
     my_struct A;
-    A.a = foo_a(A.a);
+    A.a = foo_a(A.a); // Warning -- missing MustCall("foo_a, foo_b") on param 0 of foo_a
     foo(A); // Warning -- A.a not subset of MustCall("foo_a", "a"). Missing MustCall("foo_b", "a") on foo function
 
 }

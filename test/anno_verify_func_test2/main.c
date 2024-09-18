@@ -26,3 +26,14 @@ char* foo_causes_warning2() { // warning - missing annotation MustCall("free"), 
         return x;
     }
 }
+
+char* Calls("func1") foo_causes_warning3() { // warning - missing annotation MustCall("free")
+    char* x = (char*)malloc(15);
+    func1(x);
+
+    if (getchar()) {
+        return x;
+    } else {
+        return x;
+    }
+}

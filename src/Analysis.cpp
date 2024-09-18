@@ -53,6 +53,7 @@
 // TODO: make sliceString params use unsigned instead of signed int
 // TODO: write testing for getTestName, getNthLine, getLLVMStructType, getFunctionArgs, formatSet
 // TODO: write pass to convert struct (and aliases) fields into indicies (so when anno verify errors it is more specific on what field to specify, if needed)
+// TODO: write more Calls annotation verify tests
 
 struct InstructionHolder {
     SetVector<Instruction *> branch;
