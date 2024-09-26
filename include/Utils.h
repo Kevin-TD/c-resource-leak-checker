@@ -75,6 +75,20 @@ std::string getNthLine(const std::string& filePath, unsigned n);
 // simple_layer_test/layer/test1_again
 std::string getTestName(std::string optLoadFileName);
 
+// returns the symmetric difference of set1 and set2 in a new set
+std::set<std::string> getSymmetricDifference(std::set<std::string> set1, std::set<std::string> set2);
+
+/* formats a set based off formatSpecifier. e.g.,
+if formatSpecifier = "MustCall("{}")\n" and setToFormat = {"a", "b", "c"}
+then the {} characters will be replaced by each element in setToFormat, then glued together,
+resulting in:
+MustCall("a")
+MustCall("b")
+MustCall("c")
+
+*/
+std::string formatSet(std::string formatSpecifier, std::set<std::string> setToFormat);
+
 } // namespace rlc_util
 
 #endif // UTILS_H

@@ -154,6 +154,19 @@ void DataflowPass::transfer(Instruction *instruction,
                 return;
             }
 
+            // pseudo assignment annotation verification
+            const DebugLoc &debugLoc = call->getDebugLoc();
+            unsigned lineNumber = debugLoc.getLine();
+
+            auto annos = this->annotations.getAllParameterAnnotationsWithoutFields(fnName);
+            for (auto anno : annos) {
+                if (ParameterAnnotation* paramAnno = dynamic_cast<ParameterAnnotation*>(anno)) {
+                    this->checkIfInputIsSubtypeOfAnnotation(pvas, paramAnno,
+                                                            fnName + " invoked by arg #" + std::to_string(i) + " on line " + std::to_string(lineNumber));
+                }
+            }
+
+
             if (handleSretCallForCallInsts(call, i, fnName, arg, inputProgramPoint)) {
                 return;
             }
@@ -166,6 +179,10 @@ void DataflowPass::transfer(Instruction *instruction,
             if (!funcHasAnnos) {
                 // no annotations found, treat function call as unknown function
                 logout("no annotations found for " << fnName << " index " << i << " | pvas = " << pvas->toString(false, false));
+
+                // pseudo assignment annotation verification
+                this->checkIfInputIsSubtypeOfSet(pvas, {}, fnName + " invoked by arg #" + std::to_string(i) + " on line " + std::to_string(lineNumber));
+
                 this->onUnknownFunctionCall(pvas);
             }
 
@@ -174,28 +191,26 @@ void DataflowPass::transfer(Instruction *instruction,
             auto fi = this->functionInfosManager.getFunction(fnName);
             bool skipTheOnFunctionCall = false;
 
-            if (fi) {
-                if (fi->getNumberOfParameters() != call->getNumArgOperands()) {
-                    logout("info about function " << fnName);
-                    logout("param count " << fi->getNumberOfParameters());
+            if (fi && fi->getNumberOfParameters() != call->getNumArgOperands()) {
+                logout("info about function " << fnName);
+                logout("param count " << fi->getNumberOfParameters());
 
-                    for (int k = 0; k < fi->getNumberOfParameters(); k++) {
-                        logout(k << " kth param type = " << fi->getNthParamType(k));
-                    }
+                for (int k = 0; k < fi->getNumberOfParameters(); k++) {
+                    logout(k << " kth param type = " << fi->getNthParamType(k));
+                }
 
-                    logout(i << "th param type = " << fi->getNthParamType(i));
+                logout(i << "th param type = " << fi->getNthParamType(i));
 
-                    if (fi->getNthParamType(i) == "") {
-                        skipTheOnFunctionCall = true;
-                    }
+                if (fi->getNthParamType(i) == "") {
+                    skipTheOnFunctionCall = true;
+                }
 
-                    int numFields = rlc_dataflow::getStructNumberOfFields(optLoadFileName, fi->getNthParamType(i));
+                int numFields = rlc_dataflow::getStructNumberOfFields(optLoadFileName, fi->getNthParamType(i));
 
-                    if (numFields != -1) {
-                        logout("found struct");
-                        logout("struct has this many fields: " << numFields);
-                        skipTheOnFunctionCall = true;
-                    }
+                if (numFields != -1) {
+                    logout("found struct");
+                    logout("struct has this many fields: " << numFields);
+                    skipTheOnFunctionCall = true;
                 }
             }
 
@@ -204,6 +219,132 @@ void DataflowPass::transfer(Instruction *instruction,
                 this->onFunctionCall(pvas, fnName);
             }
 
+        }
+    } else if (llvm::ReturnInst *returnInst =
+                   dyn_cast<llvm::ReturnInst>(instruction)) {
+
+        std::string fnName = this->programFunction.getFunctionName();
+
+        if (fnName == "main") {
+            return;
+        }
+
+        auto fi = this->functionInfosManager.getFunction(fnName);
+
+        if (!returnInst->getReturnValue()) {
+
+            if (fi->getReturnType() == "void") {
+                return;
+            }
+
+            // ASSUMPTION: ir optimization has been triggered
+            // and the return is now wrapped in the IR variable
+            // %agg.result
+            PVAliasSet* pvas = inputProgramPoint.getPVASRef(AGG_RESULT_NAME, false);
+            if (!pvas) {
+                logout("agg result name not found");
+                std::exit(1);
+            }
+
+            int aggResultNumberOfFields = pvas->getAggResultNumberOfFields();
+            if (aggResultNumberOfFields != -1) {
+                logout("agg.result is struct with number of fields " << aggResultNumberOfFields);
+
+                ProgramPoint::logoutProgramPoint(inputProgramPoint, false);
+
+                for (int i = 0; i < aggResultNumberOfFields; i++) {
+                    PVAliasSet* retvalPvas = inputProgramPoint.getPVASRef(AGG_RESULT_NAME + "." + std::to_string(i), false);
+                    if (retvalPvas) {
+                        if (ReturnAnnotation* returnAnno = dynamic_cast<ReturnAnnotation*>(this->annotations.getReturnAnnotation(fnName, i))) {
+                            this->checkIfInputIsSubtypeOfAnnotation(retvalPvas, returnAnno,
+                                                                    fnName + " for index " + std::to_string(i) + " of return struct");
+                        } else {
+                            this->checkIfInputIsSubtypeOfSet(retvalPvas, {},
+                                                             fnName + " for index " + std::to_string(i) + " of return struct");
+                        }
+                    }
+                }
+
+            }
+
+
+            return;
+        }
+
+        ProgramVariable returnVar = ProgramVariable(returnInst->getReturnValue());
+
+        const DebugLoc &debugLoc = returnInst->getDebugLoc();
+        unsigned lineNumber = debugLoc.getLine();
+
+        // we search backward in map since IR says the return is on the line where the
+        // closing curly brace of the function is. e.g.,
+        /*
+        1: int foo() {
+        2:    return 1;
+        3: } <-- Where IR reports the return is (line 3)
+
+        unless the result is wrapped in an agg.result variable, in which case
+        the return line is the line where the return keyword is.
+        we do not worry about this case here since it should already handled if needed
+
+        */
+        while (!this->lineNumberToLValueMap.lineNumberIsInMap(lineNumber) && lineNumber > 0) {
+            lineNumber--;
+        }
+
+        std::string lvalue = this->lineNumberToLValueMap.get(lineNumber);
+
+        PVAliasSet* pvas = inputProgramPoint.getPVASRef(lvalue, false);
+        PVAliasSet* pvasForNumberOfFields = inputProgramPoint.getPVASRef(returnVar, false);
+
+
+        if (!pvas) {
+            lvalue = RETVAL_NAME;
+            pvas = inputProgramPoint.getPVASRef(lvalue, false);
+
+            if (!pvas) {
+                logout("pvas not found");
+                return;
+            }
+        }
+
+        if (!pvasForNumberOfFields) {
+            logout("pvas for struct info not found");
+            return;
+        }
+
+        // NOTE: for now, only a warning is generated and the test passes even if the
+        // annotation verifier notices an error. this will be changed to properly
+        // error once error handling is implemented
+
+        int retvalNumberOfFields = pvasForNumberOfFields->getRetvalNumberOfFields();
+        if (retvalNumberOfFields != -1) {
+            logout("retval is struct with number of fields " << retvalNumberOfFields);
+
+            for (int i = 0; i < retvalNumberOfFields; i++) {
+                PVAliasSet* retvalPvas = inputProgramPoint.getPVASRef(lvalue + "." + std::to_string(i), false);
+
+                if (retvalPvas) {
+                    if (ReturnAnnotation* returnAnno = dynamic_cast<ReturnAnnotation*>(this->annotations.getReturnAnnotation(fnName, i))) {
+                        this->checkIfInputIsSubtypeOfAnnotation(retvalPvas, returnAnno,
+                                                                fnName + " for index " + std::to_string(i) + " of return struct");
+                    } else {
+                        this->checkIfInputIsSubtypeOfSet(retvalPvas, {},
+                                                         fnName + " for index " + std::to_string(i) + " of return struct");
+                    }
+                }
+            }
+        }
+
+        std::vector<Annotation*> returnAnnotations = this->annotations.getAllReturnAnnotationsWithoutFields(fnName);
+        if (returnAnnotations.size() == 0) {
+            this->checkIfInputIsSubtypeOfSet(pvas, {}, fnName + " at return");
+        } else {
+            for (Annotation* anno : returnAnnotations) {
+                if (ReturnAnnotation* returnAnno = dynamic_cast<ReturnAnnotation*>(anno)) {
+                    this->checkIfInputIsSubtypeOfAnnotation(pvas, returnAnno, fnName + " at return");
+                }
+            }
         }
     }
 }
@@ -500,6 +641,9 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
 }
 
 bool DataflowPass::handleIfAnnotationExistsForCallInsts(const std::string &fnName, CallInst* call, PVAliasSet *pvas) {
+    const DebugLoc &debugLoc = call->getDebugLoc();
+    unsigned lineNumber = debugLoc.getLine();
+
     for (unsigned j = 0; j < call->getNumArgOperands(); j++) {
         // checks for parameter annotations (no field specified)
         Annotation *mayParameterAnnotation =
@@ -507,6 +651,10 @@ bool DataflowPass::handleIfAnnotationExistsForCallInsts(const std::string &fnNam
         if (ParameterAnnotation *paramAnno =
                     dynamic_cast<ParameterAnnotation *>(mayParameterAnnotation)) {
             logout("found param annotation " << paramAnno->generateStringRep());
+
+            // pseudo assignment annotation verification
+            this->checkIfInputIsSubtypeOfAnnotation(pvas, paramAnno, fnName + " invoked by arg #" + std::to_string(j) + " on line " + std::to_string(lineNumber));
+
             this->onAnnotation(pvas, paramAnno);
             return true;
         }
@@ -520,6 +668,10 @@ bool DataflowPass::handleIfAnnotationExistsForCallInsts(const std::string &fnNam
                         dynamic_cast<ParameterAnnotation *>(mayParamAnnoWithField)) {
                 logout("found param annotation for struct "
                        << paramAnno->generateStringRep());
+
+                // pseudo assignment annotation verification
+                this->checkIfInputIsSubtypeOfAnnotation(pvas, paramAnno, fnName + " invoked by arg #" + std::to_string(j) + " index " + std::to_string(pvas->getIndex()) + " on line " + std::to_string(lineNumber));
+
                 this->onAnnotation(pvas, paramAnno);
                 return true;
             }
@@ -596,4 +748,8 @@ void DataflowPass::setFunctionInfosManager(FunctionInfosManager functionInfosMan
 
 void DataflowPass::setOptLoadFileName(const std::string& optLoadFileName) {
     this->optLoadFileName = optLoadFileName;
+}
+
+void DataflowPass::setLineNumberToLValueMap(LineNumberToLValueMap lineNumberToLValueMap) {
+    this->lineNumberToLValueMap = lineNumberToLValueMap;
 }

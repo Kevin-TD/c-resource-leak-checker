@@ -13,6 +13,7 @@
 #include "ProgramRepresentation/FullFile.h"
 #include "RunAnalysis.h"
 #include "Utils.h"
+#include "LineNumberToLValueMap.h"
 
 class DataflowPass {
   private:
@@ -82,6 +83,7 @@ class DataflowPass {
     std::string optLoadFileName;
     CFG *cfg;
     FunctionInfosManager functionInfosManager;
+    LineNumberToLValueMap lineNumberToLValueMap;
     FullFile expectedResult;
 
     virtual void leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSet) = 0;
@@ -95,17 +97,9 @@ class DataflowPass {
                                        std::string &fnName) = 0;
     virtual void onSafeFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
     virtual void onFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
-
-    // invokerFnName is the name of the function the annotation belongs to
-    /*
-    e.g.,
-    void free0(void* p Calls("free")) {
-      free(p);
-    }
-
-    here, invokerFnName = "free0"
-    */
     virtual void onAnnotation(PVAliasSet* input, Annotation* annotation) = 0;
+    virtual void checkIfInputIsSubtypeOfAnnotation(PVAliasSet* input, Annotation* annotation, const std::string& infoOutputIfFail) = 0;
+    virtual void checkIfInputIsSubtypeOfSet(PVAliasSet* input, std::set<std::string> setToCompareWith, const std::string& infoOutputIfFail) = 0;
 
 
   public:
@@ -127,6 +121,7 @@ class DataflowPass {
     void setAnnotations(AnnotationHandler annotations);
     void setFunctionInfosManager(FunctionInfosManager functionInfosManager);
     void setOptLoadFileName(const std::string& optLoadFileName);
+    void setLineNumberToLValueMap(LineNumberToLValueMap lineNumberToLValueMap);
 
     FullFile getExpectedResult();
 };

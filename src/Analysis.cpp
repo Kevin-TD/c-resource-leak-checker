@@ -51,7 +51,9 @@
 // TODO: getAnnotationStrings, FunctionInfosManager, StructFieldToIndexMap share code. consolidate into class & subclasses (ASTReaders)
 // TODO: document FunctionInfo and FunctionInfosManager and get_function_info.py
 // TODO: make sliceString params use unsigned instead of signed int
-// TODO: write testing for getTestName, getNthLine, getLLVMStructType, getFunctionArgs
+// TODO: write testing for getTestName, getNthLine, getLLVMStructType, getFunctionArgs, formatSet
+// TODO: write pass to convert struct (and aliases) fields into indicies (so when anno verify errors it is more specific on what field to specify, if needed)
+// TODO: write more Calls annotation verify tests
 
 struct InstructionHolder {
     SetVector<Instruction *> branch;
@@ -379,6 +381,21 @@ void doAliasReasoning(Instruction *instruction,
 
                     ProgramVariable structPV = ProgramVariable(pointerOperand);
 
+                    // the IR may do an optimization if the return type is
+                    // too large and thus, puts a aggregate type in the
+                    // parameter of the function (only visible in the IR).
+                    // so a function's parameters may go from:
+                    // void @m_init() { ... }
+                    // to:
+                    // void @m_init(%struct.M* noalias sret %agg.result) { ... }
+                    if (structPV.getRawName().find(AGG_RESULT_NAME) != std::string::npos) {
+                        ProgramVariable structVar = ProgramVariable(structPV.getValue(), index);
+                        programPoint->addVariable(structPV);
+                        programPoint->addAlias(sourceVar, structVar);
+
+                        return;
+                    }
+
                     PVAliasSet *originalStructPVASRef =
                         programPoint->getPVASRef(structPV, false);
 
@@ -682,6 +699,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     calledMethods.setProgramFunction(programFunction);
     calledMethods.setFunctionInfosManager(functionInfosManager);
     calledMethods.setOptLoadFileName(optLoadFileName);
+    calledMethods.setLineNumberToLValueMap(lineNumberToLValueMap);
 
     mustCall.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
                           annotationHandler);
@@ -689,6 +707,7 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     mustCall.setProgramFunction(programFunction);
     mustCall.setFunctionInfosManager(functionInfosManager);
     mustCall.setOptLoadFileName(optLoadFileName);
+    mustCall.setLineNumberToLValueMap(lineNumberToLValueMap);
 
     ProgramFunction PostCalledMethods = calledMethods.generatePassResults();
     ProgramFunction PostMustCalls = mustCall.generatePassResults();

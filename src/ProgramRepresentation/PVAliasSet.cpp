@@ -201,3 +201,29 @@ ProgramVariable PVAliasSet::moveOut(ProgramVariable pv) {
 
     return removedPV;
 }
+
+int PVAliasSet::getRetvalNumberOfFields() {
+    for (ProgramVariable pv : programVariables) {
+        // ASSUMPTION: IR return value name is labeled as "retval"
+        if (pv.getCleanedName() == RETVAL_NAME) {
+            if (StructType* structTy = rlc_dataflow::unwrapValuePointerToStruct(pv.getValue())) {
+                return structTy->getNumElements();
+            }
+        }
+    }
+
+    return -1;
+}
+
+int PVAliasSet::getAggResultNumberOfFields() {
+    for (ProgramVariable pv : programVariables) {
+        // ASSUMPTION: IR return value name is labeled as "agg.result" when compiler optimization is triggered
+        if (pv.getCleanedName() == AGG_RESULT_NAME) {
+            if (StructType* structTy = rlc_dataflow::unwrapValuePointerToStruct(pv.getValue())) {
+                return structTy->getNumElements();
+            }
+        }
+    }
+
+    return -1;
+}

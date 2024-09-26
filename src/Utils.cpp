@@ -297,4 +297,30 @@ std::string getTestName(std::string optLoadFileName) {
     return optLoadFileName;
 }
 
+std::set<std::string> getSymmetricDifference(std::set<std::string> set1, std::set<std::string> set2) {
+    std::set<std::string> setDifference;
+
+    std::set_symmetric_difference(set1.begin(), set1.end(),
+                                  set2.begin(), set2.end(),
+                                  std::inserter(setDifference, setDifference.begin()));
+
+    return setDifference;
+}
+
+std::string formatSet(std::string formatSpecifier, std::set<std::string> setToFormat) {
+    std::string formattedString;
+
+    for (auto element : setToFormat) {
+        std::string replacedString = formatSpecifier.replace(
+                                         formatSpecifier.find("{}"),
+                                         2,
+                                         element
+                                     );
+
+        formattedString += replacedString;
+    }
+
+    return formattedString;
+}
+
 } // namespace rlc_util

@@ -15,6 +15,7 @@ from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.AnnotateAttr import *
 from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.BinaryOperatorDecl import *
 from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.MemberExprDecl import *
 from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.DeclRefExprDecl import *
+from ASTAnalyses.ASTInfo.DeclParser.DeclTypes.ReturnStmtDecl import *
 
 
 class DeclParser:
@@ -434,6 +435,27 @@ class DeclParser:
 
         return DeclRefExprDecl(var_name)
 
+    def _parse_return_stmt_decl(self, return_stmt_decl: str):
+        # may look like:
+        # `-ReturnStmt 0x2423968 <line:18:9, col:16>
+        #  `-ReturnStmt 0x24239c8 <line:20:9, line:22:9>
+        # `-ReturnStmt 0x24231c8 <col:42, col:49>
+
+        return_stmt_section = return_stmt_decl[return_stmt_decl.find("<"):]
+        line_chunks = return_stmt_section.split(" ")
+
+        if line_chunks[0].startswith("<col:"):
+            return None
+
+        # suitable if it looks like <line:18:9, col:16>
+        line_number = int(line_chunks[0].split(":")[1])
+
+        # check if it looks like <line:20:9, line:22:9>
+        if line_chunks[1].startswith("line:"):
+            line_number = int(line_chunks[1].split(":")[1])
+
+        return ReturnStmtDecl(line_number)
+
     def _is_null_stmt(self, line_of_ast: str):
         # checks if end of string is <<<NULLL>>>
 
@@ -519,5 +541,8 @@ class DeclParser:
 
         elif decl_name == "DeclRefExpr":
             return self._parse_decl_ref_expr(expr)
+
+        elif decl_name == "ReturnStmt":
+            return self._parse_return_stmt_decl(expr)
 
         return None

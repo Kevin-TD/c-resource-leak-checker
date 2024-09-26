@@ -39,3 +39,21 @@ void CalledMethods::onAnnotation(PVAliasSet* input, Annotation* annotation) {
 void CalledMethods::onFunctionCall(PVAliasSet* input, std::string &fnName) {
     input->addMethod(fnName);
 }
+
+void CalledMethods::checkIfInputIsSubtypeOfAnnotation(PVAliasSet* input, Annotation* annotation, const std::string& infoOutputIfFail) {
+    if (annotation->getAnnotationType() == AnnotationType::CallsAnnotation) {
+        std::set<std::string> annoMethods = annotation->getAnnotationMethods();
+        this->checkIfInputIsSubtypeOfSet(input,  annoMethods, infoOutputIfFail);
+    }
+}
+
+void CalledMethods::checkIfInputIsSubtypeOfSet(PVAliasSet* input, std::set<std::string> setToCompareWith, const std::string& infoOutputIfFail) {
+    std::set<std::string> pvasMethods = input->getMethodsSet().getMethods();
+
+    if (pvasMethods < setToCompareWith) {
+        std::set<std::string> setDifference = rlc_util::getSymmetricDifference(pvasMethods, setToCompareWith);
+
+        logout("ERROR: Input methods is not subtype for CalledMethods. Invalid for " << infoOutputIfFail << ": ");
+        logout(rlc_util::formatSet("CalledMethods(\"{}\")\n", setDifference));
+    }
+}

@@ -48,6 +48,10 @@ class AnnotationHandler {
     getAllParameterAnnotationsWithFields(const std::string &functionName);
     std::vector<Annotation *>
     getAllParameterAnnotationsWithoutFields(const std::string &functionName);
+
+    std::vector<Annotation *> getAllReturnAnnotationsWithFields(const std::string &functionName);
+    std::vector<Annotation *> getAllReturnAnnotationsWithoutFields(const std::string &functionName);
+
     Annotation *getReturnAnnotation(const std::string &functionName);
     Annotation *getReturnAnnotation(const std::string &functionName, int field);
     Annotation *getStructAnnotation(const std::string &structName, int field);

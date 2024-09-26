@@ -106,6 +106,32 @@ AnnotationHandler::getAllParameterAnnotationsWithoutFields(
     return annotationsWithoutFields;
 }
 
+std::vector<Annotation *> AnnotationHandler::getAllReturnAnnotationsWithFields(const std::string &functionName) {
+    std::vector<Annotation*> annotationsWithFields;
+    for (Annotation *anno : this->annotations) {
+        if (ReturnAnnotation* returnAnno = dynamic_cast<ReturnAnnotation*>(anno)) {
+            if (returnAnno->functionNameEquals(functionName) && returnAnno->hasField()) {
+                annotationsWithFields.push_back(returnAnno);
+            }
+        }
+    }
+
+    return annotationsWithFields;
+}
+
+std::vector<Annotation *> AnnotationHandler::getAllReturnAnnotationsWithoutFields(const std::string &functionName) {
+    std::vector<Annotation*> annotationsWithFields;
+    for (Annotation *anno : this->annotations) {
+        if (ReturnAnnotation* returnAnno = dynamic_cast<ReturnAnnotation*>(anno)) {
+            if (returnAnno->functionNameEquals(functionName) && !returnAnno->hasField()) {
+                annotationsWithFields.push_back(returnAnno);
+            }
+        }
+    }
+
+    return annotationsWithFields;
+}
+
 Annotation *
 AnnotationHandler::getReturnAnnotation(const std::string &functionName) {
     for (Annotation *anno : this->annotations) {
