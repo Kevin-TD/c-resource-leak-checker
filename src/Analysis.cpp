@@ -452,7 +452,6 @@ void doAliasReasoning(Instruction *instruction,
             exit(1);
         }
 
-        // TODO: remove this assumption that struct fields are also created
         int numFields = structType->getNumElements();
         for (int i = 0; i < numFields; i++) {
             ProgramVariable sourceVar = ProgramVariable(allocate, i);

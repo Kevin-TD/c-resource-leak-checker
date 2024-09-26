@@ -24,7 +24,7 @@ int main() {
     struct A a;
     struct B b;
 
-    a.a = set_mc1(a.a); // Warning -- missing MustCall("foo1") on param 0 of set_mc1
+    a.a = set_mc1(a.a); // No warning on param 0 of set_mc1 -- a.a is uninitialized
     a.a = set_mc2(a.a); // Warning -- missing MustCall("foo1") on param 0 of set_mc2 + Warning -- MustCall("foo1") (LHS) not superset of MustCall("foo2") (RHS)
 
     b.a = set_mc1(b.a); // Warning -- missing MustCall("foo1, foo2") on param 0 of set_mc1

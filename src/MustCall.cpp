@@ -45,7 +45,7 @@ void MustCall::checkIfInputIsSubtypeOfSet(PVAliasSet* input, std::set<std::strin
     std::set<std::string> pvasMethods = input->getMethodsSet().getMethods();
 
     if (pvasMethods > setToCompareWith) {
-        std::set<std::string> setDifference = rlc_util::getSetDifference(pvasMethods, setToCompareWith);
+        std::set<std::string> setDifference = rlc_util::getSymmetricDifference(pvasMethods, setToCompareWith);
 
         logout("ERROR: Input methods is not subtype for MustCall. Missing for " << infoOutputIfFail << ": ");
         logout(rlc_util::formatSet("MustCall(\"{}\")\n", setDifference));

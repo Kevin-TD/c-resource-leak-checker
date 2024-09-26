@@ -297,10 +297,12 @@ std::string getTestName(std::string optLoadFileName) {
     return optLoadFileName;
 }
 
-std::set<std::string> getSetDifference(std::set<std::string> set1, std::set<std::string> set2) {
+std::set<std::string> getSymmetricDifference(std::set<std::string> set1, std::set<std::string> set2) {
     std::set<std::string> setDifference;
-    std::set_difference(set1.begin(), set1.end(), set2.begin(), set2.end(),
-                        std::inserter(setDifference, setDifference.end()));
+
+    std::set_symmetric_difference(set1.begin(), set1.end(),
+                                  set2.begin(), set2.end(),
+                                  std::inserter(setDifference, setDifference.begin()));
 
     return setDifference;
 }

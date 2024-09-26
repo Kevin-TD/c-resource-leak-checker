@@ -50,10 +50,10 @@ void CalledMethods::checkIfInputIsSubtypeOfAnnotation(PVAliasSet* input, Annotat
 void CalledMethods::checkIfInputIsSubtypeOfSet(PVAliasSet* input, std::set<std::string> setToCompareWith, const std::string& infoOutputIfFail) {
     std::set<std::string> pvasMethods = input->getMethodsSet().getMethods();
 
-    if (pvasMethods > setToCompareWith) {
-        std::set<std::string> setDifference = rlc_util::getSetDifference(pvasMethods, setToCompareWith);
+    if (pvasMethods < setToCompareWith) {
+        std::set<std::string> setDifference = rlc_util::getSymmetricDifference(pvasMethods, setToCompareWith);
 
-        logout("ERROR: Input methods is not subtype for CalledMethods. Missing for " << infoOutputIfFail << ": ");
+        logout("ERROR: Input methods is not subtype for CalledMethods. Invalid for " << infoOutputIfFail << ": ");
         logout(rlc_util::formatSet("CalledMethods(\"{}\")\n", setDifference));
     }
 }

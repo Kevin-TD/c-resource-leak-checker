@@ -75,8 +75,8 @@ std::string getNthLine(const std::string& filePath, unsigned n);
 // simple_layer_test/layer/test1_again
 std::string getTestName(std::string optLoadFileName);
 
-// returns the set difference of set1 and set2 in a new set
-std::set<std::string> getSetDifference(std::set<std::string> set1, std::set<std::string> set2);
+// returns the symmetric difference of set1 and set2 in a new set
+std::set<std::string> getSymmetricDifference(std::set<std::string> set1, std::set<std::string> set2);
 
 /* formats a set based off formatSpecifier. e.g.,
 if formatSpecifier = "MustCall("{}")\n" and setToFormat = {"a", "b", "c"}
