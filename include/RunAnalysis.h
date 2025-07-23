@@ -38,6 +38,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
+#include <regex>
 
 using namespace llvm;
 

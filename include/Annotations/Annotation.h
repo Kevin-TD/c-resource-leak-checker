@@ -18,8 +18,6 @@ enum AnnotationType {
 class Annotation {
   private:
     static bool
-    methodsArgumentIsCorrectlyFormatted(const std::string &rawMethodsString);
-    static bool
     rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString);
 
   protected:

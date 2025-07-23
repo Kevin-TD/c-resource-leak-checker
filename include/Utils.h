@@ -54,14 +54,6 @@ void removeWhitespace(std::string &input);
 // inclusive bounds [i, j]
 std::string sliceString(const std::string &str, int i, int j);
 
-/*
-returns true iff str begins with a letter or an underscore and is followed by
-zero or more letters, numbers, or underscores
-*/
-bool isValidCVariableName(const std::string &str);
-
-bool hasOnlyOneBalancedParentheses(const std::string &str);
-
 bool startsWith(std::string str, std::string starts);
 
 // for debugging; just an easier way to get a string rep of a set
