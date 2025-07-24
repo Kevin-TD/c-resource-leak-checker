@@ -212,41 +212,6 @@ std::string sliceString(const std::string &str, int i, int j) {
     return str.substr(i, j - i + 1);
 }
 
-bool isValidCVariableName(const std::string &str) {
-    if (str.empty() || !std::isalpha(str[0]) && str[0] != '_') {
-        return false;
-    }
-
-    for (int i = 1; i < str.length(); i++) {
-        if (!std::isalnum(str[i]) && str[i] != '_') {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool hasOnlyOneBalancedParentheses(const std::string &str) {
-    std::stack<char> parenthesesStack;
-    int balancedPairs = 0;
-
-    for (char c : str) {
-        if (c == '(') {
-            parenthesesStack.push(c);
-        } else if (c == ')') {
-
-            // Unbalanced: encountered closing parenthesis without an opening one
-            if (parenthesesStack.empty()) {
-                return false;
-            }
-            parenthesesStack.pop();
-            balancedPairs++;
-        }
-    }
-
-    return parenthesesStack.empty() && balancedPairs == 1;
-}
-
 std::string setToString(std::set<std::string> &setString) {
     std::string result = "{";
     int setStringSize = setString.size();

@@ -29,8 +29,6 @@ add_llvm_library(CodeAnalyzer MODULE
   src/UtilFunctionTesters/RLCUtil/SplitStringTester.cpp
   src/UtilFunctionTesters/RLCUtil/RemoveWhitespaceTester.cpp
   src/UtilFunctionTesters/RLCUtil/SliceStringTester.cpp
-  src/UtilFunctionTesters/RLCUtil/IsValidCVariableNameTester.cpp
-  src/UtilFunctionTesters/RLCUtil/HasOnlyOneBalancedParenthesesTester.cpp
   src/UtilFunctionTesters/RLCUtil/StartsWithTester.cpp
   src/UtilFunctionTesters/RLCUtil/SetToStringTester.cpp
   src/ProgramRepresentation/MethodsSet.cpp
