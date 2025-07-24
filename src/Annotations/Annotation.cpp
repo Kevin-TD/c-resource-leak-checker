@@ -27,7 +27,7 @@ std::string Annotation::getName() {
 // message; it should potentially be managed by a class that contains the
 // different types of errors
 
-/* raw annotations have the (pseduo) regex pattern of
+/* raw annotations have the (pseudo) regex pattern of
 (Calls | MustCall)
 target = (
     (FUNCTION(<var name>)
