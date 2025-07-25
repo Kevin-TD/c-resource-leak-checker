@@ -52,7 +52,7 @@ std::vector<std::string> splitString(const std::string &input, char delimiter);
 void removeWhitespace(std::string &input);
 
 // inclusive bounds [i, j]
-std::string sliceString(const std::string &str, int i, int j);
+std::string sliceString(const std::string &str, unsigned i, unsigned j);
 
 bool startsWith(std::string str, std::string starts);
 

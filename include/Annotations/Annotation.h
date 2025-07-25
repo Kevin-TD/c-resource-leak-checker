@@ -26,11 +26,7 @@ enum AnnotationType {
 // or runtime error.
 class Annotation {
   private:
-    static bool
-    methodsArgumentIsCorrectlyFormatted(const std::string &rawMethodsString);
-
     /* checks that rawAnnotationString is in the language of valid annotations.
-
     raw annotations have the (pseudo) regex pattern of
     (Calls | MustCall)
     target = (
