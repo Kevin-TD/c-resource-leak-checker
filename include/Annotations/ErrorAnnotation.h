@@ -8,7 +8,7 @@
 
 class ErrorAnnotation : public Annotation {
   public:
-    std::string generateStringRep();
+    std::string generateStringRep() const;
 };
 
 #endif

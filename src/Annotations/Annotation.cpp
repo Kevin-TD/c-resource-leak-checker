@@ -7,20 +7,20 @@
 #include "Debug.h"
 #include "Utils.h"
 
-bool Annotation::annotationIsVerified() {
+bool Annotation::annotationIsVerified() const {
     return this->isVerified;
 }
 
-AnnotationType Annotation::getAnnotationType() {
+AnnotationType Annotation::getAnnotationType() const {
     return this->annotationType;
 }
 
-std::set<std::string> Annotation::getAnnotationMethods() {
+std::set<std::string> Annotation::getAnnotationMethods() const {
     return this->annotationMethods;
 }
 
-std::string Annotation::getName() {
-    return this->targetName;
+std::string Annotation::getSpecifierName() const {
+    return this->specifierName;
 }
 
 // TODO: error reporting should be more robust and not just a debug logout
@@ -95,58 +95,6 @@ bool Annotation::methodsArgumentIsCorrectlyFormatted(
     return true;
 }
 
-// a raw correct annotation looks like:
-// (Calls || MustCall) target = {FUNCTION ||
-// STRUCT}(name).?PARAM(int).?FIELD(int) methods = str
-
-// FIELD argument refers to the index that belongs to some struct
-// e.g., struct S = {x, y}, S.x is index 0, and S.y is index 1.
-// the AST pass converts names to indicies.
-
-// examples:
-/*
-Calls target = FUNCTION(does_free) methods = free
--- FunctionAnnotation; not anticipated that we'll be needing it but some
-handling for it is here just in case
-
-Calls target = FUNCTION(does_free).PARAM(1) methods = free
--- ParameterAnnotation
-
-Calls target = FUNCTION(creates_obligation).PARAM(2).FIELD(0)
-methods = free
--- ParameterAnnotation with field
-
-MustCall target = FUNCTION(creates_obligation).RETURN methods =
-free
--- ReturnAnnotation
-
-Calls target = FUNCTION(does_something).RETURN.FIELD(0) methods =
-free
--- ReturnAnnotation with field
-
-MustCall target = STRUCT(my_struct).FIELD(0) methods = free
--- StructAnnotation; always has FIELD specifier
-
-Example for chunks:
-
-Calls target = FUNCTION(creates_obligation).PARAM(2).FIELD(0)
-methods = free1, free2
-
-chunks = ['Calls', 'target', '=',
-'FUNCTION(creates_obligation).PARAM(2).FIELD(x)', 'methods', '=', 'free1,',
-'free2']
-
-chunks[0] is annotation type (Calls/MustCall)
-chunks[1] is "target" keyword
-chunks[2] is "="
-chunks[3] is the target itself (FUNCTION/STRUCT potentially
-with valid PARAM and FIELD specifiers)
-chunks[4] is "methods" keyword
-chunks[5] is "="
-chunks[6..end] are all the methods
-*/
-
-// TODO: make method more generic and write automated testing for that
 bool Annotation::rawStringIsCorrectlyFormatted(
     const std::string &rawAnnotationString) {
     std::vector<std::string> chunks =

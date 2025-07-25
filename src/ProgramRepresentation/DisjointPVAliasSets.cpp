@@ -125,6 +125,6 @@ void DisjointPVAliasSets::mergeSet(PVAliasSet pvas) {
     sets.push_back(pvas);
 }
 
-int DisjointPVAliasSets::size() {
+int DisjointPVAliasSets::size() const {
     return sets.size();
 }

@@ -2,15 +2,15 @@
 
 ReturnAnnotation::ReturnAnnotation(AnnotationType annotationType,
                                    std::set<std::string> annotationMethods,
-                                   std::string targetName, int field) {
+                                   std::string specifierName, int field) {
     this->annotationType = annotationType;
     this->annotationMethods = annotationMethods;
-    this->targetName = targetName;
+    this->specifierName = specifierName;
     this->field = field;
     this->isVerified = false;
 }
 
-std::string ReturnAnnotation::generateStringRep() {
+std::string ReturnAnnotation::generateStringRep() const {
     std::string annoTypeString =
         rlc_annotation_util::annotationTypeToString(this->annotationType);
     std::string annoMethodsString =
@@ -22,22 +22,22 @@ std::string ReturnAnnotation::generateStringRep() {
     }
 
     return "@" + annoTypeString +
-           " ReturnAnnotation Function Name = " + this->targetName + " " +
+           " ReturnAnnotation Function Name = " + this->specifierName + " " +
            fieldString + " methods = " + annoMethodsString;
 }
 
-bool ReturnAnnotation::fieldEquals(int field) {
+bool ReturnAnnotation::fieldEquals(int field) const {
     return field == this->field;
 }
 
-bool ReturnAnnotation::hasField() {
+bool ReturnAnnotation::hasField() const {
     return this->field != -1;
 }
 
-bool ReturnAnnotation::functionNameEquals(const std::string &functionName) {
-    return functionName.compare(this->targetName) == 0;
+bool ReturnAnnotation::functionNameEquals(const std::string &functionName) const {
+    return functionName.compare(this->specifierName) == 0;
 }
 
-int ReturnAnnotation::getField() {
+int ReturnAnnotation::getField() const {
     return this->field;
 }

@@ -19,7 +19,7 @@ class PVAliasSet {
 
     // returns true iff programVar is in the set. this overload is the preferred
     // way to check if this set contains a ProgramVariable
-    bool contains(ProgramVariable programVar);
+    bool contains(const ProgramVariable &programVar);
 
     // return true iff there is a program var in this set with cleaned name cleanedName.
     // it is preferable to use the overload that specifies a ProgramVariable to avoid

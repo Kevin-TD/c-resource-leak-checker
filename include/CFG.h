@@ -7,7 +7,6 @@ class CFG {
   private:
     std::string branchName;
     std::list<CFG *> successors;
-    std::list<CFG *> predecessors;
     llvm::SetVector<Instruction *> instructions;
 
   public:
@@ -20,16 +19,10 @@ class CFG {
     CFG *addSuccessor(std::string branchName);
     void addSuccessor(CFG *cfg);
 
-    void addPredecessor(std::string branchName,
-                        llvm::SetVector<Instruction *> instructions);
-    void addPredecessor(std::string branchName);
-    void addPredecessor(CFG *cfg);
-
     void setInstructions(llvm::SetVector<Instruction *> instructions);
 
     std::string getBranchName();
     std::list<CFG *> getSuccessors();
-    std::list<CFG *> getPredecessors();
     llvm::SetVector<Instruction *> getInstructions();
 };
 

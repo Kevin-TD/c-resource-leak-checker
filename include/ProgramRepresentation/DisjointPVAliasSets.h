@@ -60,7 +60,7 @@ class DisjointPVAliasSets {
     void clear();
 
     // returns the number of disjointed sets
-    int size();
+    int size() const;
 
     // adds pvas by either merging it into one of our sets or adding it to our set
     // of sets. the program variables in pvas are merged if it has a program

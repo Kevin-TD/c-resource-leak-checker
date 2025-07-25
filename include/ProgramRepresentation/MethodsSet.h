@@ -18,9 +18,9 @@ class MethodsSet {
     void addMethod(std::string method);
     void clearMethods();
 
-    bool equals(MethodsSet otherMethodsSet);
+    bool equals(MethodsSet otherMethodsSet) const;
 
-    bool isUninit();
+    bool isUninit() const;
 
     std::set<std::string> getMethods() const;
 };

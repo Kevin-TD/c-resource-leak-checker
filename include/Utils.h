@@ -65,7 +65,7 @@ bool hasOnlyOneBalancedParentheses(const std::string &str);
 bool startsWith(std::string str, std::string starts);
 
 // for debugging; just an easier way to get a string rep of a set
-std::string setToString(std::set<std::string> &setString);
+std::string setToString(const std::set<std::string> &setString);
 
 // opens file with name filePath and returns the nth line of it
 std::string getNthLine(const std::string& filePath, unsigned n);

@@ -210,7 +210,7 @@ void DataflowPass::transfer(Instruction *instruction,
 
 void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
                               ProgramFunction &postProgramFunction,
-                              std::string priorBranch) {
+                              const std::string &priorBranch) {
     std::string currentBranch = cfg->getBranchName();
 
     if (currentBranch == FIRST_BRANCH_NAME) {

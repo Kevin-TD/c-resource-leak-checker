@@ -50,11 +50,11 @@ Value *ProgramVariable::getValue() {
     return this->value;
 }
 
-bool ProgramVariable::hasProgramName() {
+bool ProgramVariable::hasProgramName() const {
     return this->value->hasName();
 }
 
-bool ProgramVariable::containsStructFieldVar() {
+bool ProgramVariable::containsStructFieldVar() const {
     return this->index != -1;
 }
 
@@ -62,23 +62,23 @@ int ProgramVariable::getIndex() {
     return this->index;
 }
 
-bool ProgramVariable::isIdentifier() {
+bool ProgramVariable::isIdentifier() const {
     return this->varIsIdentifier;
 }
 
-bool ProgramVariable::equalsValue(Value *otherValue) {
+bool ProgramVariable::equalsValue(Value *otherValue) const {
     return this->value == otherValue;
 }
 
-bool ProgramVariable::equalsCleanedName(std::string otherName) {
+bool ProgramVariable::equalsCleanedName(const std::string &otherName) const {
     return this->cleanedName.compare(otherName) == 0;
 }
 
-bool ProgramVariable::equalsRawName(std::string otherRawName) {
+bool ProgramVariable::equalsRawName(const std::string &otherRawName) const {
     return this->rawName.compare(otherRawName) == 0;
 }
 
-unsigned ProgramVariable::getSetNumber() {
+unsigned ProgramVariable::getSetNumber() const {
     return this->setNumber;
 }
 

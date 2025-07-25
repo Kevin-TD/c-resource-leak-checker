@@ -19,11 +19,11 @@ std::set<std::string> MethodsSet::getMethods() const {
     return this->methods;
 }
 
-bool MethodsSet::isUninit() {
+bool MethodsSet::isUninit() const {
     return this->setIsUninit;
 }
 
-bool MethodsSet::equals(MethodsSet otherMethodsSet) {
+bool MethodsSet::equals(MethodsSet otherMethodsSet) const {
     if (this->isUninit() != otherMethodsSet.isUninit()) {
         return false;
     }

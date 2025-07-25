@@ -18,7 +18,7 @@ class DataflowPass {
   private:
     void analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
                     ProgramFunction &postProgramFunction,
-                    std::string priorBranch);
+                    const std::string &priorBranch);
     void transfer(Instruction *instruction, ProgramPoint &inputProgramPoint);
 
     // a helper function that handles functions with Sret attribute.

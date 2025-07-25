@@ -20,15 +20,15 @@ class ParameterAnnotation : public Annotation {
   public:
     ParameterAnnotation(AnnotationType annotationType,
                         std::set<std::string> annotationMethods,
-                        std::string targetName, int field, int nthParameter);
-    std::string generateStringRep();
-    bool nthParameterEquals(int param);
-    bool functionNameEquals(const std::string &functionName);
-    bool fieldNameEquals(int field);
-    bool hasField();
+                        std::string specifierName, int field, int nthParameter);
+    std::string generateStringRep() const;
+    bool nthParameterEquals(int param) const;
+    bool functionNameEquals(const std::string &functionName) const;
+    bool fieldNameEquals(int field) const;
+    bool hasField() const;
 
-    int getField();
-    int getNthParameter();
+    int getField() const;
+    int getNthParameter() const;
 };
 
 #endif

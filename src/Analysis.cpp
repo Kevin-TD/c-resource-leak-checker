@@ -40,10 +40,8 @@
 #include "FunctionInfosManager.h"
 #include "Utils.h"
 
-// TODO: remove predecessors from CFG; unused
 // TODO: better test names in diff pr
 // TODO: write testing for intentional errors (ErrorTestRunner)
-// TODO: add const to method params where it applies; specifically, specifying more const std::string& type
 // TODO: add error pairs to annotation test
 // TODO: see for ast info generator we can filter out functions included from std lib
 // TODO: make test cases for ASTAnalyses and have them ignore functions in stdlib

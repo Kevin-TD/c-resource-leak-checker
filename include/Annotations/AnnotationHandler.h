@@ -18,7 +18,7 @@ class AnnotationHandler {
 
   public:
     AnnotationHandler();
-    void addAnnotations(std::vector<std::string> rawAnnotationStrings);
+    void addAnnotations(const std::vector<std::string> &rawAnnotationStrings);
 
     // returns Annotation* instead of more specific type (in this case,
     // FunctionAnnotation*) since we may not find the annotation and will want to
@@ -38,19 +38,19 @@ class AnnotationHandler {
 
 
     */
-    Annotation *getFunctionAnnotation(const std::string &functionName);
+    Annotation *getFunctionAnnotation(const std::string &functionName) const;
 
     Annotation *getParameterAnnotation(const std::string &functionName,
-                                       int nthParameter);
+                                       int nthParameter) const;
     Annotation *getParameterAnnotation(const std::string &functionName,
-                                       int nthParameter, int field);
+                                       int nthParameter, int field) const;
     std::vector<Annotation *>
-    getAllParameterAnnotationsWithFields(const std::string &functionName);
+    getAllParameterAnnotationsWithFields(const std::string &functionName) const;
     std::vector<Annotation *>
-    getAllParameterAnnotationsWithoutFields(const std::string &functionName);
-    Annotation *getReturnAnnotation(const std::string &functionName);
-    Annotation *getReturnAnnotation(const std::string &functionName, int field);
-    Annotation *getStructAnnotation(const std::string &structName, int field);
+    getAllParameterAnnotationsWithoutFields(const std::string &functionName) const;
+    Annotation *getReturnAnnotation(const std::string &functionName) const;
+    Annotation *getReturnAnnotation(const std::string &functionName, int field) const;
+    Annotation *getStructAnnotation(const std::string &structName, int field) const;
 };
 
 #endif

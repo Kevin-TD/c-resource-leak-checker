@@ -12,13 +12,13 @@ class ReturnAnnotation : public Annotation {
   public:
     ReturnAnnotation(AnnotationType annotationType,
                      std::set<std::string> annotationMethods,
-                     std::string targetName, int field);
-    std::string generateStringRep();
-    bool functionNameEquals(const std::string &functionName);
-    bool fieldEquals(int field);
-    bool hasField();
+                     std::string specifierName, int field);
+    std::string generateStringRep() const;
+    bool functionNameEquals(const std::string &functionName) const;
+    bool fieldEquals(int field) const;
+    bool hasField() const;
 
-    int getField();
+    int getField() const;
 };
 
 #endif

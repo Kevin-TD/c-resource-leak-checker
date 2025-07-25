@@ -17,7 +17,7 @@ class FullFile {
 
     void addProgramFunction(ProgramFunction programFunction);
 
-    std::list<ProgramFunction> getProgramFunctions();
+    std::list<ProgramFunction> getProgramFunctions() const;
 
     // returns a program function based functionName and, if addNewIfNotFound is
     // true, creates a new one if it was not. if addNewIfNotFound is false and the
@@ -31,7 +31,7 @@ class FullFile {
     ProgramFunction *getProgramFunctionRef(std::string functionName,
                                            bool addNewIfNotFound);
 
-    std::string getFileName();
+    std::string getFileName() const;
 };
 
 #endif

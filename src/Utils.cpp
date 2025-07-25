@@ -247,7 +247,7 @@ bool hasOnlyOneBalancedParentheses(const std::string &str) {
     return parenthesesStack.empty() && balancedPairs == 1;
 }
 
-std::string setToString(std::set<std::string> &setString) {
+std::string setToString(const std::set<std::string> &setString) {
     std::string result = "{";
     int setStringSize = setString.size();
 

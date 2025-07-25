@@ -10,12 +10,12 @@ class StructAnnotation : public Annotation {
   public:
     StructAnnotation(AnnotationType annotationType,
                      std::set<std::string> annotationMethods,
-                     std::string targetName, int field);
-    std::string generateStringRep();
-    bool structNameEquals(const std::string &structName);
-    bool fieldNameEquals(int fieldName);
+                     std::string specifierName, int field);
+    std::string generateStringRep() const;
+    bool structNameEquals(const std::string &structName) const;
+    bool fieldNameEquals(int fieldName) const;
 
-    int getFieldName();
+    int getFieldName() const;
 };
 
 #endif

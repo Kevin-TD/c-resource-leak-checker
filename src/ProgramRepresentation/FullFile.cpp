@@ -10,11 +10,11 @@ void FullFile::addProgramFunction(ProgramFunction programFunction) {
     this->programFunctions.push_back(programFunction);
 }
 
-std::list<ProgramFunction> FullFile::getProgramFunctions() {
+std::list<ProgramFunction> FullFile::getProgramFunctions() const {
     return this->programFunctions;
 }
 
-std::string FullFile::getFileName() {
+std::string FullFile::getFileName() const {
     return this->fileName;
 }
 
