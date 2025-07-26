@@ -7,6 +7,8 @@
 // calls. all ProgramVariable's (PVs) have their own MethodsSet
 class MethodsSet {
   private:
+    // value is true if any information is passed to the internal method set but is set
+    // to and remains false if otherwise
     bool setIsUninit;
     std::set<std::string> methods;
 

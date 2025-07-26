@@ -2,7 +2,7 @@
 
 ReturnAnnotation::ReturnAnnotation(AnnotationType annotationType,
                                    std::set<std::string> annotationMethods,
-                                   std::string specifierName, int field) {
+                                   std::string specifierName, unsigned field) {
     this->annotationType = annotationType;
     this->annotationMethods = annotationMethods;
     this->specifierName = specifierName;
@@ -25,7 +25,7 @@ std::string ReturnAnnotation::toString() const {
            fieldString + " methods = " + annoMethodsString;
 }
 
-bool ReturnAnnotation::fieldEquals(unsigned field) const {
+bool ReturnAnnotation::fieldIndexEquals(unsigned field) const {
     return field == this->field;
 }
 

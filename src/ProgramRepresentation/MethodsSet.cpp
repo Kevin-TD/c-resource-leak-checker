@@ -28,11 +28,7 @@ bool MethodsSet::equals(MethodsSet otherMethodsSet) const {
         return false;
     }
 
-    if (this->getMethods() != otherMethodsSet.getMethods()) {
-        return false;
-    }
-
-    return true;
+    return this->getMethods() == otherMethodsSet.getMethods();
 }
 
 void MethodsSet::addMethod(std::string method) {

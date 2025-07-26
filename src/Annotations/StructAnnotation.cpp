@@ -2,7 +2,7 @@
 
 StructAnnotation::StructAnnotation(AnnotationType annotationType,
                                    std::set<std::string> annotationMethods,
-                                   std::string specifierName, int field) {
+                                   std::string specifierName, unsigned field) {
     this->annotationType = annotationType;
     this->annotationMethods = annotationMethods;
     this->specifierName = specifierName;
@@ -26,10 +26,10 @@ bool StructAnnotation::structNameEquals(const std::string &structName) const {
     return structName.compare(this->specifierName) == 0;
 }
 
-bool StructAnnotation::fieldNameEquals(int fieldName) const {
+bool StructAnnotation::fieldIndexEquals(unsigned fieldName) const {
     return fieldName == this->field;
 }
 
-int StructAnnotation::getFieldName() const {
+unsigned StructAnnotation::getField() const {
     return this->field;
 }

@@ -20,7 +20,7 @@ ProgramVariable::ProgramVariable(Value *value) {
     this->fixNameAndIdentifier();
 }
 
-ProgramVariable::ProgramVariable(Value *value, int index) {
+ProgramVariable::ProgramVariable(Value *value, unsigned index) {
     this->value = value;
     this->rawName = rlc_dataflow::variable(value) + "." + std::to_string(index);
     this->index = index;

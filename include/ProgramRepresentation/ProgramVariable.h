@@ -48,7 +48,7 @@ class ProgramVariable {
     ProgramVariable(std::string cleanedName);
 
     // for struct variables
-    ProgramVariable(Value *value, int index);
+    ProgramVariable(Value *value, unsigned index);
 
     std::string getRawName() const;
     std::string getCleanedName();

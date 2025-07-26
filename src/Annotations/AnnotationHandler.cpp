@@ -64,7 +64,7 @@ AnnotationHandler::getParameterAnnotation(const std::string &functionName,
                     dynamic_cast<ParameterAnnotation *>(anno)) {
             if (paramAnno->functionNameEquals(functionName) &&
                     paramAnno->nthParameterEquals(nthParameter) &&
-                    paramAnno->fieldEquals(field)) {
+                    paramAnno->fieldIndexEquals(field)) {
                 return paramAnno;
             }
         }
@@ -125,7 +125,7 @@ AnnotationHandler::getReturnAnnotation(const std::string &functionName,
     for (Annotation *anno : this->annotations) {
         if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(anno)) {
             if (returnAnno->functionNameEquals(functionName) &&
-                    returnAnno->fieldEquals(field)) {
+                    returnAnno->fieldIndexEquals(field)) {
                 return returnAnno;
             }
         }
@@ -139,7 +139,7 @@ AnnotationHandler::getStructAnnotation(const std::string &structName,
     for (Annotation *anno : this->annotations) {
         if (StructAnnotation *structAnno = dynamic_cast<StructAnnotation *>(anno)) {
             if (structAnno->structNameEquals(structName) &&
-                    structAnno->fieldNameEquals(field)) {
+                    structAnno->fieldIndexEquals(field)) {
                 return structAnno;
             }
         }

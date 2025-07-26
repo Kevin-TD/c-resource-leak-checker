@@ -8,7 +8,7 @@ ProgramLinesBranchInfo::ProgramLinesBranchInfo() {
 void ProgramLinesBranchInfo::add(Function& function) {
     std::string functionName = function.getName().str();
 
-    int branchCount = 0;
+    unsigned branchCount = 0;
     for (inst_iterator I = inst_begin(function), E = inst_end(function); I != E; ++I) {
         Instruction* instruction = &(*I);
         if (isa<BranchInst>(instruction)) {
@@ -68,7 +68,7 @@ LineBranchInfo* ProgramLinesBranchInfo::getLBI(unsigned lineNumber) {
 void ProgramLinesBranchInfo::generate(std::string cFileName, bool overwrite) {
     std::ifstream cFile(cFileName);
     std::string cLine;
-    int cLineNumber = 1;
+    unsigned cLineNumber = 1;
     std::vector<std::string> overWrittenFile;
 
     if (!cFile.is_open()) {
@@ -77,13 +77,13 @@ void ProgramLinesBranchInfo::generate(std::string cFileName, bool overwrite) {
     }
 
     std::ifstream cFileForLineCounting(cFileName);
-    int lineCount = std::count(std::istreambuf_iterator<char>(cFileForLineCounting),
-                               std::istreambuf_iterator<char>(), '\n');
+    unsigned lineCount = std::count(std::istreambuf_iterator<char>(cFileForLineCounting),
+                                    std::istreambuf_iterator<char>(), '\n');
 
     while (std::getline(cFile, cLine)) {
         if (auto lbi = this->getLBI(cLineNumber)) {
             std::string whiteSpaceOfCurrentLine;
-            for (int i = 0; i < cLine.length(); i++) {
+            for (unsigned i = 0; i < cLine.length(); i++) {
                 if (isspace(cLine[i])) {
                     whiteSpaceOfCurrentLine += cLine[i];
                 }

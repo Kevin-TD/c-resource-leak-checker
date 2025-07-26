@@ -35,7 +35,7 @@ bool ParameterAnnotation::functionNameEquals(const std::string &functionName) co
     return functionName.compare(this->specifierName) == 0;
 }
 
-bool ParameterAnnotation::fieldEquals(unsigned field) const {
+bool ParameterAnnotation::fieldIndexEquals(unsigned field) const {
     return field == this->field;
 }
 

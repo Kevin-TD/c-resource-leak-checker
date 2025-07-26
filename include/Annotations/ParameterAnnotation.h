@@ -29,7 +29,7 @@ class ParameterAnnotation : public Annotation {
     std::string toString() const;
     bool nthParameterEquals(unsigned param) const;
     bool functionNameEquals(const std::string &functionName) const;
-    bool fieldEquals(unsigned field) const;
+    bool fieldIndexEquals(unsigned field) const;
     bool hasField() const;
 
     // returns the field assuming `hasField` is true; iff it is not true, then
