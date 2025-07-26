@@ -61,7 +61,7 @@ void DataflowPass::transfer(Instruction *instruction,
             } else if (ReturnAnnotation *returnAnno =
                            dynamic_cast<ReturnAnnotation *>(
                                this->annotations.getReturnAnnotation(fnName))) {
-                logout("found return annotation " << returnAnno->generateStringRep());
+                logout("found return annotation " << returnAnno->toString());
                 this->onAnnotation(pvas, returnAnno);
             } else if (pvas->containsStructFieldVar()) {
                 if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(
@@ -127,7 +127,7 @@ void DataflowPass::transfer(Instruction *instruction,
                 if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(
                                                        this->annotations.getReturnAnnotation(fnName, fieldIndex))) {
                     logout("found annotation from extract value "
-                           << returnAnno->generateStringRep());
+                           << returnAnno->toString());
                     this->onAnnotation(pvas, returnAnno);
                 }
             }
@@ -350,7 +350,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                 if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(
                                                        this->annotations.getReturnAnnotation(fnName, fieldIndex))) {
                     logout("found annotation from sret "
-                           << returnAnno->generateStringRep());
+                           << returnAnno->toString());
                     this->onAnnotation(pvasField, returnAnno);
                 }
             }
@@ -393,7 +393,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                                     dynamic_cast<ParameterAnnotation *>(anno)) {
                             if (paramAnno->getField() == fieldIndex) {
                                 logout("found param annotation for sret annos with fields "
-                                       << paramAnno->generateStringRep());
+                                       << paramAnno->toString());
                                 this->onAnnotation(pvasField, paramAnno);
                             }
                         }
@@ -413,7 +413,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                         if (paramAnno->getNthParameter() == j - 1) {
                             PVAliasSet *argVar = programPoint.getPVASRef(nextArg, false);
                             logout("found param annotation for j "
-                                   << paramAnno->generateStringRep() << " for j = " << j
+                                   << paramAnno->toString() << " for j = " << j
                                    << " and var "
                                    << argVar->toString(true, false));
                             this->onAnnotation(argVar, paramAnno);
@@ -506,7 +506,7 @@ bool DataflowPass::handleIfAnnotationExistsForCallInsts(const std::string &fnNam
             this->annotations.getParameterAnnotation(fnName, j);
         if (ParameterAnnotation *paramAnno =
                     dynamic_cast<ParameterAnnotation *>(mayParameterAnnotation)) {
-            logout("found param annotation " << paramAnno->generateStringRep());
+            logout("found param annotation " << paramAnno->toString());
             this->onAnnotation(pvas, paramAnno);
             return true;
         }
@@ -519,7 +519,7 @@ bool DataflowPass::handleIfAnnotationExistsForCallInsts(const std::string &fnNam
             if (ParameterAnnotation *paramAnno =
                         dynamic_cast<ParameterAnnotation *>(mayParamAnnoWithField)) {
                 logout("found param annotation for struct "
-                       << paramAnno->generateStringRep());
+                       << paramAnno->toString());
                 this->onAnnotation(pvas, paramAnno);
                 return true;
             }

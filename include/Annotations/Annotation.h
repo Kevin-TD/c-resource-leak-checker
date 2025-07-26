@@ -63,29 +63,52 @@ class Annotation {
     -- ReturnAnnotation with field
 
     MustCall target = STRUCT(my_struct).FIELD(0) methods = free
-    -- StructAnnotation; always has FIELD specifier
+    -- StructAnnotation; always has FIELD extension
     */
     static bool
     rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString);
 
   protected:
     AnnotationType annotationType;
+
+    // set of methods specified in the user's annotation
     std::set<std::string> annotationMethods;
+
+    // note the distinction between "specifier" and "specifier name".
+    // an annotation on a function malloc has specifier `function` and name
+    // `malloc`. so, in pseudo code, `malloc_anno.specifier = function` and
+    // `malloc_anno.specifier_name = malloc`. for struct `my_struct`, similarly,
+    // we'll have that `my_struct_anno.specifier = struct`
+    // and `my_struct_anno.specifier_name = my_struct`.
     std::string specifierName;
-    bool isVerified;
 
   public:
+    // produces an annotation given a well-formed string from the language annotations are
+    // specified by, and an error annotation otherwise.
+    // implementation detail: the return type is a pointer
+    // so that we are allowed by the compiler to return any subtype of Annotation
     static Annotation *generateAnnotation(const std::string &rawAnnotationString);
-    bool annotationIsVerified() const;
+
+    // annotation type is MustCall or Calls
     AnnotationType getAnnotationType() const;
+
+    // gets the set of methods specified in the user's annotation
     std::set<std::string> getAnnotationMethods() const;
+
+    // gets the specifier name (i.e., function name or struct name) of the
+    // annotation
     std::string getSpecifierName() const;
-    virtual std::string generateStringRep() const = 0;
+
+    // string representation of the annotation that is implemented
+    // uniquely for each annotation subtype
+    virtual std::string toString() const = 0;
 };
 
 namespace rlc_annotation_util {
 
-// more for debugging
+// turns the enum literal of AnnotationType into a string.
+// this method is useful only really for us
+// for debugging.
 std::string annotationTypeToString(AnnotationType anno);
 
 } // namespace rlc_annotation_util

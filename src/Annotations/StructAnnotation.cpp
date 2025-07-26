@@ -7,10 +7,9 @@ StructAnnotation::StructAnnotation(AnnotationType annotationType,
     this->annotationMethods = annotationMethods;
     this->specifierName = specifierName;
     this->field = field;
-    this->isVerified = false;
 }
 
-std::string StructAnnotation::generateStringRep() const {
+std::string StructAnnotation::toString() const {
     std::string annoTypeString =
         rlc_annotation_util::annotationTypeToString(this->annotationType);
     std::string annoMethodsString =

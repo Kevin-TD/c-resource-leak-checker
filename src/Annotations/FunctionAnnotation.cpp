@@ -6,10 +6,9 @@ FunctionAnnotation::FunctionAnnotation(AnnotationType annotationType,
     this->annotationType = annotationType;
     this->annotationMethods = annotationMethods;
     this->specifierName = specifierName;
-    this->isVerified = false;
 }
 
-std::string FunctionAnnotation::generateStringRep() const {
+std::string FunctionAnnotation::toString() const {
     std::string annoTypeString =
         rlc_annotation_util::annotationTypeToString(this->annotationType);
     std::string annoMethodsString =

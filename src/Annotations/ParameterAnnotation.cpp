@@ -2,16 +2,15 @@
 
 ParameterAnnotation::ParameterAnnotation(
     AnnotationType annotationType, std::set<std::string> annotationMethods,
-    std::string specifierName, int field, int nthParameter) {
+    std::string specifierName, unsigned field, unsigned nthParameter) {
     this->annotationType = annotationType;
     this->annotationMethods = annotationMethods;
     this->specifierName = specifierName;
     this->field = field;
     this->nthParameter = nthParameter;
-    this->isVerified = false;
 }
 
-std::string ParameterAnnotation::generateStringRep() const {
+std::string ParameterAnnotation::toString() const {
     std::string annoTypeString =
         rlc_annotation_util::annotationTypeToString(this->annotationType);
     std::string annoMethodsString =
@@ -28,7 +27,7 @@ std::string ParameterAnnotation::generateStringRep() const {
            fieldString + " methods = " + annoMethodsString;
 }
 
-bool ParameterAnnotation::nthParameterEquals(int param) const {
+bool ParameterAnnotation::nthParameterEquals(unsigned param) const {
     return this->nthParameter == param;
 }
 
@@ -36,7 +35,7 @@ bool ParameterAnnotation::functionNameEquals(const std::string &functionName) co
     return functionName.compare(this->specifierName) == 0;
 }
 
-bool ParameterAnnotation::fieldNameEquals(int field) const {
+bool ParameterAnnotation::fieldEquals(unsigned field) const {
     return field == this->field;
 }
 
@@ -48,6 +47,6 @@ int ParameterAnnotation::getField() const {
     return this->field;
 }
 
-int ParameterAnnotation::getNthParameter() const {
+unsigned ParameterAnnotation::getNthParameter() const {
     return this->nthParameter;
 }

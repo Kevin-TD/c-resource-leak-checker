@@ -7,10 +7,6 @@
 #include "Debug.h"
 #include "Utils.h"
 
-bool Annotation::annotationIsVerified() const {
-    return this->isVerified;
-}
-
 AnnotationType Annotation::getAnnotationType() const {
     return this->annotationType;
 }

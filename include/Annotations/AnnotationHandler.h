@@ -10,7 +10,28 @@
 #include "StructAnnotation.h"
 #include "Utils.h"
 
-// manages annotations for a single file
+/*
+manages annotations for a single file (a `FullFile` object).
+implementation detail: getter functions have the return type
+of `Annotation* (`A*`) because we want to express that,
+when we want to get annotation of subtype `T`, we might get
+error subtype `E` if we are unable to find the annotation given
+the user's arguments. ideally, the return type would be
+something like `T* | E*`, but `A*` is used due to
+constraints with our current type hierarchy.
+
+notes on public method parameters:
+- `functionName` and `structName` should be as it appears in the user's C code.
+- `nthParameter` is the 0-indexed parameter of the function.
+- `field` is 0-indexed parameter specifying, for a
+function that returns a struct, which field.
+note: a struct `S {x, y}` has indexing `x -> 0`, `y -> 1`.
+
+
+TODO: using C++'s multiple inheritance, we could construct
+specific error types `(TE)*` if we let TE inherit both T and E,
+where T and E are both inherited from A.
+*/
 class AnnotationHandler {
   private:
     std::list<Annotation *> annotations;
@@ -20,37 +41,24 @@ class AnnotationHandler {
     AnnotationHandler();
     void addAnnotations(const std::vector<std::string> &rawAnnotationStrings);
 
-    // returns Annotation* instead of more specific type (in this case,
-    // FunctionAnnotation*) since we may not find the annotation and will want to
-    // return ErrorAnnotation* instead
-    /*
-    TODO: C++ has multiple inheritance, so we could also fix this issue by
-    changing the type hierarchy. In particular, we could add types like
-    FunctionErrorAnnotation that are both a FunctionAnnotation and an
-    ErrorAnnotation; that is, make the type hierarchy look like this:
-
-           Annotation
-         /                   \
-    ErrorAnno        FunctionAnno
-        \                     /
-      FunctionErrorAnno
-    (and then we'd do the same for parameter annotations, etc.)
-
-
-    */
     Annotation *getFunctionAnnotation(const std::string &functionName) const;
 
     Annotation *getParameterAnnotation(const std::string &functionName,
-                                       int nthParameter) const;
+                                       unsigned nthParameter) const;
     Annotation *getParameterAnnotation(const std::string &functionName,
-                                       int nthParameter, int field) const;
+                                       unsigned nthParameter, unsigned field) const;
+    // we return all parameter's `p` of function `f` if `p` has
+    // a corresponding `ParameterAnnotation` with a field specified.
     std::vector<Annotation *>
     getAllParameterAnnotationsWithFields(const std::string &functionName) const;
     std::vector<Annotation *>
+
+    // we return all parameter's `p` of function `f` if `p` has
+    // a corresponding `ParameterAnnotation` with no field specified.
     getAllParameterAnnotationsWithoutFields(const std::string &functionName) const;
     Annotation *getReturnAnnotation(const std::string &functionName) const;
-    Annotation *getReturnAnnotation(const std::string &functionName, int field) const;
-    Annotation *getStructAnnotation(const std::string &structName, int field) const;
+    Annotation *getReturnAnnotation(const std::string &functionName, unsigned field) const;
+    Annotation *getStructAnnotation(const std::string &structName, unsigned field) const;
 };
 
 #endif

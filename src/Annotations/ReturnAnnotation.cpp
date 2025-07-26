@@ -7,10 +7,9 @@ ReturnAnnotation::ReturnAnnotation(AnnotationType annotationType,
     this->annotationMethods = annotationMethods;
     this->specifierName = specifierName;
     this->field = field;
-    this->isVerified = false;
 }
 
-std::string ReturnAnnotation::generateStringRep() const {
+std::string ReturnAnnotation::toString() const {
     std::string annoTypeString =
         rlc_annotation_util::annotationTypeToString(this->annotationType);
     std::string annoMethodsString =
@@ -26,7 +25,7 @@ std::string ReturnAnnotation::generateStringRep() const {
            fieldString + " methods = " + annoMethodsString;
 }
 
-bool ReturnAnnotation::fieldEquals(int field) const {
+bool ReturnAnnotation::fieldEquals(unsigned field) const {
     return field == this->field;
 }
 

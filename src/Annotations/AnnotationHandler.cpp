@@ -4,7 +4,7 @@ AnnotationHandler::AnnotationHandler() {}
 
 void AnnotationHandler::addAnnotation(const std::string &rawAnnotationString) {
     Annotation *anno = Annotation::generateAnnotation(rawAnnotationString);
-    logout("anno string rep: " << anno->generateStringRep());
+    logout("anno string rep: " << anno->toString());
 
     if (StructAnnotation *structAnno = dynamic_cast<StructAnnotation *>(anno)) {
         this->annotations.push_back(structAnno);
@@ -42,7 +42,7 @@ AnnotationHandler::getFunctionAnnotation(const std::string &functionName) const 
 
 Annotation *
 AnnotationHandler::getParameterAnnotation(const std::string &functionName,
-        int nthParameter) const {
+        unsigned nthParameter) const {
     for (Annotation *anno : this->annotations) {
         if (ParameterAnnotation *paramAnno =
                     dynamic_cast<ParameterAnnotation *>(anno)) {
@@ -58,13 +58,13 @@ AnnotationHandler::getParameterAnnotation(const std::string &functionName,
 
 Annotation *
 AnnotationHandler::getParameterAnnotation(const std::string &functionName,
-        int nthParameter, int field) const {
+        unsigned nthParameter, unsigned field) const {
     for (Annotation *anno : this->annotations) {
         if (ParameterAnnotation *paramAnno =
                     dynamic_cast<ParameterAnnotation *>(anno)) {
             if (paramAnno->functionNameEquals(functionName) &&
                     paramAnno->nthParameterEquals(nthParameter) &&
-                    paramAnno->fieldNameEquals(field)) {
+                    paramAnno->fieldEquals(field)) {
                 return paramAnno;
             }
         }
@@ -121,7 +121,7 @@ AnnotationHandler::getReturnAnnotation(const std::string &functionName) const {
 
 Annotation *
 AnnotationHandler::getReturnAnnotation(const std::string &functionName,
-                                       int field) const {
+                                       unsigned field) const {
     for (Annotation *anno : this->annotations) {
         if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(anno)) {
             if (returnAnno->functionNameEquals(functionName) &&
@@ -135,7 +135,7 @@ AnnotationHandler::getReturnAnnotation(const std::string &functionName,
 
 Annotation *
 AnnotationHandler::getStructAnnotation(const std::string &structName,
-                                       int field) const {
+                                       unsigned field) const {
     for (Annotation *anno : this->annotations) {
         if (StructAnnotation *structAnno = dynamic_cast<StructAnnotation *>(anno)) {
             if (structAnno->structNameEquals(structName) &&
