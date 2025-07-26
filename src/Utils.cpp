@@ -208,11 +208,11 @@ void removeWhitespace(std::string &input) {
     input.end());
 }
 
-std::string sliceString(const std::string &str, int i, int j) {
+std::string sliceString(const std::string &str, unsigned i, unsigned j) {
     return str.substr(i, j - i + 1);
 }
 
-std::string setToString(std::set<std::string> &setString) {
+std::string setToString(const std::set<std::string> &setString) {
     std::string result = "{";
     int setStringSize = setString.size();
 

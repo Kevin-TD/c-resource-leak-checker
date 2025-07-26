@@ -5,7 +5,6 @@
 
 // tests rlc_dataflow::getSuccessors by checking the number of
 // successors for each instruction of an IR file for accuracy
-
 class GetSuccessorsTester : public UtilFunctionTester {
   public:
     GetSuccessorsTester();

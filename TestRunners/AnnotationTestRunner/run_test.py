@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     flags_manager.add_flag(
         "n", "only-run-for",
-        "Only runs specified c file. c file must be specified in the succeeding argument. Combined with --no-run-for may result in undesireable output.",
+        "Only runs specified c file. c file must be specified in the succeeding argument. Combined with --no-run-for may result in undesirable output.",
         lambda annotation_test_files_manager, file_name: [file.toggle_test_running(
         ) for file in annotation_test_files_manager.get_all_files_excluding(file_name)]
     )

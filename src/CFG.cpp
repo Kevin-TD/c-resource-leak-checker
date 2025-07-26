@@ -28,29 +28,12 @@ void CFG::addSuccessor(CFG *tree) {
     this->successors.push_back(tree);
 }
 
-void CFG::addPredecessor(std::string branchName,
-                         llvm::SetVector<Instruction *> instructions) {
-    this->predecessors.push_back(new CFG(branchName, instructions));
-}
-
-void CFG::addPredecessor(std::string branchName) {
-    this->predecessors.push_back(new CFG(branchName));
-}
-
-void CFG::addPredecessor(CFG *cfg) {
-    this->predecessors.push_back(cfg);
-}
-
 std::string CFG::getBranchName() {
     return this->branchName;
 }
 
 std::list<CFG *> CFG::getSuccessors() {
     return this->successors;
-}
-
-std::list<CFG *> CFG::getPredecessors() {
-    return this->predecessors;
 }
 
 void CFG::setInstructions(llvm::SetVector<Instruction *> instructions) {

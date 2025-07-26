@@ -7,20 +7,16 @@
 #include "Debug.h"
 #include "Utils.h"
 
-bool Annotation::annotationIsVerified() {
-    return this->isVerified;
-}
-
-AnnotationType Annotation::getAnnotationType() {
+AnnotationType Annotation::getAnnotationType() const {
     return this->annotationType;
 }
 
-std::set<std::string> Annotation::getAnnotationMethods() {
+std::set<std::string> Annotation::getAnnotationMethods() const {
     return this->annotationMethods;
 }
 
-std::string Annotation::getName() {
-    return this->targetName;
+std::string Annotation::getSpecifierName() const {
+    return this->specifierName;
 }
 
 // TODO: error reporting should be more robust and not just a debug logout

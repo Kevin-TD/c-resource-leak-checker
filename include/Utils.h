@@ -52,12 +52,12 @@ std::vector<std::string> splitString(const std::string &input, char delimiter);
 void removeWhitespace(std::string &input);
 
 // inclusive bounds [i, j]
-std::string sliceString(const std::string &str, int i, int j);
+std::string sliceString(const std::string &str, unsigned i, unsigned j);
 
 bool startsWith(std::string str, std::string starts);
 
 // for debugging; just an easier way to get a string rep of a set
-std::string setToString(std::set<std::string> &setString);
+std::string setToString(const std::set<std::string> &setString);
 
 // opens file with name filePath and returns the nth line of it
 std::string getNthLine(const std::string& filePath, unsigned n);

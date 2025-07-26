@@ -48,7 +48,7 @@ class ProgramVariable {
     ProgramVariable(std::string cleanedName);
 
     // for struct variables
-    ProgramVariable(Value *value, int index);
+    ProgramVariable(Value *value, unsigned index);
 
     std::string getRawName() const;
     std::string getCleanedName();
@@ -57,25 +57,25 @@ class ProgramVariable {
 
     // returns true iff index does not equal -1, meaning the program var
     // refers to a struct's field
-    bool containsStructFieldVar();
+    bool containsStructFieldVar() const;
 
     // IR names like %7 are considered unnamed and program names like %str are
     // named
-    bool hasProgramName();
+    bool hasProgramName() const;
 
     // checks if value pointers are the same
-    bool equalsValue(Value *otherValue);
+    bool equalsValue(Value *otherValue) const;
 
     // checks if value's name (without % or @) equals other name
-    bool equalsCleanedName(std::string otherName);
+    bool equalsCleanedName(const std::string &otherName) const;
 
     // checks if value's name (maybe with % or @) equals other name
-    bool equalsRawName(std::string otherRawName);
+    bool equalsRawName(const std::string &otherRawName) const;
 
-    unsigned getSetNumber();
+    unsigned getSetNumber() const;
     void setSetNumber(unsigned setNumber);
 
-    bool isIdentifier();
+    bool isIdentifier() const;
 };
 
 #endif

@@ -6,8 +6,6 @@ MustCall::MustCall() {
     this->passName = MUST_CALL_PASS_NAME;
 }
 
-// fnName refers to corresponding deallocation/free function instead of memory
-// allocating function
 void MustCall::onAllocationFunctionCall(PVAliasSet *input,
                                         std::string &fnName) {
     input->addMethod(fnName);

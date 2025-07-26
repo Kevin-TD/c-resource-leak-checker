@@ -11,7 +11,7 @@ class ProgramLinesBranchInfo {
     std::vector<LineBranchInfo> lineBranches;
 
     // return true iff there exists another LBI stored with the same branch name
-    // and function name as otherLBI
+    // and function name as `otherLBI`
     bool exists(const LineBranchInfo otherLBI) const;
 
   public:
@@ -28,8 +28,8 @@ class ProgramLinesBranchInfo {
     void add(Function& function);
 
     // adds comments about branch information to the file being referenced
-    // by cFileName (branch information is stored by calls to add).
-    // if overwrite is true, the contents of the file will
+    // by `cFileName` (branch information is stored by calls to add).
+    // if `overwrite` is true, the contents of the file will
     // be replaced by the commented version
     void generate(std::string cFileName, bool overwrite);
 };

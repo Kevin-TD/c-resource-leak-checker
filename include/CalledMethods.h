@@ -3,6 +3,8 @@
 
 #include "DataflowPass.h"
 
+// implementation of the pass that computes an underestimate
+// of the set of methods called on each resource
 class CalledMethods : public DataflowPass {
   protected:
     void leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSet);

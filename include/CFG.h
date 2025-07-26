@@ -3,11 +3,13 @@
 
 #include "Utils.h"
 
+// the control flow graph (cfg) represents the connection branches have among themselves
+// in a program block, relating branches with their successors. each branch
+// has its name, instructions, and successors stored.
 class CFG {
   private:
     std::string branchName;
     std::list<CFG *> successors;
-    std::list<CFG *> predecessors;
     llvm::SetVector<Instruction *> instructions;
 
   public:
@@ -17,19 +19,15 @@ class CFG {
 
     void addSuccessor(std::string branchName,
                       llvm::SetVector<Instruction *> instructions);
+    // returns the added successor, which just a cfg with only a branch name and
+    // no instructions stored
     CFG *addSuccessor(std::string branchName);
     void addSuccessor(CFG *cfg);
-
-    void addPredecessor(std::string branchName,
-                        llvm::SetVector<Instruction *> instructions);
-    void addPredecessor(std::string branchName);
-    void addPredecessor(CFG *cfg);
 
     void setInstructions(llvm::SetVector<Instruction *> instructions);
 
     std::string getBranchName();
     std::list<CFG *> getSuccessors();
-    std::list<CFG *> getPredecessors();
     llvm::SetVector<Instruction *> getInstructions();
 };
 

@@ -3,7 +3,6 @@
 
 #include "UtilFunctionTesters/UtilFunctionTester.h"
 
-
 // tests rlc_dataflow::IRstructNameEqualsCstructName by checking if
 // certain structs exist in a specific ir file in the test directory
 class IRstructNameEqualsCstructNameTester : public UtilFunctionTester {

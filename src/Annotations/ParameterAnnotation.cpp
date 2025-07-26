@@ -2,16 +2,15 @@
 
 ParameterAnnotation::ParameterAnnotation(
     AnnotationType annotationType, std::set<std::string> annotationMethods,
-    std::string targetName, int field, int nthParameter) {
+    std::string specifierName, unsigned field, unsigned nthParameter) {
     this->annotationType = annotationType;
     this->annotationMethods = annotationMethods;
-    this->targetName = targetName;
+    this->specifierName = specifierName;
     this->field = field;
     this->nthParameter = nthParameter;
-    this->isVerified = false;
 }
 
-std::string ParameterAnnotation::generateStringRep() {
+std::string ParameterAnnotation::toString() const {
     std::string annoTypeString =
         rlc_annotation_util::annotationTypeToString(this->annotationType);
     std::string annoMethodsString =
@@ -23,31 +22,31 @@ std::string ParameterAnnotation::generateStringRep() {
     }
 
     return "@" + annoTypeString +
-           " ParameterAnnotation Function Name = " + this->targetName +
+           " ParameterAnnotation Function Name = " + this->specifierName +
            " Parameter = #" + std::to_string(this->nthParameter) + " " +
            fieldString + " methods = " + annoMethodsString;
 }
 
-bool ParameterAnnotation::nthParameterEquals(int param) {
+bool ParameterAnnotation::nthParameterEquals(unsigned param) const {
     return this->nthParameter == param;
 }
 
-bool ParameterAnnotation::functionNameEquals(const std::string &functionName) {
-    return functionName.compare(this->targetName) == 0;
+bool ParameterAnnotation::functionNameEquals(const std::string &functionName) const {
+    return functionName.compare(this->specifierName) == 0;
 }
 
-bool ParameterAnnotation::fieldNameEquals(int field) {
+bool ParameterAnnotation::fieldIndexEquals(unsigned field) const {
     return field == this->field;
 }
 
-bool ParameterAnnotation::hasField() {
+bool ParameterAnnotation::hasField() const {
     return this->field != -1;
 }
 
-int ParameterAnnotation::getField() {
+int ParameterAnnotation::getField() const {
     return this->field;
 }
 
-int ParameterAnnotation::getNthParameter() {
+unsigned ParameterAnnotation::getNthParameter() const {
     return this->nthParameter;
 }
