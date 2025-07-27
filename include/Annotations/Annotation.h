@@ -22,7 +22,7 @@ enum AnnotationType {
 // Parameter & Return (extensions) annotations. the Field extension is tied
 // to the Struct specifier, so it does not get its own class subtype.
 // there is also the Error annotation, which is used to tell us that an error
-// occurred when parsing the user's annotation, whether it be a semantic
+// occurred when parsing the user's annotation, whether it be a syntax
 // or runtime error.
 class Annotation {
   private:
