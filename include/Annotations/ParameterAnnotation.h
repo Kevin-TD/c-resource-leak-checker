@@ -27,7 +27,7 @@ class ParameterAnnotation : public Annotation {
                         std::set<std::string> annotationMethods,
                         std::string specifierName, unsigned fieldIndex, unsigned parameterIndex);
     std::string toString() const;
-    bool parameterIndexEquals(unsigned param) const;
+    bool parameterIndexEquals(unsigned parameterIndex) const;
     bool functionNameEquals(const std::string &functionName) const;
     bool fieldIndexEquals(unsigned fieldIndex) const;
     bool hasFieldIndex() const;
@@ -36,7 +36,7 @@ class ParameterAnnotation : public Annotation {
     // -1 is returned.
     int getFieldIndex() const;
 
-    unsigned getparameterIndex() const;
+    unsigned getParameterIndex() const;
 };
 
 #endif

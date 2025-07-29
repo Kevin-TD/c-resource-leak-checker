@@ -410,7 +410,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                         // part of the actual function. the rest of the arguments are the
                         // ones a part of the call.
 
-                        if (paramAnno->getparameterIndex() == j - 1) {
+                        if (paramAnno->getParameterIndex() == j - 1) {
                             PVAliasSet *argVar = programPoint.getPVASRef(nextArg, false);
                             logout("found param annotation for j "
                                    << paramAnno->toString() << " for j = " << j

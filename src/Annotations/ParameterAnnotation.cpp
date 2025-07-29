@@ -27,8 +27,8 @@ std::string ParameterAnnotation::toString() const {
            fieldString + " methods = " + annoMethodsString;
 }
 
-bool ParameterAnnotation::parameterIndexEquals(unsigned param) const {
-    return this->parameterIndex == param;
+bool ParameterAnnotation::parameterIndexEquals(unsigned parameterIndex) const {
+    return this->parameterIndex == parameterIndex;
 }
 
 bool ParameterAnnotation::functionNameEquals(const std::string &functionName) const {
@@ -47,6 +47,6 @@ int ParameterAnnotation::getFieldIndex() const {
     return this->fieldIndex;
 }
 
-unsigned ParameterAnnotation::getparameterIndex() const {
+unsigned ParameterAnnotation::getParameterIndex() const {
     return this->parameterIndex;
 }
