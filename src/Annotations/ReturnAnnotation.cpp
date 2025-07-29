@@ -2,7 +2,7 @@
 
 ReturnAnnotation::ReturnAnnotation(AnnotationType annotationType,
                                    std::set<std::string> annotationMethods,
-                                   std::string specifierName, unsigned field) {
+                                   std::string specifierName, unsigned fieldIndex) {
     this->annotationType = annotationType;
     this->annotationMethods = annotationMethods;
     this->specifierName = specifierName;
