@@ -13,10 +13,11 @@ to a set of methods called on them, which are the `DisjointPVAliasSets`.
 - these disjoint sets are composed of `PVAliasSet` s, which holds a set of program variables
 (typed `ProgramVariable`) which are must-aliases of each other, and the set of methods
 called on them (typed `MethodSet`)
-- `ProgramVariable` s are thus primitive objects that are isomorphic to the
-set of variables seen in the user's C code (or LLVM IR code – usually intermediate
+- `ProgramVariable` s are isomorphic to the
+set of variables seen in the user's C code or is a variable
+defined only in the LLVM IR code – usually an intermediate variable.
 variables)
-- `MethodsSet` s are also primitive, simply being a container for a set of methods.
+- finally, `MethodsSet` is a container for a set of methods.
 - the hierarchy may be "ordered" as follows:
 `FullFile` > `ProgramFunction` > `ProgramPoint` > `PVAliasSet` > (`ProgramVariable, MethodsSet`)
 

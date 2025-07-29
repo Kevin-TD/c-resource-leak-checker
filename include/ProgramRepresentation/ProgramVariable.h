@@ -31,7 +31,7 @@ class ProgramVariable {
 
     // if program var is referring to a struct's field, it has an index.
     // otherwise, it is equal to -1
-    int index;
+    int fieldIndex;
 
     // represents an alias set the program variable is apart of. e.g.,
     // if we have two sets {a, b, c} and {x, y, z}, all elements have
@@ -48,12 +48,12 @@ class ProgramVariable {
     ProgramVariable(std::string cleanedName);
 
     // for struct variables
-    ProgramVariable(Value *value, unsigned index);
+    ProgramVariable(Value *value, unsigned fieldIndex);
 
     std::string getRawName() const;
     std::string getCleanedName();
     Value *getValue();
-    int getIndex();
+    int getFieldIndex();
 
     // returns true iff index does not equal -1, meaning the program var
     // refers to a struct's field

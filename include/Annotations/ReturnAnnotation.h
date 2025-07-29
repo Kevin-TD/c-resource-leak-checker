@@ -10,20 +10,20 @@ class ReturnAnnotation : public Annotation {
     // iff the return is a struct type, this refers to its index.
     // otherwise, this equals -1.
     // TODO: use maybe monad?
-    int field;
+    int fieldIndex;
 
   public:
     ReturnAnnotation(AnnotationType annotationType,
                      std::set<std::string> annotationMethods,
-                     std::string specifierName, unsigned field);
+                     std::string specifierName, unsigned fieldIndex);
     std::string toString() const;
     bool functionNameEquals(const std::string &functionName) const;
-    bool fieldIndexEquals(unsigned field) const;
-    bool hasField() const;
+    bool fieldIndexEquals(unsigned fieldIndex) const;
+    bool hasFieldIndex() const;
 
     // returns the field assuming `hasField` is true; iff it is not true, then
     // -1 is returned.
-    int getField() const;
+    int getFieldIndex() const;
 };
 
 #endif

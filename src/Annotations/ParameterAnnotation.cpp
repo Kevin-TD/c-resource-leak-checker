@@ -2,12 +2,12 @@
 
 ParameterAnnotation::ParameterAnnotation(
     AnnotationType annotationType, std::set<std::string> annotationMethods,
-    std::string specifierName, unsigned field, unsigned nthParameter) {
+    std::string specifierName, unsigned fieldIndex, unsigned parameterIndex) {
     this->annotationType = annotationType;
     this->annotationMethods = annotationMethods;
     this->specifierName = specifierName;
-    this->field = field;
-    this->nthParameter = nthParameter;
+    this->fieldIndex = fieldIndex;
+    this->parameterIndex = parameterIndex;
 }
 
 std::string ParameterAnnotation::toString() const {
@@ -17,36 +17,36 @@ std::string ParameterAnnotation::toString() const {
         rlc_util::setToString(this->annotationMethods);
 
     std::string fieldString;
-    if (this->hasField()) {
-        fieldString = "Field = " + std::to_string(this->field);
+    if (this->hasFieldIndex()) {
+        fieldString = "Field = " + std::to_string(this->fieldIndex);
     }
 
     return "@" + annoTypeString +
            " ParameterAnnotation Function Name = " + this->specifierName +
-           " Parameter = #" + std::to_string(this->nthParameter) + " " +
+           " Parameter = #" + std::to_string(this->parameterIndex) + " " +
            fieldString + " methods = " + annoMethodsString;
 }
 
-bool ParameterAnnotation::nthParameterEquals(unsigned param) const {
-    return this->nthParameter == param;
+bool ParameterAnnotation::parameterIndexEquals(unsigned param) const {
+    return this->parameterIndex == param;
 }
 
 bool ParameterAnnotation::functionNameEquals(const std::string &functionName) const {
     return functionName.compare(this->specifierName) == 0;
 }
 
-bool ParameterAnnotation::fieldIndexEquals(unsigned field) const {
-    return field == this->field;
+bool ParameterAnnotation::fieldIndexEquals(unsigned fieldIndex) const {
+    return fieldIndex == this->fieldIndex;
 }
 
-bool ParameterAnnotation::hasField() const {
-    return this->field != -1;
+bool ParameterAnnotation::hasFieldIndex() const {
+    return this->fieldIndex != -1;
 }
 
-int ParameterAnnotation::getField() const {
-    return this->field;
+int ParameterAnnotation::getFieldIndex() const {
+    return this->fieldIndex;
 }
 
-unsigned ParameterAnnotation::getNthParameter() const {
-    return this->nthParameter;
+unsigned ParameterAnnotation::getparameterIndex() const {
+    return this->parameterIndex;
 }

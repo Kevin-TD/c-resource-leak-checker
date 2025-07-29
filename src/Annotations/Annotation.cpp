@@ -160,8 +160,8 @@ Annotation *Annotation::generateAnnotation(const std::string &rawAnno) {
         }
 
         // targetField is PARAM(int)
-        int nthParameter = std::stoi(rlc_util::sliceString(
-                                         targetField, targetField.find('(') + 1, targetField.find(')') - 1));
+        int parameterIndex = std::stoi(rlc_util::sliceString(
+                                           targetField, targetField.find('(') + 1, targetField.find(')') - 1));
         std::string parameterField;
 
         // there is a parameter field
@@ -180,7 +180,7 @@ Annotation *Annotation::generateAnnotation(const std::string &rawAnno) {
         }
 
         return new ParameterAnnotation(annoType, methodsSet, name,
-                                       parameterFieldInt, nthParameter);
+                                       parameterFieldInt, parameterIndex);
     }
 
     return new ErrorAnnotation();

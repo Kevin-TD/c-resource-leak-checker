@@ -4,7 +4,9 @@
 #include "Annotation.h"
 
 // an ErrorAnnotation is returned if the input string to be recognized
-// as an annotation fails at some point, whether syntactically or by runtime.
+// as an annotation fails at some point, whether syntactically or during
+// run time (e.g., the annotation has correct syntax but it
+// specifies a field that does not exist, prompting an error).
 // its toString method will not provide any useful information, other
 // than that it should not be called.
 // TODO: error when calling toString instead of producing an ignorable string?

@@ -6,17 +6,17 @@
 // reflects an annotation the user puts on some field of a struct
 class StructAnnotation : public Annotation {
   private:
-    unsigned field;
+    unsigned fieldIndex;
 
   public:
     StructAnnotation(AnnotationType annotationType,
                      std::set<std::string> annotationMethods,
-                     std::string specifierName, unsigned field);
+                     std::string specifierName, unsigned fieldIndex);
     std::string toString() const;
     bool structNameEquals(const std::string &structName) const;
-    bool fieldIndexEquals(unsigned field) const;
+    bool fieldIndexEquals(unsigned fieldIndex) const;
 
-    unsigned getField() const;
+    unsigned getFieldIndex() const;
 };
 
 #endif

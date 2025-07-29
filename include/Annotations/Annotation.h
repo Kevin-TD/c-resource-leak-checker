@@ -16,11 +16,11 @@ enum AnnotationType {
 // already checks things like if a struct being referred to
 // actually exists in our program.
 
-// represents, generically, a piece of information (a specifier or an extension)
+// represents, generically, a piece of information (a specifier kind or an extension)
 // a user can specify in an annotation. it is a base class for the
-// Function & Struct annotations (specifiers), and
+// Function & Struct annotations (specifier kinds), and
 // Parameter & Return (extensions) annotations. the Field extension is tied
-// to the Struct specifier, so it does not get its own class subtype.
+// to the Struct specifier kind, so it does not get its own class subtype.
 // there is also the Error annotation, which is used to tell us that an error
 // occurred when parsing the user's annotation, whether it be a syntax
 // or runtime error.
@@ -74,12 +74,12 @@ class Annotation {
     // set of methods specified in the user's annotation
     std::set<std::string> annotationMethods;
 
-    // note the distinction between "specifier" and "specifier name".
-    // an annotation on a function malloc has specifier `function` and name
-    // `malloc`. so, in pseudo code, `malloc_anno.specifier = function` and
-    // `malloc_anno.specifier_name = malloc`. for struct `my_struct`, similarly,
-    // we'll have that `my_struct_anno.specifier = struct`
-    // and `my_struct_anno.specifier_name = my_struct`.
+    // note the distinction between "specifier kind" and "specifier name".
+    // an annotation on a function malloc has specifier kind `function` and name
+    // `malloc`. so, in pseudo code, `malloc_anno.specifierKind = function` and
+    // `malloc_anno.specifierName = malloc`. for struct `my_struct`, similarly,
+    // we'll have that `my_struct_anno.specifierKind = struct`
+    // and `my_struct_anno.specifierName = my_struct`.
     std::string specifierName;
 
   public:
@@ -89,7 +89,6 @@ class Annotation {
     // so that we are allowed by the compiler to return any subtype of Annotation
     static Annotation *generateAnnotation(const std::string &rawAnnotationString);
 
-    // annotation type is MustCall or Calls
     AnnotationType getAnnotationType() const;
 
     // gets the set of methods specified in the user's annotation

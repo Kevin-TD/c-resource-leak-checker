@@ -175,7 +175,7 @@ void ProgramPoint::add(ProgramPoint *programPoint) {
 void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable pvCallInst, ProgramVariable callInstAlias) {
     for (ProgramVariable& pv : pvas->getProgramVariables()) {
         if (pv.equalsCleanedName(cleanedNameOfPVToUnalias)) {
-            if (pv.getIndex() != -1) {
+            if (pv.getFieldIndex() != -1) {
                 PVAliasSet grabbedSet = pvas->moveOut(pv.getSetNumber());
                 grabbedSet.add(pvCallInst);
 
@@ -203,7 +203,11 @@ void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVT
 void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar) {
     for (ProgramVariable& pv : pvas->getProgramVariables()) {
         if (pv.equalsCleanedName(cleanedNameOfPVToUnalias)) {
-            if (pv.getIndex() != -1) {
+            // TODO: replace all instances of
+            // below where where check if
+            // `field != -1` to use `ProgramVariable::containsStructFieldVar` instead as
+            // checking this is the purpose that method serves
+            if (pv.getFieldIndex() != -1) {
                 PVAliasSet grabbedSet = pvas->moveOut(pv.getSetNumber());
 
                 ProgramVariable argVarPV = pvas->moveOut(argumentVar);

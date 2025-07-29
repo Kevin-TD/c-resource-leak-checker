@@ -3,9 +3,9 @@
 
 #include "Utils.h"
 
-// the control flow graph (cfg) represents the connection branches have among themselves
-// in a program block, relating branches with their successors. each branch
-// has its name, instructions, and successors stored.
+// implementation of a control flow graph (cfg)
+// used to represent the control flow of an entire file (`FullFile`)
+// see: https://en.wikipedia.org/wiki/Control-flow_graph
 class CFG {
   private:
     std::string branchName;
@@ -21,6 +21,8 @@ class CFG {
                       llvm::SetVector<Instruction *> instructions);
     // returns the added successor, which just a cfg with only a branch name and
     // no instructions stored
+    // TODO: remove this as it is more confusing than useful and does not contain
+    // any unique functionality
     CFG *addSuccessor(std::string branchName);
     void addSuccessor(CFG *cfg);
 

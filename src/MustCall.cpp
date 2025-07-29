@@ -7,8 +7,8 @@ MustCall::MustCall() {
 }
 
 void MustCall::onAllocationFunctionCall(PVAliasSet *input,
-                                        std::string &fnName) {
-    input->addMethod(fnName);
+                                        std::string &nameOfDeallocFunction) {
+    input->addMethod(nameOfDeallocFunction);
 }
 void MustCall::onDeallocationFunctionCall(PVAliasSet *input,
         std::string &fnName) {}

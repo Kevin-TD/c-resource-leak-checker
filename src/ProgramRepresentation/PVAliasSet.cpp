@@ -118,7 +118,7 @@ std::string PVAliasSet::getMethodsString() const {
 int PVAliasSet::getIndex() {
     for (ProgramVariable pv : programVariables) {
         if (pv.containsStructFieldVar()) {
-            return pv.getIndex();
+            return pv.getFieldIndex();
         }
     }
 

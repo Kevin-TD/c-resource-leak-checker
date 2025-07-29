@@ -5,9 +5,7 @@
 #include "Debug.h"
 #include "Utils.h"
 
-// a purely abstract class to be extended in order to represent
-// the fact that it is a util function that needs to have a test
-// ran
+// base class to be extended for the purpose of testing util functions
 class UtilFunctionTester {
   public:
     // should return true iff test passed and false iff otherwise

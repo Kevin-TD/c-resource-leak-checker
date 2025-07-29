@@ -391,7 +391,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                     for (Annotation *anno : allAnnotationsWithFields) {
                         if (ParameterAnnotation *paramAnno =
                                     dynamic_cast<ParameterAnnotation *>(anno)) {
-                            if (paramAnno->getField() == fieldIndex) {
+                            if (paramAnno->getFieldIndex() == fieldIndex) {
                                 logout("found param annotation for sret annos with fields "
                                        << paramAnno->toString());
                                 this->onAnnotation(pvasField, paramAnno);
@@ -410,7 +410,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
                         // part of the actual function. the rest of the arguments are the
                         // ones a part of the call.
 
-                        if (paramAnno->getNthParameter() == j - 1) {
+                        if (paramAnno->getparameterIndex() == j - 1) {
                             PVAliasSet *argVar = programPoint.getPVASRef(nextArg, false);
                             logout("found param annotation for j "
                                    << paramAnno->toString() << " for j = " << j

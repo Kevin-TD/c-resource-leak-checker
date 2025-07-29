@@ -42,13 +42,13 @@ AnnotationHandler::getFunctionAnnotation(const std::string &functionName) const 
 
 Annotation *
 AnnotationHandler::getParameterAnnotation(const std::string &functionName,
-        unsigned nthParameter) const {
+        unsigned parameterIndex) const {
     for (Annotation *anno : this->annotations) {
         if (ParameterAnnotation *paramAnno =
                     dynamic_cast<ParameterAnnotation *>(anno)) {
             if (paramAnno->functionNameEquals(functionName) &&
-                    paramAnno->nthParameterEquals(nthParameter) &&
-                    !paramAnno->hasField()) {
+                    paramAnno->parameterIndexEquals(parameterIndex) &&
+                    !paramAnno->hasFieldIndex()) {
                 return paramAnno;
             }
         }
@@ -58,13 +58,13 @@ AnnotationHandler::getParameterAnnotation(const std::string &functionName,
 
 Annotation *
 AnnotationHandler::getParameterAnnotation(const std::string &functionName,
-        unsigned nthParameter, unsigned field) const {
+        unsigned parameterIndex, unsigned fieldIndex) const {
     for (Annotation *anno : this->annotations) {
         if (ParameterAnnotation *paramAnno =
                     dynamic_cast<ParameterAnnotation *>(anno)) {
             if (paramAnno->functionNameEquals(functionName) &&
-                    paramAnno->nthParameterEquals(nthParameter) &&
-                    paramAnno->fieldIndexEquals(field)) {
+                    paramAnno->parameterIndexEquals(parameterIndex) &&
+                    paramAnno->fieldIndexEquals(fieldIndex)) {
                 return paramAnno;
             }
         }
@@ -80,7 +80,7 @@ AnnotationHandler::getAllParameterAnnotationsWithFields(
         if (ParameterAnnotation *paramAnno =
                     dynamic_cast<ParameterAnnotation *>(anno)) {
             if (paramAnno->functionNameEquals(functionName) &&
-                    paramAnno->hasField()) {
+                    paramAnno->hasFieldIndex()) {
                 annotationsWithFields.push_back(paramAnno);
             }
         }
@@ -97,7 +97,7 @@ AnnotationHandler::getAllParameterAnnotationsWithoutFields(
         if (ParameterAnnotation *paramAnno =
                     dynamic_cast<ParameterAnnotation *>(anno)) {
             if (paramAnno->functionNameEquals(functionName) &&
-                    !paramAnno->hasField()) {
+                    !paramAnno->hasFieldIndex()) {
                 annotationsWithoutFields.push_back(paramAnno);
             }
         }
@@ -111,7 +111,7 @@ AnnotationHandler::getReturnAnnotation(const std::string &functionName) const {
     for (Annotation *anno : this->annotations) {
         if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(anno)) {
             if (returnAnno->functionNameEquals(functionName) &&
-                    !returnAnno->hasField()) {
+                    !returnAnno->hasFieldIndex()) {
                 return returnAnno;
             }
         }
@@ -121,11 +121,11 @@ AnnotationHandler::getReturnAnnotation(const std::string &functionName) const {
 
 Annotation *
 AnnotationHandler::getReturnAnnotation(const std::string &functionName,
-                                       unsigned field) const {
+                                       unsigned fieldIndex) const {
     for (Annotation *anno : this->annotations) {
         if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(anno)) {
             if (returnAnno->functionNameEquals(functionName) &&
-                    returnAnno->fieldIndexEquals(field)) {
+                    returnAnno->fieldIndexEquals(fieldIndex)) {
                 return returnAnno;
             }
         }
@@ -135,11 +135,11 @@ AnnotationHandler::getReturnAnnotation(const std::string &functionName,
 
 Annotation *
 AnnotationHandler::getStructAnnotation(const std::string &structName,
-                                       unsigned field) const {
+                                       unsigned fieldIndex) const {
     for (Annotation *anno : this->annotations) {
         if (StructAnnotation *structAnno = dynamic_cast<StructAnnotation *>(anno)) {
             if (structAnno->structNameEquals(structName) &&
-                    structAnno->fieldIndexEquals(field)) {
+                    structAnno->fieldIndexEquals(fieldIndex)) {
                 return structAnno;
             }
         }

@@ -16,27 +16,27 @@ class ParameterAnnotation : public Annotation {
     // if there was no struct, this would equal -1.
     // TODO: this would be better described with a Maybe<unsigned> monad
     // but that sounds iffy to do in C++11. consider this later
-    int field;
+    int fieldIndex;
 
     // refers to the 0-indexed n-th position of the parameter in relation
     // to some function
-    unsigned nthParameter;
+    unsigned parameterIndex;
 
   public:
     ParameterAnnotation(AnnotationType annotationType,
                         std::set<std::string> annotationMethods,
-                        std::string specifierName, unsigned field, unsigned nthParameter);
+                        std::string specifierName, unsigned fieldIndex, unsigned parameterIndex);
     std::string toString() const;
-    bool nthParameterEquals(unsigned param) const;
+    bool parameterIndexEquals(unsigned param) const;
     bool functionNameEquals(const std::string &functionName) const;
-    bool fieldIndexEquals(unsigned field) const;
-    bool hasField() const;
+    bool fieldIndexEquals(unsigned fieldIndex) const;
+    bool hasFieldIndex() const;
 
     // returns the field assuming `hasField` is true; iff it is not true, then
     // -1 is returned.
-    int getField() const;
+    int getFieldIndex() const;
 
-    unsigned getNthParameter() const;
+    unsigned getparameterIndex() const;
 };
 
 #endif

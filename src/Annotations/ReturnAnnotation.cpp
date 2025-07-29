@@ -6,7 +6,7 @@ ReturnAnnotation::ReturnAnnotation(AnnotationType annotationType,
     this->annotationType = annotationType;
     this->annotationMethods = annotationMethods;
     this->specifierName = specifierName;
-    this->field = field;
+    this->fieldIndex = fieldIndex;
 }
 
 std::string ReturnAnnotation::toString() const {
@@ -16,8 +16,8 @@ std::string ReturnAnnotation::toString() const {
         rlc_util::setToString(this->annotationMethods);
 
     std::string fieldString;
-    if (this->field != -1) {
-        fieldString = "Field = " + std::to_string(this->field);
+    if (this->fieldIndex != -1) {
+        fieldString = "Field = " + std::to_string(this->fieldIndex);
     }
 
     return "@" + annoTypeString +
@@ -25,18 +25,18 @@ std::string ReturnAnnotation::toString() const {
            fieldString + " methods = " + annoMethodsString;
 }
 
-bool ReturnAnnotation::fieldIndexEquals(unsigned field) const {
-    return field == this->field;
+bool ReturnAnnotation::fieldIndexEquals(unsigned fieldIndex) const {
+    return fieldIndex == this->fieldIndex;
 }
 
-bool ReturnAnnotation::hasField() const {
-    return this->field != -1;
+bool ReturnAnnotation::hasFieldIndex() const {
+    return this->fieldIndex != -1;
 }
 
 bool ReturnAnnotation::functionNameEquals(const std::string &functionName) const {
     return functionName.compare(this->specifierName) == 0;
 }
 
-int ReturnAnnotation::getField() const {
-    return this->field;
+int ReturnAnnotation::getFieldIndex() const {
+    return this->fieldIndex;
 }

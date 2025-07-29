@@ -22,8 +22,8 @@ constraints with our current type hierarchy.
 
 notes on public method parameters:
 - `functionName` and `structName` should be as it appears in the user's C code.
-- `nthParameter` is the 0-indexed parameter of the function.
-- `field` is 0-indexed parameter specifying, for a
+- `paramaterIndex` is the 0-indexed parameter of the function.
+- `fieldIndex` is 0-indexed parameter specifying, for a
 function that returns a struct, which field.
 note: a struct `S {x, y}` has indexing `x -> 0`, `y -> 1`.
 
@@ -44,9 +44,9 @@ class AnnotationHandler {
     Annotation *getFunctionAnnotation(const std::string &functionName) const;
 
     Annotation *getParameterAnnotation(const std::string &functionName,
-                                       unsigned nthParameter) const;
+                                       unsigned parameterIndex) const;
     Annotation *getParameterAnnotation(const std::string &functionName,
-                                       unsigned nthParameter, unsigned field) const;
+                                       unsigned parameterIndex, unsigned fieldIndex) const;
     // we return all parameter's `p` of function `f` if `p` has
     // a corresponding `ParameterAnnotation` with a field specified.
     std::vector<Annotation *>
@@ -54,11 +54,11 @@ class AnnotationHandler {
     std::vector<Annotation *>
 
     // we return all parameter's `p` of function `f` if `p` has
-    // a corresponding `ParameterAnnotation` with no field specified.
+    // a corresponding `ParameterAnnotation` with no field index specified.
     getAllParameterAnnotationsWithoutFields(const std::string &functionName) const;
     Annotation *getReturnAnnotation(const std::string &functionName) const;
-    Annotation *getReturnAnnotation(const std::string &functionName, unsigned field) const;
-    Annotation *getStructAnnotation(const std::string &structName, unsigned field) const;
+    Annotation *getReturnAnnotation(const std::string &functionName, unsigned fieldIndex) const;
+    Annotation *getStructAnnotation(const std::string &structName, unsigned fieldIndex) const;
 };
 
 #endif

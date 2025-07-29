@@ -7,7 +7,7 @@ ProgramVariable::ProgramVariable() {
 
 ProgramVariable::ProgramVariable(std::string cleanedName) {
     this->cleanedName = cleanedName;
-    this->index = -1;
+    this->fieldIndex = -1;
     this->setNumber = 0;
 }
 
@@ -15,15 +15,15 @@ ProgramVariable::ProgramVariable(Value *value) {
     this->value = value;
     this->rawName = rlc_dataflow::variable(value);
     this->cleanedName = this->rawName;
-    this->index = -1;
+    this->fieldIndex = -1;
     this->setNumber = 0;
     this->fixNameAndIdentifier();
 }
 
-ProgramVariable::ProgramVariable(Value *value, unsigned index) {
+ProgramVariable::ProgramVariable(Value *value, unsigned fieldIndex) {
     this->value = value;
-    this->rawName = rlc_dataflow::variable(value) + "." + std::to_string(index);
-    this->index = index;
+    this->rawName = rlc_dataflow::variable(value) + "." + std::to_string(fieldIndex);
+    this->fieldIndex = fieldIndex;
     this->cleanedName = this->rawName;
     this->setNumber = 0;
     this->fixNameAndIdentifier();
@@ -55,11 +55,11 @@ bool ProgramVariable::hasProgramName() const {
 }
 
 bool ProgramVariable::containsStructFieldVar() const {
-    return this->index != -1;
+    return this->fieldIndex != -1;
 }
 
-int ProgramVariable::getIndex() {
-    return this->index;
+int ProgramVariable::getFieldIndex() {
+    return this->fieldIndex;
 }
 
 bool ProgramVariable::isIdentifier() const {

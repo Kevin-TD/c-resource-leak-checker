@@ -14,12 +14,10 @@
 #include "RunAnalysis.h"
 #include "Utils.h"
 
-// the dataflow pass is an abstract class that handles the program flow and
-// enforces the application of transfer functions and least upper
-// bound (lub) operations, provided by from subtypes of this class)
-// only specific details on how to lub and how
-// to update a set of methods given the introduction of a new method being called.
-// this class is extended by the `MustCall` pass and `CalledMethods` pass.
+// the dataflow pass is an abstract class that models the program flow.
+// the class knows where to apply transfer and lub operations,
+// but subtypes must provide the specific details on how those
+// operations are done.
 class DataflowPass {
   private:
     // looks at the cfg to analyze the flow between
