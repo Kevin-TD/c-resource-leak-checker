@@ -2,52 +2,51 @@
 
 ParameterAnnotation::ParameterAnnotation(
     AnnotationType annotationType, std::set<std::string> annotationMethods,
-    std::string targetName, int field, int nthParameter) {
+    std::string specifierName, unsigned fieldIndex, unsigned parameterIndex) {
     this->annotationType = annotationType;
     this->annotationMethods = annotationMethods;
-    this->targetName = targetName;
-    this->field = field;
-    this->nthParameter = nthParameter;
-    this->isVerified = false;
+    this->specifierName = specifierName;
+    this->fieldIndex = fieldIndex;
+    this->parameterIndex = parameterIndex;
 }
 
-std::string ParameterAnnotation::generateStringRep() {
+std::string ParameterAnnotation::toString() const {
     std::string annoTypeString =
         rlc_annotation_util::annotationTypeToString(this->annotationType);
     std::string annoMethodsString =
         rlc_util::setToString(this->annotationMethods);
 
     std::string fieldString;
-    if (this->hasField()) {
-        fieldString = "Field = " + std::to_string(this->field);
+    if (this->hasFieldIndex()) {
+        fieldString = "Field = " + std::to_string(this->fieldIndex);
     }
 
     return "@" + annoTypeString +
-           " ParameterAnnotation Function Name = " + this->targetName +
-           " Parameter = #" + std::to_string(this->nthParameter) + " " +
+           " ParameterAnnotation Function Name = " + this->specifierName +
+           " Parameter = #" + std::to_string(this->parameterIndex) + " " +
            fieldString + " methods = " + annoMethodsString;
 }
 
-bool ParameterAnnotation::nthParameterEquals(int param) {
-    return this->nthParameter == param;
+bool ParameterAnnotation::parameterIndexEquals(unsigned parameterIndex) const {
+    return this->parameterIndex == parameterIndex;
 }
 
-bool ParameterAnnotation::functionNameEquals(const std::string &functionName) {
-    return functionName.compare(this->targetName) == 0;
+bool ParameterAnnotation::functionNameEquals(const std::string &functionName) const {
+    return functionName.compare(this->specifierName) == 0;
 }
 
-bool ParameterAnnotation::fieldNameEquals(int field) {
-    return field == this->field;
+bool ParameterAnnotation::fieldIndexEquals(unsigned fieldIndex) const {
+    return fieldIndex == this->fieldIndex;
 }
 
-bool ParameterAnnotation::hasField() {
-    return this->field != -1;
+bool ParameterAnnotation::hasFieldIndex() const {
+    return this->fieldIndex != -1;
 }
 
-int ParameterAnnotation::getField() {
-    return this->field;
+int ParameterAnnotation::getFieldIndex() const {
+    return this->fieldIndex;
 }
 
-int ParameterAnnotation::getNthParameter() {
-    return this->nthParameter;
+unsigned ParameterAnnotation::getParameterIndex() const {
+    return this->parameterIndex;
 }

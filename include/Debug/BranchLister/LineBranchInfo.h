@@ -4,7 +4,8 @@
 #define LINE_BRANCH_INFO
 
 // correlates an instruction into a string that lists
-// the branch name and its predecessors
+// the branch name and its predecessors. used for `ProgramLineBranchesInfo`
+// in order to map the user's LoC to which LLVM IR branch it is stored in
 class LineBranchInfo {
   private:
     // represents the line number of the corresponding line in C code for the instruction
@@ -14,7 +15,7 @@ class LineBranchInfo {
 
     std::vector<llvm::Instruction *> branchPredecessors;
 
-    // refers to the function name the instruction was called in
+    // refers to the function name (in the user's C code) the instruction was called in
     std::string functionName;
 
   public:

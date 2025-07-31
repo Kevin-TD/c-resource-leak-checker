@@ -2,35 +2,34 @@
 
 StructAnnotation::StructAnnotation(AnnotationType annotationType,
                                    std::set<std::string> annotationMethods,
-                                   std::string targetName, int field) {
+                                   std::string specifierName, unsigned fieldIndex) {
     this->annotationType = annotationType;
     this->annotationMethods = annotationMethods;
-    this->targetName = targetName;
-    this->field = field;
-    this->isVerified = false;
+    this->specifierName = specifierName;
+    this->fieldIndex = fieldIndex;
 }
 
-std::string StructAnnotation::generateStringRep() {
+std::string StructAnnotation::toString() const {
     std::string annoTypeString =
         rlc_annotation_util::annotationTypeToString(this->annotationType);
     std::string annoMethodsString =
         rlc_util::setToString(this->annotationMethods);
 
-    std::string fieldString = "Field = " + std::to_string(this->field);
+    std::string fieldString = "Field = " + std::to_string(this->fieldIndex);
 
     return "@" + annoTypeString +
-           " StructAnnotation Struct Name = " + this->targetName + " " +
+           " StructAnnotation Struct Name = " + this->specifierName + " " +
            fieldString + " methods = " + annoMethodsString;
 }
 
-bool StructAnnotation::structNameEquals(const std::string &structName) {
-    return structName.compare(this->targetName) == 0;
+bool StructAnnotation::structNameEquals(const std::string &structName) const {
+    return structName.compare(this->specifierName) == 0;
 }
 
-bool StructAnnotation::fieldNameEquals(int fieldName) {
-    return fieldName == this->field;
+bool StructAnnotation::fieldIndexEquals(unsigned fieldIndex) const {
+    return fieldIndex == this->fieldIndex;
 }
 
-int StructAnnotation::getFieldName() {
-    return this->field;
+unsigned StructAnnotation::getFieldIndex() const {
+    return this->fieldIndex;
 }

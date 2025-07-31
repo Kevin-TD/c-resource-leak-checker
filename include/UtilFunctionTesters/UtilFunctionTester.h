@@ -5,6 +5,7 @@
 #include "Debug.h"
 #include "Utils.h"
 
+// base class to be extended for the purpose of testing util functions
 class UtilFunctionTester {
   public:
     // should return true iff test passed and false iff otherwise

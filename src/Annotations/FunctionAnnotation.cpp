@@ -2,23 +2,22 @@
 
 FunctionAnnotation::FunctionAnnotation(AnnotationType annotationType,
                                        std::set<std::string> annotationMethods,
-                                       std::string targetName) {
+                                       std::string specifierName) {
     this->annotationType = annotationType;
     this->annotationMethods = annotationMethods;
-    this->targetName = targetName;
-    this->isVerified = false;
+    this->specifierName = specifierName;
 }
 
-std::string FunctionAnnotation::generateStringRep() {
+std::string FunctionAnnotation::toString() const {
     std::string annoTypeString =
         rlc_annotation_util::annotationTypeToString(this->annotationType);
     std::string annoMethodsString =
         rlc_util::setToString(this->annotationMethods);
 
-    return "@" + annoTypeString + " FunctionAnnotation Name = " + targetName +
+    return "@" + annoTypeString + " FunctionAnnotation Name = " + specifierName +
            " methods = " + annoMethodsString;
 }
 
-bool FunctionAnnotation::functionNameEquals(const std::string &functionName) {
-    return functionName.compare(this->targetName) == 0;
+bool FunctionAnnotation::functionNameEquals(const std::string &functionName) const {
+    return functionName.compare(this->specifierName) == 0;
 }

@@ -14,11 +14,22 @@
 #include "RunAnalysis.h"
 #include "Utils.h"
 
+// the dataflow pass is an abstract class that models the program flow.
+// the class knows where to apply transfer and lub operations,
+// but subtypes must provide the specific details on how those
+// operations are done.
 class DataflowPass {
   private:
+    // looks at the cfg to analyze the flow between
+    // the branches (nodes of the graph) and performs lub between
+    // each branch and their successors.
     void analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
                     ProgramFunction &postProgramFunction,
-                    std::string priorBranch);
+                    const std::string &priorBranch);
+
+    // analyses the instruction semantics and updates `inputProgramPoint`
+    // accordingly, looking for function calls that an
+    // implemented dataflow pass should handle
     void transfer(Instruction *instruction, ProgramPoint &inputProgramPoint);
 
     // a helper function that handles functions with Sret attribute.
@@ -95,16 +106,6 @@ class DataflowPass {
                                        std::string &fnName) = 0;
     virtual void onSafeFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
     virtual void onFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
-
-    // invokerFnName is the name of the function the annotation belongs to
-    /*
-    e.g.,
-    void free0(void* p Calls("free")) {
-      free(p);
-    }
-
-    here, invokerFnName = "free0"
-    */
     virtual void onAnnotation(PVAliasSet* input, Annotation* annotation) = 0;
 
 

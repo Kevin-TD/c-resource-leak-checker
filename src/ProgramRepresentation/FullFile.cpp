@@ -10,15 +10,15 @@ void FullFile::addProgramFunction(ProgramFunction programFunction) {
     this->programFunctions.push_back(programFunction);
 }
 
-std::list<ProgramFunction> FullFile::getProgramFunctions() {
+std::list<ProgramFunction> FullFile::getProgramFunctions() const {
     return this->programFunctions;
 }
 
-std::string FullFile::getFileName() {
+std::string FullFile::getFileName() const {
     return this->fileName;
 }
 
-ProgramFunction FullFile::getProgramFunction(std::string functionName,
+ProgramFunction FullFile::getProgramFunction(const std::string &functionName,
         bool addNewIfNotFound) {
     for (ProgramFunction &programFunction : this->programFunctions) {
         if (programFunction.getFunctionName() == functionName) {
@@ -37,7 +37,7 @@ ProgramFunction FullFile::getProgramFunction(std::string functionName,
     std::exit(EXIT_FAILURE);
 }
 
-ProgramFunction *FullFile::getProgramFunctionRef(std::string functionName,
+ProgramFunction *FullFile::getProgramFunctionRef(const std::string &functionName,
         bool addNewIfNotFound) {
     for (ProgramFunction &programFunction : this->programFunctions) {
         if (programFunction.getFunctionName() == functionName) {

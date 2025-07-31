@@ -7,20 +7,16 @@
 #include "Debug.h"
 #include "Utils.h"
 
-bool Annotation::annotationIsVerified() {
-    return this->isVerified;
-}
-
-AnnotationType Annotation::getAnnotationType() {
+AnnotationType Annotation::getAnnotationType() const {
     return this->annotationType;
 }
 
-std::set<std::string> Annotation::getAnnotationMethods() {
+std::set<std::string> Annotation::getAnnotationMethods() const {
     return this->annotationMethods;
 }
 
-std::string Annotation::getName() {
-    return this->targetName;
+std::string Annotation::getSpecifierName() const {
+    return this->specifierName;
 }
 
 // TODO: error reporting should be more robust and not just a debug logout
@@ -164,8 +160,8 @@ Annotation *Annotation::generateAnnotation(const std::string &rawAnno) {
         }
 
         // targetField is PARAM(int)
-        int nthParameter = std::stoi(rlc_util::sliceString(
-                                         targetField, targetField.find('(') + 1, targetField.find(')') - 1));
+        int parameterIndex = std::stoi(rlc_util::sliceString(
+                                           targetField, targetField.find('(') + 1, targetField.find(')') - 1));
         std::string parameterField;
 
         // there is a parameter field
@@ -184,7 +180,7 @@ Annotation *Annotation::generateAnnotation(const std::string &rawAnno) {
         }
 
         return new ParameterAnnotation(annoType, methodsSet, name,
-                                       parameterFieldInt, nthParameter);
+                                       parameterFieldInt, parameterIndex);
     }
 
     return new ErrorAnnotation();

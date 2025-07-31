@@ -7,16 +7,16 @@
 /*
 maps line numbers to l-value names
 example program:
-(1) a = 1
-(2) b = 2
-(3) c
-(4)    =
-(5) 3
+`(1) a = 1`
+`(2) b = 2`
+`(3) c`
+`(4)    =`
+`(5) 3`
 
 our output is then
-1=a
-2=b
-5=c
+`1=a`
+`2=b`
+`5=c`
 
 with the LHS referring to the line number of the l-value
 and the RHS referring to the l-value

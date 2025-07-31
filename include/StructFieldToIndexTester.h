@@ -4,6 +4,12 @@
 #include "Utils.h"
 #include "StructFieldToIndexMap.h"
 
+/* tests `StructFieldToIndexTester`. language of verification looks like
+- `<struct>.<name:str>=<struct>.<index:uint>`
+
+e.g., for `struct M {x, y}` and `variable M m`, there should be
+`m.x=m.0` and `m.y=m.1`
+*/
 class StructFieldToIndexTester {
   public:
     // returns EXIT_SUCCESS if tests passed and EXIT_FAILURE if failed.

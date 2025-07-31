@@ -31,7 +31,7 @@ class ProgramVariable {
 
     // if program var is referring to a struct's field, it has an index.
     // otherwise, it is equal to -1
-    int index;
+    int fieldIndex;
 
     // represents an alias set the program variable is apart of. e.g.,
     // if we have two sets {a, b, c} and {x, y, z}, all elements have
@@ -48,34 +48,34 @@ class ProgramVariable {
     ProgramVariable(std::string cleanedName);
 
     // for struct variables
-    ProgramVariable(Value *value, int index);
+    ProgramVariable(Value *value, unsigned fieldIndex);
 
     std::string getRawName() const;
     std::string getCleanedName();
     Value *getValue();
-    int getIndex();
+    int getFieldIndex();
 
     // returns true iff index does not equal -1, meaning the program var
     // refers to a struct's field
-    bool containsStructFieldVar();
+    bool containsStructFieldVar() const;
 
     // IR names like %7 are considered unnamed and program names like %str are
     // named
-    bool hasProgramName();
+    bool hasProgramName() const;
 
     // checks if value pointers are the same
-    bool equalsValue(Value *otherValue);
+    bool equalsValue(Value *otherValue) const;
 
     // checks if value's name (without % or @) equals other name
-    bool equalsCleanedName(std::string otherName);
+    bool equalsCleanedName(const std::string &otherName) const;
 
     // checks if value's name (maybe with % or @) equals other name
-    bool equalsRawName(std::string otherRawName);
+    bool equalsRawName(const std::string &otherRawName) const;
 
-    unsigned getSetNumber();
+    unsigned getSetNumber() const;
     void setSetNumber(unsigned setNumber);
 
-    bool isIdentifier();
+    bool isIdentifier() const;
 };
 
 #endif

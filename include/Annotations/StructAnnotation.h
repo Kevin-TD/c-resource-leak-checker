@@ -3,19 +3,20 @@
 
 #include "Annotation.h"
 
+// reflects an annotation the user puts on some field of a struct
 class StructAnnotation : public Annotation {
   private:
-    int field;
+    unsigned fieldIndex;
 
   public:
     StructAnnotation(AnnotationType annotationType,
                      std::set<std::string> annotationMethods,
-                     std::string targetName, int field);
-    std::string generateStringRep();
-    bool structNameEquals(const std::string &structName);
-    bool fieldNameEquals(int fieldName);
+                     std::string specifierName, unsigned fieldIndex);
+    std::string toString() const;
+    bool structNameEquals(const std::string &structName) const;
+    bool fieldIndexEquals(unsigned fieldIndex) const;
 
-    int getFieldName();
+    unsigned getFieldIndex() const;
 };
 
 #endif

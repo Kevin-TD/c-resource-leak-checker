@@ -14,7 +14,7 @@ class DisjointPVAliasSets {
     // found, .end() is returned.
     typename std::list<PVAliasSet>::iterator findIter(ProgramVariable programVar);
 
-    // puts the elements of set2 into set1 in constant time. set2 is also deleteed
+    // puts the elements of set2 into set1 in constant time. set2 is also deleted
     // from our set of sets. if set1 or set2 is null, no merging or deletion occurs.
     void merge(typename std::list<PVAliasSet>::iterator set1,
                typename std::list<PVAliasSet>::iterator set2);
@@ -60,7 +60,7 @@ class DisjointPVAliasSets {
     void clear();
 
     // returns the number of disjointed sets
-    int size();
+    int size() const;
 
     // adds pvas by either merging it into one of our sets or adding it to our set
     // of sets. the program variables in pvas are merged if it has a program

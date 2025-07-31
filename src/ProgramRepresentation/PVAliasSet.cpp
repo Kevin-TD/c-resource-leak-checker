@@ -4,8 +4,8 @@
 
 PVAliasSet::PVAliasSet() {}
 
-bool PVAliasSet::contains(ProgramVariable programVar) {
-    for (ProgramVariable pv : programVariables) {
+bool PVAliasSet::contains(const ProgramVariable &programVar) {
+    for (ProgramVariable &pv : programVariables) {
         if (pv.getRawName() == programVar.getRawName()) {
             return true;
         }
@@ -15,7 +15,7 @@ bool PVAliasSet::contains(ProgramVariable programVar) {
 }
 
 bool PVAliasSet::contains(const std::string& cleanedName) {
-    for (ProgramVariable pv : programVariables) {
+    for (ProgramVariable &pv : programVariables) {
         if (pv.getCleanedName() == cleanedName) {
             return true;
         }
@@ -25,7 +25,7 @@ bool PVAliasSet::contains(const std::string& cleanedName) {
 }
 
 bool PVAliasSet::contains(Value* value) {
-    for (ProgramVariable pv : programVariables) {
+    for (ProgramVariable &pv : programVariables) {
         if (pv.getValue() == value) {
             return true;
         }
@@ -118,7 +118,7 @@ std::string PVAliasSet::getMethodsString() const {
 int PVAliasSet::getIndex() {
     for (ProgramVariable pv : programVariables) {
         if (pv.containsStructFieldVar()) {
-            return pv.getIndex();
+            return pv.getFieldIndex();
         }
     }
 
@@ -126,7 +126,7 @@ int PVAliasSet::getIndex() {
 }
 
 bool PVAliasSet::containsCallInstVar() {
-    for (ProgramVariable pv : programVariables) {
+    for (ProgramVariable &pv : programVariables) {
         if (CallInst* call = dyn_cast<CallInst>(pv.getValue())) {
             std::string fnName = call->getCalledFunction()->getName().str();
 
@@ -143,7 +143,7 @@ bool PVAliasSet::containsCallInstVar() {
 }
 
 bool PVAliasSet::containsStructFieldVar() {
-    for (ProgramVariable pv : programVariables) {
+    for (ProgramVariable &pv : programVariables) {
         if (pv.containsStructFieldVar()) {
             return true;
         }
