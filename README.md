@@ -1,11 +1,10 @@
-# c-resource-leak-checker
+﻿# c-resource-leak-checker
 
 This analysis runs with docker; here are the steps to setup the analysis: 
 
 1. Clone the repo and set directory to the repo's 
-2. Pull the docker image: ```docker pull cis547/cis547-base:latest```
-3. Run docker in interactive mode: ```docker run -it -v $(pwd):/$(basename $(pwd)) -w /$(basename $(pwd))  cis547/cis547-base:latest```
-- Note: if any files in your cwd have spaces in them, then step 3 will likely fail as the ```$(basename $(pwd))``` command will not work as intended. This is an issue to fix later, but for now, just make sure you don't have any spaces in your folders
+2. Build the docker image:  ``docker build -t c-resource .``
+3. Run docker in interactive mode: ``docker run -t c-resource -w /c-resource-leak-checker``
 4. Run the following to get opt working: ```export LD_LIBRARY_PATH=/opt/mirtk/lib:${LD_LIBRARY_PATH}```
 5. Make (```mkdir build```) and set directory to build (```cd build```)
 6. Build Clang, LLVM, other important stuff with ```cmake ..```
