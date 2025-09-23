@@ -417,7 +417,7 @@ void doAliasReasoning(Instruction *instruction,
 
         programPoint->addVariable(ProgramVariable(allocate));
 
-        std::string structName = structType->getName();
+        std::string structName = structType->getName().str();
 
         structName = rlc_util::sliceString(
                          structName, structName.find_last_of('.') + 1, structName.size() - 1);
