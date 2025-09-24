@@ -12,11 +12,11 @@
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueMap.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Pass.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Passes/PassBuilder.h"
@@ -49,26 +49,40 @@ using namespace llvm;
 
 namespace rlc_dataflow {
 
-
-struct CodeAnalyzer : public PassInfoMixin<CodeAnalyzer> {
+struct CodeAnalyzerResult {
+	CalledMethods *cm;
+	MustCall *mc;
+};
+struct CodeAnalyzer : public AnalysisInfoMixin<CodeAnalyzer> {
 	public:
-		static bool isRequired() { return true; }
-		PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM) {
-    			doAnalysis(F, F.getParent()->getSourceFileName());
-    			return PreservedAnalyses::all();
-		};
-		CalledMethods *getCM() { return cm; }
-		MustCall *getMC() { return mc; }
+		static AnalysisKey Key;
+		// Standard for llvm analysis
+		using Result = CodeAnalyzerResult;
 
-    		std::string getAnalysisName() {
-        		return "MustCall Methods and Called Methods Pass";
-    		}
+		CodeAnalyzerResult run(Function &F, FunctionAnalysisManager &FAM) {
+    			doAnalysis(F, F.getParent()->getSourceFileName());
+    			return {cm, mc};
+		};
+
  	protected:
     		CalledMethods *cm;
     		MustCall *mc;
     		void doAnalysis(Function &F, std::string optLoadFileName);
     		void onEnd();
 };
+
+struct ScopeAnalyzer : public PassInfoMixin<ScopeAnalyzer> {
+	public:
+                static bool isRequired() { return true; }
+                PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM) {
+			auto c = FAM.getResult<CodeAnalyzer>(F);
+                        doAnalysis(F, c.cm, c.mc);
+                        return PreservedAnalyses::all();
+                };
+        protected:
+                void doAnalysis(Function &F, CalledMethods *cm, MustCall *mc);
+        };
+
 } // namespace rlc_dataflow
 
 #endif // RUN_ANALYSIS_H
