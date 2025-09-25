@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 
-COPY ./ /c-copy/
+COPY ./ /c-resource-checker/
 
 RUN apt-get update && \
     apt-get install -y software-properties-common wget && \
