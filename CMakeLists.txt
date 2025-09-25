@@ -1,4 +1,5 @@
-# Shamelessly Ripped from llvm tutor
+# CMAKE based off of the llvm tutor repo found here:
+# https://github.com/banach-space/llvm-tutor/blob/a62756e265d2d28930634a932122fc2a2ce193ef/CMakeLists.txt
 cmake_minimum_required(VERSION 3.20)
 project(c-resource-checker)
 

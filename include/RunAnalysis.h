@@ -68,7 +68,6 @@ struct CodeAnalyzer : public AnalysisInfoMixin<CodeAnalyzer> {
     			doAnalysis(F, F.getParent()->getSourceFileName());
     			return {cm, mc};
 		};
-
  	protected:
     		CalledMethods *cm;
     		MustCall *mc;
