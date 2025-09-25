@@ -52,6 +52,7 @@ namespace rlc_dataflow {
 
 struct CodeAnalyzer : public PassInfoMixin<CodeAnalyzer> {
 	public:
+		//TODO: This is only left here for developmental purposes and should be removed before release
 		static bool isRequired() { return true; }
 		PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM) {
     			doAnalysis(F, F.getParent()->getSourceFileName());
