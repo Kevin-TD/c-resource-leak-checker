@@ -44,8 +44,8 @@
 #include <regex>
 
 using namespace llvm;
-	class MustCall;
-	class CalledMethods;
+class MustCall;
+class CalledMethods;
 
 namespace rlc_dataflow {
 
