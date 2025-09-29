@@ -12,12 +12,15 @@
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueMap.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/PassPlugin.h"
 #include "llvm/AsmParser/Parser.h"
 
 #include <algorithm>
@@ -41,29 +44,31 @@
 #include <regex>
 
 using namespace llvm;
+	class MustCall;
+	class CalledMethods;
 
 namespace rlc_dataflow {
 
-struct CodeAnalyzer : public FunctionPass {
-    static char ID;
-    CodeAnalyzer() : FunctionPass(ID) {}
 
-    /**
-     * This function is called for each function F in the input C program
-     * that the compiler encounters during a pass.
-     */
-    bool runOnFunction(Function &F) override;
+struct CodeAnalyzer : public PassInfoMixin<CodeAnalyzer> {
+	public:
+		//TODO: This is only left here for developmental purposes and should be removed before release
+		static bool isRequired() { return true; }
+		PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM) {
+    			doAnalysis(F, F.getParent()->getSourceFileName());
+    			return PreservedAnalyses::all();
+		};
+		CalledMethods *getCM() { return cm; }
+		MustCall *getMC() { return mc; }
 
-    // calls when all functions have been passed
-    bool doFinalization(Module &M) override;
-
-  protected:
-    void doAnalysis(Function &F, std::string optLoadFileName);
-    void onEnd();
-
-    std::string getAnalysisName() {
-        return "CalledMethodsPass";
-    }
+    		std::string getAnalysisName() {
+        		return "MustCall Methods and Called Methods Pass";
+    		}
+ 	protected:
+    		CalledMethods *cm;
+    		MustCall *mc;
+    		void doAnalysis(Function &F, std::string optLoadFileName);
+    		void onEnd();
 };
 } // namespace rlc_dataflow
 

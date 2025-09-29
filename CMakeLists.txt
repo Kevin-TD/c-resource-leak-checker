@@ -1,18 +1,71 @@
-cmake_minimum_required(VERSION 3.10)
+# CMAKE based off of the llvm tutor repo found here:
+# https://github.com/banach-space/llvm-tutor/blob/a62756e265d2d28930634a932122fc2a2ce193ef/CMakeLists.txt
+cmake_minimum_required(VERSION 3.20)
+project(c-resource-checker)
 
-find_package(LLVM 8 REQUIRED CONFIG)
-list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
-include(HandleLLVMOptions)
-include(AddLLVM)
+set(LT_LLVM_INCLUDE_DIR "/usr/lib/llvm-13/include/llvm")
+set(LT_LLVM_INSTALL_DIR "/usr/lib/llvm-13/")
+
+if(NOT EXISTS "${LT_LLVM_INCLUDE_DIR}")
+message(FATAL_ERROR
+  " LT_LLVM_INSTALL_DIR (${LT_LLVM_INCLUDE_DIR}) is invalid.")
+endif()
+
+set(LT_VALID_INSTALLATION FALSE)
+
+# Ubuntu + Darwin
+if(EXISTS "${LT_LLVM_INSTALL_DIR}/lib/cmake/llvm/LLVMConfig.cmake")
+  set(LT_VALID_INSTALLATION TRUE)
+endif()
+
+# Fedora
+if(EXISTS "${LT_LLVM_INSTALL_DIR}/lib64/cmake/llvm/LLVMConfig.cmake")
+  set(LT_VALID_INSTALLATION TRUE)
+endif()
+
+if(NOT ${LT_VALID_INSTALLATION})
+	message("${LT_LLVM_INSTALL_DIR}/lib/cmake/llvm/LLVMConfig.cmake")
+  message(FATAL_ERROR
+    "LLVM installation directory, (${LT_LLVM_INSTALL_DIR}), is invalid. Couldn't
+    find LLVMConfig.cmake.")
+endif()
+
+list(APPEND CMAKE_PREFIX_PATH "${LT_LLVM_INSTALL_DIR}/lib/cmake/llvm/")
+
+find_package(LLVM 13 CONFIG)
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LT_LLVM_INSTALL_DIR}")
 
+message("LLVM STATUS:
+  Definitions ${LLVM_DEFINITIONS}
+  Includes    ${LLVM_INCLUDE_DIRS}
+  Libraries   ${LLVM_LIBRARY_DIRS}
+  ")
+ 
+include_directories(SYSTEM include ${LLVM_INCLUDE_DIRS})
+link_directories(${LLVM_LIBRARY_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
-include_directories(${LLVM_INCLUDE_DIRS} include)
-link_directories(${LLVM_LIBRARY_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "")
+if (NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Debug CACHE
+      STRING "Build type (default Debug):" FORCE)
+endif()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall\
+  -fdiagnostics-color=always")
 
-add_llvm_library(CodeAnalyzer MODULE
+if(NOT LLVM_ENABLE_RTTI)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
+endif()
+
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag("-fvisibility-inlines-hidden" SUPPORTS_FVISIBILITY_INLINES_HIDDEN_FLAG)
+if (${SUPPORTS_FVISIBILITY_INLINES_HIDDEN_FLAG} EQUAL "1")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility-inlines-hidden")
+endif()
+
+add_library(CodeAnalyzer SHARED
   src/Annotations/AnnotationHandler.cpp
   src/Annotations/Annotation.cpp
   src/Annotations/FunctionAnnotation.cpp
@@ -58,5 +111,3 @@ add_llvm_library(CodeAnalyzer MODULE
   src/RunAnalysis.cpp
   src/Utils.cpp
 )
-
-target_compile_options(CodeAnalyzer PRIVATE -frtti)
