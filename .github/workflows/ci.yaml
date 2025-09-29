@@ -1,6 +1,6 @@
 name: Build Analysis
 
-on: [push]
+on: [push, workflow_dispatch]
 
 jobs:
   build:
@@ -11,7 +11,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Pull Docker Image
-      run: docker pull cis547/cis547-base:latest
+      run: docker build -t c-resource .
     
     - name: Install Artistic Style Formatter
       run: |
