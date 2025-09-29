@@ -44,31 +44,37 @@
 #include <regex>
 
 using namespace llvm;
-	class MustCall;
-	class CalledMethods;
+class MustCall;
+class CalledMethods;
 
 namespace rlc_dataflow {
 
 
 struct CodeAnalyzer : public PassInfoMixin<CodeAnalyzer> {
-	public:
-		//TODO: This is only left here for developmental purposes and should be removed before release
-		static bool isRequired() { return true; }
-		PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM) {
-    			doAnalysis(F, F.getParent()->getSourceFileName());
-    			return PreservedAnalyses::all();
-		};
-		CalledMethods *getCM() { return cm; }
-		MustCall *getMC() { return mc; }
+  public:
+    //TODO: This is only left here for developmental purposes and should be removed before release
+    static bool isRequired() {
+        return true;
+    }
+    PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM) {
+        doAnalysis(F, F.getParent()->getSourceFileName());
+        return PreservedAnalyses::all();
+    };
+    CalledMethods *getCM() {
+        return cm;
+    }
+    MustCall *getMC() {
+        return mc;
+    }
 
-    		std::string getAnalysisName() {
-        		return "MustCall Methods and Called Methods Pass";
-    		}
- 	protected:
-    		CalledMethods *cm;
-    		MustCall *mc;
-    		void doAnalysis(Function &F, std::string optLoadFileName);
-    		void onEnd();
+    std::string getAnalysisName() {
+        return "MustCall Methods and Called Methods Pass";
+    }
+  protected:
+    CalledMethods *cm;
+    MustCall *mc;
+    void doAnalysis(Function &F, std::string optLoadFileName);
+    void onEnd();
 };
 } // namespace rlc_dataflow
 
