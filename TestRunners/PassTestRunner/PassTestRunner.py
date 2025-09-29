@@ -54,7 +54,7 @@ class PassTestRunner(TestRunner):
         if not test_file.ir_will_generate():
             test_result.add_note("ir was not generated")
 
-        run_test_command = f"opt -load CodeAnalyzer.so -CodeAnalyzer {c_file_as_ll}"
+        run_test_command = f'opt-13 -load-pass-plugin=./libCodeAnalyzer.so -passes="ScopeAnalyzer" {c_file_as_ll}'
         test_run_exit_status = os.system(run_test_command)
 
         if test_run_exit_status != 0:
