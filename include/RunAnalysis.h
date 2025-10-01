@@ -51,20 +51,20 @@ namespace rlc_dataflow {
 
 // LLVM analysis results are in the form of structs, this struct will be defined
 // as a result in the CodeAnalyzer struct and will be the return value of the doAnalysis function
-struct CodeAnalyzerResult {
+struct ResourceLeakFunctionAnalyzerResult {
     CalledMethods *cm;
     MustCall *mc;
 };
 
 // This represents the analysis that constructs the must call and may called passes
 // we will retrieve it's computation in Scope Analyzer to reason if/when to check obligations
-struct CodeAnalyzer : public AnalysisInfoMixin<CodeAnalyzer> {
+struct ResourceLeakFunctionAnalyzer : public AnalysisInfoMixin<ResourceLeakFunctionAnalyzer> {
   public:
     static AnalysisKey Key;
     // Standard for llvm analysis,
-    using Result = CodeAnalyzerResult;
+    using Result = ResourceLeakFunctionAnalyzerResult;
 
-    CodeAnalyzerResult run(Function &F, FunctionAnalysisManager &FAM) {
+    ResourceLeakFunctionAnalyzerResult run(Function &F, FunctionAnalysisManager &FAM) {
         doAnalysis(F, F.getParent()->getSourceFileName());
         return {cm, mc};
     };
@@ -79,14 +79,14 @@ struct CodeAnalyzer : public AnalysisInfoMixin<CodeAnalyzer> {
 // If we find that CalledMethods and MustCall must run over the entirety of the CFG before our scope analysis
 // we can construct a pass before this one that is required by this one and which will get the results of CodeAnalyzer
 // so that they will be cached for later use
-struct ScopeAnalyzer : public PassInfoMixin<ScopeAnalyzer> {
+struct ResourceLeakOutOfScopeDetector : public PassInfoMixin<ResourceLeakOutOfScopeDetector> {
   public:
     //TODO: This is only left here for developmental purposes and should be removed before release
     static bool isRequired() {
         return true;
     }
     PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM) {
-        auto c = FAM.getResult<CodeAnalyzer>(F);
+        auto c = FAM.getResult<ResourceLeakFunctionAnalyzer>(F);
         doAnalysis(F, c.cm, c.mc);
         return PreservedAnalyses::all();
     };
