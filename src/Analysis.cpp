@@ -579,7 +579,7 @@ void doAliasReasoning(Instruction *instruction,
     }
 }
 
-void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
+void ResourceLeakFunctionAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     std::string fnName = F.getName().str();
 
     std::string testName = rlc_util::getTestName(optLoadFileName);
@@ -764,7 +764,7 @@ void runUtilFunctionTester(UtilFunctionTester* utilFunctionTester, const std::st
     errs() << "UTIL FUNCTION TEST PASS: " << functionName << "\n\n";
 }
 
-void CodeAnalyzer::onEnd() {
+void ResourceLeakFunctionAnalyzer::onEnd() {
     if (BUILD_PROGRAM_LINES_BRANCH_INFO) {
         programLinesBranchesInfo.generate(cFileName, false);
     }
