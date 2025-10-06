@@ -44,6 +44,7 @@
 #include <regex>
 
 using namespace llvm;
+<<<<<<< HEAD
 class ProgramFunction;
 namespace rlc_dataflow {
 
