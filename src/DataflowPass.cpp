@@ -18,10 +18,10 @@ void DataflowPass::setExpectedResult(FullFile expectedResult) {
     this->expectedResult = expectedResult;
 }
 
-ProgramFunction DataflowPass::generatePassResults() {
+ProgramFunction *DataflowPass::generatePassResults() {
     ProgramFunction preProgramFunction;
-    ProgramFunction postProgramFunction;
-    this->analyzeCFG(this->cfg, preProgramFunction, postProgramFunction, "");
+    ProgramFunction *postProgramFunction = new ProgramFunction();
+    this->analyzeCFG(this->cfg, preProgramFunction, *postProgramFunction, "");
     return postProgramFunction;
 }
 

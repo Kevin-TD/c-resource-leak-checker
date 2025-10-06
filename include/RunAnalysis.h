@@ -44,34 +44,27 @@
 #include <regex>
 
 using namespace llvm;
-class MustCall;
-class CalledMethods;
-
+class ProgramFunction;
 namespace rlc_dataflow {
 
 // LLVM analysis results are in the form of structs, this struct will be defined
 // as a result in the CodeAnalyzer struct and will be the return value of the doAnalysis function
-struct CodeAnalyzerResult {
-    CalledMethods *cm;
-    MustCall *mc;
+struct ResourceLeakFunctionCallAnalyzerResult {
+    ProgramFunction *programFunctionMustCall;
+    ProgramFunction *programFunctionCalledMethods;
 };
 
 // This represents the analysis that constructs the must call and may called passes
 // we will retrieve it's computation in Scope Analyzer to reason if/when to check obligations
-struct CodeAnalyzer : public AnalysisInfoMixin<CodeAnalyzer> {
+struct ResourceLeakFunctionCallAnalyzer : public AnalysisInfoMixin<ResourceLeakFunctionCallAnalyzer> {
   public:
     static AnalysisKey Key;
     // Standard for llvm analysis,
-    using Result = CodeAnalyzerResult;
+    using Result = ResourceLeakFunctionCallAnalyzerResult;
 
-    CodeAnalyzerResult run(Function &F, FunctionAnalysisManager &FAM) {
-        doAnalysis(F, F.getParent()->getSourceFileName());
-        return {cm, mc};
-    };
+    ResourceLeakFunctionCallAnalyzerResult run(Function &F, FunctionAnalysisManager &FAM);
   protected:
-    CalledMethods *cm;
-    MustCall *mc;
-    void doAnalysis(Function &F, std::string optLoadFileName);
+    ResourceLeakFunctionCallAnalyzerResult doAnalysis(Function &F, std::string optLoadFileName);
     void onEnd();
 };
 
@@ -79,19 +72,19 @@ struct CodeAnalyzer : public AnalysisInfoMixin<CodeAnalyzer> {
 // If we find that CalledMethods and MustCall must run over the entirety of the CFG before our scope analysis
 // we can construct a pass before this one that is required by this one and which will get the results of CodeAnalyzer
 // so that they will be cached for later use
-struct ScopeAnalyzer : public PassInfoMixin<ScopeAnalyzer> {
+struct ResourceLeakScopeChecker : public PassInfoMixin<ResourceLeakScopeChecker> {
   public:
     //TODO: This is only left here for developmental purposes and should be removed before release
     static bool isRequired() {
         return true;
     }
     PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM) {
-        auto c = FAM.getResult<CodeAnalyzer>(F);
-        doAnalysis(F, c.cm, c.mc);
+        auto c = FAM.getResult<ResourceLeakFunctionCallAnalyzer>(F);
+        doAnalysis(F, c.programFunctionMustCall, c.programFunctionCalledMethods);
         return PreservedAnalyses::all();
     };
   protected:
-    void doAnalysis(Function &F, CalledMethods *cm, MustCall *mc);
+    void doAnalysis(Function &F, ProgramFunction *pf, ProgramFunction *pf2);
 };
 
 } // namespace rlc_dataflow

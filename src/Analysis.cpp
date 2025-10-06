@@ -579,7 +579,7 @@ void doAliasReasoning(Instruction *instruction,
     }
 }
 
-void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
+ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     std::string fnName = F.getName().str();
 
     std::string testName = rlc_util::getTestName(optLoadFileName);
@@ -668,25 +668,27 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
         }
     }
 
-    CFG cfg;
-    buildCFG(cfg, realBranchOrder, branchInstructionMap);
+    CFG *cfg = new CFG();
+    buildCFG(*cfg, realBranchOrder, branchInstructionMap);
 
     calledMethods.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
                                annotationHandler);
-    calledMethods.setCFG(&cfg);
+    calledMethods.setCFG(cfg);
     calledMethods.setProgramFunction(programFunction);
     calledMethods.setFunctionInfosManager(functionInfosManager);
     calledMethods.setOptLoadFileName(optLoadFileName);
 
     mustCall.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
                           annotationHandler);
-    mustCall.setCFG(&cfg);
+    mustCall.setCFG(cfg);
     mustCall.setProgramFunction(programFunction);
     mustCall.setFunctionInfosManager(functionInfosManager);
     mustCall.setOptLoadFileName(optLoadFileName);
 
-    ProgramFunction PostCalledMethods = calledMethods.generatePassResults();
-    ProgramFunction PostMustCalls = mustCall.generatePassResults();
+    ProgramFunction *PostCalledMethods = calledMethods.generatePassResults();
+    ProgramFunction *PostMustCalls = mustCall.generatePassResults();
+
+    /*
 
     logout("\n\nPROGRAM FUNCTION for " << programFunction.getFunctionName());
     ProgramFunction::logoutProgramFunction(programFunction, false);
@@ -742,8 +744,11 @@ void CodeAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     } else {
         logout("LINE NUMBER TO L-VALUE TESTER PASSED");
     }
-
+    */
     realBranchOrder.clear();
+
+    PostCalledMethods->getProgramPoints();
+    return {PostCalledMethods, PostMustCalls};
 }
 
 // utilFunctionTester is an extended class of UtilFunctionTester
@@ -764,7 +769,8 @@ void runUtilFunctionTester(UtilFunctionTester* utilFunctionTester, const std::st
     errs() << "UTIL FUNCTION TEST PASS: " << functionName << "\n\n";
 }
 
-void CodeAnalyzer::onEnd() {
+void ResourceLeakFunctionCallAnalyzer::onEnd() {
+    std::cout << "why am I here\n";
     if (BUILD_PROGRAM_LINES_BRANCH_INFO) {
         programLinesBranchesInfo.generate(cFileName, false);
     }

@@ -120,7 +120,7 @@ class DataflowPass {
     std::map<std::string, std::string> memoryFunctions;
     std::string passName;
 
-    ProgramFunction generatePassResults();
+    ProgramFunction *generatePassResults();
 
     void setCFG(CFG *cfg);
     void setExpectedResult(FullFile expectedResult);
