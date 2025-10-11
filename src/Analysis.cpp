@@ -688,16 +688,14 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
     ProgramFunction *PostCalledMethods = calledMethods.generatePassResults();
     ProgramFunction *PostMustCalls = mustCall.generatePassResults();
 
-    /*
-
     logout("\n\nPROGRAM FUNCTION for " << programFunction.getFunctionName());
     ProgramFunction::logoutProgramFunction(programFunction, false);
 
     logout("\n\nCALLED METHODS RESULT");
-    ProgramFunction::logoutProgramFunction(PostCalledMethods, true);
+    ProgramFunction::logoutProgramFunction(*PostCalledMethods, true);
 
     logout("\n\nMUST CALL RESULT");
-    ProgramFunction::logoutProgramFunction(PostMustCalls, true);
+    ProgramFunction::logoutProgramFunction(*PostMustCalls, true);
 
     errs() << "\n\nRUNNING CALLED METHODS TESTS - "
            << " TEST NAME - " << testName << "\n\n";
@@ -706,12 +704,12 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
 
     bool calledMethodsResult = TestRunner::runTests(
                                    fnName, lastBranchName, calledMethods.getExpectedResult(),
-                                   PostCalledMethods, structFieldToIndexMap);
+                                   *PostCalledMethods, structFieldToIndexMap);
 
     errs() << "\n\nRUNNING MUST CALL TESTS "
            << " TEST NAME - " << testName << "\n\n";
     bool mustCallResult = TestRunner::runTests(
-                              fnName, lastBranchName, mustCall.getExpectedResult(), PostMustCalls, structFieldToIndexMap);
+                              fnName, lastBranchName, mustCall.getExpectedResult(), *PostMustCalls, structFieldToIndexMap);
 
     if (calledMethodsResult == EXIT_FAILURE || mustCallResult == EXIT_FAILURE) {
         anyTestFailed = true;
@@ -744,7 +742,6 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
     } else {
         logout("LINE NUMBER TO L-VALUE TESTER PASSED");
     }
-    */
     realBranchOrder.clear();
 
     PostCalledMethods->getProgramPoints();
@@ -767,56 +764,6 @@ void runUtilFunctionTester(UtilFunctionTester* utilFunctionTester, const std::st
     }
 
     errs() << "UTIL FUNCTION TEST PASS: " << functionName << "\n\n";
-}
-
-void ResourceLeakFunctionCallAnalyzer::onEnd() {
-    std::cout << "why am I here\n";
-    if (BUILD_PROGRAM_LINES_BRANCH_INFO) {
-        programLinesBranchesInfo.generate(cFileName, false);
-    }
-
-    // rlc_dataflow function testers
-    if (RUN_UTIL_FUNCTION_TESTS) {
-        VariableTester vt = VariableTester();
-        runUtilFunctionTester(&vt, "rlc_dataflow::variable");
-
-        UnwrapValuePointerToStructTester uvptst = UnwrapValuePointerToStructTester();
-        runUtilFunctionTester(&uvptst, "rlc_dataflow::unwrapValuePointerToStruct");
-
-        IRstructNameEqualsCstructNameTester irsnecsnt = IRstructNameEqualsCstructNameTester();
-        runUtilFunctionTester(&irsnecsnt, "rlc_dataflow::IRstructNameEqualsCstructName");
-
-        GetPredecessorsTester getPredsTester = GetPredecessorsTester();
-        runUtilFunctionTester(&getPredsTester, "rlc_dataflow::getPredecessors");
-
-        GetSuccessorsTester getSuccsTester = GetSuccessorsTester();
-        runUtilFunctionTester(&getSuccsTester, "rlc_dataflow::getSuccessors");
-
-        // rlc_util function testers
-        IsNumberTester isNumTester = IsNumberTester();
-        runUtilFunctionTester(&isNumTester, "rlc_util::isNumber");
-
-        SplitStringTester splitStringTester = SplitStringTester();
-        runUtilFunctionTester(&splitStringTester, "rlc_util::splitString");
-
-        RemoveWhitespaceTester removeWhitespaceTester = RemoveWhitespaceTester();
-        runUtilFunctionTester(&removeWhitespaceTester, "rlc_util::removeWhitespace");
-
-        SliceStringTester sliceStringTester = SliceStringTester();
-        runUtilFunctionTester(&sliceStringTester, "rlc_util::sliceString");
-
-        StartsWithTester startsWithTester = StartsWithTester();
-        runUtilFunctionTester(&startsWithTester, "rlc_util::startsWith");
-
-        SetToStringTester setToStringTester = SetToStringTester();
-        runUtilFunctionTester(&setToStringTester, "rlc_util::setToString");
-    }
-
-    if (anyTestFailed) {
-        std::exit(EXIT_FAILURE);
-    }
-
-    std::exit(EXIT_SUCCESS);
 }
 
 } // namespace rlc_dataflow

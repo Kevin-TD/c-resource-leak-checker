@@ -54,8 +54,8 @@ struct ResourceLeakFunctionCallAnalyzerResult {
     ProgramFunction *programFunctionCalledMethods;
 };
 
-// This represents the analysis that constructs the must call and may called passes
-// we will retrieve it's computation in Scope Analyzer to reason if/when to check obligations
+// This represents the analysis that constructs the must call and called method passes
+// we will retrieve its computation in Scope Analyzer to reason if/when to check obligations
 struct ResourceLeakFunctionCallAnalyzer : public AnalysisInfoMixin<ResourceLeakFunctionCallAnalyzer> {
   public:
     static AnalysisKey Key;

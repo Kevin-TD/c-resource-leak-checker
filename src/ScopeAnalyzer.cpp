@@ -2,17 +2,6 @@
 #include "ProgramRepresentation/ProgramFunction.h"
 namespace rlc_dataflow {
 
-PVAliasSet *findMatchingSet(std::list<ProgramVariable> vars, DisjointPVAliasSets aliasList) {
-    PVAliasSet *ret = NULL;
-    for(auto p = vars.begin(); p != vars.end(); ++p) {
-        ret = aliasList.getSetRef(*p);
-        if(ret) {
-            return ret;
-        }
-    }
-    std::cout << "Error, element in Must Call is not in Called Methods\n";
-    std::exit(1);
-}
 
 void ResourceLeakScopeChecker::doAnalysis(Function &F, ProgramFunction *pfMustCall, ProgramFunction *pfCalledMethods) {
     std::cout << "\n\n\n===\n\n\nCalled On \n\n\n===\n\n\n" << F.getName().str() << std::endl;
@@ -64,14 +53,14 @@ void ResourceLeakScopeChecker::doAnalysis(Function &F, ProgramFunction *pfMustCa
 
     for(auto setMC = setsMC.begin(); setMC != setsMC.end(); ++setMC) {
         varsMC = setMC->getProgramVariables();
-        asCM = findMatchingSet(varsMC, dpvaCM);
+        asCM = dpvaCM.findMatchingSet(varsMC);
         msetCM = asCM->getMethodsSet().getMethods();
         msetMC = (*setMC).getMethodsSet().getMethods();
         if(!includes(msetCM.begin(), msetCM.end(), msetMC.begin(), msetMC.end())) {
             //TODO: flesh out this error
-            std::cout << "ERROR!, Must Call not subset of Called Methods at " << F.getName().str() << std::endl;
-            std::cout << "HERE IS Must Call " << setMC->getMethodsString() << std::endl;
-            std::cout << "Here is CalledMethods " << asCM->getMethodsString() << std::endl;
+            llvm::errs() << "ERROR!, Must Call not subset of Called Methods at " << F.getName().str() << "\n";
+            llvm::errs() << "HERE IS Must Call " << setMC->getMethodsString() << "\n";
+            llvm::errs() << "Here is CalledMethods " << asCM->getMethodsString() << "\n";
         }
     }
 
