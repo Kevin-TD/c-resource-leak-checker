@@ -97,6 +97,7 @@ add_library(CodeAnalyzer SHARED
   src/CalledMethods.cpp
   src/MustCall.cpp
   src/DataflowPass.cpp
+  src/ScopeAnalyzer.cpp
   src/TestRunner.cpp
   src/BranchListerTester.cpp
   src/StructFieldToIndexTester.cpp
