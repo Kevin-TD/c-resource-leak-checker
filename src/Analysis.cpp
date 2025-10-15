@@ -744,8 +744,7 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
     }
     realBranchOrder.clear();
 
-    PostCalledMethods->getProgramPoints();
-    return {PostCalledMethods, PostMustCalls};
+    return {PostMustCalls, PostCalledMethods};
 }
 
 // utilFunctionTester is an extended class of UtilFunctionTester

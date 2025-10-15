@@ -41,24 +41,20 @@ void ResourceLeakScopeChecker::doAnalysis(Function &F, ProgramFunction *pfMustCa
             asCM = dpvaCM.findMatchingSet(varsMC);
             msetCM = asCM->getMethodsSet().getMethods();
             msetMC = (*setMC).getMethodsSet().getMethods();
-            if(!(*setMC).contains(retVal) && !includes(msetCM.begin(), msetCM.end(), msetMC.begin(), msetMC.end())) {
+
+            if(!setMC->contains(retVal) && !includes(msetCM.begin(), msetCM.end(), msetMC.begin(), msetMC.end())) {
                 //TODO: flesh out this error
                 llvm::errs() << "ERROR!, Must Call not subset of Called Methods at " << F.getName().str() << "\n";
                 llvm::errs() << "HERE IS Must Call " << setMC->getMethodsString() << "\n";
                 llvm::errs() << "Here is CalledMethods " << asCM->getMethodsString() << "\n";
-                llvm::errs() << "Here are vars: ";
+                llvm::errs() << "HERE ARE THE VARS: ";
                 for(auto v : varsMC) {
-                    llvm::errs() << v.getRawName() << ", ";
+                    llvm::errs() << v.getCleanedName() << ", ";
                 }
                 llvm::errs() << "\n";
             }
-            if((*setMC).contains(retVal)) {
-                std::cout <<"WORKS\n";
-            }
         }
     }
-
-    std::cout << "DONE\n" << std::endl;
 }
 
 }

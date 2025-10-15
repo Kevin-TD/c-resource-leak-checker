@@ -55,10 +55,13 @@ void DataflowPass::transfer(Instruction *instruction,
             ProgramVariable assignedVar = ProgramVariable(store->getOperand(1));
             std::string arg = assignedVar.getCleanedName();
             PVAliasSet *pvas = inputProgramPoint.getPVASRef(assignedVar, false);
+            // this->onFunctionCall(pvas, fnName);
+            // TODO: Ask, wouldn't we want to keep track of functions like this
+            // if we want to make something that infers annotations?
+
 
             if (this->memoryFunctions[fnName].size() > 0 &&
                     assignedVar.isIdentifier()) {
-
                 logout("calling on alloc function for argname "
                        << arg << " and fnname " << fnName << " fnname = " << fnName);
                 this->onAllocationFunctionCall(pvas, this->memoryFunctions[fnName]);
@@ -459,7 +462,6 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
 
     logout("call fnname = " << fnName);
     if (this->reallocFunctions.count(fnName)) {
-
         this->onReallocFunctionCall(pvas, fnName);
         return true;
     }

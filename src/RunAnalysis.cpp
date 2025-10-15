@@ -8,7 +8,6 @@ AnalysisKey rlc_dataflow::ResourceLeakFunctionCallAnalyzer::Key;
 
 rlc_dataflow::ResourceLeakFunctionCallAnalyzerResult rlc_dataflow::ResourceLeakFunctionCallAnalyzer::run(Function &F, FunctionAnalysisManager &FAM) {
     auto ret = doAnalysis(F, F.getParent()->getSourceFileName());
-    ret.programFunctionMustCall->getProgramPoints();
     return ret;
 };
 
