@@ -200,6 +200,10 @@ void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVT
     }
 }
 
+Value *ProgramPoint::getReturnValue() {
+    return returnValue;
+}
+
 void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar) {
     for (ProgramVariable& pv : pvas->getProgramVariables()) {
         if (pv.equalsCleanedName(cleanedNameOfPVToUnalias)) {

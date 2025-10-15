@@ -33,6 +33,10 @@ void DataflowPass::transfer(Instruction *instruction,
                             ProgramPoint &inputProgramPoint) {
     std::string branchName = instruction->getParent()->getName().str();
 
+
+    if (ReturnInst *retInst = dyn_cast<ReturnInst>(instruction)) {
+        inputProgramPoint.returnValue = retInst->getReturnValue();
+    }
     if (StoreInst *store = dyn_cast<StoreInst>(instruction)) {
         Value *valueToStore = store->getOperand(0);
         Value *receivingValue = store->getOperand(1);

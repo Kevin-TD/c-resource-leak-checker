@@ -9,11 +9,13 @@
 class ProgramPoint {
   private:
     DisjointPVAliasSets programVariableAliasSets;
+    Value *returnValue;
 
     // the name is same as the branch name that shows up in the IR
     std::string pointName;
 
   public:
+    friend class DataflowPass;
     // debugging function that lists variables and methods (methods logged if
     // logMethods is true) of a program point
     static void logoutProgramPoint(const ProgramPoint &point, bool logMethods);
@@ -38,6 +40,11 @@ class ProgramPoint {
     // into one of these sets if it contains a program variable that exists in one
     // of these sets
     void addPVAS(PVAliasSet pvas);
+
+    // Returns the return value associated with this program point
+    // Likely will need to be remodeled later so all resources that are owned by
+    // other parts in the program are returned
+    Value *getReturnValue();
 
     // finds set A and B from element A and element B (respectively) and merges
     // them together. if A == B or one of the elements is not found in any of these

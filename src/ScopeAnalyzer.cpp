@@ -19,48 +19,42 @@ void ResourceLeakScopeChecker::doAnalysis(Function &F, ProgramFunction *pfMustCa
 
     std::list<ProgramVariable> varsMC, varsCM;
 
+    PVAliasSet *asCM;
+    std::set<std::string> msetMC, msetCM;
+
     nextMC = programPointsMC.front();
-    for(auto elementMC = ++programPointsMC.begin(), elementCM = programPointsCM.begin(); elementMC != programPointsMC.end(); ++elementMC, ++elementCM) {
+    Value *retVal;
+    for(auto elementMC = programPointsMC.begin(), elementCM = programPointsCM.begin(); elementMC != programPointsMC.end(); ++elementMC, ++elementCM) {
         currentMC = nextMC;
         nextMC = *elementMC;
 
-        currentCM = *elementCM;
+        retVal = currentMC.getReturnValue();
 
+        currentCM = *elementCM;
         dpvaMC = currentMC.getProgramVariableAliasSets();
+        dpvaCM = currentCM.getProgramVariableAliasSets();
         nextDPVAMC = nextMC.getProgramVariableAliasSets();
         setsMC = dpvaMC.getSets();
         // We want to check if the resource runs "out of scope" in the next function for every set of aliases
         for(auto setMC = setsMC.begin(); setMC != setsMC.end(); ++setMC) {
-            //TODO: Finish checking if the next branch has elements in scope
-            std::cout << "COUNT\n";
-        }
-    }
-
-    // At the end of the function, the only elements in scope "after" will be that which is returned
-    // TODO: Ask about global scope (assume unhandled?)
-    currentMC = programPointsMC.back();
-    currentCM = programPointsCM.back();
-
-    dpvaMC = currentMC.getProgramVariableAliasSets();
-    dpvaCM = currentCM.getProgramVariableAliasSets();
-
-    setsMC = dpvaMC.getSets();
-    setsCM = dpvaCM.getSets();
-
-    PVAliasSet *asCM;
-
-    std::set<std::string> msetMC, msetCM;
-
-    for(auto setMC = setsMC.begin(); setMC != setsMC.end(); ++setMC) {
-        varsMC = setMC->getProgramVariables();
-        asCM = dpvaCM.findMatchingSet(varsMC);
-        msetCM = asCM->getMethodsSet().getMethods();
-        msetMC = (*setMC).getMethodsSet().getMethods();
-        if(!includes(msetCM.begin(), msetCM.end(), msetMC.begin(), msetMC.end())) {
-            //TODO: flesh out this error
-            llvm::errs() << "ERROR!, Must Call not subset of Called Methods at " << F.getName().str() << "\n";
-            llvm::errs() << "HERE IS Must Call " << setMC->getMethodsString() << "\n";
-            llvm::errs() << "Here is CalledMethods " << asCM->getMethodsString() << "\n";
+            varsMC = setMC->getProgramVariables();
+            asCM = dpvaCM.findMatchingSet(varsMC);
+            msetCM = asCM->getMethodsSet().getMethods();
+            msetMC = (*setMC).getMethodsSet().getMethods();
+            if(!(*setMC).contains(retVal) && !includes(msetCM.begin(), msetCM.end(), msetMC.begin(), msetMC.end())) {
+                //TODO: flesh out this error
+                llvm::errs() << "ERROR!, Must Call not subset of Called Methods at " << F.getName().str() << "\n";
+                llvm::errs() << "HERE IS Must Call " << setMC->getMethodsString() << "\n";
+                llvm::errs() << "Here is CalledMethods " << asCM->getMethodsString() << "\n";
+                llvm::errs() << "Here are vars: ";
+                for(auto v : varsMC) {
+                    llvm::errs() << v.getRawName() << ", ";
+                }
+                llvm::errs() << "\n";
+            }
+            if((*setMC).contains(retVal)) {
+                std::cout <<"WORKS\n";
+            }
         }
     }
 
