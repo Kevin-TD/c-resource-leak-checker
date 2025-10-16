@@ -38,7 +38,6 @@ llvm::PassPluginLibraryInfo getResourceLeakFunctionCallAnalyzerPluginInfo() {
 }
 
 extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo llvmGetPassPluginInfo() {
-    std::cout << "ENTERED HERE HELLO\n";
     return getResourceLeakFunctionCallAnalyzerPluginInfo();
 }
 

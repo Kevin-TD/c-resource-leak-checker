@@ -240,10 +240,13 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         return;
     }
 
+
     ProgramPoint *priorPrePoint =
         preProgramFunction.getProgramPointRef(currentBranch, true);
     ProgramPoint *priorPostPoint =
         postProgramFunction.getProgramPointRef(currentBranch, true);
+
+    postProgramFunction.getProgramPointRef(priorBranch, false)->addSuccessor(postProgramFunction.getProgramPointRef(currentBranch, false));
 
     priorPostPoint->add(
         this->programFunction.getProgramPointRef(currentBranch, true));
