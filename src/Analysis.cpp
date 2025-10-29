@@ -579,7 +579,7 @@ void doAliasReasoning(Instruction *instruction,
     }
 }
 
-void ResourceLeakFunctionAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
+ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
     std::string fnName = F.getName().str();
 
     std::string testName = rlc_util::getTestName(optLoadFileName);
@@ -668,34 +668,34 @@ void ResourceLeakFunctionAnalyzer::doAnalysis(Function &F, std::string optLoadFi
         }
     }
 
-    CFG cfg;
-    buildCFG(cfg, realBranchOrder, branchInstructionMap);
+    CFG *cfg = new CFG();
+    buildCFG(*cfg, realBranchOrder, branchInstructionMap);
 
     calledMethods.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
                                annotationHandler);
-    calledMethods.setCFG(&cfg);
+    calledMethods.setCFG(cfg);
     calledMethods.setProgramFunction(programFunction);
     calledMethods.setFunctionInfosManager(functionInfosManager);
     calledMethods.setOptLoadFileName(optLoadFileName);
 
     mustCall.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
                           annotationHandler);
-    mustCall.setCFG(&cfg);
+    mustCall.setCFG(cfg);
     mustCall.setProgramFunction(programFunction);
     mustCall.setFunctionInfosManager(functionInfosManager);
     mustCall.setOptLoadFileName(optLoadFileName);
 
-    ProgramFunction PostCalledMethods = calledMethods.generatePassResults();
-    ProgramFunction PostMustCalls = mustCall.generatePassResults();
+    ProgramFunction *PostCalledMethods = calledMethods.generatePassResults();
+    ProgramFunction *PostMustCalls = mustCall.generatePassResults();
 
     logout("\n\nPROGRAM FUNCTION for " << programFunction.getFunctionName());
     ProgramFunction::logoutProgramFunction(programFunction, false);
 
     logout("\n\nCALLED METHODS RESULT");
-    ProgramFunction::logoutProgramFunction(PostCalledMethods, true);
+    ProgramFunction::logoutProgramFunction(*PostCalledMethods, true);
 
     logout("\n\nMUST CALL RESULT");
-    ProgramFunction::logoutProgramFunction(PostMustCalls, true);
+    ProgramFunction::logoutProgramFunction(*PostMustCalls, true);
 
     errs() << "\n\nRUNNING CALLED METHODS TESTS - "
            << " TEST NAME - " << testName << "\n\n";
@@ -704,12 +704,12 @@ void ResourceLeakFunctionAnalyzer::doAnalysis(Function &F, std::string optLoadFi
 
     bool calledMethodsResult = TestRunner::runTests(
                                    fnName, lastBranchName, calledMethods.getExpectedResult(),
-                                   PostCalledMethods, structFieldToIndexMap);
+                                   *PostCalledMethods, structFieldToIndexMap);
 
     errs() << "\n\nRUNNING MUST CALL TESTS "
            << " TEST NAME - " << testName << "\n\n";
     bool mustCallResult = TestRunner::runTests(
-                              fnName, lastBranchName, mustCall.getExpectedResult(), PostMustCalls, structFieldToIndexMap);
+                              fnName, lastBranchName, mustCall.getExpectedResult(), *PostMustCalls, structFieldToIndexMap);
 
     if (calledMethodsResult == EXIT_FAILURE || mustCallResult == EXIT_FAILURE) {
         anyTestFailed = true;
@@ -742,8 +742,9 @@ void ResourceLeakFunctionAnalyzer::doAnalysis(Function &F, std::string optLoadFi
     } else {
         logout("LINE NUMBER TO L-VALUE TESTER PASSED");
     }
-
     realBranchOrder.clear();
+
+    return {PostMustCalls, PostCalledMethods};
 }
 
 // utilFunctionTester is an extended class of UtilFunctionTester
@@ -762,55 +763,6 @@ void runUtilFunctionTester(UtilFunctionTester* utilFunctionTester, const std::st
     }
 
     errs() << "UTIL FUNCTION TEST PASS: " << functionName << "\n\n";
-}
-
-void ResourceLeakFunctionAnalyzer::onEnd() {
-    if (BUILD_PROGRAM_LINES_BRANCH_INFO) {
-        programLinesBranchesInfo.generate(cFileName, false);
-    }
-
-    // rlc_dataflow function testers
-    if (RUN_UTIL_FUNCTION_TESTS) {
-        VariableTester vt = VariableTester();
-        runUtilFunctionTester(&vt, "rlc_dataflow::variable");
-
-        UnwrapValuePointerToStructTester uvptst = UnwrapValuePointerToStructTester();
-        runUtilFunctionTester(&uvptst, "rlc_dataflow::unwrapValuePointerToStruct");
-
-        IRstructNameEqualsCstructNameTester irsnecsnt = IRstructNameEqualsCstructNameTester();
-        runUtilFunctionTester(&irsnecsnt, "rlc_dataflow::IRstructNameEqualsCstructName");
-
-        GetPredecessorsTester getPredsTester = GetPredecessorsTester();
-        runUtilFunctionTester(&getPredsTester, "rlc_dataflow::getPredecessors");
-
-        GetSuccessorsTester getSuccsTester = GetSuccessorsTester();
-        runUtilFunctionTester(&getSuccsTester, "rlc_dataflow::getSuccessors");
-
-        // rlc_util function testers
-        IsNumberTester isNumTester = IsNumberTester();
-        runUtilFunctionTester(&isNumTester, "rlc_util::isNumber");
-
-        SplitStringTester splitStringTester = SplitStringTester();
-        runUtilFunctionTester(&splitStringTester, "rlc_util::splitString");
-
-        RemoveWhitespaceTester removeWhitespaceTester = RemoveWhitespaceTester();
-        runUtilFunctionTester(&removeWhitespaceTester, "rlc_util::removeWhitespace");
-
-        SliceStringTester sliceStringTester = SliceStringTester();
-        runUtilFunctionTester(&sliceStringTester, "rlc_util::sliceString");
-
-        StartsWithTester startsWithTester = StartsWithTester();
-        runUtilFunctionTester(&startsWithTester, "rlc_util::startsWith");
-
-        SetToStringTester setToStringTester = SetToStringTester();
-        runUtilFunctionTester(&setToStringTester, "rlc_util::setToString");
-    }
-
-    if (anyTestFailed) {
-        std::exit(EXIT_FAILURE);
-    }
-
-    std::exit(EXIT_SUCCESS);
 }
 
 } // namespace rlc_dataflow

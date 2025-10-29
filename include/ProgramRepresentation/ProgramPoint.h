@@ -9,11 +9,14 @@
 class ProgramPoint {
   private:
     DisjointPVAliasSets programVariableAliasSets;
+    Value *returnValue;
+    std::list<ProgramPoint *> successors;
 
     // the name is same as the branch name that shows up in the IR
     std::string pointName;
 
   public:
+    friend class DataflowPass;
     // debugging function that lists variables and methods (methods logged if
     // logMethods is true) of a program point
     static void logoutProgramPoint(const ProgramPoint &point, bool logMethods);
@@ -28,6 +31,12 @@ class ProgramPoint {
     // copies the alias sets of programPoint into a new instance
     ProgramPoint(std::string pointName, ProgramPoint *programPoint);
 
+    // adds a new successor program point
+    void addSuccessor(ProgramPoint *successor);
+
+    // returns a list of successors
+    std::list<ProgramPoint *> getSuccessors();
+
     // aliases element1 and element2 by putting them into the same set
     void addAlias(ProgramVariable element1, ProgramVariable element2);
 
@@ -38,6 +47,11 @@ class ProgramPoint {
     // into one of these sets if it contains a program variable that exists in one
     // of these sets
     void addPVAS(PVAliasSet pvas);
+
+    // Returns the return value associated with this program point
+    // Likely will need to be remodeled later so all resources that are owned by
+    // other parts in the program are returned
+    Value *getReturnValue();
 
     // finds set A and B from element A and element B (respectively) and merges
     // them together. if A == B or one of the elements is not found in any of these
