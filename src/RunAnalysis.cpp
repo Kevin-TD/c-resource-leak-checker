@@ -28,8 +28,9 @@ llvm::PassPluginLibraryInfo getResourceLeakFunctionCallAnalyzerPluginInfo() {
         PB.registerPipelineParsingCallback(
             [](StringRef Name, FunctionPassManager &FPM,
         ArrayRef<PassBuilder::PipelineElement>) {
-            if(Name == "ScopeAnalyzer") {
-                FPM.addPass(rlc_dataflow::ResourceLeakScopeChecker());
+            // TODO: This or statement keeps the CI and python testers working, it should be removed before release
+            if(Name == "ResourceLeak" || "ScopeAnalyzer") {
+                FPM.addPass(rlc_dataflow::ResourceLeakOutOfScopeDetector());
                 return true;
             }
             return false;
@@ -40,4 +41,3 @@ llvm::PassPluginLibraryInfo getResourceLeakFunctionCallAnalyzerPluginInfo() {
 extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo llvmGetPassPluginInfo() {
     return getResourceLeakFunctionCallAnalyzerPluginInfo();
 }
-
