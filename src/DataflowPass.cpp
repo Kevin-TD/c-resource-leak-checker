@@ -230,7 +230,6 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         auto fnName = this->programFunction.getFunctionName();;
         auto f_iterator = this->F->args();
 
-        llvm::errs() << "\n\nWE FOUND " << fnName << "\n\n";
         for(auto a : this->annotations.getAllParameterAnnotationsWithoutFields(fnName)) {
             if(a->getAnnotationType() == AnnotationType::MustCallAnnotation) {
                 int index = a->getParameterIndex();
