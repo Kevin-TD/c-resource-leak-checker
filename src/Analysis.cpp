@@ -673,7 +673,7 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
 
     calledMethods.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
                                annotationHandler);
-    calledMethods.setCFG(&cfg);
+    calledMethods.setCFG(cfg);
     calledMethods.setFunc(&F);
     calledMethods.setProgramFunction(programFunction);
     calledMethods.setFunctionInfosManager(functionInfosManager);
@@ -681,7 +681,7 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
 
     mustCall.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
                           annotationHandler);
-    mustCall.setCFG(&cfg);
+    mustCall.setCFG(cfg);
     mustCall.setFunc(&F);
     mustCall.setProgramFunction(programFunction);
     mustCall.setFunctionInfosManager(functionInfosManager);
