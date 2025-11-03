@@ -28,6 +28,9 @@ void MustCall::onAnnotation(PVAliasSet* input, Annotation* annotation) {
 
         }
     }
+    else if(annotation->getAnnotationType() == AnnotationType::OwningAnnotation) {
+	    input->clearMethods();
+    }
 }
 
 void MustCall::onFunctionCall(PVAliasSet* input, std::string &fnName) {}

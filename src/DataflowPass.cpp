@@ -220,6 +220,22 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         ProgramPoint postProgramPoint =
             this->programFunction.getProgramPoint(currentBranch, true);
 
+	auto fnName = this->programFunction.getFunctionName();;
+	auto f_iterator = this->F->args();
+
+	llvm::errs() << "\n\nWE FOUND " << fnName << "\n\n"; 	
+	for(auto a : this->annotations.getAllParameterAnnotationsWithoutFields(fnName)) {
+		if(a->getAnnotationType() == AnnotationType::MustCallAnnotation) {
+			int index = a->getParameterIndex();
+			auto f_iterator = this->F->args();
+			auto arg = std::next(f_iterator.begin(), index);
+			ProgramVariable var = ProgramVariable(arg);
+			auto pvas = postProgramPoint.getPVASRef(var, true);
+			this->onAnnotation(pvas, a);
+		}
+	}
+	//TODO: Add parameter annotation WITH fields
+
         for (Instruction *instruction : instructions) {
             transfer(instruction, postProgramPoint);
         }
@@ -592,6 +608,10 @@ void DataflowPass::setProgramFunction(ProgramFunction programFunction) {
 
 void DataflowPass::setFunctionInfosManager(FunctionInfosManager functionInfosManager) {
     this->functionInfosManager = functionInfosManager;
+}
+
+void DataflowPass::setFunc(Function *F) {
+    this->F = F;
 }
 
 void DataflowPass::setOptLoadFileName(const std::string& optLoadFileName) {

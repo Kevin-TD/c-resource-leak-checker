@@ -8,6 +8,7 @@
 enum AnnotationType {
     MustCallAnnotation,
     CallsAnnotation,
+    OwningAnnotation,
 };
 
 // TODO: add virtual method verifyAnnotation and implement for the superclasses

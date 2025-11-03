@@ -252,18 +252,25 @@ class DeclParser:
             0: anno_decl.find(" ")
         ]
 
-        anno_methods = anno_decl[anno_decl.rfind(
-            "methods = ") + len("methods = ")::]
-        logout(f"ANNO METHODS = {anno_methods}")
+        if anno_type != "Owning":
+            anno_methods = anno_decl[anno_decl.rfind(
+                "methods = ") + len("methods = ")::]
+            logout(f"ANNO METHODS = {anno_methods}")
 
         known_target = ""
 
         anno_unfilled_target = ""
         anno_unfilled_target_index = anno_decl.find("_")
 
-        while (anno_decl[anno_unfilled_target_index] != " "):
+        while (anno_unfilled_target_index < len(anno_decl) and anno_decl[anno_unfilled_target_index] != " "):
             anno_unfilled_target += anno_decl[anno_unfilled_target_index]
             anno_unfilled_target_index += 1
+
+        if anno_unfilled_target_index == len(anno_decl):
+            known_target += f"FUNCTION({spec.get_name()}).PARAM({param_index})"
+            logout(
+                f"for anno {anno_decl} known target is {known_target}")
+            return AnnotateAttr(anno_type, known_target, '')
 
         # anno_unfilled_target looks like "_" or "_.FIELD(x)"
 

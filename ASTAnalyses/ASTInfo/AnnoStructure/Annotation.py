@@ -11,7 +11,7 @@ class Annotation:
             target (str): name of function/struct 
             methods (str): list of methods (as a str) specified in the annotation
         """
-        if anno_type != "Calls" and anno_type != "MustCall":
+        if anno_type != "Calls" and anno_type != "MustCall" and anno_type != "Owning":
             raise ValueError(f"Annotation type '{anno_type}' unrecognized")
 
         self.__anno_type = anno_type
@@ -34,4 +34,6 @@ class Annotation:
         return self.__methods == other.get_methods()
 
     def to_str(self) -> str:
-        return f"{self.__anno_type} target = {self.__target} methods = {self.__methods}"
+        if self.__anno_type != "Owning":
+            return f"{self.__anno_type} target = {self.__target} methods = {self.__methods}"
+        return f"{self.__anno_type} target = {self.__target}"

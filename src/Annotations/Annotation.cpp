@@ -61,6 +61,7 @@ MustCall target = STRUCT(my_struct).FIELD(0) methods = free
 bool Annotation::rawStringIsCorrectlyFormatted(const std::string &rawAnnotationString) {
     std::string callsAnnoRe = "Calls";
     std::string mustCallAnnoRe = "MustCall";
+    std::string owningAnnoRe = "Owning";
     std::string targetRe = "target";
     std::string structRe = "STRUCT";
     std::string functionRe = "FUNCTION";
@@ -72,11 +73,10 @@ bool Annotation::rawStringIsCorrectlyFormatted(const std::string &rawAnnotationS
 
     std::string varNameRe = "([_A-Za-z])([_A-Za-z0-9])*";
     std::string methodArgRe = "(" + varNameRe + ")(\ ?,\ ?(" + varNameRe + "))*";
-    std::string annoNameRe = callsAnnoRe + "|" + mustCallAnnoRe;
+    std::string annoNameRe = callsAnnoRe + "|" + mustCallAnnoRe + "|" + owningAnnoRe;
 
     std::regex annoStrRe(
-        "(" + annoNameRe + ") " + targetRe + " = (" + structRe + "\\((" + varNameRe + ")\\)|" + functionRe + "\\((" + varNameRe + ")\\)(\\." + extParamRe + "\\([0-9]+\\)|\\." + extReturnRe + ")?)(\\." + extFieldRe + "\\([0-9]+\\))? " + methodsRe + " = (" + methodArgRe + ")");
-
+        "(" + annoNameRe + ") " + targetRe + " = (" + structRe + "\\((" + varNameRe + ")\\)|" + functionRe + "\\((" + varNameRe + ")\\)(\\." + extParamRe + "\\([0-9]+\\)|\\." + extReturnRe + ")?)(\\." + extFieldRe + "\\([0-9]+\\))?( " + methodsRe + " = (" + methodArgRe + "))?");
     return std::regex_match(rawAnnotationString.c_str(), annoStrRe);
 }
 
@@ -94,6 +94,9 @@ Annotation *Annotation::generateAnnotation(const std::string &rawAnno) {
         annoType = AnnotationType::CallsAnnotation;
     } else if (chunks[0] == "MustCall") {
         annoType = AnnotationType::MustCallAnnotation;
+    }
+    else if (chunks[0] == "Owning") {
+	    annoType = AnnotationType::OwningAnnotation;
     }
 
     std::string methodsString;
@@ -196,6 +199,9 @@ std::string annotationTypeToString(AnnotationType anno) {
     case AnnotationType::CallsAnnotation:
         return "CallsAnnotation";
         break;
+    case AnnotationType::OwningAnnotation:
+	return "OwningAnnotation";
+	break;
     }
     return "";
 }
