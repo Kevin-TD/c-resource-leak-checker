@@ -32,9 +32,8 @@ void CalledMethods::onAnnotation(PVAliasSet* input, Annotation* annotation) {
         for (std::string annoMethod : annoMethods) {
             input->addMethod(annoMethod);
         }
-    }
-    else if(annotation->getAnnotationType() == AnnotationType::OwningAnnotation) {
-	    input->clearMethods();
+    } else if(annotation->getAnnotationType() == AnnotationType::OwningAnnotation) {
+        input->clearMethods();
     }
 }
 

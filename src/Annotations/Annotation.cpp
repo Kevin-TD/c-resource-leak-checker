@@ -94,9 +94,8 @@ Annotation *Annotation::generateAnnotation(const std::string &rawAnno) {
         annoType = AnnotationType::CallsAnnotation;
     } else if (chunks[0] == "MustCall") {
         annoType = AnnotationType::MustCallAnnotation;
-    }
-    else if (chunks[0] == "Owning") {
-	    annoType = AnnotationType::OwningAnnotation;
+    } else if (chunks[0] == "Owning") {
+        annoType = AnnotationType::OwningAnnotation;
     }
 
     std::string methodsString;
@@ -200,8 +199,8 @@ std::string annotationTypeToString(AnnotationType anno) {
         return "CallsAnnotation";
         break;
     case AnnotationType::OwningAnnotation:
-	return "OwningAnnotation";
-	break;
+        return "OwningAnnotation";
+        break;
     }
     return "";
 }
