@@ -26,6 +26,9 @@ class DisjointPVAliasSets {
     // returns a copy of every disjointed set
     std::list<PVAliasSet> getSets() const;
 
+    // returns the contained alias set that has matching references to the list of Program variables
+    PVAliasSet *findMatchingSet(std::list<ProgramVariable> vars);
+
     // returns a reference to the alias set that has programVar.
     // NULL is returned if it's not found.
     PVAliasSet *getSetRef(ProgramVariable programVar);
