@@ -322,8 +322,14 @@ class DeclParser:
                         return_struct_name = return_type_split[1]
                     else:
                         return_struct_name = return_type_split[0]
-                    struct = specifier_manager.get_or_add_struct(
-                        return_struct_name)
+                    # When we return a struct ptr, it is being treated as a different type from the struct
+                    if return_struct_name[-1] != '*':
+                        struct = specifier_manager.get_or_add_struct(
+                            return_struct_name)
+                    else:
+                        struct = specifier_manager.get_or_add_struct(
+                                return_struct_name[:-1])
+
 
                     for field in struct.get_fields():
                         if anno_unfilled_target_field_name == field.get_field_name():
