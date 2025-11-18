@@ -5,7 +5,7 @@
 
 int main () {
 	long *item = malloc(sizeof(long));
-	if(!item)
-		free(item);
+	item = NULL;
+	free(item);
     return 0;
 }
