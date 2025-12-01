@@ -45,18 +45,23 @@ void ProgramBlock::add(ProgramPoint *programPoint) {
 }
 
 ProgramPoint *ProgramBlock::getPoint(unsigned int line) {
-    if(line > this->points.back()->getPointName()) {
-        return this->points.back();
-    }
-    ProgramPoint *last = this->points.front();
-    // I don't know if this part is necessary if everything in a program point is continuous but it
-    // is here just in case
+	ProgramPoint *last = this->points.front();
     for(auto p : this->points) {
-        if(p->getPointName() > line) {
-            return last;
+        if(p->getPointName() == line) {
+            return p;
         }
-        last = p;
+	if(line < p->getPointName())
+		last = p;
     }
+    // Create new point
+    ProgramPoint *newP;
+    if(last)
+    	newP = new ProgramPoint(line, last);
+    else
+	newP = new ProgramPoint(line);
+    this->points.push_back(newP);
+    // The way we calculate last assumes sorting
+    this->points.sort([](const ProgramPoint *P, const ProgramPoint *P2){ return P->getPointName() < P2->getPointName(); });
     return last;
 }
 
