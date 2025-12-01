@@ -2,12 +2,13 @@
 #define PROGRAM_FUNCTION_H
 
 #include "ProgramRepresentation/ProgramPoint.h"
+#include "ProgramRepresentation/ProgramBlock.h"
 
 // reflects a function from the C code. this class manages a set of points that
 // make up a function
 class ProgramFunction {
   private:
-    std::list<ProgramPoint> programPoints;
+    std::list<ProgramBlock> programBlocks;
 
     std::string functionName;
 
@@ -20,22 +21,22 @@ class ProgramFunction {
     ProgramFunction();
     ProgramFunction(std::string functionName);
 
-    void addProgramPoint(ProgramPoint programPoint);
+    void addProgramBlock(ProgramBlock programBlock);
 
-    void setProgramPoint(std::string pointName, ProgramPoint programPoint);
+    void setProgramBlock(std::string blockName, ProgramBlock programBlock);
 
-    std::list<ProgramPoint> getProgramPoints() const;
+    std::list<ProgramBlock> getProgramBlocks() const;
 
-    // returns a program point based off pointName and, if addNewIfNotFound is
+    // returns a program block based off pointName and, if addNewIfNotFound is
     // true, creates a new one if it was not found. if addNewIfNotFound is false
     // and the point was not found, the program fails & exits
-    ProgramPoint getProgramPoint(const std::string &pointName,
+    ProgramBlock getProgramBlock(const std::string &blockName,
                                  bool addNewIfNotFound);
 
     // returns a program point ref based off name and, if addNewIfNotFound is
     // true, creates a new one if it was not. if addNewIfNotFound is false and the
     // point was not found, the program fails & exits
-    ProgramPoint *getProgramPointRef(const std::string &pointName,
+    ProgramBlock *getProgramBlockRef(const std::string &blockName,
                                      bool addNewIfNotFound);
 
     // searches every program point to find the alias set with that value pointer. this

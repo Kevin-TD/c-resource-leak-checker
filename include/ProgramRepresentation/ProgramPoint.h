@@ -9,11 +9,12 @@
 class ProgramPoint {
   private:
     DisjointPVAliasSets programVariableAliasSets;
-    Value *returnValue;
     std::list<ProgramPoint *> successors;
 
-    // the name is same as the branch name that shows up in the IR
-    std::string pointName;
+    // this is the first instruction num that the ProgramPoint describes
+    // To find the most current one, iterate until the next Point does not exist
+    // or the next pointName is higher than the instruction number you are
+    int pointName;
 
   public:
     friend class DataflowPass;
@@ -26,10 +27,10 @@ class ProgramPoint {
     static void logoutProgramPoint(const ProgramPoint *point, bool logMethods);
 
     ProgramPoint();
-    ProgramPoint(std::string pointName);
+    ProgramPoint(int pointName);
 
     // copies the alias sets of programPoint into a new instance
-    ProgramPoint(std::string pointName, ProgramPoint *programPoint);
+    ProgramPoint(int pointName, ProgramPoint *programPoint);
 
     // adds a new successor program point
     void addSuccessor(ProgramPoint *successor);
@@ -47,12 +48,6 @@ class ProgramPoint {
     // into one of these sets if it contains a program variable that exists in one
     // of these sets
     void addPVAS(PVAliasSet pvas);
-
-    // Returns the return value associated with this program point
-    // Likely will need to be remodeled later so all resources that are owned by
-    // other parts in the program are returned
-    Value *getReturnValue();
-
     // finds set A and B from element A and element B (respectively) and merges
     // them together. if A == B or one of the elements is not found in any of these
     // sets, no actions are performed
@@ -79,7 +74,7 @@ class ProgramPoint {
     // that value pointer
     PVAliasSet *getPVASRef(Value* value, bool addNewIfNotFound);
 
-    std::string getPointName() const;
+    int getPointName() const;
 
     // compares self and another point ref to see if they have the same program
     // variables and methods set
@@ -149,6 +144,12 @@ class ProgramPoint {
     argumentVar is alias information related to the pointer being assigned a new resource
     */
     void unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar);
+
+    /*
+     * This removes a variable from an alias set without moving it to another alias set, this is used when
+     * pointers are set to NULL instead of reassigned to other pointers
+     */
+    void remove(ProgramVariable pv);
 };
 
 #endif

@@ -328,8 +328,7 @@ class DeclParser:
                             return_struct_name)
                     else:
                         struct = specifier_manager.get_or_add_struct(
-                                return_struct_name[:-1])
-
+                            return_struct_name[:-1])
 
                     for field in struct.get_fields():
                         if anno_unfilled_target_field_name == field.get_field_name():
