@@ -4,8 +4,8 @@
 #include "../../Annotations/Annotations.h"
 
 int main () {
-	long *item = malloc(sizeof(long));
-	if(!item)
-		free(item);
+    long *item = malloc(sizeof(long));
+    if(!item)
+        free(item);
     return 0;
 }
