@@ -58,7 +58,7 @@ void DataflowPass::transfer(Instruction *instruction,
             // if we want to make something that infers annotations?
 
             ProgramPoint *newPoint = new ProgramPoint(insNum, inputProgramBlock.getPoint(insNum));
-            PVAliasSet *pvas = newPoint->getPVASRef(assignedVar, false);
+            PVAliasSet *pvas = newPoint->getPVASRef(assignedVar, true);
 
             if (this->memoryFunctions[fnName].size() > 0 &&
                     assignedVar.isIdentifier()) {
