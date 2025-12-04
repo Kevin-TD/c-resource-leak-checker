@@ -200,6 +200,19 @@ void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVT
     }
 }
 
+void ProgramPoint::addSuccessor(ProgramPoint *p) {
+    llvm::errs() << "I AM BEING ADDED AND I AM " << this->pointName << "\n\n";
+    successors.push_back(p);
+}
+
+std::list<ProgramPoint *> ProgramPoint::getSuccessors() {
+    return successors;
+}
+
+Value *ProgramPoint::getReturnValue() {
+    return returnValue;
+}
+
 void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar) {
     for (ProgramVariable& pv : pvas->getProgramVariables()) {
         if (pv.equalsCleanedName(cleanedNameOfPVToUnalias)) {

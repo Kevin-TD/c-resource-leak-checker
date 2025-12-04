@@ -18,10 +18,10 @@ void DataflowPass::setExpectedResult(FullFile expectedResult) {
     this->expectedResult = expectedResult;
 }
 
-ProgramFunction DataflowPass::generatePassResults() {
+ProgramFunction *DataflowPass::generatePassResults() {
     ProgramFunction preProgramFunction;
-    ProgramFunction postProgramFunction;
-    this->analyzeCFG(this->cfg, preProgramFunction, postProgramFunction, "");
+    ProgramFunction *postProgramFunction = new ProgramFunction();
+    this->analyzeCFG(this->cfg, preProgramFunction, *postProgramFunction, "");
     return postProgramFunction;
 }
 
@@ -33,6 +33,10 @@ void DataflowPass::transfer(Instruction *instruction,
                             ProgramPoint &inputProgramPoint) {
     std::string branchName = instruction->getParent()->getName().str();
 
+
+    if (ReturnInst *retInst = dyn_cast<ReturnInst>(instruction)) {
+        inputProgramPoint.returnValue = retInst->getReturnValue();
+    }
     if (StoreInst *store = dyn_cast<StoreInst>(instruction)) {
         Value *valueToStore = store->getOperand(0);
         Value *receivingValue = store->getOperand(1);
@@ -51,10 +55,13 @@ void DataflowPass::transfer(Instruction *instruction,
             ProgramVariable assignedVar = ProgramVariable(store->getOperand(1));
             std::string arg = assignedVar.getCleanedName();
             PVAliasSet *pvas = inputProgramPoint.getPVASRef(assignedVar, false);
+            // this->onFunctionCall(pvas, fnName);
+            // TODO: Ask, wouldn't we want to keep track of functions like this
+            // if we want to make something that infers annotations?
+
 
             if (this->memoryFunctions[fnName].size() > 0 &&
                     assignedVar.isIdentifier()) {
-
                 logout("calling on alloc function for argname "
                        << arg << " and fnname " << fnName << " fnname = " << fnName);
                 this->onAllocationFunctionCall(pvas, this->memoryFunctions[fnName]);
@@ -233,10 +240,13 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         return;
     }
 
+
     ProgramPoint *priorPrePoint =
         preProgramFunction.getProgramPointRef(currentBranch, true);
     ProgramPoint *priorPostPoint =
         postProgramFunction.getProgramPointRef(currentBranch, true);
+
+    postProgramFunction.getProgramPointRef(priorBranch, false)->addSuccessor(postProgramFunction.getProgramPointRef(currentBranch, false));
 
     priorPostPoint->add(
         this->programFunction.getProgramPointRef(currentBranch, true));
@@ -455,7 +465,6 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
 
     logout("call fnname = " << fnName);
     if (this->reallocFunctions.count(fnName)) {
-
         this->onReallocFunctionCall(pvas, fnName);
         return true;
     }

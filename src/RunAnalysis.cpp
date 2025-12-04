@@ -1,19 +1,26 @@
 #include "RunAnalysis.h"
 #include "MustCall.h"
+#include "ProgramRepresentation/ProgramFunction.h"
+#include "ProgramRepresentation/ProgramPoint.h"
 #include "CalledMethods.h"
 
-AnalysisKey rlc_dataflow::ResourceLeakFunctionAnalyzer::Key;
+AnalysisKey rlc_dataflow::ResourceLeakFunctionCallAnalyzer::Key;
 
-llvm::PassPluginLibraryInfo getCodeAnalyzerPluginInfo() {
-    return { LLVM_PLUGIN_API_VERSION, "C Resource Leak Checker", LLVM_VERSION_STRING,
+rlc_dataflow::ResourceLeakFunctionCallAnalyzerResult rlc_dataflow::ResourceLeakFunctionCallAnalyzer::run(Function &F, FunctionAnalysisManager &FAM) {
+    auto ret = doAnalysis(F, F.getParent()->getSourceFileName());
+    return ret;
+};
+
+
+llvm::PassPluginLibraryInfo getResourceLeakFunctionCallAnalyzerPluginInfo() {
+    return { LLVM_PLUGIN_API_VERSION, "ResourceLeakFunctionCallAnalyzer", LLVM_VERSION_STRING,
     [](PassBuilder &PB) {
-        // Here we register our struct that determines which functions must have been called on resources and
-        // which functions may need to be called to close the resource. This is an LLVM analysis which will only run
-        // when requested for output, as oppposed to a pass, which will only run if we specifically call for it
+        // Here we register our analysis as an analysis, which will always be registered, as oppposed
+        // to a pass, which will only sometimes be registered if we specifically call for it
         PB.registerAnalysisRegistrationCallback(
         [](FunctionAnalysisManager &FAM) {
             FAM.registerPass([&] {
-                return rlc_dataflow::ResourceLeakFunctionAnalyzer();
+                return rlc_dataflow::ResourceLeakFunctionCallAnalyzer();
             });
         });
         // Here we register the actual pass, the Name argument in the anonymous function is the name
@@ -23,7 +30,7 @@ llvm::PassPluginLibraryInfo getCodeAnalyzerPluginInfo() {
         ArrayRef<PassBuilder::PipelineElement>) {
             // TODO: This or statement keeps the CI and python testers working, it should be removed before release
             if(Name == "ResourceLeak" || "ScopeAnalyzer") {
-                FPM.addPass(rlc_dataflow::ResourceLeakOutOfScopeDetector());
+                FPM.addPass(rlc_dataflow::ResourceLeakScopeChecker());
                 return true;
             }
             return false;
@@ -32,5 +39,5 @@ llvm::PassPluginLibraryInfo getCodeAnalyzerPluginInfo() {
 }
 
 extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo llvmGetPassPluginInfo() {
-    return getCodeAnalyzerPluginInfo();
+    return getResourceLeakFunctionCallAnalyzerPluginInfo();
 }

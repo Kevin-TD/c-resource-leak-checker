@@ -12,6 +12,18 @@ DisjointPVAliasSets::findIter(ProgramVariable programVar) {
     return sets.end();
 }
 
+PVAliasSet *DisjointPVAliasSets::findMatchingSet(std::list<ProgramVariable> vars) {
+    PVAliasSet *ret = NULL;
+    for(auto p = vars.begin(); p != vars.end(); ++p) {
+        ret = this->getSetRef(*p);
+        if(ret) {
+            return ret;
+        }
+    }
+    return NULL;
+}
+
+
 void DisjointPVAliasSets::merge(
     typename std::list<PVAliasSet>::iterator set1,
     typename std::list<PVAliasSet>::iterator set2) {
