@@ -89,6 +89,7 @@ class DataflowPass {
 
   protected:
     ProgramFunction programFunction;
+    Function *F;
     AnnotationHandler annotations;
     std::string optLoadFileName;
     CFG *cfg;
@@ -123,6 +124,7 @@ class DataflowPass {
     ProgramFunction *generatePassResults();
 
     void setCFG(CFG *cfg);
+    void setFunc(llvm::Function *F);
     void setExpectedResult(FullFile expectedResult);
     void setProgramFunction(ProgramFunction programFunction);
     void setAnnotations(AnnotationHandler annotations);

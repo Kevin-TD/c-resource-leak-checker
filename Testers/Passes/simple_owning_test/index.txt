@@ -1,0 +1,2 @@
+pass=CalledMethods function=free0 var=0 methods={free}
+pass=MustCall function=free0 var=0 methods={free}

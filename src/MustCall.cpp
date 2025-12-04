@@ -27,6 +27,8 @@ void MustCall::onAnnotation(PVAliasSet* input, Annotation* annotation) {
             input->addMethod(annoMethod);
 
         }
+    } else if(annotation->getAnnotationType() == AnnotationType::OwningAnnotation) {
+        input->clearMethods();
     }
 }
 

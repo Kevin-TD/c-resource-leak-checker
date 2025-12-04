@@ -21,6 +21,9 @@
 
 #define MustCall(...) MUST_CALL_CHOOSER(__VA_ARGS__)(__VA_ARGS__)
 
+#define Owning()                                                 \
+  __attribute__((annotate("Owning target = _")))
+
 // TODO: add MustCallAlias and Owning annotation
 
 // annotations have extra macros (CALLS_1_ARG, __VA_ARGS_, etc) so that we can
