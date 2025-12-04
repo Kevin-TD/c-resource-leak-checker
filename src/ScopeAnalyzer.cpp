@@ -1,13 +1,24 @@
 #include "RunAnalysis.h"
 #include "ProgramRepresentation/ProgramFunction.h"
+#include "Utils.h"
 namespace rlc_dataflow {
 
-void ResourceLeakScopeChecker::doAnalysis(Function &F, ProgramFunction *pfMustCall, ProgramFunction *pfCalledMethods) {
-    std::cout << "\n\n\n===\n\n\nCalled On \n\n\n===\n\n\n" << F.getName().str() << std::endl;
 
-    std::list<ProgramPoint> programPointsMC = pfMustCall->getProgramPoints();
-    std::list<ProgramPoint> programPointsCM = pfCalledMethods->getProgramPoints();
+void ResourceLeakScopeChecker::onOutOfScope() {
+    /*	if(!setMC->contains(retVal) && !includes(msetCM.begin(), msetCM.end(), msetMC.begin(), msetMC.end())) {
+                //TODO: flesh out this error
+                llvm::errs() << "ERROR!, Must Call not subset of Called Methods at " << F.getName().str() << "\n";
+                llvm::errs() << "HERE IS Must Call " << setMC->getMethodsString() << "\n";
+                llvm::errs() << "Here is CalledMethods " << asCM->getMethodsString() << "\n";
+                llvm::errs() << "HERE ARE THE VARS: ";
+                for(auto v : varsMC) {
+                    llvm::errs() << v.getCleanedName() << ", ";
+                }
+                llvm::errs() << "\n";
+            }*/
+}
 
+void ResourceLeakScopeChecker::handleBranch(Function &F, ProgramPoint *elementMC, ProgramPoint *elementCM) {
     DisjointPVAliasSets dpvaMC, dpvaCM;
 
     std::list<PVAliasSet> setsMC, setsCM;
@@ -18,11 +29,23 @@ void ResourceLeakScopeChecker::doAnalysis(Function &F, ProgramFunction *pfMustCa
     std::set<std::string> msetMC, msetCM;
 
     Value *retVal;
-    for(auto elementMC = programPointsMC.begin(), elementCM = programPointsCM.begin(); elementMC != programPointsMC.end(); ++elementMC, ++elementCM) {
-        retVal = elementMC->getReturnValue();
-        dpvaMC = elementMC->getProgramVariableAliasSets();
-        dpvaCM = elementCM->getProgramVariableAliasSets();
-        setsMC = dpvaMC.getSets();
+    llvm::errs() << "point " << elementMC->getPointName();
+    // Go through instruction by instruction and create obligations (represented by PVAS)
+    /*
+    /*
+    for(BasicBlock::iterator I = point->begin(), end = point->end(); end != I; ++I) {
+    	if (StoreInst *store = dyn_cast<StoreInst>(I)) {
+    	// Ignore this for now
+    	// if the variable has not yet been used, then there is no need to check the consistency, it is not currently filled with anything to overwrite
+            if (a != usedVariables.end()) {
+
+    	}
+    	else {
+    		usedVariables.push_back(store->getOperand(1)->getName.str());
+    	}
+    }
+    }
+
         // We want to check if the resource runs "out of scope" in the next function for every set of aliases
         for(auto setMC = setsMC.begin(); setMC != setsMC.end(); ++setMC) {
             varsMC = setMC->getProgramVariables();
@@ -61,7 +84,19 @@ void ResourceLeakScopeChecker::doAnalysis(Function &F, ProgramFunction *pfMustCa
                 llvm::errs() << "\n";
             }
         }
-    }
+    Needs to be rewritten with new ProgramBlocks*/
+}
+
+void ResourceLeakScopeChecker::doAnalysis(Function &F, ProgramFunction *pfMustCall, ProgramFunction *pfCalledMethods) {
+    std::cout << "\n\n\n===\n\n\nCalled On \n\n\n===\n\n\n" << F.getName().str() << std::endl;
+
+    //std::list<ProgramPoint> programPointsMC = pfMustCall->getProgramPoints();
+    //std::list<ProgramPoint> programPointsCM = pfCalledMethods->getProgramPoints();
+    /*
+
+    for(auto elementMC = programPointsMC.begin(), elementCM = programPointsCM.begin(); elementMC != programPointsMC.end(); ++elementMC, ++elementCM) {
+       this->handleBranch(F, &*elementMC, &*elementCM);
+    }*/
 }
 
 }

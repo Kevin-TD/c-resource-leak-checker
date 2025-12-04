@@ -1,13 +1,13 @@
 #include "ProgramRepresentation/ProgramPoint.h"
 #include "Debug.h"
 
-ProgramPoint::ProgramPoint(std::string pointName) {
+ProgramPoint::ProgramPoint(int pointName) {
     this->pointName = pointName;
 }
 
 ProgramPoint::ProgramPoint() {}
 
-ProgramPoint::ProgramPoint(std::string pointName, ProgramPoint *programPoint) {
+ProgramPoint::ProgramPoint(int pointName, ProgramPoint *programPoint) {
     this->pointName = pointName;
     this->programVariableAliasSets = programPoint->getProgramVariableAliasSets();
 }
@@ -58,7 +58,7 @@ DisjointPVAliasSets ProgramPoint::getProgramVariableAliasSets() const {
     return this->programVariableAliasSets;
 }
 
-std::string ProgramPoint::getPointName() const {
+int ProgramPoint::getPointName() const {
     return this->pointName;
 }
 
@@ -209,9 +209,6 @@ std::list<ProgramPoint *> ProgramPoint::getSuccessors() {
     return successors;
 }
 
-Value *ProgramPoint::getReturnValue() {
-    return returnValue;
-}
 
 void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar) {
     for (ProgramVariable& pv : pvas->getProgramVariables()) {
@@ -244,4 +241,13 @@ void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVT
             }
         }
     }
+}
+
+
+void ProgramPoint::remove(ProgramVariable pv) {
+    PVAliasSet *pvas = this->programVariableAliasSets.getSetRef(pv);
+    if(pvas == NULL) {
+        return;
+    }
+    pvas->moveOut(pv);
 }
