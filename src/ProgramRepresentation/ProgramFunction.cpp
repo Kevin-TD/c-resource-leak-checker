@@ -8,6 +8,14 @@ ProgramFunction::ProgramFunction(std::string functionName) {
 
 ProgramFunction::ProgramFunction() {}
 
+void ProgramFunction::setAnnotationHandler(AnnotationHandler a) {
+    this->a = a;
+}
+
+AnnotationHandler *ProgramFunction::getAnnotationHandler() {
+    return &a;
+}
+
 void ProgramFunction::addProgramBlock(ProgramBlock programBlock) {
     this->programBlocks.push_back(programBlock);
 }

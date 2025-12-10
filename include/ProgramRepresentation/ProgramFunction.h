@@ -3,12 +3,16 @@
 
 #include "ProgramRepresentation/ProgramPoint.h"
 #include "ProgramRepresentation/ProgramBlock.h"
+#include "Annotations/AnnotationHandler.h"
 
 // reflects a function from the C code. this class manages a set of points that
 // make up a function
+
 class ProgramFunction {
   private:
     std::list<ProgramBlock> programBlocks;
+
+    AnnotationHandler a;
 
     std::string functionName;
 
@@ -20,6 +24,9 @@ class ProgramFunction {
 
     ProgramFunction();
     ProgramFunction(std::string functionName);
+
+    AnnotationHandler *getAnnotationHandler();
+    void setAnnotationHandler(AnnotationHandler a);
 
     void addProgramBlock(ProgramBlock programBlock);
 

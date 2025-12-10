@@ -18,85 +18,83 @@ void ResourceLeakScopeChecker::onOutOfScope() {
             }*/
 }
 
-void ResourceLeakScopeChecker::handleBranch(Function &F, ProgramPoint *elementMC, ProgramPoint *elementCM) {
+void ResourceLeakScopeChecker::handleBranch(BasicBlock *B, ProgramBlock *blockMC, ProgramBlock *blockCM, AnnotationHandler *annos) {
     DisjointPVAliasSets dpvaMC, dpvaCM;
 
-    std::list<PVAliasSet> setsMC, setsCM;
+    ProgramPoint *pointMC, *pointCM;
 
-    std::list<ProgramVariable> varsMC, varsCM;
-
-    PVAliasSet *asCM;
-    std::set<std::string> msetMC, msetCM;
+    PVAliasSet *pvas, aliasMC, aliasCM;
 
     Value *retVal;
-    llvm::errs() << "point " << elementMC->getPointName();
-    // Go through instruction by instruction and create obligations (represented by PVAS)
-    /*
-    /*
-    for(BasicBlock::iterator I = point->begin(), end = point->end(); end != I; ++I) {
-    	if (StoreInst *store = dyn_cast<StoreInst>(I)) {
-    	// Ignore this for now
-    	// if the variable has not yet been used, then there is no need to check the consistency, it is not currently filled with anything to overwrite
-            if (a != usedVariables.end()) {
 
-    	}
-    	else {
-    		usedVariables.push_back(store->getOperand(1)->getName.str());
-    	}
-    }
-    }
+    // Iterate through call instructions and make sure the ownership makes sense
 
-        // We want to check if the resource runs "out of scope" in the next function for every set of aliases
-        for(auto setMC = setsMC.begin(); setMC != setsMC.end(); ++setMC) {
-            varsMC = setMC->getProgramVariables();
-            if(varsMC.size() == 0)
-                continue;
-            asCM = dpvaCM.findMatchingSet(varsMC);
-            msetCM = asCM->getMethodsSet().getMethods();
-            msetMC = setMC->getMethodsSet().getMethods();
-            bool continues_in_successor = 0;
-            bool continues_in_all =  elementMC->getSuccessors().size() > 0;
-            for(auto succ : elementMC->getSuccessors()) {
-                continues_in_successor = 0;
-                for(auto var : varsMC) {
-                    if(succ->getPVASRef(var, false)) {
-                        continues_in_successor = 1;
-                        break;
-                    }
+    int instNum = 1;
+    for(Instruction &I : *B) {
+        if (CallInst *call = dyn_cast<CallInst>(&I)) {
+            pointMC = blockMC->getPoint(instNum);
+            pointCM = blockCM->getPoint(instNum);
+
+            std::string fnName = call->getCalledFunction()->getName().str();
+
+            // For every parameter, check its annotations
+            int argnum = -1;
+            for(Value *arg : call->args()) {
+                argnum += 1;
+                Annotation *p = annos->getParameterAnnotation(fnName, argnum);
+                if(ErrorAnnotation *e = dynamic_cast<ErrorAnnotation *>(p))
+                    continue;
+                switch(p->getAnnotationType()) {
+                    // TODO: handle Annotations here, currently only one annotation is returned, I need to change
+                    // it to be a list first
                 }
-                continues_in_all = continues_in_all && continues_in_successor;
-                if(!continues_in_all)
-                    break;
-            }
-            if(continues_in_all) {
-                continue;
             }
 
-            if(!setMC->contains(retVal) && !includes(msetCM.begin(), msetCM.end(), msetMC.begin(), msetMC.end())) {
-                //TODO: flesh out this error
-                llvm::errs() << "ERROR!, Must Call not subset of Called Methods at " << F.getName().str() << "\n";
-                llvm::errs() << "HERE IS Must Call " << setMC->getMethodsString() << "\n";
-                llvm::errs() << "Here is CalledMethods " << asCM->getMethodsString() << "\n";
-                llvm::errs() << "HERE ARE THE VARS: ";
-                for(auto v : varsMC) {
-                    llvm::errs() << v.getCleanedName() << ", ";
-                }
-                llvm::errs() << "\n";
+            instNum += 1;
+
+        }
+
+    }
+
+    // Check if at every point, every alias either is satisfied or exists in the next point
+
+    for(ProgramPoint *pointMC : blockMC->getPoints()) {
+        pointCM = blockCM->getPoint(pointMC->getPointLine());
+        for(PVAliasSet aliasMC : pointMC->getProgramVariableAliasSets().getSets()) {
+            aliasCM = *pointCM->getPVASRef(aliasMC.getProgramVariables().front(), false);
+            std::list<std::string> msetMC(aliasMC.getMethodsSet().getMethods().begin(), aliasMC.getMethodsSet().getMethods().end());
+            std::list<std::string> msetCM(aliasCM.getMethodsSet().getMethods().begin(), aliasCM.getMethodsSet().getMethods().end());
+            msetMC.sort();
+            msetCM.sort();
+            if(std::includes(msetCM.begin(), msetCM.end(), msetMC.begin(), msetMC.end())) {
+                // The obligation is satisfied, no further checks are needed
+                continue;
+            } else {
+                // The obligation isn't satisfied, check if it exists in the next program point
+
             }
         }
-    Needs to be rewritten with new ProgramBlocks*/
+    }
+    // TODO: Handle Return instructions, and handle blocks passing to other blocks
 }
 
 void ResourceLeakScopeChecker::doAnalysis(Function &F, ProgramFunction *pfMustCall, ProgramFunction *pfCalledMethods) {
     std::cout << "\n\n\n===\n\n\nCalled On \n\n\n===\n\n\n" << F.getName().str() << std::endl;
 
-    //std::list<ProgramPoint> programPointsMC = pfMustCall->getProgramPoints();
-    //std::list<ProgramPoint> programPointsCM = pfCalledMethods->getProgramPoints();
-    /*
+    std::list<ProgramBlock> programBlocksMC = pfMustCall->getProgramBlocks();
+    std::list<ProgramBlock> programBlocksCM = pfCalledMethods->getProgramBlocks();
+    BasicBlock *b;
+    for(auto elementMC = programBlocksMC.begin(), elementCM = programBlocksCM.begin(); elementMC != programBlocksMC.end(); ++elementMC, ++elementCM) {
 
-    for(auto elementMC = programPointsMC.begin(), elementCM = programPointsCM.begin(); elementMC != programPointsMC.end(); ++elementMC, ++elementCM) {
-       this->handleBranch(F, &*elementMC, &*elementCM);
-    }*/
+        // Find the corresponding block
+        for(Function::iterator I = F.begin(), end = F.end(); end != I; ++I) {
+            if(I->getName() == elementMC->getBlockName()) {
+                b = &(*I);
+                break;
+            }
+            this->handleBranch(b, &*elementMC, &*elementCM, pfMustCall->getAnnotationHandler());
+        }
+    }
+
 }
-
 }

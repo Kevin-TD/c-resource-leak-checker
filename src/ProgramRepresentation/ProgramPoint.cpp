@@ -1,20 +1,20 @@
 #include "ProgramRepresentation/ProgramPoint.h"
 #include "Debug.h"
 
-ProgramPoint::ProgramPoint(int pointName) {
-    this->pointName = pointName;
+ProgramPoint::ProgramPoint(int pointLine) {
+    this->pointLine = pointLine;
 }
 
 ProgramPoint::ProgramPoint() {}
 
-ProgramPoint::ProgramPoint(int pointName, ProgramPoint *programPoint) {
-    this->pointName = pointName;
+ProgramPoint::ProgramPoint(int pointLine, ProgramPoint *programPoint) {
+    this->pointLine = pointLine;
     this->programVariableAliasSets = programPoint->getProgramVariableAliasSets();
 }
 
 void ProgramPoint::logoutProgramPoint(const ProgramPoint &point,
                                       bool logMethods) {
-    logout("\n**point name " << point.getPointName());
+    logout("\n**point name " << point.getPointLine());
     for (auto aliasSet : point.getProgramVariableAliasSets().getSets()) {
         logout("> alias set = " << aliasSet.toString(false, false));
 
@@ -26,7 +26,7 @@ void ProgramPoint::logoutProgramPoint(const ProgramPoint &point,
 
 void ProgramPoint::logoutProgramPoint(const ProgramPoint *point,
                                       bool logMethods) {
-    logout("\n**point name " << point->getPointName());
+    logout("\n**point name " << point->getPointLine());
     for (auto aliasSet : point->getProgramVariableAliasSets().getSets()) {
         logout("> alias set = " << aliasSet.toString(false, false));
 
@@ -58,8 +58,8 @@ DisjointPVAliasSets ProgramPoint::getProgramVariableAliasSets() const {
     return this->programVariableAliasSets;
 }
 
-int ProgramPoint::getPointName() const {
-    return this->pointName;
+int ProgramPoint::getPointLine() const {
+    return this->pointLine;
 }
 
 PVAliasSet *ProgramPoint::getPVASRef(ProgramVariable programVar,
@@ -201,14 +201,12 @@ void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVT
 }
 
 void ProgramPoint::addSuccessor(ProgramPoint *p) {
-    llvm::errs() << "I AM BEING ADDED AND I AM " << this->pointName << "\n\n";
     successors.push_back(p);
 }
 
 std::list<ProgramPoint *> ProgramPoint::getSuccessors() {
     return successors;
 }
-
 
 void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar) {
     for (ProgramVariable& pv : pvas->getProgramVariables()) {

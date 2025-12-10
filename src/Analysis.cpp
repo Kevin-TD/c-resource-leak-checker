@@ -178,6 +178,7 @@ void doAliasReasoning(Instruction *instruction,
                       LineNumberToLValueMap lineNumberToLValueMap) {
     bool includes = false;
     std::string branchName = instruction->getParent()->getName().str();
+    llvm::errs() << "BRANCH " << branchName << "\n";
     for (auto branch : realBranchOrder) {
         if (branch == branchName) {
             includes = true;
@@ -197,7 +198,6 @@ void doAliasReasoning(Instruction *instruction,
 
     ProgramPoint *programPoint =
         programFunction.getProgramBlockRef(branchName, true)->getPoint(instNum);
-    std::cout << "DONE HERE\n";
 
     if (!includes) {
         realBranchOrder.push_back(branchName);
@@ -769,6 +769,8 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
         logout("LINE NUMBER TO L-VALUE TESTER PASSED");
     }
     realBranchOrder.clear();
+    PostMustCalls->setAnnotationHandler(annotationHandler);
+    PostCalledMethods->setAnnotationHandler(annotationHandler);
 
     return {PostMustCalls, PostCalledMethods};
 }

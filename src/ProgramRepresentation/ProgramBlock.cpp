@@ -11,7 +11,11 @@ ProgramBlock::ProgramBlock() {}
 
 ProgramBlock::ProgramBlock(std::string pointName, ProgramBlock *prev) {
     this->blockName = blockName;
-    this->points.push_back(&prev->getPoints().back());
+    this->points.push_back(prev->getPoints().back());
+}
+
+std::list<ProgramPoint *> ProgramBlock::getPoints() {
+    return this->points;
 }
 
 void ProgramBlock::logoutProgramBlock(const ProgramBlock &block) {
@@ -45,24 +49,22 @@ void ProgramBlock::add(ProgramPoint *programPoint) {
 }
 
 ProgramPoint *ProgramBlock::getPoint(unsigned int line) {
-	ProgramPoint *last = this->points.front();
+    ProgramPoint *last = this->points.front();
     for(auto p : this->points) {
-        if(p->getPointName() == line) {
+        if(p->getPointLine() == line) {
             return p;
         }
-	if(line < p->getPointName())
-		last = p;
+        if(line < p->getPointLine())
+            last = p;
     }
     // Create new point
     ProgramPoint *newP;
     if(last)
-    	newP = new ProgramPoint(line, last);
+        newP = new ProgramPoint(line, last);
     else
-	newP = new ProgramPoint(line);
+        newP = new ProgramPoint(line);
     this->points.push_back(newP);
-    // The way we calculate last assumes sorting
-    this->points.sort([](const ProgramPoint *P, const ProgramPoint *P2){ return P->getPointName() < P2->getPointName(); });
-    return last;
+    return newP;
 }
 
 void ProgramBlock::addSuccessor(ProgramBlock *p) {

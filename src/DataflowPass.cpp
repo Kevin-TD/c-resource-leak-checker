@@ -152,7 +152,7 @@ void DataflowPass::transfer(Instruction *instruction,
         for (unsigned i = 0; i < call->getNumArgOperands(); ++i) {
             ProgramVariable argumentVar = ProgramVariable(call->getArgOperand(i));
             std::string arg = argumentVar.getCleanedName();
-            PVAliasSet *pvas = newPoint->getPVASRef(argumentVar, false);
+            PVAliasSet *pvas = newPoint->getPVASRef(argumentVar, true);
 
             if (!argumentVar.isIdentifier()) {
                 continue;
@@ -346,7 +346,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
             postProgramFunction.getProgramBlockRef(priorBranch, true);
 
         preProgramFunction.getProgramBlockRef(currentBranch, true)->getPoint(0)
-        ->setProgramVariableAliasSets(priorPostBlock->getPoints().back().getProgramVariableAliasSets());
+        ->setProgramVariableAliasSets(priorPostBlock->getPoints().back()->getProgramVariableAliasSets());
 
         llvm::SetVector<Instruction *> instructions = cfg->getInstructions();
 
@@ -354,7 +354,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
             this->programFunction.getProgramBlock(currentBranch, true);
         ProgramBlock flowInto = ProgramBlock(currentBranch);
 
-        ProgramPoint *p = new ProgramPoint(0, &(postProgramFunction.getProgramBlockRef(priorBranch, true)->getPoints().back()));
+        ProgramPoint *p = new ProgramPoint(0, postProgramFunction.getProgramBlockRef(priorBranch, true)->getPoints().back());
         flowInto.add(p);
 
         int instNum = 1;

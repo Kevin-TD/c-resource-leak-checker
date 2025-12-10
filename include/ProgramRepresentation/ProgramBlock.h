@@ -27,7 +27,7 @@ class ProgramBlock {
     ProgramBlock();
     ProgramBlock(std::string blockName);
 
-    // Returns the return value associated with this program point
+    // Returns the return value associated with this program block
     // Likely will need to be remodeled later so all resources that are owned by
     // other parts in the program are returned
     Value *getReturnValue();
@@ -53,7 +53,7 @@ class ProgramBlock {
     std::string getBlockName() const;
 
     // Returns a list of contained program points
-    std::list<ProgramPoint> getPoints();
+    std::list<ProgramPoint *> getPoints();
 };
 
 #endif

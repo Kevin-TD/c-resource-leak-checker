@@ -46,7 +46,8 @@
 
 using namespace llvm;
 class ProgramFunction;
-class ProgramPoint;
+class ProgramBlock;
+class AnnotationHandler;
 namespace rlc_dataflow {
 
 // LLVM analysis results are in the form of structs, this struct will be defined
@@ -89,7 +90,7 @@ struct ResourceLeakScopeChecker : public PassInfoMixin<ResourceLeakScopeChecker>
     };
   protected:
     void doAnalysis(Function &F, ProgramFunction *pf, ProgramFunction *pf2);
-    void handleBranch(Function &F, ProgramPoint *pmc, ProgramPoint *pcm);
+    void handleBranch(BasicBlock *B, ProgramBlock *pmc, ProgramBlock *pcm, AnnotationHandler *annos);
     void onOutOfScope();
 };
 

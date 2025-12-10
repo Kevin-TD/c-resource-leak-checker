@@ -11,10 +11,12 @@ class ProgramPoint {
     DisjointPVAliasSets programVariableAliasSets;
     std::list<ProgramPoint *> successors;
 
-    // this is the first instruction num that the ProgramPoint describes
-    // To find the most current one, iterate until the next Point does not exist
-    // or the next pointName is higher than the instruction number you are
-    int pointName;
+    // Within a block, points are defined by the number instruction they apply to. For example
+    // a program point with pointLine = 2 applies at the second instruction and continues to apply
+    // until another ProgramPoint with higher pointLine applies
+    // This is done so that points are only created when alias sets change. Points within blocks
+    // are always in the same order.
+    int pointLine;
 
   public:
     friend class DataflowPass;
@@ -27,10 +29,10 @@ class ProgramPoint {
     static void logoutProgramPoint(const ProgramPoint *point, bool logMethods);
 
     ProgramPoint();
-    ProgramPoint(int pointName);
+    ProgramPoint(int pointLine);
 
     // copies the alias sets of programPoint into a new instance
-    ProgramPoint(int pointName, ProgramPoint *programPoint);
+    ProgramPoint(int pointLine, ProgramPoint *programPoint);
 
     // adds a new successor program point
     void addSuccessor(ProgramPoint *successor);
@@ -74,7 +76,7 @@ class ProgramPoint {
     // that value pointer
     PVAliasSet *getPVASRef(Value* value, bool addNewIfNotFound);
 
-    int getPointName() const;
+    int getPointLine() const;
 
     // compares self and another point ref to see if they have the same program
     // variables and methods set
