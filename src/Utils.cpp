@@ -54,6 +54,16 @@ std::string variable(const Value *Val) {
     return RetVal;
 }
 
+BasicBlock *extractBlock(Function *F, std::string name) {
+    for(BasicBlock &a : *F) {
+        if(a.getName() == name) {
+            return &a;
+        }
+    }
+    llvm::errs() << "Failed to find Basic Block\n";
+    return nullptr;
+}
+
 bool IRstructNameEqualsCstructName(std::string &structName,
                                    std::string &optLoadFileName) {
     LLVMContext context;

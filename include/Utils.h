@@ -19,6 +19,11 @@ std::string variable(const Value *Val);
 // StructType, NULL is returned.
 StructType *unwrapValuePointerToStruct(Value *value);
 
+// Returns a ptr to a basic block in a function given its name
+// Useful for the consistency analyzer to go instruction by instruction
+// on a function
+BasicBlock *extractBlock(Function *F, std::string name);
+
 // checks to see if the name of some struct is present
 // in any IR debug !DICompositeType tags. these tags are
 // more reliable in preserving the original struct name from

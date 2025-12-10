@@ -9,11 +9,14 @@
 class ProgramPoint {
   private:
     DisjointPVAliasSets programVariableAliasSets;
-    Value *returnValue;
     std::list<ProgramPoint *> successors;
 
-    // the name is same as the branch name that shows up in the IR
-    std::string pointName;
+    // Within a block, points are defined by the number instruction they apply to. For example
+    // a program point with pointLine = 2 applies at the second instruction and continues to apply
+    // until another ProgramPoint with higher pointLine applies
+    // This is done so that points are only created when alias sets change. Points within blocks
+    // are always in the same order.
+    int pointLine;
 
   public:
     friend class DataflowPass;
@@ -26,10 +29,10 @@ class ProgramPoint {
     static void logoutProgramPoint(const ProgramPoint *point, bool logMethods);
 
     ProgramPoint();
-    ProgramPoint(std::string pointName);
+    ProgramPoint(int pointLine);
 
     // copies the alias sets of programPoint into a new instance
-    ProgramPoint(std::string pointName, ProgramPoint *programPoint);
+    ProgramPoint(int pointLine, ProgramPoint *programPoint);
 
     // adds a new successor program point
     void addSuccessor(ProgramPoint *successor);
@@ -47,12 +50,6 @@ class ProgramPoint {
     // into one of these sets if it contains a program variable that exists in one
     // of these sets
     void addPVAS(PVAliasSet pvas);
-
-    // Returns the return value associated with this program point
-    // Likely will need to be remodeled later so all resources that are owned by
-    // other parts in the program are returned
-    Value *getReturnValue();
-
     // finds set A and B from element A and element B (respectively) and merges
     // them together. if A == B or one of the elements is not found in any of these
     // sets, no actions are performed
@@ -79,7 +76,7 @@ class ProgramPoint {
     // that value pointer
     PVAliasSet *getPVASRef(Value* value, bool addNewIfNotFound);
 
-    std::string getPointName() const;
+    int getPointLine() const;
 
     // compares self and another point ref to see if they have the same program
     // variables and methods set
@@ -149,6 +146,12 @@ class ProgramPoint {
     argumentVar is alias information related to the pointer being assigned a new resource
     */
     void unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar);
+
+    /*
+     * This removes a variable from an alias set without moving it to another alias set, this is used when
+     * pointers are set to NULL instead of reassigned to other pointers
+     */
+    void remove(ProgramVariable pv);
 };
 
 #endif
