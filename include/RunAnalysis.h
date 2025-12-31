@@ -82,8 +82,6 @@ struct ResourceLeakScopeChecker : public PassInfoMixin<ResourceLeakScopeChecker>
         return true;
     }
     PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM) {
-        //PromotePass p;
-        //p.run(F, FAM);
         auto c = FAM.getResult<ResourceLeakFunctionCallAnalyzer>(F);
         doAnalysis(F, c.programFunctionMustCall, c.programFunctionCalledMethods);
         return PreservedAnalyses::all();

@@ -194,7 +194,7 @@ void doAliasReasoning(Instruction *instruction,
             break;
         instNum += 1;
     }
-    std::cout << "INST NUM IS " << instNum << "\n";
+    //std::cout << "INST NUM IS " << instNum << "\n";
 
     ProgramPoint *programPoint =
         programFunction.getProgramBlockRef(branchName, true)->getPoint(instNum);
@@ -691,6 +691,11 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
             branchInstructionMap[branchName].successors.insert(succ);
         }
     }
+    for(auto b : programFunction.getProgramBlocks()) {
+        for(auto p : b.getPoints()) {
+            ProgramPoint::logoutProgramPoint(p, true);
+        }
+    }
 
     CFG *cfg = new CFG();
     buildCFG(*cfg, realBranchOrder, branchInstructionMap);
@@ -707,12 +712,28 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
                           annotationHandler);
     mustCall.setCFG(cfg);
     mustCall.setFunc(&F);
-    mustCall.setProgramFunction(programFunction);
+    mustCall.setProgramFunction(programFunction.deepCopy());
     mustCall.setFunctionInfosManager(functionInfosManager);
     mustCall.setOptLoadFileName(optLoadFileName);
 
     ProgramFunction *PostCalledMethods = calledMethods.generatePassResults();
     ProgramFunction *PostMustCalls = mustCall.generatePassResults();
+
+    llvm::errs() << "DONE DONE DONE\n\n\n\n\n";
+    for(auto b : PostCalledMethods->getProgramBlocks()) {
+        for(auto p : b.getPoints()) {
+            ProgramPoint::logoutProgramPoint(p, true);
+        }
+    }
+
+
+    llvm::errs() << "\n\n\n\nBREAK\n\n\n\n\n";
+
+    for(auto b : PostMustCalls->getProgramBlocks()) {
+        for(auto p : b.getPoints()) {
+            ProgramPoint::logoutProgramPoint(p, true);
+        }
+    }
 
     logout("\n\nPROGRAM FUNCTION for " << programFunction.getFunctionName());
     ProgramFunction::logoutProgramFunction(programFunction, false);

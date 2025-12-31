@@ -1,5 +1,6 @@
 #include "RunAnalysis.h"
 #include "ProgramRepresentation/ProgramFunction.h"
+#include "ProgramRepresentation/ProgramPoint.h"
 #include "Utils.h"
 namespace rlc_dataflow {
 
@@ -49,29 +50,41 @@ void ResourceLeakScopeChecker::handleBranch(BasicBlock *B, ProgramBlock *blockMC
                     // it to be a list first
                 }
             }
-
-            instNum += 1;
-
         }
-
+        instNum += 1;
     }
 
     // Check if at every point, every alias either is satisfied or exists in the next point
 
     for(ProgramPoint *pointMC : blockMC->getPoints()) {
         pointCM = blockCM->getPoint(pointMC->getPointLine());
+        if( pointCM == pointMC)
+            llvm::errs() << "AAAAAAAAAAAAAAAAAAAAAAA"	<< "\n";
+        //llvm::errs() << "\n\n\n MC IS \n";
+        //ProgramPoint::logoutProgramPoint(pointMC, true);
+
+        llvm::errs() << "\n\n\n CM IS \n";
+        ProgramPoint::logoutProgramPoint(pointCM, true);
         for(PVAliasSet aliasMC : pointMC->getProgramVariableAliasSets().getSets()) {
             aliasCM = *pointCM->getPVASRef(aliasMC.getProgramVariables().front(), false);
-            std::list<std::string> msetMC(aliasMC.getMethodsSet().getMethods().begin(), aliasMC.getMethodsSet().getMethods().end());
-            std::list<std::string> msetCM(aliasCM.getMethodsSet().getMethods().begin(), aliasCM.getMethodsSet().getMethods().end());
+            if(aliasMC.getMethodsSet().getMethods().size() == 0)
+                continue;
+            std::set<std::string> msMC = aliasMC.getMethodsSet().getMethods();
+            std::set<std::string> msCM = aliasCM.getMethodsSet().getMethods();
+            std::list<std::string> msetMC(msMC.begin(), msMC.end());
+            std::list<std::string> msetCM(msCM.begin(), msCM.end());
             msetMC.sort();
             msetCM.sort();
             if(std::includes(msetCM.begin(), msetCM.end(), msetMC.begin(), msetMC.end())) {
+                llvm::errs() << "FINISHED\n";
                 // The obligation is satisfied, no further checks are needed
                 continue;
             } else {
                 // The obligation isn't satisfied, check if it exists in the next program point
-
+                ProgramPoint *next = blockMC->getPoint(pointMC->getPointLine());
+                if(next == pointMC || !next->getPVASRef(aliasMC.getProgramVariables().front(), false)) {
+                    llvm::errs() << "End of life, failure for variable " << aliasMC.getProgramVariables().front().getCleanedName() << "\n";
+                }
             }
         }
     }
@@ -92,8 +105,9 @@ void ResourceLeakScopeChecker::doAnalysis(Function &F, ProgramFunction *pfMustCa
                 b = &(*I);
                 break;
             }
-            this->handleBranch(b, &*elementMC, &*elementCM, pfMustCall->getAnnotationHandler());
         }
+        llvm::errs() << "\n\nBranch " << elementMC->getBlockName() << "\n";
+        this->handleBranch(b, &*elementMC, &*elementCM, pfMustCall->getAnnotationHandler());
     }
 
 }

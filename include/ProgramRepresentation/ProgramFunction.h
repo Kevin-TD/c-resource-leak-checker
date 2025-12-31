@@ -17,8 +17,7 @@ class ProgramFunction {
     std::string functionName;
 
   public:
-    // debugging function that lists program points and methods called (methods
-    // logged if logMethods is true) of a program function
+    // debugging function that lists program blocks which are a set of continuous program points
     static void logoutProgramFunction(ProgramFunction &programFunction,
                                       bool logMethods);
 
@@ -33,6 +32,8 @@ class ProgramFunction {
     void setProgramBlock(std::string blockName, ProgramBlock programBlock);
 
     std::list<ProgramBlock> getProgramBlocks() const;
+
+    ProgramFunction deepCopy();
 
     // returns a program block based off pointName and, if addNewIfNotFound is
     // true, creates a new one if it was not found. if addNewIfNotFound is false

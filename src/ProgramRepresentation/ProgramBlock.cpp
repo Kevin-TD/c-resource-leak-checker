@@ -9,7 +9,7 @@ ProgramBlock::ProgramBlock(std::string blockName) {
 
 ProgramBlock::ProgramBlock() {}
 
-ProgramBlock::ProgramBlock(std::string pointName, ProgramBlock *prev) {
+ProgramBlock::ProgramBlock(std::string blockName, ProgramBlock *prev) {
     this->blockName = blockName;
     this->points.push_back(prev->getPoints().back());
 }
@@ -54,16 +54,22 @@ ProgramPoint *ProgramBlock::getPoint(unsigned int line) {
         if(p->getPointLine() == line) {
             return p;
         }
-        if(line < p->getPointLine())
+        if(p->getPointLine() < line)
             last = p;
     }
     // Create new point
     ProgramPoint *newP;
-    if(last)
+    if(last) {
+        llvm::errs() << "Creating " << line << " from " << last->getPointLine() << "\n";
         newP = new ProgramPoint(line, last);
-    else
+    } else {
+        llvm::errs() << "Creating completely new in " << this << "\n";
         newP = new ProgramPoint(line);
+    }
     this->points.push_back(newP);
+    this->points.sort([](ProgramPoint *a, ProgramPoint *b) {
+        return a->getPointLine() < b->getPointLine();
+    });
     return newP;
 }
 

@@ -57,7 +57,7 @@ void DataflowPass::transfer(Instruction *instruction,
             // TODO: Ask, wouldn't we want to keep track of functions like this
             // if we want to make something that infers annotations?
 
-            ProgramPoint *newPoint = new ProgramPoint(insNum, inputProgramBlock.getPoint(insNum));
+            ProgramPoint *newPoint = inputProgramBlock.getPoint(insNum);
             PVAliasSet *pvas = newPoint->getPVASRef(assignedVar, true);
 
             if (this->memoryFunctions[fnName].size() > 0 &&
@@ -77,7 +77,6 @@ void DataflowPass::transfer(Instruction *instruction,
                     this->onAnnotation(pvas, returnAnno);
                 }
             }
-            inputProgramBlock.add(newPoint);
 
         } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(valueToStore)) {
             std::string argName = rlc_dataflow::variable(store->getOperand(1));
@@ -97,11 +96,10 @@ void DataflowPass::transfer(Instruction *instruction,
                 if (this->memoryFunctions[fnName].size() > 0 &&
                         bitcastVar.isIdentifier()) {
                     std::string arg = bitcastVar.getCleanedName();
-                    ProgramPoint *newPoint = new ProgramPoint(insNum, inputProgramBlock.getPoint(insNum));
+                    ProgramPoint *newPoint = inputProgramBlock.getPoint(insNum);
                     PVAliasSet *pvas = newPoint->getPVASRef(bitcastVar, false);
                     this->onAllocationFunctionCall(pvas,
                                                    this->memoryFunctions[fnName]);
-                    inputProgramBlock.add(newPoint);
                 }
             }
         } else if (ExtractValueInst *extractValue =
@@ -138,16 +136,15 @@ void DataflowPass::transfer(Instruction *instruction,
                                                        this->annotations.getReturnAnnotation(fnName, fieldIndex))) {
                     logout("found annotation from extract value "
                            << returnAnno->toString());
-                    ProgramPoint *newPoint = new ProgramPoint(insNum, inputProgramBlock.getPoint(insNum));
+                    ProgramPoint *newPoint = inputProgramBlock.getPoint(insNum);
                     pvas = newPoint->getPVASRef(assignedVar, false);
                     this->onAnnotation(pvas, returnAnno);
-                    inputProgramBlock.add(newPoint);
                 }
             }
         }
 
     } else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
-        ProgramPoint *newPoint = new ProgramPoint(insNum, inputProgramBlock.getPoint(insNum));
+        ProgramPoint *newPoint = inputProgramBlock.getPoint(insNum);
 
         for (unsigned i = 0; i < call->getNumArgOperands(); ++i) {
             ProgramVariable argumentVar = ProgramVariable(call->getArgOperand(i));
@@ -166,12 +163,10 @@ void DataflowPass::transfer(Instruction *instruction,
 
             if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
                     rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
-                inputProgramBlock.add(newPoint);
                 return;
             }
 
             if (handleSretCallForCallInsts(call, i, fnName, arg, newPoint)) {
-                inputProgramBlock.add(newPoint);
                 return;
             }
 
@@ -222,8 +217,6 @@ void DataflowPass::transfer(Instruction *instruction,
             }
 
         }
-
-        inputProgramBlock.add(newPoint);
     }
 }
 

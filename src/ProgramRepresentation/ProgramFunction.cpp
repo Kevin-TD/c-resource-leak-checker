@@ -24,6 +24,19 @@ std::list<ProgramBlock> ProgramFunction::getProgramBlocks() const {
     return this->programBlocks;
 }
 
+ProgramFunction ProgramFunction::deepCopy() {
+    ProgramFunction newPF(this->getFunctionName());
+    newPF.setAnnotationHandler(*this->getAnnotationHandler());
+    for(ProgramBlock &b : this->getProgramBlocks()) {
+        ProgramBlock *newBlock = newPF.getProgramBlockRef(b.getBlockName(), true);
+        for(ProgramPoint *P : b.getPoints()) {
+            ProgramPoint *p = new ProgramPoint(P->getPointLine(), P);
+            newBlock->add(p);
+        }
+    }
+    return newPF;
+}
+
 ProgramBlock *ProgramFunction::getProgramBlockRef(const std::string &blockName,
         bool addNewIfNotFound) {
     for (ProgramBlock &programBlock : this->programBlocks) {
