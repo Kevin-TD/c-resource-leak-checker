@@ -178,6 +178,7 @@ void doAliasReasoning(Instruction *instruction,
                       LineNumberToLValueMap lineNumberToLValueMap) {
     bool includes = false;
     std::string branchName = instruction->getParent()->getName().str();
+    llvm::errs() << "BRANCH " << branchName << "\n";
     for (auto branch : realBranchOrder) {
         if (branch == branchName) {
             includes = true;
@@ -185,8 +186,18 @@ void doAliasReasoning(Instruction *instruction,
         }
     }
 
+    BasicBlock *branch = instruction->getParent();
+
+    int instNum = 1;
+    for(Instruction &I : *branch) {
+        if(&I == instruction)
+            break;
+        instNum += 1;
+    }
+    //std::cout << "INST NUM IS " << instNum << "\n";
+
     ProgramPoint *programPoint =
-        programFunction.getProgramPointRef(branchName, true);
+        programFunction.getProgramBlockRef(branchName, true)->getPoint(instNum);
 
     if (!includes) {
         realBranchOrder.push_back(branchName);
@@ -217,11 +228,24 @@ void doAliasReasoning(Instruction *instruction,
         // there may be in the IR something like "%0 = ...", and our code will
         // interpret these as aliased
 
+        ProgramVariable receivingVar = ProgramVariable(store->getOperand(1));
+
         if (!varToStore.isIdentifier()) {
+            // If we null out a pointer, we want to remove it from its alias set
+            if(auto pvasRef = programPoint->getPVASRef(receivingVar, false)) {
+                logout("PVAS was " << pvasRef->toString(true, true) <<  pvasRef->getMethodsSet().getMethods().size());
+                for(auto a : pvasRef->getMethodsSet().getMethods()) {
+                    logout("AND " << a);
+                }
+                programPoint->remove(receivingVar);
+                logout("PVAS is now " <<pvasRef->toString(true, true));
+                for(auto a : pvasRef->getMethodsSet().getMethods()) {
+                    logout("AND " << a);
+                }
+            }
+
             return;
         }
-
-        ProgramVariable receivingVar = ProgramVariable(store->getOperand(1));
 
         if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
             ProgramVariable callVar = ProgramVariable(call);
@@ -555,7 +579,7 @@ void doAliasReasoning(Instruction *instruction,
 
                 auto args = getFunctionArgs(optLoadFileName, call);
 
-                if (i < arg.size()) {
+                if (i < args.size()) {
                     std::string targetArg = args[i];
 
                     std::string potentialStructAndFieldName = structFieldToIndexMap.get(targetArg);
@@ -667,6 +691,11 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
             branchInstructionMap[branchName].successors.insert(succ);
         }
     }
+    for(auto b : programFunction.getProgramBlocks()) {
+        for(auto p : b.getPoints()) {
+            ProgramPoint::logoutProgramPoint(p, true);
+        }
+    }
 
     CFG *cfg = new CFG();
     buildCFG(*cfg, realBranchOrder, branchInstructionMap);
@@ -683,12 +712,28 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
                           annotationHandler);
     mustCall.setCFG(cfg);
     mustCall.setFunc(&F);
-    mustCall.setProgramFunction(programFunction);
+    mustCall.setProgramFunction(programFunction.deepCopy());
     mustCall.setFunctionInfosManager(functionInfosManager);
     mustCall.setOptLoadFileName(optLoadFileName);
 
     ProgramFunction *PostCalledMethods = calledMethods.generatePassResults();
     ProgramFunction *PostMustCalls = mustCall.generatePassResults();
+
+    llvm::errs() << "DONE DONE DONE\n\n\n\n\n";
+    for(auto b : PostCalledMethods->getProgramBlocks()) {
+        for(auto p : b.getPoints()) {
+            ProgramPoint::logoutProgramPoint(p, true);
+        }
+    }
+
+
+    llvm::errs() << "\n\n\n\nBREAK\n\n\n\n\n";
+
+    for(auto b : PostMustCalls->getProgramBlocks()) {
+        for(auto p : b.getPoints()) {
+            ProgramPoint::logoutProgramPoint(p, true);
+        }
+    }
 
     logout("\n\nPROGRAM FUNCTION for " << programFunction.getFunctionName());
     ProgramFunction::logoutProgramFunction(programFunction, false);
@@ -745,6 +790,8 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
         logout("LINE NUMBER TO L-VALUE TESTER PASSED");
     }
     realBranchOrder.clear();
+    PostMustCalls->setAnnotationHandler(annotationHandler);
+    PostCalledMethods->setAnnotationHandler(annotationHandler);
 
     return {PostMustCalls, PostCalledMethods};
 }

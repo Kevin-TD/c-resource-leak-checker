@@ -22,6 +22,7 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/AsmParser/Parser.h"
+#include "llvm/Transforms/Utils/Mem2Reg.h"
 
 #include <algorithm>
 #include <cctype>
@@ -45,6 +46,8 @@
 
 using namespace llvm;
 class ProgramFunction;
+class ProgramBlock;
+class AnnotationHandler;
 namespace rlc_dataflow {
 
 // LLVM analysis results are in the form of structs, this struct will be defined
@@ -85,6 +88,8 @@ struct ResourceLeakScopeChecker : public PassInfoMixin<ResourceLeakScopeChecker>
     };
   protected:
     void doAnalysis(Function &F, ProgramFunction *pf, ProgramFunction *pf2);
+    void handleBranch(BasicBlock *B, ProgramBlock *pmc, ProgramBlock *pcm, AnnotationHandler *annos);
+    void onOutOfScope();
 };
 
 } // namespace rlc_dataflow

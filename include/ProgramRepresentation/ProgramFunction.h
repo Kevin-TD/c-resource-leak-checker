@@ -2,40 +2,49 @@
 #define PROGRAM_FUNCTION_H
 
 #include "ProgramRepresentation/ProgramPoint.h"
+#include "ProgramRepresentation/ProgramBlock.h"
+#include "Annotations/AnnotationHandler.h"
 
 // reflects a function from the C code. this class manages a set of points that
 // make up a function
+
 class ProgramFunction {
   private:
-    std::list<ProgramPoint> programPoints;
+    std::list<ProgramBlock> programBlocks;
+
+    AnnotationHandler a;
 
     std::string functionName;
 
   public:
-    // debugging function that lists program points and methods called (methods
-    // logged if logMethods is true) of a program function
+    // debugging function that lists program blocks which are a set of continuous program points
     static void logoutProgramFunction(ProgramFunction &programFunction,
                                       bool logMethods);
 
     ProgramFunction();
     ProgramFunction(std::string functionName);
 
-    void addProgramPoint(ProgramPoint programPoint);
+    AnnotationHandler *getAnnotationHandler();
+    void setAnnotationHandler(AnnotationHandler a);
 
-    void setProgramPoint(std::string pointName, ProgramPoint programPoint);
+    void addProgramBlock(ProgramBlock programBlock);
 
-    std::list<ProgramPoint> getProgramPoints() const;
+    void setProgramBlock(std::string blockName, ProgramBlock programBlock);
 
-    // returns a program point based off pointName and, if addNewIfNotFound is
+    std::list<ProgramBlock> getProgramBlocks() const;
+
+    ProgramFunction deepCopy();
+
+    // returns a program block based off pointName and, if addNewIfNotFound is
     // true, creates a new one if it was not found. if addNewIfNotFound is false
     // and the point was not found, the program fails & exits
-    ProgramPoint getProgramPoint(const std::string &pointName,
+    ProgramBlock getProgramBlock(const std::string &blockName,
                                  bool addNewIfNotFound);
 
     // returns a program point ref based off name and, if addNewIfNotFound is
     // true, creates a new one if it was not. if addNewIfNotFound is false and the
     // point was not found, the program fails & exits
-    ProgramPoint *getProgramPointRef(const std::string &pointName,
+    ProgramBlock *getProgramBlockRef(const std::string &blockName,
                                      bool addNewIfNotFound);
 
     // searches every program point to find the alias set with that value pointer. this

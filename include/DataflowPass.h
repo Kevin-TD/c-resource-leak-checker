@@ -27,10 +27,10 @@ class DataflowPass {
                     ProgramFunction &postProgramFunction,
                     const std::string &priorBranch);
 
-    // analyses the instruction semantics and updates `inputProgramPoint`
+    // analyses the instruction semantics and updates `inputProgramBlock`
     // accordingly, looking for function calls that an
     // implemented dataflow pass should handle
-    void transfer(Instruction *instruction, ProgramPoint &inputProgramPoint);
+    void transfer(Instruction *instruction, ProgramBlock &inputProgramBlock, int insNum);
 
     // a helper function that handles functions with Sret attribute.
     // returns true if the function had an Sret attribute and was handled,
@@ -72,7 +72,7 @@ class DataflowPass {
     bool handleSretCallForCallInsts(CallInst *call, int argIndex,
                                     const std::string &fnName,
                                     const std::string &argName,
-                                    ProgramPoint &programPoint);
+                                    ProgramPoint *programPoint);
 
     // a helper function that handles function calls that are implicit,
     // or  identified as a memory, realloc, or safe function (/Functions files).
@@ -85,7 +85,7 @@ class DataflowPass {
     bool handleIfAnnotationExistsForCallInsts(const std::string &fnName, CallInst* call, PVAliasSet *pvas);
 
     // if the call argument is a struct ty, this function de-structures it into its fields and looks for annotations on those fields
-    void handleIfStructTyAndIfFieldsHaveAnnotations(CallInst *call, unsigned argIndex, const std::string &fnName, const std::string &argName, ProgramPoint &programPoint, PVAliasSet* pvas);
+    void handleIfStructTyAndIfFieldsHaveAnnotations(CallInst *call, unsigned argIndex, const std::string &fnName, const std::string &argName, ProgramPoint *programPoint, PVAliasSet* pvas);
 
   protected:
     ProgramFunction programFunction;
