@@ -86,6 +86,7 @@ void DisjointPVAliasSets::makeSet(ProgramVariable programVar) {
     sets.push_back(newSet);
 }
 
+// First argument is "new" second is "old" for example item = %1 will be addAlias(item, %1)
 void DisjointPVAliasSets::addAlias(ProgramVariable element1,
                                    ProgramVariable element2) {
 
@@ -93,9 +94,17 @@ void DisjointPVAliasSets::addAlias(ProgramVariable element1,
     PVAliasSet* element2Set = this->getSetRef(element2);
 
     // case: both sets exist
+    // Earlier, this joined two sets, this causes an error under the following example:
+    // Register 0 and 1 point to different resources.
+    // Register 0 is stored in item
+    // Register 1 is stored in item
+    // Now these aliases will be joined into the same set despite pointing to different resources
+    // Registers are SSA, we can reason that the only time this case will happen is when
+    // we are storing something into memory. In that case we will remove the variable from the old set
+    // and store it in the new set
     if (element1Set && element2Set) {
-        element2Set->changeSetNumbersBy(element1Set->getMaxSetNumber() + 1);
-        this->unionSets(element1, element2);
+        element1Set->moveOut(element1);
+        element2Set->add(element1);
         return;
     }
 

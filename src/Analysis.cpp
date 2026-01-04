@@ -194,10 +194,12 @@ void doAliasReasoning(Instruction *instruction,
             break;
         instNum += 1;
     }
-    //std::cout << "INST NUM IS " << instNum << "\n";
+    std::cout << "INST NUM IS " << instNum << "\n";
 
     ProgramPoint *programPoint =
-        programFunction.getProgramBlockRef(branchName, true)->getPoint(instNum);
+        programFunction.getProgramBlockRef(branchName, true)->getPoint(instNum, true);
+    llvm::errs() << "old is \n";
+    ProgramPoint::logoutProgramPoint(programPoint, true);
 
     if (!includes) {
         realBranchOrder.push_back(branchName);
@@ -322,7 +324,7 @@ void doAliasReasoning(Instruction *instruction,
 
         logout("add alias for analysis storeinst else case");
         ProgramPoint::logoutProgramPoint(*programPoint, true);
-        programPoint->addAlias(varToStore, receivingVar);
+        programPoint->addAlias(receivingVar, varToStore);
         ProgramPoint::logoutProgramPoint(*programPoint, true);
 
     } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
@@ -719,15 +721,11 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
     ProgramFunction *PostCalledMethods = calledMethods.generatePassResults();
     ProgramFunction *PostMustCalls = mustCall.generatePassResults();
 
-    llvm::errs() << "DONE DONE DONE\n\n\n\n\n";
     for(auto b : PostCalledMethods->getProgramBlocks()) {
         for(auto p : b.getPoints()) {
             ProgramPoint::logoutProgramPoint(p, true);
         }
     }
-
-
-    llvm::errs() << "\n\n\n\nBREAK\n\n\n\n\n";
 
     for(auto b : PostMustCalls->getProgramBlocks()) {
         for(auto p : b.getPoints()) {

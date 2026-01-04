@@ -45,12 +45,14 @@ class ProgramBlock {
     // adds a new program point
     void add(ProgramPoint *point);
 
-    ProgramPoint *getPoint(unsigned int line);
+    ProgramPoint *getPoint(unsigned int line, bool addNew);
 
     // returns a list of successors
     std::list<ProgramBlock *> getSuccessors();
 
     std::string getBlockName() const;
+
+    void update(int point);
 
     // Returns a list of contained program points
     std::list<ProgramPoint *> getPoints();

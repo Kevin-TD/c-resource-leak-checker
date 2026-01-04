@@ -48,8 +48,40 @@ void ProgramBlock::add(ProgramPoint *programPoint) {
     this->points.push_back(programPoint);
 }
 
-ProgramPoint *ProgramBlock::getPoint(unsigned int line) {
+void ProgramBlock::update(int point) {
+    ProgramPoint *one, *two;
+    one = this->getPoint(point-1, false);
+    two = this->getPoint(point, false);
+    ProgramVariable oneVar;
+    PVAliasSet *oneSet, *twoSet;
+    int run = 0;
+    if(one != two) {
+        for(auto set : one->getProgramVariableAliasSets().getSets()) {
+            run = 0;
+            for(auto var : set.getProgramVariables()) {
+                if (var.getRawName()[0] == '%' && std::isdigit(var.getRawName()[1])) {// two's alias set is a subset of one's, it is the successor
+                    oneVar = var;
+                    run = 1;
+                    break;
+                }
+            }
+            if(!run)
+                continue;
+            twoSet = two->getPVASRef(oneVar, false);
+            oneSet = one->getPVASRef(oneVar, false);
+            // This is run intra blocks, therefore a union here is safe. Between blocks will need to be an intersection between successors
+            twoSet->methodsSetUnion(oneSet->getMethodsSet());
+
+        }
+    }
+}
+
+ProgramPoint *ProgramBlock::getPoint(unsigned int line, bool addNew) {
     ProgramPoint *last = this->points.front();
+    this->points.sort([](ProgramPoint *a, ProgramPoint *b) {
+        return a->getPointLine() < b->getPointLine();
+    });
+
     for(auto p : this->points) {
         if(p->getPointLine() == line) {
             return p;
@@ -57,6 +89,8 @@ ProgramPoint *ProgramBlock::getPoint(unsigned int line) {
         if(p->getPointLine() < line)
             last = p;
     }
+    if(!addNew)
+        return NULL;
     // Create new point
     ProgramPoint *newP;
     if(last) {

@@ -33,8 +33,8 @@ void ResourceLeakScopeChecker::handleBranch(BasicBlock *B, ProgramBlock *blockMC
     int instNum = 1;
     for(Instruction &I : *B) {
         if (CallInst *call = dyn_cast<CallInst>(&I)) {
-            pointMC = blockMC->getPoint(instNum);
-            pointCM = blockCM->getPoint(instNum);
+            pointMC = blockMC->getPoint(instNum, false);
+            pointCM = blockCM->getPoint(instNum, false);
 
             std::string fnName = call->getCalledFunction()->getName().str();
 
@@ -57,15 +57,12 @@ void ResourceLeakScopeChecker::handleBranch(BasicBlock *B, ProgramBlock *blockMC
     // Check if at every point, every alias either is satisfied or exists in the next point
 
     for(ProgramPoint *pointMC : blockMC->getPoints()) {
-        pointCM = blockCM->getPoint(pointMC->getPointLine());
-        if( pointCM == pointMC)
-            llvm::errs() << "AAAAAAAAAAAAAAAAAAAAAAA"	<< "\n";
-        //llvm::errs() << "\n\n\n MC IS \n";
-        //ProgramPoint::logoutProgramPoint(pointMC, true);
-
-        llvm::errs() << "\n\n\n CM IS \n";
-        ProgramPoint::logoutProgramPoint(pointCM, true);
+        pointCM = blockCM->getPoint(pointMC->getPointLine(), false);
         for(PVAliasSet aliasMC : pointMC->getProgramVariableAliasSets().getSets()) {
+            //llvm::errs() << "MC \n";
+            //ProgramPoint::logoutProgramPoint(pointMC, true);
+            //llvm::errs() << "CM \n";
+            //ProgramPoint::logoutProgramPoint(pointCM, true);
             aliasCM = *pointCM->getPVASRef(aliasMC.getProgramVariables().front(), false);
             if(aliasMC.getMethodsSet().getMethods().size() == 0)
                 continue;
@@ -76,14 +73,17 @@ void ResourceLeakScopeChecker::handleBranch(BasicBlock *B, ProgramBlock *blockMC
             msetMC.sort();
             msetCM.sort();
             if(std::includes(msetCM.begin(), msetCM.end(), msetMC.begin(), msetMC.end())) {
-                llvm::errs() << "FINISHED\n";
                 // The obligation is satisfied, no further checks are needed
                 continue;
             } else {
                 // The obligation isn't satisfied, check if it exists in the next program point
-                ProgramPoint *next = blockMC->getPoint(pointMC->getPointLine());
-                if(next == pointMC || !next->getPVASRef(aliasMC.getProgramVariables().front(), false)) {
+                ProgramPoint *next = blockMC->getPoint(pointMC->getPointLine()+1, false);
+                if(!next) {
+                    // if non owned give error, right now assume not owned
                     llvm::errs() << "End of life, failure for variable " << aliasMC.getProgramVariables().front().getCleanedName() << "\n";
+                } else if(next == pointMC || !next->getPVASRef(aliasMC.getProgramVariables().front(), false)) {
+                    llvm::errs() << "End of life, failure for variable " << aliasMC.getProgramVariables().front().getCleanedName() << "\n";
+
                 }
             }
         }

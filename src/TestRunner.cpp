@@ -16,7 +16,7 @@ bool TestRunner::runTests(const std::string functionName,
     std::list<ProgramBlock> points = function.getProgramBlocks();
     /* NEEDS TO BE REWRITTEN FOR ProgramBlocks
         for (ProgramPoint expectedResultPoint : points) {
-            std::string branchName = expectedResultPoint.getPointName();
+            std::string branchName = expectedResultPoint.getPointLine();
 
             if (branchName == "") {
                 branchName = lastBranchName;
@@ -140,13 +140,12 @@ FullFile TestRunner::buildExpectedResults(std::string testName,
                        << line << "'");
                 std::exit(EXIT_FAILURE);
             }
-            /* NEEDS TO BE REWRITTEN FOR BLOCKS
-                if (passName == inputPassName) {
-                    expectedResult.getProgramFunctionRef(functionName, true)
-                    ->getProgramPointRef(branchName, true)
-                    ->getPVASRef(varName, true)->methods = methodsSet;
-                }
-            */
+            if (passName == inputPassName) {
+                expectedResult.getProgramFunctionRef(functionName, true)
+                ->getProgramBlockRef(branchName, true)
+                ->getPoint(-1, false)
+                ->getPVASRef(varName, true)->methods = methodsSet;
+            }
         }
     }
 
