@@ -198,6 +198,7 @@ void doAliasReasoning(Instruction *instruction,
 
     ProgramPoint *programPoint =
         programFunction.getProgramBlockRef(branchName, true)->getPoint(instNum, true);
+    programPoint->setParentFunc(&programFunction);
     llvm::errs() << "old is \n";
     ProgramPoint::logoutProgramPoint(programPoint, true);
 
@@ -629,11 +630,12 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
 
         auto annotations = getAnnotationStrings(astInfoTempFile);
 
-
-        calledMethods.setExpectedResult(
-            TestRunner::buildExpectedResults(testName, calledMethods.passName));
-        mustCall.setExpectedResult(
-            TestRunner::buildExpectedResults(testName, mustCall.passName));
+        /*
+            calledMethods.setExpectedResult(
+                TestRunner::buildExpectedResults(testName, calledMethods.passName));
+            mustCall.setExpectedResult(
+                TestRunner::buildExpectedResults(testName, mustCall.passName));
+            */
         annotationHandler.addAnnotations(annotations);
 
         structFieldToIndexMap.buildMap(astInfoTempFile);

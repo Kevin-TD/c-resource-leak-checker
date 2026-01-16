@@ -13,6 +13,8 @@ class ProgramFunction {
     std::list<ProgramBlock> programBlocks;
 
     AnnotationHandler a;
+    // Tracks the next unique id for aliases in the function, updated whenever a new alias is created
+    int currentAliasNum = 0;
 
     std::string functionName;
 
@@ -34,6 +36,8 @@ class ProgramFunction {
     std::list<ProgramBlock> getProgramBlocks() const;
 
     ProgramFunction deepCopy();
+
+    int getNewID();
 
     // returns a program block based off pointName and, if addNewIfNotFound is
     // true, creates a new one if it was not found. if addNewIfNotFound is false

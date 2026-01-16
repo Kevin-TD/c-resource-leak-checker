@@ -55,6 +55,16 @@ PVAliasSet *DisjointPVAliasSets::getSetRef(const std::string& cleanedName) {
     return NULL;
 }
 
+PVAliasSet *DisjointPVAliasSets::getSetRefID(int ID) {
+    for (PVAliasSet &set : sets) {
+        if (set.getID() == ID) {
+            return &set;
+        }
+    }
+
+    return NULL;
+}
+
 PVAliasSet *DisjointPVAliasSets::getSetRef(Value* val) {
     for (PVAliasSet &set : sets) {
         if (set.contains(val)) {
@@ -76,12 +86,13 @@ void DisjointPVAliasSets::unionSets(ProgramVariable elementA,
 
     merge(set1, set2);
 }
-void DisjointPVAliasSets::makeSet(ProgramVariable programVar) {
+void DisjointPVAliasSets::makeSet(ProgramVariable programVar, int newID) {
     if (getSetRef(programVar)) {
         return;
     }
 
     PVAliasSet newSet;
+    newSet.setID(newID);
     newSet.add(programVar);
     sets.push_back(newSet);
 }

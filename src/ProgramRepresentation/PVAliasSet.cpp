@@ -115,6 +115,14 @@ std::string PVAliasSet::getMethodsString() const {
     return rlc_util::setToString(methodsSet);
 }
 
+int PVAliasSet::getID() {
+    return this->id;
+}
+
+void PVAliasSet::setID(int newID) {
+    this->id = newID;
+}
+
 int PVAliasSet::getIndex() {
     for (ProgramVariable pv : programVariables) {
         if (pv.containsStructFieldVar()) {

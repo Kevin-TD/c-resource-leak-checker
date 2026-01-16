@@ -30,7 +30,7 @@ class DataflowPass {
     // analyses the instruction semantics and updates `inputProgramBlock`
     // accordingly, looking for function calls that an
     // implemented dataflow pass should handle
-    void transfer(Instruction *instruction, ProgramBlock &inputProgramBlock, int insNum);
+    void transfer(Instruction *instruction, ProgramBlock &inputProgramBlock, int insNum, ProgramFunction *parent);
 
     // a helper function that handles functions with Sret attribute.
     // returns true if the function had an Sret attribute and was handled,

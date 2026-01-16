@@ -30,7 +30,7 @@ void DataflowPass::setCFG(CFG *cfg) {
 }
 
 void DataflowPass::transfer(Instruction *instruction,
-                            ProgramBlock &inputProgramBlock, int insNum) {
+                            ProgramBlock &inputProgramBlock, int insNum, ProgramFunction *parent) {
     std::string branchName = instruction->getParent()->getName().str();
     inputProgramBlock.update(insNum);
     if (ReturnInst *retInst = dyn_cast<ReturnInst>(instruction)) {
@@ -251,7 +251,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
 
         int instNum = 1;
         for (Instruction *instruction : instructions) {
-            transfer(instruction, postProgramBlock, instNum);
+            transfer(instruction, postProgramBlock, instNum, &postProgramFunction);
             instNum += 1;
         }
 
@@ -321,7 +321,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         llvm::SetVector<Instruction *> instructions = cfg->getInstructions();
         int instNum = 1;
         for (Instruction *instruction : instructions) {
-            transfer(instruction, b, instNum);
+            transfer(instruction, b, instNum, &postProgramFunction);
             instNum += 1;
         }
 
@@ -352,7 +352,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
 
         int instNum = 1;
         for (Instruction *instruction : instructions) {
-            transfer(instruction, flowInto, instNum);
+            transfer(instruction, flowInto, instNum, &postProgramFunction);
             instNum += 1;
         }
 

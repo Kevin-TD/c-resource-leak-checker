@@ -10,6 +10,7 @@ ProgramPoint::ProgramPoint() {}
 ProgramPoint::ProgramPoint(int pointLine, ProgramPoint *programPoint) {
     this->pointLine = pointLine;
     this->programVariableAliasSets = programPoint->getProgramVariableAliasSets();
+    this->parentFunc = programPoint->parentFunc;
 }
 
 void ProgramPoint::logoutProgramPoint(const ProgramPoint &point,
@@ -22,6 +23,10 @@ void ProgramPoint::logoutProgramPoint(const ProgramPoint &point,
             logout("--> methods set = " << aliasSet.getMethodsString());
         }
     }
+}
+
+void ProgramPoint::setParentFunc(ProgramFunction *p) {
+    this->parentFunc = p;
 }
 
 void ProgramPoint::logoutProgramPoint(const ProgramPoint *point,
@@ -47,7 +52,7 @@ void ProgramPoint::makeAliased(ProgramVariable elementA,
 }
 
 void ProgramPoint::addVariable(ProgramVariable programVar) {
-    this->programVariableAliasSets.makeSet(programVar);
+    this->programVariableAliasSets.makeSet(programVar, this->parentFunc->getNewID());
 }
 
 void ProgramPoint::addPVAS(PVAliasSet pvas) {
@@ -60,6 +65,10 @@ DisjointPVAliasSets ProgramPoint::getProgramVariableAliasSets() const {
 
 int ProgramPoint::getPointLine() const {
     return this->pointLine;
+}
+
+PVAliasSet *ProgramPoint::getSetID(int id) {
+    return this->programVariableAliasSets.getSetRefID(id);
 }
 
 PVAliasSet *ProgramPoint::getPVASRef(ProgramVariable programVar,

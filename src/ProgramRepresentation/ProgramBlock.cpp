@@ -52,26 +52,21 @@ void ProgramBlock::update(int point) {
     ProgramPoint *one, *two;
     one = this->getPoint(point-1, false);
     two = this->getPoint(point, false);
+    if(point == 8)
+        llvm::errs() << "POINT IS 8 and two is " << two << "\n";
+    if(!two)
+        return;
     ProgramVariable oneVar;
     PVAliasSet *oneSet, *twoSet;
     int run = 0;
     if(one != two) {
         for(auto set : one->getProgramVariableAliasSets().getSets()) {
-            run = 0;
-            for(auto var : set.getProgramVariables()) {
-                if (var.getRawName()[0] == '%' && std::isdigit(var.getRawName()[1])) {// two's alias set is a subset of one's, it is the successor
-                    oneVar = var;
-                    run = 1;
-                    break;
-                }
-            }
-            if(!run)
-                continue;
-            twoSet = two->getPVASRef(oneVar, false);
-            oneSet = one->getPVASRef(oneVar, false);
+            twoSet = two->getSetID(set.getID());
+            oneSet = one->getSetID(set.getID());
             // This is run intra blocks, therefore a union here is safe. Between blocks will need to be an intersection between successors
+            if(!oneSet || !twoSet)
+                continue;
             twoSet->methodsSetUnion(oneSet->getMethodsSet());
-
         }
     }
 }

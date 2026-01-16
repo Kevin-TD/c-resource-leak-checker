@@ -2,6 +2,7 @@
 #define PROGRAM_POINT_H
 
 #include "ProgramRepresentation/DisjointPVAliasSets.h"
+#include "ProgramRepresentation/ProgramFunction.h"
 
 // reflects a branch that holds some instructions in the IR. this class manages
 // a point's program variables using a set of alias sets. it is effectively a
@@ -10,6 +11,7 @@ class ProgramPoint {
   private:
     DisjointPVAliasSets programVariableAliasSets;
     std::list<ProgramPoint *> successors;
+    ProgramFunction *parentFunc;
 
     // Within a block, points are defined by the number instruction they apply to. For example
     // a program point with pointLine = 2 applies at the second instruction and continues to apply
@@ -33,6 +35,8 @@ class ProgramPoint {
 
     // copies the alias sets of programPoint into a new instance
     ProgramPoint(int pointLine, ProgramPoint *programPoint);
+
+    void setParentFunc(ProgramFunction *f);
 
     // adds a new successor program point
     void addSuccessor(ProgramPoint *successor);
@@ -60,6 +64,8 @@ class ProgramPoint {
     setProgramVariableAliasSets(DisjointPVAliasSets programVariableAliasSets);
 
     DisjointPVAliasSets getProgramVariableAliasSets() const;
+
+    PVAliasSet *getSetID(int ID);
 
     // returns a pointer to an alias set based on programVar. if addNewIfNotFound is true,
     // if we do not find the alias set, we will add a new set that consists of only

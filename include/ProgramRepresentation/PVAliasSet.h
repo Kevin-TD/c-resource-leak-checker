@@ -10,12 +10,18 @@
 class PVAliasSet {
   private:
     std::list<ProgramVariable> programVariables;
+    // this is the uniquely identifying id of the PV alias set that identifies it in a function
+    int id;
 
     // holds the methods called on the set
     MethodsSet methods;
 
   public:
     PVAliasSet();
+
+    // getters and setters for the unique id
+    int getID();
+    void setID(int newID);
 
     // returns true iff programVar is in the set. this overload is the preferred
     // way to check if this set contains a ProgramVariable

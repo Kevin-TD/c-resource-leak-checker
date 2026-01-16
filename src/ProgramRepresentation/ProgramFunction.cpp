@@ -20,6 +20,11 @@ void ProgramFunction::addProgramBlock(ProgramBlock programBlock) {
     this->programBlocks.push_back(programBlock);
 }
 
+int ProgramFunction::getNewID() {
+    this->currentAliasNum += 1;
+    return this->currentAliasNum - 1;
+}
+
 std::list<ProgramBlock> ProgramFunction::getProgramBlocks() const {
     return this->programBlocks;
 }

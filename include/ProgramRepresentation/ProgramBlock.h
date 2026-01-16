@@ -6,6 +6,9 @@
 // reflects a branch that holds some instructions in the IR. this class manages
 // a block's program variables using a set of alias sets. it is effectively a
 // wrapper for a continuous list of points
+
+class ProgramPoint;
+
 class ProgramBlock {
   private:
     std::list<ProgramBlock *> successors;
