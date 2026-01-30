@@ -5,8 +5,8 @@
 #include "ProgramRepresentation/ProgramBlock.h"
 #include "Annotations/AnnotationHandler.h"
 
-// reflects a function from the C code. this class manages a set of points that
-// make up a function
+// reflects a function from the C code. this class manages a set of blocks that
+// make up a function and has a counter taht is used to assign IDs to alias sets within it
 
 class ProgramFunction {
   private:
@@ -38,6 +38,8 @@ class ProgramFunction {
     ProgramFunction deepCopy();
 
     int getNewID();
+
+    void resetID();
 
     // returns a program block based off pointName and, if addNewIfNotFound is
     // true, creates a new one if it was not found. if addNewIfNotFound is false

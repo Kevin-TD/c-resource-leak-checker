@@ -144,16 +144,46 @@ void DataflowPass::transfer(Instruction *instruction,
         }
 
     } else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
+
         ProgramPoint *newPoint = inputProgramBlock.getPoint(insNum, true);
+        if(call->getName() != "") {
+            std::string fnName = call->getCalledFunction()->getName().str();
+            ProgramVariable assignedVar = ProgramVariable(call);
+            std::string arg = assignedVar.getCleanedName();
+            PVAliasSet *pvas = newPoint->getPVASRef(assignedVar, true);
+            this->onFunctionCall(pvas, fnName);
+
+            if (this->memoryFunctions[fnName].size() > 0 &&
+                    assignedVar.isIdentifier()) {
+                logout("calling on alloc function for argname "
+                       << arg << " and fnname " << fnName << " fnname = " << fnName);
+                this->onAllocationFunctionCall(pvas, this->memoryFunctions[fnName]);
+            } else if (ReturnAnnotation *returnAnno =
+                           dynamic_cast<ReturnAnnotation *>(
+                               this->annotations.getReturnAnnotation(fnName))) {
+                logout("found return annotation " << returnAnno->toString());
+                this->onAnnotation(pvas, returnAnno);
+            } else if (pvas->containsStructFieldVar()) {
+                if (ReturnAnnotation *returnAnno = dynamic_cast<ReturnAnnotation *>(
+                                                       this->annotations.getReturnAnnotation(fnName,
+                                                               pvas->getIndex()))) {
+                    this->onAnnotation(pvas, returnAnno);
+                }
+            }
+        }
 
         for (unsigned i = 0; i < call->getNumArgOperands(); ++i) {
             ProgramVariable argumentVar = ProgramVariable(call->getArgOperand(i));
             std::string arg = argumentVar.getCleanedName();
-            PVAliasSet *pvas = newPoint->getPVASRef(argumentVar, true);
 
             if (!argumentVar.isIdentifier()) {
                 continue;
             }
+
+            llvm::errs() << "point is below and arg is " << arg <<  "\n\n";
+            ProgramPoint::logoutProgramPoint(newPoint, true);
+
+            PVAliasSet *pvas = newPoint->getPVASRef(argumentVar, true);
 
             std::string fnName = call->getCalledFunction()->getName().str();
 
@@ -275,7 +305,6 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
     priorPostBlock->add(
         this->programFunction.getProgramBlockRef(currentBranch, true)->getPoint(0, true));
 
-    // almost certainly will cause OOB
     if (priorPreBlock->getPoint(0, true)->getProgramVariableAliasSets().size() > 0) {
         logout("need to lub for " << currentBranch << " " << priorBranch);
 

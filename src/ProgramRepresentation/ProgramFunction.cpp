@@ -21,8 +21,13 @@ void ProgramFunction::addProgramBlock(ProgramBlock programBlock) {
 }
 
 int ProgramFunction::getNewID() {
+    llvm::errs() << "CREATING NEW ID\n";
     this->currentAliasNum += 1;
     return this->currentAliasNum - 1;
+}
+
+void ProgramFunction::resetID() {
+    this->currentAliasNum = 0;
 }
 
 std::list<ProgramBlock> ProgramFunction::getProgramBlocks() const {

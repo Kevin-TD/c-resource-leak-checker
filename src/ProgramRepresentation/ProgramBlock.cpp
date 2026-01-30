@@ -51,11 +51,7 @@ void ProgramBlock::add(ProgramPoint *programPoint) {
 void ProgramBlock::update(int point) {
     ProgramPoint *one, *two;
     one = this->getPoint(point-1, false);
-    two = this->getPoint(point, false);
-    if(point == 8)
-        llvm::errs() << "POINT IS 8 and two is " << two << "\n";
-    if(!two)
-        return;
+    two = this->getPoint(point, true);
     ProgramVariable oneVar;
     PVAliasSet *oneSet, *twoSet;
     int run = 0;
@@ -64,9 +60,13 @@ void ProgramBlock::update(int point) {
             twoSet = two->getSetID(set.getID());
             oneSet = one->getSetID(set.getID());
             // This is run intra blocks, therefore a union here is safe. Between blocks will need to be an intersection between successors
-            if(!oneSet || !twoSet)
+            if(!oneSet)
                 continue;
-            twoSet->methodsSetUnion(oneSet->getMethodsSet());
+            else if(!twoSet) {
+                two->addPVAS(*oneSet);
+            } else {
+                twoSet->methodsSetUnion(oneSet->getMethodsSet());
+            }
         }
     }
 }
@@ -88,7 +88,7 @@ ProgramPoint *ProgramBlock::getPoint(unsigned int line, bool addNew) {
         return NULL;
     // Create new point
     ProgramPoint *newP;
-    if(last) {
+    if(last && last->getPointLine() < line) {
         llvm::errs() << "Creating " << line << " from " << last->getPointLine() << "\n";
         newP = new ProgramPoint(line, last);
     } else {

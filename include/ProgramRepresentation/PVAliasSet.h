@@ -10,7 +10,9 @@
 class PVAliasSet {
   private:
     std::list<ProgramVariable> programVariables;
-    // this is the uniquely identifying id of the PV alias set that identifies it in a function
+    // this is the uniquely identifying id of the PV alias set
+    // this is unique with a given function and is primarily how alias sets
+    // are identified
     int id;
 
     // holds the methods called on the set

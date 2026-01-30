@@ -55,9 +55,9 @@ PVAliasSet *DisjointPVAliasSets::getSetRef(const std::string& cleanedName) {
     return NULL;
 }
 
-PVAliasSet *DisjointPVAliasSets::getSetRefID(int ID) {
+PVAliasSet *DisjointPVAliasSets::getSetRefID(int id) {
     for (PVAliasSet &set : sets) {
-        if (set.getID() == ID) {
+        if (set.getID() == id) {
             return &set;
         }
     }

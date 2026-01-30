@@ -170,6 +170,308 @@ std::vector<std::string> getAnnotationStrings(const TempFileManager& astInfoFile
     return annotations;
 }
 
+
+void onLoadInst(LoadInst *load, ProgramPoint *programPoint) {
+    logout("(load) name is " << variable(load) << " for "
+           << variable(load->getPointerOperand()));
+    std::string varName = variable(load->getPointerOperand());
+
+    ProgramVariable receivingVar = ProgramVariable(load);
+    ProgramVariable givingVar = ProgramVariable(load->getPointerOperand());
+
+    logout("add alias for analysis loadinst");
+    programPoint->addAlias(receivingVar, givingVar);
+}
+
+void onCallInst(CallInst *call, ProgramPoint *programPoint) {
+    // are parameters non mutable?
+    // Right now, because everything is SSA, call instructions don't matter
+    return;
+    /*
+    ProgramVariable callVar = ProgramVariable(call);
+    logout("add alias for analysis storeinst call inst");
+
+    // check for pointer reassignment; if so, the resource becomes un-aliased
+    if (auto pvasRef = programPoint->getPVASRef(callVar, false)) {
+        if (pvasRef->containsCallInstVar()) {
+            logout("pointer reassignment inst " << *call);
+            logout("receiving var " << callVar.getRawName());
+
+            logout(callVar.getRawName()
+                   << " alias to "
+                   << pvasRef->toString(false, true));
+
+
+            const DebugLoc &debugLoc = call->getDebugLoc();
+
+            if (lineNumberToLValueMap.lineNumberIsInMap(debugLoc.getLine())) {
+                std::string leftHandSide = lineNumberToLValueMap.get(debugLoc.getLine());
+
+                std::string potentialStructName = structFieldToIndexMap.get(leftHandSide);
+                if (potentialStructName != "") {
+                    leftHandSide = potentialStructName;
+                }
+
+                logout("LHS = " << leftHandSide);
+                PVAliasSet* LHSpvas = programPoint->getPVASRef(leftHandSide, false);
+
+                if (LHSpvas) {
+                    programPoint->unalias(pvasRef, leftHandSide, call, callVar);
+                    return;
+                }
+            }
+        }
+    }
+    programPoint->addAlias(callVar, receivingVar);
+    // now we check for un-aliasing
+
+    auto fi = functionInfosManager.getFunction(fnName);
+    if (fi && fi->getNumberOfParameters() != call->getNumArgOperands()) {
+        auto args = getFunctionArgs(optLoadFileName, call);
+
+        for (unsigned i = 0; i < fi->getNumberOfParameters(); i++) {
+            ProgramVariable argumentVar = ProgramVariable(call->getArgOperand(i));
+            std::string arg = argumentVar.getCleanedName();
+            PVAliasSet *pvas = programPoint->getPVASRef(argumentVar, false);
+
+            int numFields = rlc_dataflow::getStructNumberOfFields(optLoadFileName, fi->getNthParamType(i));
+
+            if (numFields != -1) {
+                for (unsigned j = 0; j < numFields; j++) {
+                    std::string targetArg = args[i] + "." + std::to_string(j);
+
+                    logout("target arg1 " << targetArg);
+
+                    if (i + j >= call->getNumArgOperands()) {
+                        continue;
+                    }
+
+                    argumentVar = ProgramVariable(call->getArgOperand(i + j));
+                    logout("argument var " << argumentVar.getRawName());
+
+                    PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
+
+                    if (targetArgPvas) {
+                        logout("found target " << targetArg);
+                        programPoint->unalias(targetArgPvas, targetArg, argumentVar);
+                    }
+                }
+            } else {
+                std::string targetArg = args[i];
+
+                std::string potentialStructAndFieldName = structFieldToIndexMap.get(targetArg);
+                if (potentialStructAndFieldName != "") {
+                    targetArg = potentialStructAndFieldName;
+                }
+
+                logout("target arg2 " << targetArg);
+
+                PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
+
+                if (targetArgPvas) {
+                    programPoint->unalias(pvas, targetArg, argumentVar);
+                }
+            }
+        }
+        return;
+    }
+
+    for (unsigned i = 0; i < call->getNumArgOperands(); ++i) {
+        ProgramVariable argumentVar = ProgramVariable(call->getArgOperand(i));
+        std::string arg = argumentVar.getCleanedName();
+        PVAliasSet *pvas = programPoint->getPVASRef(argumentVar, false);
+
+        if (pvas && pvas->containsCallInstVar()) {
+            logout("at call " << *call << " param " << i << " pvas contains call inst var");
+
+            if (SafeFunctions.count(fnName)) {
+                logout("safe function -> skip");
+                continue;
+            }
+
+            bool doContinue = false;
+            for (auto pair : MemoryFunctions) {
+                if (fnName == pair.second) {
+                    logout("mem freeing function -> skip");
+                    doContinue = true;
+                    break;
+                }
+            }
+
+            if (doContinue) {
+                continue;
+            }
+
+            logout("not skipped i = " << i);
+
+            logout(pvas->toString(false, true));
+
+            auto args = getFunctionArgs(optLoadFileName, call);
+
+            if (i < args.size()) {
+                std::string targetArg = args[i];
+
+                std::string potentialStructAndFieldName = structFieldToIndexMap.get(targetArg);
+                if (potentialStructAndFieldName != "") {
+                    targetArg = potentialStructAndFieldName;
+                }
+
+                logout("target arg " << targetArg << " for i = " << i);
+                logout(argumentVar.getRawName());
+
+                PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
+
+                if (targetArgPvas) {
+                    programPoint->unalias(pvas, targetArg, argumentVar);
+                }
+            } else {
+                logout("missed out on " << arg << " for i = " << i);
+            }
+        }
+    }
+
+    return;
+    */
+}
+
+void onBitCastInst(BitCastInst *bitcast, ProgramPoint *programPoint) {
+    ProgramVariable sourceVar = ProgramVariable(bitcast);
+    ProgramVariable destinationVar = ProgramVariable(bitcast->getOperand(0));
+
+    StructType *sourceType = rlc_dataflow::unwrapValuePointerToStruct(bitcast);
+    StructType *destType =
+        rlc_dataflow::unwrapValuePointerToStruct(bitcast->getOperand(0));
+
+    if (sourceType && destType && sourceType->hasName() &&
+            destType->hasName()) {
+        if (sourceType->getName() != destType->getName()) {
+            errs() << "WARNING: Struct type conversions/bitcasting ('"
+                   << destType->getName() << "' to '" << sourceType->getName()
+                   << "') not supported. Related variables will not be considered "
+                   "aliased, potentially causing false positives.\n";
+
+            programPoint->addVariable(bitcast);
+
+            int numFields = sourceType->getNumElements();
+            for (int i = 0; i < numFields; i++) {
+                ProgramVariable sourceVar = ProgramVariable(bitcast, i);
+                programPoint->addVariable(sourceVar);
+            }
+
+            return;
+        }
+    }
+
+    logout("add alias for analysis bitcast");
+    programPoint->addAlias(sourceVar, destinationVar);
+}
+
+void onGetElementPtrInst(GetElementPtrInst *gepInst, ProgramPoint *programPoint, ProgramFunction &programFunction) {
+    // gepInsts typically take a struct and breaks it down into
+    // its fields. an individual gepInst may represent one field of a struct.
+    // note:
+    /*
+    LLVM removes field names and just makes them indices
+    example:
+    struct s {
+      int a; // index 0
+      int b; // index 1
+      int c; // index 2
+    }
+    see:
+    https://mapping-high-level-constructs-to-llvm-ir.readthedocs.io/en/latest/basic-constructs/structures.html
+    */
+
+    llvm::Type *structType = gepInst->getPointerOperandType();
+    llvm::Value *pointerOperand = gepInst->getPointerOperand();
+
+
+    if (llvm::PointerType *pointerType =
+                llvm::dyn_cast<llvm::PointerType>(pointerOperand->getType())) {
+        if (llvm::StructType *structType =
+                    llvm::dyn_cast<llvm::StructType>(pointerType->getElementType())) {
+            llvm::Value *indexValue = gepInst->getOperand(2);
+            if (llvm::ConstantInt *constIndex =
+                        llvm::dyn_cast<llvm::ConstantInt>(indexValue)) {
+                ProgramVariable sourceVar = ProgramVariable(gepInst);
+                int index = constIndex->getValue().getSExtValue();
+
+                if (BitCastInst *bitcast = dyn_cast<BitCastInst>(pointerOperand)) {
+                    ProgramVariable structVar =
+                        ProgramVariable(bitcast->getOperand(0), index);
+                    logout("add alias for analysis gepinst");
+                    programPoint->addAlias(sourceVar, structVar);
+                    return;
+                }
+
+                ProgramVariable structPV = ProgramVariable(pointerOperand);
+
+                PVAliasSet *originalStructPVASRef =
+                    programPoint->getPVASRef(structPV, false);
+
+                if (!originalStructPVASRef) {
+                    originalStructPVASRef = programFunction.getPVASRefFromValue(pointerOperand);
+
+                    if (!originalStructPVASRef) {
+                        errs() << "pvas struct ref not found by value " << *pointerOperand << ". early exit\n";
+                        std::exit(1);
+                    }
+                }
+
+
+                ProgramFunction::logoutProgramFunction(programFunction, false);
+
+                for (ProgramVariable pv :
+                        originalStructPVASRef->getProgramVariables()) {
+                    if (AllocaInst *structAllocaInst =
+                                dyn_cast<AllocaInst>(pv.getValue())) {
+                        ProgramVariable structVar = ProgramVariable(pv.getValue(), index);
+
+                        logout("spec index inst = " << *gepInst);
+                        logout("specifying index for " << structVar.getCleanedName());
+
+                        programPoint->addAlias(sourceVar, structVar);
+
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+void onAllocaInst(AllocaInst *allocate, ProgramPoint *programPoint, std::string optLoadFileName) {
+    logout("alloca inst = " << *allocate);
+
+    StructType *structType = rlc_dataflow::unwrapValuePointerToStruct(allocate);
+
+    if (!structType) {
+        return;
+    }
+
+    programPoint->addVariable(ProgramVariable(allocate));
+
+    std::string structName = structType->getName().str();
+
+    structName = rlc_util::sliceString(
+                     structName, structName.find_last_of('.') + 1, structName.size() - 1);
+    logout("struct name in IR = " << structName);
+
+    if (!rlc_dataflow::IRstructNameEqualsCstructName(structName,
+            optLoadFileName)) {
+        errs() << "Error: Did not find struct name '" << structName
+               << "' in debug info\n";
+        exit(1);
+    }
+
+    int numFields = structType->getNumElements();
+    for (int i = 0; i < numFields; i++) {
+        ProgramVariable sourceVar = ProgramVariable(allocate, i);
+        programPoint->addVariable(sourceVar);
+    }
+}
+
 void doAliasReasoning(Instruction *instruction,
                       ProgramFunction &programFunction,
                       std::string optLoadFileName,
@@ -207,263 +509,62 @@ void doAliasReasoning(Instruction *instruction,
     }
 
     if (LoadInst *load = dyn_cast<LoadInst>(instruction)) {
-        logout("(load) name is " << variable(load) << " for "
-               << variable(load->getPointerOperand()));
-        std::string varName = variable(load->getPointerOperand());
-
-        ProgramVariable receivingVar = ProgramVariable(load);
-        ProgramVariable givingVar = ProgramVariable(load->getPointerOperand());
-
-        logout("add alias for analysis loadinst");
-        programPoint->addAlias(receivingVar, givingVar);
-
-    } else if (StoreInst *store = dyn_cast<StoreInst>(instruction)) {
-        logout("store inst " << *instruction);
-
-        Value *valueToStore = store->getOperand(0);
-        Value *receivingValue = store->getOperand(1);
-
-        ProgramVariable varToStore = ProgramVariable(store->getOperand(0));
-
-        // necessary check since the value to store could just be a number, and we
-        // don't need to alias vars with nums. Also can cause name clashes; e.g.,
-        // if we have some "ret i32 0", we'll be adding program variable 0, but
-        // there may be in the IR something like "%0 = ...", and our code will
-        // interpret these as aliased
-
-        ProgramVariable receivingVar = ProgramVariable(store->getOperand(1));
-
-        if (!varToStore.isIdentifier()) {
-            // If we null out a pointer, we want to remove it from its alias set
-            if(auto pvasRef = programPoint->getPVASRef(receivingVar, false)) {
-                logout("PVAS was " << pvasRef->toString(true, true) <<  pvasRef->getMethodsSet().getMethods().size());
-                for(auto a : pvasRef->getMethodsSet().getMethods()) {
-                    logout("AND " << a);
-                }
-                programPoint->remove(receivingVar);
-                logout("PVAS is now " <<pvasRef->toString(true, true));
-                for(auto a : pvasRef->getMethodsSet().getMethods()) {
-                    logout("AND " << a);
-                }
-            }
-
-            return;
-        }
-
-        if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
-            ProgramVariable callVar = ProgramVariable(call);
-            logout("add alias for analysis storeinst call inst");
-
-            // check for pointer reassignment; if so, the resource becomes un-aliased
-            if (auto pvasRef = programPoint->getPVASRef(receivingVar, false)) {
-                if (pvasRef->containsCallInstVar()) {
-                    logout("pointer reassignment inst " << *instruction);
-                    logout("receiving var " << receivingVar.getRawName());
-
-                    logout(callVar.getRawName()
-                           << " alias to "
-                           << pvasRef->toString(false, true));
-
-
-                    const DebugLoc &debugLoc = call->getDebugLoc();
-
-                    if (lineNumberToLValueMap.lineNumberIsInMap(debugLoc.getLine())) {
-                        std::string leftHandSide = lineNumberToLValueMap.get(debugLoc.getLine());
-
-                        std::string potentialStructName = structFieldToIndexMap.get(leftHandSide);
-                        if (potentialStructName != "") {
-                            leftHandSide = potentialStructName;
-                        }
-
-                        logout("LHS = " << leftHandSide);
-                        PVAliasSet* LHSpvas = programPoint->getPVASRef(leftHandSide, false);
-
-                        if (LHSpvas) {
-                            programPoint->unalias(pvasRef, leftHandSide, call, receivingVar);
-                            return;
-                        }
-                    }
-                }
-            }
-
-            programPoint->addAlias(callVar, receivingVar);
-            return;
-        }
-
-        // check if two structs are being aliased. the structs must refer
-        // to the same type. if they do not, they are not aliased;
-        // it is safe to do this because worst case scenario,
-        // it yields a false positive.
-        if (valueToStore->getType()->isPointerTy() &&
-                receivingValue->getType()->isPointerTy()) {
-            StructType *valueStruct =
-                rlc_dataflow::unwrapValuePointerToStruct(valueToStore);
-            StructType *receivingStruct =
-                rlc_dataflow::unwrapValuePointerToStruct(receivingValue);
-
-            if (valueStruct && receivingStruct && valueStruct == receivingStruct) {
-                logout("two structs to alias " << *store);
-                int numFields = valueStruct->getNumElements();
-
-                logout("pre alias");
-                ProgramPoint::logoutProgramPoint(*programPoint, true);
-
-                for (int i = 0; i < numFields; i++) {
-                    ProgramVariable valueStructVar = ProgramVariable(valueToStore, i);
-                    ProgramVariable receivingStructVar =
-                        ProgramVariable(receivingValue, i);
-
-                    programPoint->makeAliased(valueStructVar, receivingStructVar);
-                }
-
-                logout("post alias");
-                ProgramPoint::logoutProgramPoint(*programPoint, true);
-
-                return;
-            }
-        }
-
-        logout("add alias for analysis storeinst else case");
-        ProgramPoint::logoutProgramPoint(*programPoint, true);
-        programPoint->addAlias(receivingVar, varToStore);
-        ProgramPoint::logoutProgramPoint(*programPoint, true);
-
-    } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
-        ProgramVariable sourceVar = ProgramVariable(bitcast);
-        ProgramVariable destinationVar = ProgramVariable(bitcast->getOperand(0));
-
-        StructType *sourceType = rlc_dataflow::unwrapValuePointerToStruct(bitcast);
-        StructType *destType =
-            rlc_dataflow::unwrapValuePointerToStruct(bitcast->getOperand(0));
-
-        if (sourceType && destType && sourceType->hasName() &&
-                destType->hasName()) {
-            if (sourceType->getName() != destType->getName()) {
-                errs() << "WARNING: Struct type conversions/bitcasting ('"
-                       << destType->getName() << "' to '" << sourceType->getName()
-                       << "') not supported. Related variables will not be considered "
-                       "aliased, potentially causing false positives.\n";
-
-                programPoint->addVariable(bitcast);
-
-                int numFields = sourceType->getNumElements();
-                for (int i = 0; i < numFields; i++) {
-                    ProgramVariable sourceVar = ProgramVariable(bitcast, i);
-                    programPoint->addVariable(sourceVar);
-                }
-
-                return;
-            }
-        }
-
-        logout("add alias for analysis bitcast");
-        programPoint->addAlias(sourceVar, destinationVar);
-
-    } else if (GetElementPtrInst *gepInst =
-                   dyn_cast<GetElementPtrInst>(instruction)) {
-
-        // gepInsts typically take a struct and breaks it down into
-        // its fields. an individual gepInst may represent one field of a struct.
-        // note:
-        /*
-        LLVM removes field names and just makes them indices
-        example:
-        struct s {
-          int a; // index 0
-          int b; // index 1
-          int c; // index 2
-        }
-        see:
-        https://mapping-high-level-constructs-to-llvm-ir.readthedocs.io/en/latest/basic-constructs/structures.html
-        */
-
-        llvm::Type *structType = gepInst->getPointerOperandType();
-        llvm::Value *pointerOperand = gepInst->getPointerOperand();
-
-
-        if (llvm::PointerType *pointerType =
-                    llvm::dyn_cast<llvm::PointerType>(pointerOperand->getType())) {
-            if (llvm::StructType *structType =
-                        llvm::dyn_cast<llvm::StructType>(pointerType->getElementType())) {
-                llvm::Value *indexValue = gepInst->getOperand(2);
-                if (llvm::ConstantInt *constIndex =
-                            llvm::dyn_cast<llvm::ConstantInt>(indexValue)) {
-                    ProgramVariable sourceVar = ProgramVariable(gepInst);
-                    int index = constIndex->getValue().getSExtValue();
-
-                    if (BitCastInst *bitcast = dyn_cast<BitCastInst>(pointerOperand)) {
-                        ProgramVariable structVar =
-                            ProgramVariable(bitcast->getOperand(0), index);
-                        logout("add alias for analysis gepinst");
-                        programPoint->addAlias(sourceVar, structVar);
-                        return;
-                    }
-
-                    ProgramVariable structPV = ProgramVariable(pointerOperand);
-
-                    PVAliasSet *originalStructPVASRef =
-                        programPoint->getPVASRef(structPV, false);
-
-                    if (!originalStructPVASRef) {
-                        originalStructPVASRef = programFunction.getPVASRefFromValue(pointerOperand);
-
-                        if (!originalStructPVASRef) {
-                            errs() << "pvas struct ref not found by value " << *pointerOperand << ". early exit\n";
-                            std::exit(1);
-                        }
-                    }
-
-
-                    ProgramFunction::logoutProgramFunction(programFunction, false);
-
-                    for (ProgramVariable pv :
-                            originalStructPVASRef->getProgramVariables()) {
-                        if (AllocaInst *structAllocaInst =
-                                    dyn_cast<AllocaInst>(pv.getValue())) {
-                            ProgramVariable structVar = ProgramVariable(pv.getValue(), index);
-
-                            logout("spec index inst = " << *gepInst);
-                            logout("specifying index for " << structVar.getCleanedName());
-
-                            programPoint->addAlias(sourceVar, structVar);
-
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-    } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
-        logout("alloca inst = " << *allocate);
-
-        StructType *structType = rlc_dataflow::unwrapValuePointerToStruct(allocate);
-
-        if (!structType) {
-            return;
-        }
-
-        programPoint->addVariable(ProgramVariable(allocate));
-
-        std::string structName = structType->getName().str();
-
-        structName = rlc_util::sliceString(
-                         structName, structName.find_last_of('.') + 1, structName.size() - 1);
-        logout("struct name in IR = " << structName);
-
-        if (!rlc_dataflow::IRstructNameEqualsCstructName(structName,
-                optLoadFileName)) {
-            errs() << "Error: Did not find struct name '" << structName
-                   << "' in debug info\n";
-            exit(1);
-        }
-
-        int numFields = structType->getNumElements();
-        for (int i = 0; i < numFields; i++) {
-            ProgramVariable sourceVar = ProgramVariable(allocate, i);
-            programPoint->addVariable(sourceVar);
-        }
+        onLoadInst(load, programPoint);
 
     } else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
+        onCallInst(call, programPoint);
+    }
+    /* The following snippet handled struct behavior which I have not inspected yet since
+     * updating to the mem2reg pass. It will be refactored in later once the non struct things work
+
+    // check if two structs are being aliased. the structs must refer
+    // to the same type. if they do not, they are not aliased;
+    // it is safe to do this because worst case scenario,
+    // it yields a false positive.
+    else if (valueToStore->getType()->isPointerTy() &&
+            receivingValue->getType()->isPointerTy()) {
+        StructType *valueStruct =
+            rlc_dataflow::unwrapValuePointerToStruct(valueToStore);
+        StructType *receivingStruct =
+            rlc_dataflow::unwrapValuePointerToStruct(receivingValue);
+
+        if (valueStruct && receivingStruct && valueStruct == receivingStruct) {
+            logout("two structs to alias " << *store);
+            int numFields = valueStruct->getNumElements();
+
+            logout("pre alias");
+            ProgramPoint::logoutProgramPoint(*programPoint, true);
+
+            for (int i = 0; i < numFields; i++) {
+                ProgramVariable valueStructVar = ProgramVariable(valueToStore, i);
+                ProgramVariable receivingStructVar =
+                    ProgramVariable(receivingValue, i);
+
+                programPoint->makeAliased(valueStructVar, receivingStructVar);
+            }
+
+            logout("post alias");
+            ProgramPoint::logoutProgramPoint(*programPoint, true);
+
+            return;
+        }
+    }
+
+    logout("add alias for analysis storeinst else case");
+    ProgramPoint::logoutProgramPoint(*programPoint, true);
+    programPoint->addAlias(receivingVar, varToStore);
+    ProgramPoint::logoutProgramPoint(*programPoint, true);
+    */
+    else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
+        onBitCastInst(bitcast, programPoint);
+    } else if (GetElementPtrInst *gepInst =
+                   dyn_cast<GetElementPtrInst>(instruction)) {
+        onGetElementPtrInst(gepInst, programPoint, programFunction);
+    } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
+        onAllocaInst(allocate, programPoint, optLoadFileName);
+    }
+    /* This seems to handle the LLVM debug instruction calls
+    	else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
         std::string fnName = call->getCalledFunction()->getName().str();
         /*
         there are 2 llvm annotations to consider:
@@ -487,7 +588,7 @@ void doAliasReasoning(Instruction *instruction,
         and llvm.annotation.*
         (https://llvm.org/docs/LangRef.html#llvm-annotation-intrinsic)
         but we wont need to worry about them; they hold no aliasing information
-        */
+        *\/
         if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
                 rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
             ProgramVariable sourceVar = ProgramVariable(call);
@@ -497,113 +598,8 @@ void doAliasReasoning(Instruction *instruction,
             return;
         }
 
-        // now we check for un-aliasing
 
-        auto fi = functionInfosManager.getFunction(fnName);
-        if (fi && fi->getNumberOfParameters() != call->getNumArgOperands()) {
-            auto args = getFunctionArgs(optLoadFileName, call);
-
-            for (unsigned i = 0; i < fi->getNumberOfParameters(); i++) {
-                ProgramVariable argumentVar = ProgramVariable(call->getArgOperand(i));
-                std::string arg = argumentVar.getCleanedName();
-                PVAliasSet *pvas = programPoint->getPVASRef(argumentVar, false);
-
-                int numFields = rlc_dataflow::getStructNumberOfFields(optLoadFileName, fi->getNthParamType(i));
-
-                if (numFields != -1) {
-                    for (unsigned j = 0; j < numFields; j++) {
-                        std::string targetArg = args[i] + "." + std::to_string(j);
-
-                        logout("target arg1 " << targetArg);
-
-                        if (i + j >= call->getNumArgOperands()) {
-                            continue;
-                        }
-
-                        argumentVar = ProgramVariable(call->getArgOperand(i + j));
-                        logout("argument var " << argumentVar.getRawName());
-
-                        PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
-
-                        if (targetArgPvas) {
-                            logout("found target " << targetArg);
-                            programPoint->unalias(targetArgPvas, targetArg, argumentVar);
-                        }
-                    }
-                } else {
-                    std::string targetArg = args[i];
-
-                    std::string potentialStructAndFieldName = structFieldToIndexMap.get(targetArg);
-                    if (potentialStructAndFieldName != "") {
-                        targetArg = potentialStructAndFieldName;
-                    }
-
-                    logout("target arg2 " << targetArg);
-
-                    PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
-
-                    if (targetArgPvas) {
-                        programPoint->unalias(pvas, targetArg, argumentVar);
-                    }
-                }
-            }
-            return;
-        }
-
-        for (unsigned i = 0; i < call->getNumArgOperands(); ++i) {
-            ProgramVariable argumentVar = ProgramVariable(call->getArgOperand(i));
-            std::string arg = argumentVar.getCleanedName();
-            PVAliasSet *pvas = programPoint->getPVASRef(argumentVar, false);
-
-            if (pvas && pvas->containsCallInstVar()) {
-                logout("at call " << *call << " param " << i << " pvas contains call inst var");
-
-                if (SafeFunctions.count(fnName)) {
-                    logout("safe function -> skip");
-                    continue;
-                }
-
-                bool doContinue = false;
-                for (auto pair : MemoryFunctions) {
-                    if (fnName == pair.second) {
-                        logout("mem freeing function -> skip");
-                        doContinue = true;
-                        break;
-                    }
-                }
-
-                if (doContinue) {
-                    continue;
-                }
-
-                logout("not skipped i = " << i);
-
-                logout(pvas->toString(false, true));
-
-                auto args = getFunctionArgs(optLoadFileName, call);
-
-                if (i < args.size()) {
-                    std::string targetArg = args[i];
-
-                    std::string potentialStructAndFieldName = structFieldToIndexMap.get(targetArg);
-                    if (potentialStructAndFieldName != "") {
-                        targetArg = potentialStructAndFieldName;
-                    }
-
-                    logout("target arg " << targetArg << " for i = " << i);
-                    logout(argumentVar.getRawName());
-
-                    PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
-
-                    if (targetArgPvas) {
-                        programPoint->unalias(pvas, targetArg, argumentVar);
-                    }
-                } else {
-                    logout("missed out on " << arg << " for i = " << i);
-                }
-            }
-        }
-    }
+        */
 }
 
 ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
@@ -695,6 +691,8 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
             branchInstructionMap[branchName].successors.insert(succ);
         }
     }
+
+    llvm::errs() << "\n\n\n" << "After Alias Analysis: \n\n\n";
     for(auto b : programFunction.getProgramBlocks()) {
         for(auto p : b.getPoints()) {
             ProgramPoint::logoutProgramPoint(p, true);
@@ -708,7 +706,7 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
                                annotationHandler);
     calledMethods.setCFG(cfg);
     calledMethods.setFunc(&F);
-    calledMethods.setProgramFunction(programFunction);
+    calledMethods.setProgramFunction(programFunction.deepCopy());
     calledMethods.setFunctionInfosManager(functionInfosManager);
     calledMethods.setOptLoadFileName(optLoadFileName);
 
@@ -721,6 +719,7 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
     mustCall.setOptLoadFileName(optLoadFileName);
 
     ProgramFunction *PostCalledMethods = calledMethods.generatePassResults();
+    programFunction.resetID();
     ProgramFunction *PostMustCalls = mustCall.generatePassResults();
 
     for(auto b : PostCalledMethods->getProgramBlocks()) {

@@ -58,11 +58,12 @@ void ResourceLeakScopeChecker::handleBranch(BasicBlock *B, ProgramBlock *blockMC
 
     for(ProgramPoint *pointMC : blockMC->getPoints()) {
         pointCM = blockCM->getPoint(pointMC->getPointLine(), false);
+        llvm::errs() << "MC \n";
+        ProgramPoint::logoutProgramPoint(pointMC, true);
+        llvm::errs() << "CM \n";
+        ProgramPoint::logoutProgramPoint(pointCM, true);
         for(PVAliasSet aliasMC : pointMC->getProgramVariableAliasSets().getSets()) {
-            //llvm::errs() << "MC \n";
-            //ProgramPoint::logoutProgramPoint(pointMC, true);
-            //llvm::errs() << "CM \n";
-            //ProgramPoint::logoutProgramPoint(pointCM, true);
+
             aliasCM = *pointCM->getPVASRef(aliasMC.getProgramVariables().front(), false);
             if(aliasMC.getMethodsSet().getMethods().size() == 0)
                 continue;

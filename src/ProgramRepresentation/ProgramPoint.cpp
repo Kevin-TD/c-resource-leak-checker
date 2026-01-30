@@ -17,7 +17,7 @@ void ProgramPoint::logoutProgramPoint(const ProgramPoint &point,
                                       bool logMethods) {
     logout("\n**point name " << point.getPointLine());
     for (auto aliasSet : point.getProgramVariableAliasSets().getSets()) {
-        logout("> alias set = " << aliasSet.toString(false, false));
+        logout("> alias set (id) " << aliasSet.getID() << " = " << aliasSet.toString(false, false));
 
         if (logMethods) {
             logout("--> methods set = " << aliasSet.getMethodsString());
@@ -33,7 +33,7 @@ void ProgramPoint::logoutProgramPoint(const ProgramPoint *point,
                                       bool logMethods) {
     logout("\n**point name " << point->getPointLine());
     for (auto aliasSet : point->getProgramVariableAliasSets().getSets()) {
-        logout("> alias set = " << aliasSet.toString(false, false));
+        logout("> alias set (id) " << aliasSet.getID() << " = " << aliasSet.toString(false, false));
 
         if (logMethods) {
             logout("--> methods set = " << aliasSet.getMethodsString());
