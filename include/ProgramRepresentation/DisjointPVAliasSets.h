@@ -60,7 +60,7 @@ class DisjointPVAliasSets {
     // that set. otherwise, they will be put into a new set.
     // additionally, if both sets (set1 and set2) exist, the set numbers
     // of set2 will be changed by set1's maximum set number plus 1.
-    void addAlias(ProgramVariable element1, ProgramVariable element2);
+    void addAlias(ProgramVariable element1, ProgramVariable element2, ProgramFunction *pf);
 
     // removes all sets
     void clear();

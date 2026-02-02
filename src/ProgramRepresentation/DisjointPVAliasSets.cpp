@@ -1,4 +1,5 @@
 #include "ProgramRepresentation/DisjointPVAliasSets.h"
+#include "ProgramRepresentation/ProgramFunction.h"
 #include "Debug.h"
 
 typename std::list<PVAliasSet>::iterator
@@ -99,7 +100,7 @@ void DisjointPVAliasSets::makeSet(ProgramVariable programVar, int newID) {
 
 // First argument is "new" second is "old" for example item = %1 will be addAlias(item, %1)
 void DisjointPVAliasSets::addAlias(ProgramVariable element1,
-                                   ProgramVariable element2) {
+                                   ProgramVariable element2, ProgramFunction *pf) {
 
     PVAliasSet* element1Set = this->getSetRef(element1);
     PVAliasSet* element2Set = this->getSetRef(element2);
@@ -135,6 +136,9 @@ void DisjointPVAliasSets::addAlias(ProgramVariable element1,
     // case: neither of the sets exist
     PVAliasSet newSet;
     newSet.programVariables = {element1, element2};
+    int newID = pf->getNewID();
+    newSet.setID(newID);
+
     sets.push_back(newSet);
 
 }

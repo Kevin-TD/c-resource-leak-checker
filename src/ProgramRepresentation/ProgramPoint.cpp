@@ -43,7 +43,7 @@ void ProgramPoint::logoutProgramPoint(const ProgramPoint *point,
 
 void ProgramPoint::addAlias(ProgramVariable element1,
                             ProgramVariable element2) {
-    this->programVariableAliasSets.addAlias(element1, element2);
+    this->programVariableAliasSets.addAlias(element1, element2, this->parentFunc);
 }
 
 void ProgramPoint::makeAliased(ProgramVariable elementA,

@@ -46,6 +46,7 @@ Value *ProgramBlock::getReturnValue() {
 }
 
 void ProgramBlock::add(ProgramPoint *programPoint) {
+    programPoint->setParentFunc(this->parent);
     this->points.push_back(programPoint);
 }
 

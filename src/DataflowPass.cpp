@@ -324,6 +324,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
 
         // lub PriorPreCM and CurrentPreCM
         ProgramPoint *lub = new ProgramPoint(0);
+        lub->setParentFunc(&preProgramFunction);
 
         DisjointPVAliasSets priorPreVars =
             priorPreBlock->getPoint(0, true)->getProgramVariableAliasSets();
@@ -349,6 +350,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         // fill the lub with remaining facts from priorPostPoint
         lub->add(priorPostBlock->getPoint(0, true));
         ProgramBlock b = ProgramBlock();
+        b.parent=&preProgramFunction;
         b.add(lub);
 
         preProgramFunction.setProgramBlock(currentBranch, b);
@@ -383,7 +385,9 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         ProgramBlock flowInto = ProgramBlock(currentBranch);
 
         ProgramPoint *p = new ProgramPoint(0, postProgramFunction.getProgramBlockRef(priorBranch, true)->getPoints().back());
+        p->setParentFunc(&postProgramFunction);
         flowInto.add(p);
+        flowInto.parent = &postProgramFunction;
 
         int instNum = 1;
         for (Instruction *instruction : instructions) {

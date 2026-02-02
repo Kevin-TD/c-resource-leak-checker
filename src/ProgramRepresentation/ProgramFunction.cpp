@@ -43,6 +43,7 @@ ProgramFunction *ProgramFunction::deepCopy() {
         newBlock->parent = newPF;
         for(ProgramPoint *P : b.getPoints()) {
             ProgramPoint *p = new ProgramPoint(P->getPointLine(), P);
+            p->setParentFunc(newPF);
             newBlock->add(p);
         }
     }
