@@ -18,6 +18,9 @@ class ProgramBlock {
     // the name is same as the branch name that shows up in the IR
     std::string blockName;
 
+    // Helps assign parent function to its points
+    ProgramFunction *parent;
+
   public:
     friend class DataflowPass;
     friend class ProgramFunction;

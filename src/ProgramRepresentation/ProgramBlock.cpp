@@ -11,6 +11,7 @@ ProgramBlock::ProgramBlock() {}
 
 ProgramBlock::ProgramBlock(std::string blockName, ProgramBlock *prev) {
     this->blockName = blockName;
+    this->parent = prev->parent;
     this->points.push_back(prev->getPoints().back());
 }
 
@@ -95,6 +96,7 @@ ProgramPoint *ProgramBlock::getPoint(unsigned int line, bool addNew) {
         llvm::errs() << "Creating completely new in " << this << "\n";
         newP = new ProgramPoint(line);
     }
+    newP->setParentFunc(this->parent);
     this->points.push_back(newP);
     this->points.sort([](ProgramPoint *a, ProgramPoint *b) {
         return a->getPointLine() < b->getPointLine();

@@ -366,7 +366,7 @@ void onBitCastInst(BitCastInst *bitcast, ProgramPoint *programPoint) {
     programPoint->addAlias(sourceVar, destinationVar);
 }
 
-void onGetElementPtrInst(GetElementPtrInst *gepInst, ProgramPoint *programPoint, ProgramFunction &programFunction) {
+void onGetElementPtrInst(GetElementPtrInst *gepInst, ProgramPoint *programPoint, ProgramFunction *programFunction) {
     // gepInsts typically take a struct and breaks it down into
     // its fields. an individual gepInst may represent one field of a struct.
     // note:
@@ -410,7 +410,7 @@ void onGetElementPtrInst(GetElementPtrInst *gepInst, ProgramPoint *programPoint,
                     programPoint->getPVASRef(structPV, false);
 
                 if (!originalStructPVASRef) {
-                    originalStructPVASRef = programFunction.getPVASRefFromValue(pointerOperand);
+                    originalStructPVASRef = programFunction->getPVASRefFromValue(pointerOperand);
 
                     if (!originalStructPVASRef) {
                         errs() << "pvas struct ref not found by value " << *pointerOperand << ". early exit\n";
@@ -419,7 +419,7 @@ void onGetElementPtrInst(GetElementPtrInst *gepInst, ProgramPoint *programPoint,
                 }
 
 
-                ProgramFunction::logoutProgramFunction(programFunction, false);
+                ProgramFunction::logoutProgramFunction(*programFunction, false);
 
                 for (ProgramVariable pv :
                         originalStructPVASRef->getProgramVariables()) {
@@ -473,7 +473,7 @@ void onAllocaInst(AllocaInst *allocate, ProgramPoint *programPoint, std::string 
 }
 
 void doAliasReasoning(Instruction *instruction,
-                      ProgramFunction &programFunction,
+                      ProgramFunction *programFunction,
                       std::string optLoadFileName,
                       StructFieldToIndexMap structFieldToIndexMap,
                       FunctionInfosManager functionInfosManager,
@@ -499,8 +499,8 @@ void doAliasReasoning(Instruction *instruction,
     std::cout << "INST NUM IS " << instNum << "\n";
 
     ProgramPoint *programPoint =
-        programFunction.getProgramBlockRef(branchName, true)->getPoint(instNum, true);
-    programPoint->setParentFunc(&programFunction);
+        programFunction->getProgramBlockRef(branchName, true)->getPoint(instNum, true);
+    programPoint->setParentFunc(programFunction);
     llvm::errs() << "old is \n";
     ProgramPoint::logoutProgramPoint(programPoint, true);
 
@@ -676,7 +676,7 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
         }
     }
 
-    ProgramFunction programFunction(fnName);
+    ProgramFunction *programFunction = new ProgramFunction(fnName);
     std::map<std::string, InstructionHolder> branchInstructionMap;
 
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
@@ -693,7 +693,7 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
     }
 
     llvm::errs() << "\n\n\n" << "After Alias Analysis: \n\n\n";
-    for(auto b : programFunction.getProgramBlocks()) {
+    for(auto b : programFunction->getProgramBlocks()) {
         for(auto p : b.getPoints()) {
             ProgramPoint::logoutProgramPoint(p, true);
         }
@@ -706,7 +706,7 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
                                annotationHandler);
     calledMethods.setCFG(cfg);
     calledMethods.setFunc(&F);
-    calledMethods.setProgramFunction(programFunction.deepCopy());
+    calledMethods.setProgramFunction(programFunction->deepCopy());
     calledMethods.setFunctionInfosManager(functionInfosManager);
     calledMethods.setOptLoadFileName(optLoadFileName);
 
@@ -714,12 +714,12 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
                           annotationHandler);
     mustCall.setCFG(cfg);
     mustCall.setFunc(&F);
-    mustCall.setProgramFunction(programFunction.deepCopy());
+    mustCall.setProgramFunction(programFunction->deepCopy());
     mustCall.setFunctionInfosManager(functionInfosManager);
     mustCall.setOptLoadFileName(optLoadFileName);
 
     ProgramFunction *PostCalledMethods = calledMethods.generatePassResults();
-    programFunction.resetID();
+    programFunction->resetID();
     ProgramFunction *PostMustCalls = mustCall.generatePassResults();
 
     for(auto b : PostCalledMethods->getProgramBlocks()) {
@@ -734,8 +734,9 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
         }
     }
 
-    logout("\n\nPROGRAM FUNCTION for " << programFunction.getFunctionName());
-    ProgramFunction::logoutProgramFunction(programFunction, false);
+    logout("\n\nPROGRAM FUNCTION for " << programFunction->getFunctionName());
+    ProgramFunction::logoutProgramFunction(*programFunction, false);
+    delete programFunction;
 
     logout("\n\nCALLED METHODS RESULT");
     ProgramFunction::logoutProgramFunction(*PostCalledMethods, true);

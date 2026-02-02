@@ -11,7 +11,7 @@ class CalledMethods : public DataflowPass {
     void onAllocationFunctionCall(PVAliasSet* input, std::string &fnName);
     void onDeallocationFunctionCall(PVAliasSet* input, std::string &fnName);
     void onUnknownFunctionCall(PVAliasSet* input);
-    void onReallocFunctionCall(PVAliasSet* input, std::string &fnName);
+    void onReallocFunctionCall(PVAliasSet* result, PVAliasSet* arg, std::string &fnName);
     void onSafeFunctionCall(PVAliasSet* input, std::string &fnName);
     void onAnnotation(PVAliasSet* input, Annotation* annotation);
     void onFunctionCall(PVAliasSet* input, std::string &fnName);

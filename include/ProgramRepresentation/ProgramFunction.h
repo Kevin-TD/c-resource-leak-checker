@@ -35,7 +35,7 @@ class ProgramFunction {
 
     std::list<ProgramBlock> getProgramBlocks() const;
 
-    ProgramFunction deepCopy();
+    ProgramFunction *deepCopy();
 
     int getNewID();
 

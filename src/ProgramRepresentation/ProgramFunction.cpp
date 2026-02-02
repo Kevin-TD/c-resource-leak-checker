@@ -17,6 +17,7 @@ AnnotationHandler *ProgramFunction::getAnnotationHandler() {
 }
 
 void ProgramFunction::addProgramBlock(ProgramBlock programBlock) {
+    programBlock.parent = this;
     this->programBlocks.push_back(programBlock);
 }
 
@@ -34,11 +35,12 @@ std::list<ProgramBlock> ProgramFunction::getProgramBlocks() const {
     return this->programBlocks;
 }
 
-ProgramFunction ProgramFunction::deepCopy() {
-    ProgramFunction newPF(this->getFunctionName());
-    newPF.setAnnotationHandler(*this->getAnnotationHandler());
+ProgramFunction *ProgramFunction::deepCopy() {
+    ProgramFunction *newPF = new ProgramFunction(this->getFunctionName());
+    newPF->setAnnotationHandler(*this->getAnnotationHandler());
     for(ProgramBlock &b : this->getProgramBlocks()) {
-        ProgramBlock *newBlock = newPF.getProgramBlockRef(b.getBlockName(), true);
+        ProgramBlock *newBlock = newPF->getProgramBlockRef(b.getBlockName(), true);
+        newBlock->parent = newPF;
         for(ProgramPoint *P : b.getPoints()) {
             ProgramPoint *p = new ProgramPoint(P->getPointLine(), P);
             newBlock->add(p);
@@ -57,6 +59,7 @@ ProgramBlock *ProgramFunction::getProgramBlockRef(const std::string &blockName,
 
     if (addNewIfNotFound) {
         ProgramBlock newProgramBlock = ProgramBlock(blockName);
+        newProgramBlock.parent = this;
         this->addProgramBlock(newProgramBlock);
         return &this->programBlocks.back();
     }
@@ -76,6 +79,7 @@ ProgramBlock ProgramFunction::getProgramBlock(const std::string &blockName,
 
     if (addNewIfNotFound) {
         ProgramBlock newProgramBlock = ProgramBlock(blockName);
+        newProgramBlock.parent = this;
         this->addProgramBlock(newProgramBlock);
         return this->programBlocks.back();
     }

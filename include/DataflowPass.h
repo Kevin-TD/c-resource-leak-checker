@@ -80,6 +80,10 @@ class DataflowPass {
     // handled the call, and false otherwise.
     bool handleIfKnownFunctionForCallInsts(CallInst *call, PVAliasSet *pvas);
 
+    // Realloc needs to change both the argument obligations AND the result obligations due to the
+    // mem2reg pass
+    bool handleIfRealloc(CallInst *call, ProgramPoint *p, std::string &fnName);
+
     // a helper function that checks for parameter annotations on call
     // instructions. returns true if an annotation was found, and false if not.
     bool handleIfAnnotationExistsForCallInsts(const std::string &fnName, CallInst* call, PVAliasSet *pvas);
@@ -88,7 +92,7 @@ class DataflowPass {
     void handleIfStructTyAndIfFieldsHaveAnnotations(CallInst *call, unsigned argIndex, const std::string &fnName, const std::string &argName, ProgramPoint *programPoint, PVAliasSet* pvas);
 
   protected:
-    ProgramFunction programFunction;
+    ProgramFunction *programFunction;
     Function *F;
     AnnotationHandler annotations;
     std::string optLoadFileName;
@@ -103,7 +107,11 @@ class DataflowPass {
     virtual void onDeallocationFunctionCall(PVAliasSet* input,
                                             std::string &fnName) = 0;
     virtual void onUnknownFunctionCall(PVAliasSet* input) = 0;
-    virtual void onReallocFunctionCall(PVAliasSet* input,
+// Because we use the mem2reg pass, there are two cases of a realloc function, the argument
+// that gets realloc'd and what it is stored into. This means that for the argument we can
+// clear the obligations and for the result we store we need to set them
+
+    virtual void onReallocFunctionCall(PVAliasSet* result, PVAliasSet* arg,
                                        std::string &fnName) = 0;
     virtual void onSafeFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
     virtual void onFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
@@ -126,7 +134,7 @@ class DataflowPass {
     void setCFG(CFG *cfg);
     void setFunc(llvm::Function *F);
     void setExpectedResult(FullFile expectedResult);
-    void setProgramFunction(ProgramFunction programFunction);
+    void setProgramFunction(ProgramFunction *programFunction);
     void setAnnotations(AnnotationHandler annotations);
     void setFunctionInfosManager(FunctionInfosManager functionInfosManager);
     void setOptLoadFileName(const std::string& optLoadFileName);

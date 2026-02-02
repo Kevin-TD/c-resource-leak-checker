@@ -187,6 +187,11 @@ void DataflowPass::transfer(Instruction *instruction,
 
             std::string fnName = call->getCalledFunction()->getName().str();
 
+            //Previously this was handled by handeIfKnownFunction, but realloc requires changes to both argument AND result, so I broke it out into its own function
+            if(handleIfRealloc(call, newPoint, fnName)) {
+                break;
+            }
+
             if (handleIfKnownFunctionForCallInsts(call, pvas)) {
                 continue;
             }
@@ -260,11 +265,12 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         llvm::SetVector<Instruction *> instructions = cfg->getInstructions();
 
         ProgramBlock postProgramBlock =
-            this->programFunction.getProgramBlock(currentBranch, true);
+            this->programFunction->getProgramBlock(currentBranch, true);
 
-        auto fnName = this->programFunction.getFunctionName();;
+        auto fnName = this->programFunction->getFunctionName();;
         auto f_iterator = this->F->args();
         ProgramPoint *p = new ProgramPoint(0);
+        p->setParentFunc(&postProgramFunction);
         postProgramBlock.add(p);
 
         for(auto a : this->annotations.getAllParameterAnnotationsWithoutFields(fnName)) {
@@ -303,7 +309,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
     postProgramFunction.getProgramBlockRef(priorBranch, false)->addSuccessor(postProgramFunction.getProgramBlockRef(currentBranch, false));
 
     priorPostBlock->add(
-        this->programFunction.getProgramBlockRef(currentBranch, true)->getPoint(0, true));
+        this->programFunction->getProgramBlockRef(currentBranch, true)->getPoint(0, true));
 
     if (priorPreBlock->getPoint(0, true)->getProgramVariableAliasSets().size() > 0) {
         logout("need to lub for " << currentBranch << " " << priorBranch);
@@ -373,7 +379,7 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         llvm::SetVector<Instruction *> instructions = cfg->getInstructions();
 
         ProgramBlock postProgramBlock =
-            this->programFunction.getProgramBlock(currentBranch, true);
+            this->programFunction->getProgramBlock(currentBranch, true);
         ProgramBlock flowInto = ProgramBlock(currentBranch);
 
         ProgramPoint *p = new ProgramPoint(0, postProgramFunction.getProgramBlockRef(priorBranch, true)->getPoints().back());
@@ -392,6 +398,28 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         }
     }
 }
+
+bool DataflowPass::handleIfRealloc(CallInst *call, ProgramPoint *programPoint, std::string &fnName) {
+    if (this->reallocFunctions.count(fnName)) {
+        //gets the ptr being realloc'd
+        auto reallocCallArg = call->getArgOperand(0);
+        ProgramVariable reallocArgVar = ProgramVariable(reallocCallArg);
+        PVAliasSet* pvas_arg = programPoint->getPVASRef(reallocArgVar, false);
+        //auto reallocCallRes = call->getArgOperand(0);
+        ProgramVariable reallocResVar = ProgramVariable(call);
+        PVAliasSet* pvas = programPoint->getPVASRef(reallocResVar, true);
+
+        llvm::errs() << "arg0 is\n\n";
+        llvm::errs() << pvas->toString(true, true);
+
+
+        this->onReallocFunctionCall(pvas, pvas_arg, fnName);
+        return true;
+    }
+    return false;
+}
+
+
 
 bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
         const std::string &fnName,
@@ -508,6 +536,13 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
     */
     std::string fnName = call->getCalledFunction()->getName().str();
 
+    // llvm.dbg.declare are function calls made by the IR to set debug
+    // information. this function does not have annotations, as it's a function
+    // by the IR, not the C code. thus, we do not check it for annotations.
+    if (fnName == LLVM_DBG_DECLARE) {
+        return true;
+    }
+
     if (call->getCalledFunction() == NULL) {
         const DebugLoc &debugLoc = call->getDebugLoc();
 
@@ -524,10 +559,8 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
 
 
     logout("call fnname = " << fnName);
-    if (this->reallocFunctions.count(fnName)) {
-        this->onReallocFunctionCall(pvas, fnName);
-        return true;
-    }
+    // the code here handling realloc functions has been moved out because the
+    // realloc function has to modify two alias sets with the mem2reg pass
 
     if (this->safeFunctions.count(fnName)) {
         this->onSafeFunctionCall(pvas, fnName);
@@ -558,12 +591,6 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
         }
     }
 
-    // llvm.dbg.declare are function calls made by the IR to set debug
-    // information. this function does not have annotations, as it's a function
-    // by the IR, not the C code. thus, we do not check it for annotations.
-    if (fnName == LLVM_DBG_DECLARE) {
-        return true;
-    }
 
     return false;
 }
@@ -655,7 +682,7 @@ FullFile DataflowPass::getExpectedResult() {
     return this->expectedResult;
 }
 
-void DataflowPass::setProgramFunction(ProgramFunction programFunction) {
+void DataflowPass::setProgramFunction(ProgramFunction *programFunction) {
     this->programFunction = programFunction;
 }
 
