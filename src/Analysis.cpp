@@ -183,19 +183,16 @@ void onLoadInst(LoadInst *load, ProgramPoint *programPoint) {
     programPoint->addAlias(receivingVar, givingVar);
 }
 
-void onCallInst(CallInst *call, ProgramPoint *programPoint) {
-    // are parameters non mutable?
-    // Right now, because everything is SSA, call instructions don't matter
-    return;
-    /*
+// this is called as a part of the store Instruction case, otherwise no aliases are created by calls (unless we add annotations for it later?)
+void onCallInst(CallInst *call, ProgramVariable receivingVar,  ProgramPoint *programPoint) {
     ProgramVariable callVar = ProgramVariable(call);
     logout("add alias for analysis storeinst call inst");
 
     // check for pointer reassignment; if so, the resource becomes un-aliased
-    if (auto pvasRef = programPoint->getPVASRef(callVar, false)) {
+    if (auto pvasRef = programPoint->getPVASRef(receivingVar, false)) {
         if (pvasRef->containsCallInstVar()) {
             logout("pointer reassignment inst " << *call);
-            logout("receiving var " << callVar.getRawName());
+            logout("receiving var " << receivingVar.getRawName());
 
             logout(callVar.getRawName()
                    << " alias to "
@@ -216,14 +213,27 @@ void onCallInst(CallInst *call, ProgramPoint *programPoint) {
                 PVAliasSet* LHSpvas = programPoint->getPVASRef(leftHandSide, false);
 
                 if (LHSpvas) {
-                    programPoint->unalias(pvasRef, leftHandSide, call, callVar);
+                    programPoint->unalias(pvasRef, leftHandSide, call, receivingVar);
                     return;
                 }
             }
         }
     }
     programPoint->addAlias(callVar, receivingVar);
-    // now we check for un-aliasing
+}
+
+void onCallNotStoreInst(CallInst *call, ProgramPoint *programPoint, std::string optLoadFileName) {
+    std::string fnName = call->getCalledFunction()->getName().str();
+    if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
+                rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
+            ProgramVariable sourceVar = ProgramVariable(call);
+            ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
+            logout("add alias for analysis callinst llvm annotation");
+            programPoint->addAlias(sourceVar, destinationVar);
+            return;
+        }
+	
+	// now we check for un-aliasing
 
     auto fi = functionInfosManager.getFunction(fnName);
     if (fi && fi->getNumberOfParameters() != call->getNumArgOperands()) {
@@ -331,7 +341,7 @@ void onCallInst(CallInst *call, ProgramPoint *programPoint) {
     }
 
     return;
-    */
+
 }
 
 void onBitCastInst(BitCastInst *bitcast, ProgramPoint *programPoint) {
@@ -507,99 +517,75 @@ void doAliasReasoning(Instruction *instruction,
     if (!includes) {
         realBranchOrder.push_back(branchName);
     }
+    // a store instruction is how llvm IR handles mutable field reassignment, even in SSA
+    if(StoreInst *store = dyn_cast<StoreInst>(instruction)) {
+        Value *valueToStore = store->getOperand(0);
+        Value *receivingValue = store->getOperand(1);
+ProgramVariable varToStore = ProgramVariable(store->getOperand(0));
+        if (!varToStore.isIdentifier()) {
+            // TODO if it is not an identifier, remove the receiving var from all aliases
+            return;
+        }
+        ProgramVariable receivingVar = ProgramVariable(store->getOperand(1));
+        if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
+        	ProgramVariable callVar = ProgramVariable(call);
+        logout("add alias for analysis storeinst call inst");
+            onCallInst(call, receivingValue, programPoint);
+            return;
+        }
+        // check if two structs are being aliased. the structs must refer
+        // to the same type. if they do not, they are not aliased;
+        // it is safe to do this because worst case scenario,
+        // it yields a false positive.
+        if (valueToStore->getType()->isPointerTy() &&
+                receivingValue->getType()->isPointerTy()) {
+            StructType *valueStruct =
+                rlc_dataflow::unwrapValuePointerToStruct(valueToStore);
+            StructType *receivingStruct =
+                rlc_dataflow::unwrapValuePointerToStruct(receivingValue);
 
-    if (LoadInst *load = dyn_cast<LoadInst>(instruction)) {
-        onLoadInst(load, programPoint);
+            if (valueStruct && receivingStruct && valueStruct == receivingStruct) {
+                logout("two structs to alias " << *store);
+                int numFields = valueStruct->getNumElements();
 
-    } else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
-        onCallInst(call, programPoint);
-    }
-    /* The following snippet handled struct behavior which I have not inspected yet since
-     * updating to the mem2reg pass. It will be refactored in later once the non struct things work
+                logout("pre alias");
+                ProgramPoint::logoutProgramPoint(*programPoint, true);
 
-    // check if two structs are being aliased. the structs must refer
-    // to the same type. if they do not, they are not aliased;
-    // it is safe to do this because worst case scenario,
-    // it yields a false positive.
-    else if (valueToStore->getType()->isPointerTy() &&
-            receivingValue->getType()->isPointerTy()) {
-        StructType *valueStruct =
-            rlc_dataflow::unwrapValuePointerToStruct(valueToStore);
-        StructType *receivingStruct =
-            rlc_dataflow::unwrapValuePointerToStruct(receivingValue);
+                for (int i = 0; i < numFields; i++) {
+                    ProgramVariable valueStructVar = ProgramVariable(valueToStore, i);
+                    ProgramVariable receivingStructVar =
+                        ProgramVariable(receivingValue, i);
 
-        if (valueStruct && receivingStruct && valueStruct == receivingStruct) {
-            logout("two structs to alias " << *store);
-            int numFields = valueStruct->getNumElements();
+                    programPoint->makeAliased(valueStructVar, receivingStructVar);
+                }
 
-            logout("pre alias");
-            ProgramPoint::logoutProgramPoint(*programPoint, true);
+                logout("post alias");
+                ProgramPoint::logoutProgramPoint(*programPoint, true);
 
-            for (int i = 0; i < numFields; i++) {
-                ProgramVariable valueStructVar = ProgramVariable(valueToStore, i);
-                ProgramVariable receivingStructVar =
-                    ProgramVariable(receivingValue, i);
-
-                programPoint->makeAliased(valueStructVar, receivingStructVar);
+                return;
             }
-
-            logout("post alias");
-            ProgramPoint::logoutProgramPoint(*programPoint, true);
-
-            return;
-        }
-    }
-
-    logout("add alias for analysis storeinst else case");
-    ProgramPoint::logoutProgramPoint(*programPoint, true);
-    programPoint->addAlias(receivingVar, varToStore);
-    ProgramPoint::logoutProgramPoint(*programPoint, true);
-    */
-    else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
-        onBitCastInst(bitcast, programPoint);
-    } else if (GetElementPtrInst *gepInst =
-                   dyn_cast<GetElementPtrInst>(instruction)) {
-        onGetElementPtrInst(gepInst, programPoint, programFunction);
-    } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
-        onAllocaInst(allocate, programPoint, optLoadFileName);
-    }
-    /* This seems to handle the LLVM debug instruction calls
-    	else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
-        std::string fnName = call->getCalledFunction()->getName().str();
-        /*
-        there are 2 llvm annotations to consider:
-        - llvm.ptr.annotation.*
-         - https://llvm.org/docs/LangRef.html#llvm-ptr-annotation-intrinsic
-         - the * "specifies an address space for the pointer"
-         - "the first argument is a pointer to an integer value of arbitrary
-        bitwidth (result of some expression), the second is a pointer to a global
-        string, the third is a pointer to a global string which is the source file
-        name, and the last argument is the line number."
-        - llvm.var.annotation
-         - https://llvm.org/docs/LangRef.html#llvm-var-annotation-intrinsic
-         - "the first argument is a pointer to a value,
-         the second is a pointer to a global string,
-          the third is a pointer to a global string which is the source file name,
-          and the last argument is the line number."
-
-
-        there is also llvm.codeview.annotation
-        (https://llvm.org/docs/LangRef.html#llvm-codeview-annotation-intrinsic)
-        and llvm.annotation.*
-        (https://llvm.org/docs/LangRef.html#llvm-annotation-intrinsic)
-        but we wont need to worry about them; they hold no aliasing information
-        *\/
-        if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
-                rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
-            ProgramVariable sourceVar = ProgramVariable(call);
-            ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
-            logout("add alias for analysis callinst llvm annotation");
-            programPoint->addAlias(sourceVar, destinationVar);
-            return;
         }
 
+        logout("add alias for analysis storeinst else case");
+        ProgramPoint::logoutProgramPoint(*programPoint, true);
+        programPoint->addAlias(varToStore, receivingVar);
+        ProgramPoint::logoutProgramPoint(*programPoint, true);
 
-        */
+    }
+ else if (LoadInst *load = dyn_cast<LoadInst>(instruction)) {
+    onLoadInst(load, programPoint);
+
+} else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
+    onCallNotStoreInst(call, programPoint, optLoadFileName);
+}
+else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
+    onBitCastInst(bitcast, programPoint);
+} else if (GetElementPtrInst *gepInst =
+               dyn_cast<GetElementPtrInst>(instruction)) {
+    onGetElementPtrInst(gepInst, programPoint, programFunction);
+} else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
+    onAllocaInst(allocate, programPoint, optLoadFileName);
+} 
 }
 
 ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
