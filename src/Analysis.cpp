@@ -187,6 +187,7 @@ void onLoadInst(LoadInst *load, ProgramPoint *programPoint) {
 void onCallInst(CallInst *call, ProgramVariable receivingVar,  ProgramPoint *programPoint) {
     ProgramVariable callVar = ProgramVariable(call);
     logout("add alias for analysis storeinst call inst");
+    logout("variable Name " << callVar.getCleanedName());
 
     // check for pointer reassignment; if so, the resource becomes un-aliased
     if (auto pvasRef = programPoint->getPVASRef(receivingVar, false)) {
@@ -219,21 +220,25 @@ void onCallInst(CallInst *call, ProgramVariable receivingVar,  ProgramPoint *pro
             }
         }
     }
-    programPoint->addAlias(callVar, receivingVar);
+    if(callVar.getCleanedName() != receivingVar.getCleanedName()) {
+        programPoint->addAlias(callVar, receivingVar);
+    } else if(!programPoint->getPVASRef(callVar, false)) {
+        programPoint->addVariable(callVar);
+    }
 }
 
 void onCallNotStoreInst(CallInst *call, ProgramPoint *programPoint, std::string optLoadFileName) {
     std::string fnName = call->getCalledFunction()->getName().str();
     if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
-                rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
-            ProgramVariable sourceVar = ProgramVariable(call);
-            ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
-            logout("add alias for analysis callinst llvm annotation");
-            programPoint->addAlias(sourceVar, destinationVar);
-            return;
-        }
-	
-	// now we check for un-aliasing
+            rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
+        ProgramVariable sourceVar = ProgramVariable(call);
+        ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
+        logout("add alias for analysis callinst llvm annotation");
+        programPoint->addAlias(sourceVar, destinationVar);
+        return;
+    }
+
+    // now we check for un-aliasing
 
     auto fi = functionInfosManager.getFunction(fnName);
     if (fi && fi->getNumberOfParameters() != call->getNumArgOperands()) {
@@ -521,15 +526,15 @@ void doAliasReasoning(Instruction *instruction,
     if(StoreInst *store = dyn_cast<StoreInst>(instruction)) {
         Value *valueToStore = store->getOperand(0);
         Value *receivingValue = store->getOperand(1);
-ProgramVariable varToStore = ProgramVariable(store->getOperand(0));
+        ProgramVariable varToStore = ProgramVariable(store->getOperand(0));
         if (!varToStore.isIdentifier()) {
             // TODO if it is not an identifier, remove the receiving var from all aliases
             return;
         }
         ProgramVariable receivingVar = ProgramVariable(store->getOperand(1));
         if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
-        	ProgramVariable callVar = ProgramVariable(call);
-        logout("add alias for analysis storeinst call inst");
+            ProgramVariable callVar = ProgramVariable(call);
+            logout("add alias for analysis storeinst call inst");
             onCallInst(call, receivingValue, programPoint);
             return;
         }
@@ -571,21 +576,23 @@ ProgramVariable varToStore = ProgramVariable(store->getOperand(0));
         programPoint->addAlias(varToStore, receivingVar);
         ProgramPoint::logoutProgramPoint(*programPoint, true);
 
-    }
- else if (LoadInst *load = dyn_cast<LoadInst>(instruction)) {
-    onLoadInst(load, programPoint);
+    } else if (LoadInst *load = dyn_cast<LoadInst>(instruction)) {
+        onLoadInst(load, programPoint);
 
-} else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
-    onCallNotStoreInst(call, programPoint, optLoadFileName);
-}
-else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
-    onBitCastInst(bitcast, programPoint);
-} else if (GetElementPtrInst *gepInst =
-               dyn_cast<GetElementPtrInst>(instruction)) {
-    onGetElementPtrInst(gepInst, programPoint, programFunction);
-} else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
-    onAllocaInst(allocate, programPoint, optLoadFileName);
-} 
+    } else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
+        if(!call->getType()->isVoidTy()) {
+            onCallInst(call, call, programPoint);
+        } else {
+            onCallNotStoreInst(call, programPoint, optLoadFileName);
+        }
+    } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
+        onBitCastInst(bitcast, programPoint);
+    } else if (GetElementPtrInst *gepInst =
+                   dyn_cast<GetElementPtrInst>(instruction)) {
+        onGetElementPtrInst(gepInst, programPoint, programFunction);
+    } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
+        onAllocaInst(allocate, programPoint, optLoadFileName);
+    }
 }
 
 ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {

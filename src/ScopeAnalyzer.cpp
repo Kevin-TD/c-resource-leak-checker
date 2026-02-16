@@ -63,6 +63,11 @@ void ResourceLeakScopeChecker::handleBranch(BasicBlock *B, ProgramBlock *blockMC
         llvm::errs() << "CM \n";
         ProgramPoint::logoutProgramPoint(pointCM, true);
         for(PVAliasSet aliasMC : pointMC->getProgramVariableAliasSets().getSets()) {
+            if(!aliasMC.getProgramVariables().size()) {
+                if(aliasMC.getMethodsSet().getMethods().size())
+                    llvm::errs() << "End of life, failure for empty variables\n";
+                continue;
+            }
 
             aliasCM = *pointCM->getPVASRef(aliasMC.getProgramVariables().front(), false);
             if(aliasMC.getMethodsSet().getMethods().size() == 0)
