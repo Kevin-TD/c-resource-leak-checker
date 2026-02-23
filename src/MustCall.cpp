@@ -31,6 +31,10 @@ void MustCall::onSafeFunctionCall(PVAliasSet *input, std::string &fnName) {}
 void MustCall::leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSet) {
     preSet.methodsSetUnion(curMethodsSet);
 }
+void MustCall::leastUpperBound(PVAliasSet *preSet, MethodsSet &curMethodsSet) {
+    preSet->methodsSetUnion(curMethodsSet);
+}
+
 
 void MustCall::onAnnotation(PVAliasSet* input, Annotation* annotation) {
     if (annotation->getAnnotationType() == AnnotationType::MustCallAnnotation) {

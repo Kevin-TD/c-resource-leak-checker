@@ -9,8 +9,14 @@
 // make up a function and has a counter taht is used to assign IDs to alias sets within it
 
 class ProgramFunction {
+    friend class DataflowPass;
   private:
     std::list<ProgramBlock> programBlocks;
+
+    // When the must call and called methods passes run, there are two separate functions, these need to have their
+    // currentAliasNums sync'd, so a pointer to a paired function is used to update the other whenever one
+    // generates a new ID
+    ProgramFunction *twin;
 
     AnnotationHandler a;
     // Tracks the next unique id for aliases in the function, updated whenever a new alias is created
@@ -26,8 +32,13 @@ class ProgramFunction {
     ProgramFunction();
     ProgramFunction(std::string functionName);
 
+    bool checkFixed();
+
+    void pair(ProgramFunction *p);
+
     AnnotationHandler *getAnnotationHandler();
     void setAnnotationHandler(AnnotationHandler a);
+    int currID();
 
     void addProgramBlock(ProgramBlock programBlock);
 

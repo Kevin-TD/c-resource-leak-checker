@@ -8,6 +8,7 @@
 class MustCall : public DataflowPass {
   protected:
     void leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSet);
+    void leastUpperBound(PVAliasSet *preSet, MethodsSet &curMethodsSet);
 
     // if we have a resource allocated by `f` and de-allocated by `g`,
     // upon any call to `f` we must provide `g` to enforce that

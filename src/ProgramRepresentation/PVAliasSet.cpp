@@ -42,6 +42,17 @@ void PVAliasSet::add(ProgramVariable programVar) {
     programVariables.push_back(programVar);
 }
 
+bool PVAliasSet::equals(PVAliasSet* a) {
+    if(this->programVariables.size() != a->programVariables.size())
+        return false;
+    for(auto myAlias = this->programVariables.begin(), theirAlias = a->programVariables.begin(); myAlias != this->programVariables.end(); ++myAlias, ++theirAlias) {
+        if(myAlias->getCleanedName() != theirAlias->getCleanedName()) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void PVAliasSet::addProgramVariables(
     std::list<ProgramVariable> programVariables) {
     for (ProgramVariable pv : programVariables) {

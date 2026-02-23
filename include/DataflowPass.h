@@ -30,7 +30,7 @@ class DataflowPass {
     // analyses the instruction semantics and updates `inputProgramBlock`
     // accordingly, looking for function calls that an
     // implemented dataflow pass should handle
-    void transfer(Instruction *instruction, ProgramBlock &inputProgramBlock, int insNum, ProgramFunction *parent);
+    void transfer(Instruction *instruction, ProgramBlock *inputProgramBlock, int insNum, ProgramFunction *parent);
 
     // a helper function that handles functions with Sret attribute.
     // returns true if the function had an Sret attribute and was handled,
@@ -101,6 +101,7 @@ class DataflowPass {
     FullFile expectedResult;
 
     virtual void leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSet) = 0;
+    virtual void leastUpperBound(PVAliasSet *preSet, MethodsSet &curMethodsSet) = 0;
 
     virtual void onAllocationFunctionCall(PVAliasSet* input,
                                           std::string &fnName) = 0;
@@ -132,11 +133,13 @@ class DataflowPass {
     ProgramFunction *generatePassResults();
 
     void setCFG(CFG *cfg);
+    bool checkIfChanged(ProgramPoint& old, ProgramPoint *now);
     void setFunc(llvm::Function *F);
     void setExpectedResult(FullFile expectedResult);
     void setProgramFunction(ProgramFunction *programFunction);
     void setAnnotations(AnnotationHandler annotations);
     void setFunctionInfosManager(FunctionInfosManager functionInfosManager);
+    void leastUpperBoundFunction(ProgramPoint *p, ProgramPoint *q);
     void setOptLoadFileName(const std::string& optLoadFileName);
 
     FullFile getExpectedResult();

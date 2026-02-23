@@ -27,6 +27,9 @@ void CalledMethods::onReallocFunctionCall(PVAliasSet *result, PVAliasSet *arg, s
 void CalledMethods::onSafeFunctionCall(PVAliasSet *input, std::string &fnName) {
 }
 
+void CalledMethods::leastUpperBound(PVAliasSet *preSet, MethodsSet &curMethodsSet) {
+    preSet->methodsSetIntersection(curMethodsSet);
+}
 void CalledMethods::leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSet) {
     preSet.methodsSetIntersection(curMethodsSet);
 }

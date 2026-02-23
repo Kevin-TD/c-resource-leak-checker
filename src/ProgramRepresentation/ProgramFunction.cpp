@@ -4,9 +4,17 @@
 
 ProgramFunction::ProgramFunction(std::string functionName) {
     this->functionName = functionName;
+    this->twin = 0;
 }
 
-ProgramFunction::ProgramFunction() {}
+ProgramFunction::ProgramFunction() {
+    this->twin = 0;
+}
+
+void ProgramFunction::pair(ProgramFunction *other) {
+    this->twin = other;
+    other->twin = this;
+}
 
 void ProgramFunction::setAnnotationHandler(AnnotationHandler a) {
     this->a = a;
@@ -16,14 +24,25 @@ AnnotationHandler *ProgramFunction::getAnnotationHandler() {
     return &a;
 }
 
+int ProgramFunction::currID() {
+    return this->currentAliasNum;
+}
+
 void ProgramFunction::addProgramBlock(ProgramBlock programBlock) {
     programBlock.parent = this;
     this->programBlocks.push_back(programBlock);
 }
 
 int ProgramFunction::getNewID() {
-    llvm::errs() << "CREATING NEW ID\n";
+    if(this->twin) {
+        this->currentAliasNum = this->currentAliasNum > this->twin->currentAliasNum ? this->currentAliasNum : this->twin->currentAliasNum;
+        this->twin->currentAliasNum = this->currentAliasNum > this->twin->currentAliasNum ? this->currentAliasNum : this->twin->currentAliasNum;
+    }
     this->currentAliasNum += 1;
+    if(this->twin) {
+        this->currentAliasNum = this->currentAliasNum > this->twin->currentAliasNum ? this->currentAliasNum : this->twin->currentAliasNum;
+        this->twin->currentAliasNum = this->currentAliasNum > this->twin->currentAliasNum ? this->currentAliasNum : this->twin->currentAliasNum;
+    }
     return this->currentAliasNum - 1;
 }
 
@@ -38,6 +57,7 @@ std::list<ProgramBlock> ProgramFunction::getProgramBlocks() const {
 ProgramFunction *ProgramFunction::deepCopy() {
     ProgramFunction *newPF = new ProgramFunction(this->getFunctionName());
     newPF->setAnnotationHandler(*this->getAnnotationHandler());
+    newPF->currentAliasNum = this->currentAliasNum;
     for(ProgramBlock &b : this->getProgramBlocks()) {
         ProgramBlock *newBlock = newPF->getProgramBlockRef(b.getBlockName(), true);
         newBlock->parent = newPF;
@@ -113,6 +133,17 @@ PVAliasSet *ProgramFunction::getPVASRefFromValue(Value* value) {
     return NULL;
 }
 */
+
+bool ProgramFunction::checkFixed() {
+    bool fixed = true;
+    for(auto block : this->getProgramBlocks()) {
+        fixed = fixed && block.fixed;
+        if(!fixed) {
+            break;
+        }
+    }
+    return fixed;
+}
 
 void ProgramFunction::logoutProgramFunction(ProgramFunction &programFunction,
         bool logMethods) {

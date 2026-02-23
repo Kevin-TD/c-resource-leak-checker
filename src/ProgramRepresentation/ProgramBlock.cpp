@@ -5,14 +5,18 @@
 
 ProgramBlock::ProgramBlock(std::string blockName) {
     this->blockName = blockName;
+    this->fixed = false;
 }
 
-ProgramBlock::ProgramBlock() {}
+ProgramBlock::ProgramBlock() {
+    this->fixed = false;
+}
 
 ProgramBlock::ProgramBlock(std::string blockName, ProgramBlock *prev) {
     this->blockName = blockName;
     this->parent = prev->parent;
     this->points.push_back(prev->getPoints().back());
+    this->fixed = false;
 }
 
 std::list<ProgramPoint *> ProgramBlock::getPoints() {
@@ -20,11 +24,19 @@ std::list<ProgramPoint *> ProgramBlock::getPoints() {
 }
 
 void ProgramBlock::logoutProgramBlock(const ProgramBlock &block) {
-    logout("\n**point name " << block.getBlockName());
+    logout("\n**block name " << block.getBlockName());
+    for(auto point : block.points) {
+        ProgramPoint::logoutProgramPoint(point, true);
+        llvm::errs() << "-----\n";
+    }
 }
 
 void ProgramBlock::logoutProgramBlock(const ProgramBlock *block) {
-    logout("\n**point name " << block->getBlockName());
+    logout("\n**block name " << block->getBlockName());
+    for(auto point : block->points) {
+        ProgramPoint::logoutProgramPoint(point, true);
+        llvm::errs() << "-----\n";
+    }
 }
 
 std::string ProgramBlock::getBlockName() const {
@@ -72,6 +84,9 @@ void ProgramBlock::update(int point) {
         }
     }
 }
+ProgramPoint *ProgramBlock::getLast() {
+    return this->points.back();
+}
 
 ProgramPoint *ProgramBlock::getPoint(unsigned int line, bool addNew) {
     ProgramPoint *last = this->points.front();
@@ -94,7 +109,7 @@ ProgramPoint *ProgramBlock::getPoint(unsigned int line, bool addNew) {
         llvm::errs() << "Creating " << line << " from " << last->getPointLine() << "\n";
         newP = new ProgramPoint(line, last);
     } else {
-        llvm::errs() << "Creating completely new in " << this << "\n";
+        llvm::errs() << "Creating completely new in " << this << " name: " << this->blockName<< " Parent " << this->parent <<  "\n";
         newP = new ProgramPoint(line);
     }
     newP->setParentFunc(this->parent);

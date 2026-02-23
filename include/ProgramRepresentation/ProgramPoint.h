@@ -54,6 +54,10 @@ class ProgramPoint {
     // into one of these sets if it contains a program variable that exists in one
     // of these sets
     void addPVAS(PVAliasSet pvas);
+
+    // occurs at lubs when PVAS are modified, prevents many spurious PVAS from being created
+    void updatePVAS(PVAliasSet pvas);
+
     // finds set A and B from element A and element B (respectively) and merges
     // them together. if A == B or one of the elements is not found in any of these
     // sets, no actions are performed

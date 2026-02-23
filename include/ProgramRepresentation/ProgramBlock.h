@@ -31,6 +31,8 @@ class ProgramBlock {
     static void logoutProgramBlock(const ProgramBlock *block);
 
     ProgramBlock();
+    //This tracks whether the block has reached fixed point
+    bool fixed;
     ProgramBlock(std::string blockName);
 
     // Returns the return value associated with this program block
@@ -52,6 +54,7 @@ class ProgramBlock {
     void add(ProgramPoint *point);
 
     ProgramPoint *getPoint(unsigned int line, bool addNew);
+    ProgramPoint *getLast();
 
     // returns a list of successors
     std::list<ProgramBlock *> getSuccessors();

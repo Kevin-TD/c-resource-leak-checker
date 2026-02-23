@@ -113,6 +113,9 @@ class PVAliasSet {
     // the program variable that equals pv
     ProgramVariable moveOut(ProgramVariable pv);
 
+    //checks equality between two PVAliasSets
+    bool equals(PVAliasSet* a);
+
     friend class DisjointPVAliasSets;
     friend class TestRunner;
 };

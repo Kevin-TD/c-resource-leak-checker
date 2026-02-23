@@ -15,7 +15,7 @@ ProgramPoint::ProgramPoint(int pointLine, ProgramPoint *programPoint) {
 
 void ProgramPoint::logoutProgramPoint(const ProgramPoint &point,
                                       bool logMethods) {
-    logout("\n**point name " << point.getPointLine());
+    logout("\n**point name " << point.getPointLine() << "from function " << point.parentFunc->getFunctionName());
     for (auto aliasSet : point.getProgramVariableAliasSets().getSets()) {
         logout("> alias set (id) " << aliasSet.getID() << " = " << aliasSet.toString(false, false));
 
@@ -31,7 +31,6 @@ void ProgramPoint::setParentFunc(ProgramFunction *p) {
 
 void ProgramPoint::logoutProgramPoint(const ProgramPoint *point,
                                       bool logMethods) {
-    logout("\n**point name " << point->getPointLine());
     for (auto aliasSet : point->getProgramVariableAliasSets().getSets()) {
         logout("> alias set (id) " << aliasSet.getID() << " = " << aliasSet.toString(false, false));
 
@@ -172,6 +171,21 @@ void ProgramPoint::setProgramVariableAliasSets(
     DisjointPVAliasSets programVariableAliasSets) {
     this->programVariableAliasSets.clear();
     this->programVariableAliasSets = programVariableAliasSets;
+}
+
+void ProgramPoint::updatePVAS(PVAliasSet pvas) {
+    if(!this->getSetID(pvas.getID())) {
+        llvm::errs() << "ADDING\n";
+        logout("> alias set (id) " << pvas.getID() << " = " << this->getSetID(pvas.getID())->toString(false, false));
+        this->addPVAS(pvas);
+        exit(1);
+    } else if(this->getSetID(pvas.getID())->getProgramVariables() == pvas.getProgramVariables()) {
+        llvm::errs() << "DUPLICATE ID " << pvas.getID() << "\n";
+        return;
+    } else {
+        exit(1);
+    }
+    return;
 }
 
 void ProgramPoint::add(ProgramPoint *programPoint) {

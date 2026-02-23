@@ -8,6 +8,7 @@
 class CalledMethods : public DataflowPass {
   protected:
     void leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSet);
+    void leastUpperBound(PVAliasSet *preSet, MethodsSet &curMethodsSet);
     void onAllocationFunctionCall(PVAliasSet* input, std::string &fnName);
     void onDeallocationFunctionCall(PVAliasSet* input, std::string &fnName);
     void onUnknownFunctionCall(PVAliasSet* input);

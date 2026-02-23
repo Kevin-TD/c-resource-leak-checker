@@ -19,8 +19,10 @@ void DataflowPass::setExpectedResult(FullFile expectedResult) {
 }
 
 ProgramFunction *DataflowPass::generatePassResults() {
-    ProgramFunction preProgramFunction;
-    ProgramFunction *postProgramFunction = new ProgramFunction();
+    ProgramFunction preProgramFunction = *this->programFunction->deepCopy();
+    ProgramFunction *postProgramFunction = this->programFunction;
+    preProgramFunction.pair(postProgramFunction);
+    preProgramFunction.currentAliasNum = this->programFunction->currentAliasNum;
     this->analyzeCFG(this->cfg, preProgramFunction, *postProgramFunction, "");
     return postProgramFunction;
 }
@@ -30,11 +32,11 @@ void DataflowPass::setCFG(CFG *cfg) {
 }
 
 void DataflowPass::transfer(Instruction *instruction,
-                            ProgramBlock &inputProgramBlock, int insNum, ProgramFunction *parent) {
+                            ProgramBlock *inputProgramBlock, int insNum, ProgramFunction *parent) {
     std::string branchName = instruction->getParent()->getName().str();
-    inputProgramBlock.update(insNum);
+    inputProgramBlock->update(insNum);
     if (ReturnInst *retInst = dyn_cast<ReturnInst>(instruction)) {
-        inputProgramBlock.returnValue = retInst->getReturnValue();
+        inputProgramBlock->returnValue = retInst->getReturnValue();
     }
     if (StoreInst *store = dyn_cast<StoreInst>(instruction)) {
         Value *valueToStore = store->getOperand(0);
@@ -57,7 +59,7 @@ void DataflowPass::transfer(Instruction *instruction,
             // TODO: Ask, wouldn't we want to keep track of functions like this
             // if we want to make something that infers annotations?
 
-            ProgramPoint *newPoint = inputProgramBlock.getPoint(insNum, true);
+            ProgramPoint *newPoint = inputProgramBlock->getPoint(insNum, true);
             PVAliasSet *pvas = newPoint->getPVASRef(assignedVar, true);
 
             if (this->memoryFunctions[fnName].size() > 0 &&
@@ -96,7 +98,7 @@ void DataflowPass::transfer(Instruction *instruction,
                 if (this->memoryFunctions[fnName].size() > 0 &&
                         bitcastVar.isIdentifier()) {
                     std::string arg = bitcastVar.getCleanedName();
-                    ProgramPoint *newPoint = inputProgramBlock.getPoint(insNum, true);
+                    ProgramPoint *newPoint = inputProgramBlock->getPoint(insNum, true);
                     PVAliasSet *pvas = newPoint->getPVASRef(bitcastVar, false);
                     this->onAllocationFunctionCall(pvas,
                                                    this->memoryFunctions[fnName]);
@@ -112,7 +114,7 @@ void DataflowPass::transfer(Instruction *instruction,
             */
             ProgramVariable assignedVar = ProgramVariable(extractValue);
             std::string arg = assignedVar.getCleanedName();
-            PVAliasSet *pvas = inputProgramBlock.getPoint(insNum, true)->getPVASRef(assignedVar, false);
+            PVAliasSet *pvas = inputProgramBlock->getPoint(insNum, true)->getPVASRef(assignedVar, false);
 
             if (!pvas->containsStructFieldVar()) {
                 return;
@@ -136,7 +138,7 @@ void DataflowPass::transfer(Instruction *instruction,
                                                        this->annotations.getReturnAnnotation(fnName, fieldIndex))) {
                     logout("found annotation from extract value "
                            << returnAnno->toString());
-                    ProgramPoint *newPoint = inputProgramBlock.getPoint(insNum, true);
+                    ProgramPoint *newPoint = inputProgramBlock->getPoint(insNum, true);
                     pvas = newPoint->getPVASRef(assignedVar, false);
                     this->onAnnotation(pvas, returnAnno);
                 }
@@ -145,7 +147,7 @@ void DataflowPass::transfer(Instruction *instruction,
 
     } else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
 
-        ProgramPoint *newPoint = inputProgramBlock.getPoint(insNum, true);
+        ProgramPoint *newPoint = inputProgramBlock->getPoint(insNum, true);
         if(call->getName() != "") {
             std::string fnName = call->getCalledFunction()->getName().str();
             ProgramVariable assignedVar = ProgramVariable(call);
@@ -255,23 +257,71 @@ void DataflowPass::transfer(Instruction *instruction,
     }
 }
 
+bool DataflowPass::checkIfChanged(ProgramPoint& old, ProgramPoint *now) {
+    std::list<PVAliasSet> oldSets = old.getProgramVariableAliasSets().getSets();
+    std::list<PVAliasSet> newSets = now->getProgramVariableAliasSets().getSets();
+    if(oldSets.size() != newSets.size())
+        return true;
+    for(auto oldIt = oldSets.begin(), nowIt = newSets.begin(); oldIt != oldSets.end(); ++oldIt, ++nowIt) {
+        if(nowIt->getID() != oldIt->getID()) {
+            return true;
+        } else if(!nowIt->equals(&*oldIt)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+//modifies the first argument p with the information from q
+void DataflowPass::leastUpperBoundFunction(ProgramPoint *p, ProgramPoint *q) {
+    if(!q) {
+        return;
+    }
+    ProgramFunction *func = p->parentFunc;
+    int max = func->currID();
+    for(int i = 0; i < max; i++) {
+        PVAliasSet *pAlias = p->getSetID(i);
+        PVAliasSet *qAlias = q->getSetID(i);
+        if(!pAlias && qAlias)
+            p->addPVAS(*qAlias);
+        else if(pAlias && qAlias) {
+            MethodsSet m = qAlias->getMethodsSet();
+            this->leastUpperBound(pAlias, m);
+        }
+    }
+}
+
 void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
                               ProgramFunction &postProgramFunction,
                               const std::string &priorBranch) {
     std::string currentBranch = cfg->getBranchName();
 
+    if(postProgramFunction.getProgramBlockRef(currentBranch, true)->fixed) {
+        ProgramBlock::logoutProgramBlock(postProgramFunction.getProgramBlockRef(currentBranch, true));
+        if(postProgramFunction.checkFixed())
+            return;
+        else
+            for (CFG *succ : cfg->getSuccessors()) {
+                if(!postProgramFunction.getProgramBlockRef(succ->getBranchName(), true)->fixed) {
+                    analyzeCFG(succ, preProgramFunction, postProgramFunction, currentBranch);
+                }
+            }
+        return;
+    }
+
     if (currentBranch == FIRST_BRANCH_NAME) {
         preProgramFunction.addProgramBlock(ProgramBlock(currentBranch));
         llvm::SetVector<Instruction *> instructions = cfg->getInstructions();
 
-        ProgramBlock postProgramBlock =
-            this->programFunction->getProgramBlock(currentBranch, true);
+        ProgramBlock *postProgramBlock =
+            this->programFunction->getProgramBlockRef(currentBranch, true);
 
         auto fnName = this->programFunction->getFunctionName();;
         auto f_iterator = this->F->args();
         ProgramPoint *p = new ProgramPoint(0);
         p->setParentFunc(&postProgramFunction);
-        postProgramBlock.add(p);
+        postProgramBlock->add(p);
 
         for(auto a : this->annotations.getAllParameterAnnotationsWithoutFields(fnName)) {
             if(a->getAnnotationType() == AnnotationType::MustCallAnnotation) {
@@ -279,11 +329,12 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
                 auto f_iterator = this->F->args();
                 auto arg = std::next(f_iterator.begin(), index);
                 ProgramVariable var = ProgramVariable(arg);
-                auto pvas = postProgramBlock.getPoint(0, true)->getPVASRef(var, true);
+                auto pvas = postProgramBlock->getPoint(0, true)->getPVASRef(var, true);
                 this->onAnnotation(pvas, a);
             }
         }
         //TODO: Add parameter annotation WITH fields
+
 
         int instNum = 1;
         for (Instruction *instruction : instructions) {
@@ -291,7 +342,10 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
             instNum += 1;
         }
 
-        postProgramFunction.addProgramBlock(postProgramBlock);
+        postProgramBlock->fixed = true;
+        //entry is fixed always
+
+        postProgramFunction.addProgramBlock(*postProgramBlock);
 
         for (CFG *succ : cfg->getSuccessors()) {
             analyzeCFG(succ, preProgramFunction, postProgramFunction, currentBranch);
@@ -306,10 +360,14 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
     ProgramBlock *priorPostBlock =
         postProgramFunction.getProgramBlockRef(currentBranch, true);
 
+
     postProgramFunction.getProgramBlockRef(priorBranch, false)->addSuccessor(postProgramFunction.getProgramBlockRef(currentBranch, false));
 
-    priorPostBlock->add(
-        this->programFunction->getProgramBlockRef(currentBranch, true)->getPoint(0, true));
+    if(!priorPostBlock->getPoint(0, false)) {
+        priorPostBlock->add(
+            this->programFunction->getProgramBlockRef(currentBranch, true)->getPoint(0, true));
+    }
+    ProgramPoint old = *(priorPostBlock->getPoint(0, true));
 
     if (priorPreBlock->getPoint(0, true)->getProgramVariableAliasSets().size() > 0) {
         logout("need to lub for " << currentBranch << " " << priorBranch);
@@ -317,18 +375,21 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         ProgramBlock *currentPreBlock =
             postProgramFunction.getProgramBlockRef(priorBranch, true);
 
+
         // check if inputs (pre) differ
         if (currentPreBlock->getPoint(0, true)->equals(priorPreBlock->getPoint(0, true))) {
             return;
         }
 
         // lub PriorPreCM and CurrentPreCM
-        ProgramPoint *lub = new ProgramPoint(0);
+        // NEW CODE HERE
+        ProgramBlock *b = preProgramFunction.getProgramBlockRef(currentBranch, true);
+        ProgramPoint *lub = b->getPoint(0, true);
         lub->setParentFunc(&preProgramFunction);
 
+        // this gets the vars of the last point
         DisjointPVAliasSets priorPreVars =
             priorPreBlock->getPoint(0, true)->getProgramVariableAliasSets();
-
         for (PVAliasSet pvas : priorPreVars.getSets()) {
             MethodsSet lubMethodsSet;
 
@@ -344,16 +405,17 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
 
             this->leastUpperBound(pvas, curPrePointMethods);
 
-            lub->addPVAS(pvas);
+            lub->updatePVAS(pvas);
         }
 
         // fill the lub with remaining facts from priorPostPoint
-        lub->add(priorPostBlock->getPoint(0, true));
-        ProgramBlock b = ProgramBlock();
-        b.parent=&preProgramFunction;
-        b.add(lub);
+        ProgramPoint *prior = priorPostBlock->getPoint(-1, false);
+        if(!prior) {
+            prior = priorPostBlock->getPoint(0, true);
+        }
+        lub->add(prior);
 
-        preProgramFunction.setProgramBlock(currentBranch, b);
+        preProgramFunction.setProgramBlock(currentBranch, *b);
 
         llvm::SetVector<Instruction *> instructions = cfg->getInstructions();
         int instNum = 1;
@@ -362,7 +424,13 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
             instNum += 1;
         }
 
-        postProgramFunction.setProgramBlock(currentBranch, b);
+        postProgramFunction.setProgramBlock(currentBranch, *b);
+
+        if(!checkIfChanged(old, b->getPoint(0, false))) {
+            b->fixed = true;
+        } else {
+            b->fixed = false;
+        }
 
         for (CFG *succ : cfg->getSuccessors()) {
             analyzeCFG(succ, preProgramFunction, postProgramFunction, currentBranch);
@@ -375,19 +443,19 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         ProgramBlock *priorPostBlock =
             postProgramFunction.getProgramBlockRef(priorBranch, true);
 
-        preProgramFunction.getProgramBlockRef(currentBranch, true)->getPoint(0, true)
-        ->setProgramVariableAliasSets(priorPostBlock->getPoints().back()->getProgramVariableAliasSets());
 
         llvm::SetVector<Instruction *> instructions = cfg->getInstructions();
 
+
         ProgramBlock postProgramBlock =
             this->programFunction->getProgramBlock(currentBranch, true);
-        ProgramBlock flowInto = ProgramBlock(currentBranch);
+        ProgramBlock *flowInto = postProgramFunction.getProgramBlockRef(currentBranch, true);
 
-        ProgramPoint *p = new ProgramPoint(0, postProgramFunction.getProgramBlockRef(priorBranch, true)->getPoints().back());
+
+        ProgramPoint *p = flowInto->getPoint(0, true);
         p->setParentFunc(&postProgramFunction);
-        flowInto.add(p);
-        flowInto.parent = &postProgramFunction;
+        this->leastUpperBoundFunction(p, priorPostBlock->getLast());
+        flowInto->parent = &postProgramFunction;
 
         int instNum = 1;
         for (Instruction *instruction : instructions) {
@@ -395,7 +463,13 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
             instNum += 1;
         }
 
-        postProgramFunction.addProgramBlock(flowInto);
+        postProgramFunction.setProgramBlock(currentBranch, *flowInto);
+
+        if(!checkIfChanged(old, flowInto->getPoint(0, false))) {
+            flowInto->fixed = true;
+        } else {
+            flowInto->fixed = false;
+        }
 
         for (CFG *succ : cfg->getSuccessors()) {
             analyzeCFG(succ, preProgramFunction, postProgramFunction, currentBranch);

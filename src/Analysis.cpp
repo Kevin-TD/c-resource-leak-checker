@@ -689,6 +689,7 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
     for(auto b : programFunction->getProgramBlocks()) {
         for(auto p : b.getPoints()) {
             ProgramPoint::logoutProgramPoint(p, true);
+            logout("\n-----\n");
         }
     }
 
@@ -712,7 +713,6 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
     mustCall.setOptLoadFileName(optLoadFileName);
 
     ProgramFunction *PostCalledMethods = calledMethods.generatePassResults();
-    programFunction->resetID();
     ProgramFunction *PostMustCalls = mustCall.generatePassResults();
 
     for(auto b : PostCalledMethods->getProgramBlocks()) {

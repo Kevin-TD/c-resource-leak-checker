@@ -76,6 +76,14 @@ class ProgramVariable {
     void setSetNumber(unsigned setNumber);
 
     bool isIdentifier() const;
+
+
+
+    bool operator ==(const ProgramVariable& a) const {
+        return this->cleanedName == a.cleanedName;
+    }
+
+
 };
 
 #endif
