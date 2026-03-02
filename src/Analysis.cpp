@@ -232,7 +232,7 @@ bool onCallNotStoreInst(CallInst *call, ProgramPoint *programPoint, std::string 
     std::string fnName = call->getCalledFunction()->getName().str();
     if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
             rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
-	    //llvm var annotations should not be included
+        //llvm var annotations should not be included
         return false;
     }
     bool change = false;
