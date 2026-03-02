@@ -232,10 +232,8 @@ bool onCallNotStoreInst(CallInst *call, ProgramPoint *programPoint, std::string 
     std::string fnName = call->getCalledFunction()->getName().str();
     if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
             rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
-        ProgramVariable sourceVar = ProgramVariable(call);
-        ProgramVariable destinationVar = ProgramVariable(call->getArgOperand(0));
-        logout("add alias for analysis callinst llvm annotation");
-        return programPoint->addAlias(sourceVar, destinationVar);
+	    //llvm var annotations should not be included
+        return false;
     }
     bool change = false;
 
@@ -430,7 +428,8 @@ bool onGetElementPtrInst(GetElementPtrInst *gepInst, ProgramPoint *programPoint,
                     originalStructPVASRef = programBlock->getPVASRefFromValue(pointerOperand);
 
                     if (!originalStructPVASRef) {
-                        errs() << "struct not found, marking function as changed so that predecessors can process struct ref\n";
+                        errs() << "struct" << structPV.getCleanedName() << " not found, marking function as changed so that predecessors can process struct ref\n";
+                        // (* Add some error here if no previous change has been committed to prevent infinite loop *)
                         return true;
                     }
                 }
@@ -489,6 +488,12 @@ bool onAllocaInst(AllocaInst *allocate, ProgramPoint *programPoint, std::string 
     return ret;
 }
 
+// We convert the LLVM IR to SSA before this point
+// SSA guarantees that because there is no information of a variable in a previous branch,
+// it could not have been assigned as there is a uniqueness guarantee
+//
+// (* EXPLAIN WORRY, EXPLAIN WHY IT WONT HAPPEN *)
+//
 bool lubAlias(ProgramPoint *current, ProgramPoint *old) {
     std::list<PVAliasSet> currSets = current->getProgramVariableAliasSets().getSets();
     std::list<PVAliasSet> oldSets = old->getProgramVariableAliasSets().getSets();
@@ -541,12 +546,6 @@ bool doAliasReasoning(Instruction *instruction,
 
     BasicBlock *branch = instruction->getParent();
 
-    int instNum = 1;
-    for(Instruction &I : *branch) {
-        if(&I == instruction)
-            break;
-        instNum += 1;
-    }
     std::string branchName = instruction->getParent()->getName().str();
 
     ProgramBlock *currBlock = programFunction->getProgramBlockRef(branchName, true);
@@ -579,7 +578,6 @@ bool doAliasReasoning(Instruction *instruction,
 
     llvm::errs() << "old is \n";
     ProgramPoint::logoutProgramPoint(programPoint, true);
-
 
     if (!includes) {
         realBranchOrder.push_back(branchName);
@@ -640,7 +638,6 @@ bool doAliasReasoning(Instruction *instruction,
 
     } else if (LoadInst *load = dyn_cast<LoadInst>(instruction)) {
         change = change || onLoadInst(load, programPoint);
-
     } else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
         if(!call->getType()->isVoidTy()) {
             change = change || onCallInst(call, call, programPoint);
@@ -747,6 +744,14 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
             branchInstructionMap[branchName].successors.insert(succ);
         }
 
+    }
+    ProgramBlock *entry = programFunction->getProgramBlockRef("entry", true);
+
+    ProgramPoint *p = entry->getPoint(0, true);
+
+    for(auto& Arg : F.args()) {
+        Value *v = &Arg;
+        p->addVariable(ProgramVariable(v));
     }
 
     bool fixed = true;

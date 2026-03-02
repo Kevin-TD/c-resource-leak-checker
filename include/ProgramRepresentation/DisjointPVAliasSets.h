@@ -53,7 +53,7 @@ class DisjointPVAliasSets {
     // creates a new disjoint set containing programVar. if programVar is
     // an existing member of any of the sets, no set is created.
     // The setID uniquely identifies the set across a programFunction
-    bool makeSet(ProgramVariable programVar, int setID);
+    bool makeSet(ProgramVariable programVar, ProgramFunction *pf);
 
     // aliases element1 and element2 by putting them into the same set. if one of
     // the elements already belongs in an existing set, both elements will be in

@@ -88,13 +88,13 @@ bool DisjointPVAliasSets::unionSets(ProgramVariable elementA,
     merge(set1, set2);
     return true;
 }
-bool DisjointPVAliasSets::makeSet(ProgramVariable programVar, int newID) {
+bool DisjointPVAliasSets::makeSet(ProgramVariable programVar, ProgramFunction *f) {
     if (getSetRef(programVar)) {
         return false;
     }
 
     PVAliasSet newSet;
-    newSet.setID(newID);
+    newSet.setID(f->getNewID());
     newSet.add(programVar);
     sets.push_back(newSet);
     return true;
@@ -136,7 +136,6 @@ bool DisjointPVAliasSets::addAlias(ProgramVariable element1,
         element2Set->add(element1);
         return true;
     }
-
 
     // case: neither of the sets exist
     PVAliasSet newSet;

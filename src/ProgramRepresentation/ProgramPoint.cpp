@@ -51,7 +51,7 @@ bool ProgramPoint::makeAliased(ProgramVariable elementA,
 }
 
 bool ProgramPoint::addVariable(ProgramVariable programVar) {
-    return this->programVariableAliasSets.makeSet(programVar, this->parentFunc->getNewID());
+    return this->programVariableAliasSets.makeSet(programVar, this->parentFunc);
 }
 
 bool ProgramPoint::addPVAS(PVAliasSet pvas) {
