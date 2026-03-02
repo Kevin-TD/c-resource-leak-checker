@@ -93,7 +93,6 @@ class ProgramFunction {
       }
     }
     */
-    PVAliasSet *getPVASRefFromValue(Value* value);
 
     std::string getFunctionName() const;
 };

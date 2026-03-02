@@ -45,15 +45,15 @@ class ProgramPoint {
     std::list<ProgramPoint *> getSuccessors();
 
     // aliases element1 and element2 by putting them into the same set
-    void addAlias(ProgramVariable element1, ProgramVariable element2);
+    bool addAlias(ProgramVariable element1, ProgramVariable element2);
 
     // adds variable programVar if it does not already exist in these sets
-    void addVariable(ProgramVariable programVar);
+    bool addVariable(ProgramVariable programVar);
 
     // adds pvas into this set of alias sets. pvas's program variables will merge
     // into one of these sets if it contains a program variable that exists in one
     // of these sets
-    void addPVAS(PVAliasSet pvas);
+    bool addPVAS(PVAliasSet pvas);
 
     // occurs at lubs when PVAS are modified, prevents many spurious PVAS from being created
     void updatePVAS(PVAliasSet pvas);
@@ -61,7 +61,7 @@ class ProgramPoint {
     // finds set A and B from element A and element B (respectively) and merges
     // them together. if A == B or one of the elements is not found in any of these
     // sets, no actions are performed
-    void makeAliased(ProgramVariable elementA, ProgramVariable elementB);
+    bool makeAliased(ProgramVariable elementA, ProgramVariable elementB);
 
     // copies the disjointed sets from programVariableAliasSets into these alias sets
     void
@@ -147,7 +147,7 @@ class ProgramPoint {
     overwritten, then we assume all other previous aliased pv's won't
     get mentioned again by the IR
     */
-    void unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable pvCallInst, ProgramVariable callInstAlias);
+    bool unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable pvCallInst, ProgramVariable callInstAlias);
 
     /* moves the pv corresponding to cleanedNameOfPVToUnalias (and potential aliases) out of
     pvas and into a new alias set. should only be called when pvas already has a call inst stored
@@ -155,7 +155,7 @@ class ProgramPoint {
     assigning a pointer to a new resource.
     argumentVar is alias information related to the pointer being assigned a new resource
     */
-    void unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar);
+    bool unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar);
 
     /*
      * This removes a variable from an alias set without moving it to another alias set, this is used when

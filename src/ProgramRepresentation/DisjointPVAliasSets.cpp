@@ -76,34 +76,39 @@ PVAliasSet *DisjointPVAliasSets::getSetRef(Value* val) {
     return NULL;
 }
 
-void DisjointPVAliasSets::unionSets(ProgramVariable elementA,
+bool DisjointPVAliasSets::unionSets(ProgramVariable elementA,
                                     ProgramVariable elementB) {
     auto set1 = findIter(elementA);
     auto set2 = findIter(elementB);
 
     if (set1 == set2 || set1 == sets.end() || set2 == sets.end()) {
-        return;
+        return false;
     }
 
     merge(set1, set2);
+    return true;
 }
-void DisjointPVAliasSets::makeSet(ProgramVariable programVar, int newID) {
+bool DisjointPVAliasSets::makeSet(ProgramVariable programVar, int newID) {
     if (getSetRef(programVar)) {
-        return;
+        return false;
     }
 
     PVAliasSet newSet;
     newSet.setID(newID);
     newSet.add(programVar);
     sets.push_back(newSet);
+    return true;
 }
 
 // First argument is "new" second is "old" for example item = %1 will be addAlias(item, %1)
-void DisjointPVAliasSets::addAlias(ProgramVariable element1,
+bool DisjointPVAliasSets::addAlias(ProgramVariable element1,
                                    ProgramVariable element2, ProgramFunction *pf) {
 
     PVAliasSet* element1Set = this->getSetRef(element1);
     PVAliasSet* element2Set = this->getSetRef(element2);
+
+    if(element1Set == element2Set)
+        return false;
 
     // case: both sets exist
     // Earlier, this joined two sets, this causes an error under the following example:
@@ -117,19 +122,19 @@ void DisjointPVAliasSets::addAlias(ProgramVariable element1,
     if (element1Set && element2Set) {
         element1Set->moveOut(element1);
         element2Set->add(element1);
-        return;
+        return true;
     }
 
 
     // case: 1 of the sets exist
     if (element1Set) {
         element1Set->add(element2);
-        return;
+        return true;
     }
 
     if (element2Set) {
         element2Set->add(element1);
-        return;
+        return true;
     }
 
 
@@ -140,6 +145,7 @@ void DisjointPVAliasSets::addAlias(ProgramVariable element1,
     newSet.setID(newID);
 
     sets.push_back(newSet);
+    return true;
 
 }
 
@@ -147,18 +153,21 @@ void DisjointPVAliasSets::clear() {
     sets.clear();
 }
 
-void DisjointPVAliasSets::mergeSet(PVAliasSet pvas) {
+bool DisjointPVAliasSets::mergeSet(PVAliasSet pvas) {
 
     for (ProgramVariable pv : pvas.getProgramVariables()) {
         auto foundAliasSet = findIter(pv);
 
         if (foundAliasSet != sets.end()) {
             foundAliasSet->addProgramVariables(pvas.getProgramVariables());
-            return;
+            return true;
         }
     }
 
+    if(findMatchingSet(pvas.getProgramVariables()))
+        return false;
     sets.push_back(pvas);
+    return true;
 }
 
 int DisjointPVAliasSets::size() const {

@@ -53,6 +53,8 @@ class ProgramBlock {
     // adds a new program point
     void add(ProgramPoint *point);
 
+    PVAliasSet *getPVASRefFromValue(Value* value);
+
     ProgramPoint *getPoint(unsigned int line, bool addNew);
     ProgramPoint *getLast();
 

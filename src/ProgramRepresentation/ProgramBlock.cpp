@@ -39,6 +39,16 @@ void ProgramBlock::logoutProgramBlock(const ProgramBlock *block) {
     }
 }
 
+PVAliasSet *ProgramBlock::getPVASRefFromValue(Value* value) {
+    for (ProgramPoint* programPoint : this->points) {
+        if (PVAliasSet* pvas = programPoint->getPVASRef(value, false)) {
+            return pvas;
+        }
+    }
+
+    return NULL;
+}
+
 std::string ProgramBlock::getBlockName() const {
     return this->blockName;
 }
@@ -121,7 +131,13 @@ ProgramPoint *ProgramBlock::getPoint(unsigned int line, bool addNew) {
 }
 
 void ProgramBlock::addSuccessor(ProgramBlock *p) {
-    this->successors.push_back(p);
+    auto succ = this->successors;
+    std::string name = p->getBlockName();
+    if(succ.end() == find_if(succ.begin(), succ.end(), [name](const ProgramBlock *b) {
+    return b->getBlockName() == name;
+    })) {
+        this->successors.push_back(p);
+    }
 }
 
 std::list<ProgramBlock *> ProgramBlock::getSuccessors() {

@@ -40,22 +40,22 @@ void ProgramPoint::logoutProgramPoint(const ProgramPoint *point,
     }
 }
 
-void ProgramPoint::addAlias(ProgramVariable element1,
+bool ProgramPoint::addAlias(ProgramVariable element1,
                             ProgramVariable element2) {
-    this->programVariableAliasSets.addAlias(element1, element2, this->parentFunc);
+    return this->programVariableAliasSets.addAlias(element1, element2, this->parentFunc);
 }
 
-void ProgramPoint::makeAliased(ProgramVariable elementA,
+bool ProgramPoint::makeAliased(ProgramVariable elementA,
                                ProgramVariable elementB) {
-    this->programVariableAliasSets.unionSets(elementA, elementB);
+    return this->programVariableAliasSets.unionSets(elementA, elementB);
 }
 
-void ProgramPoint::addVariable(ProgramVariable programVar) {
-    this->programVariableAliasSets.makeSet(programVar, this->parentFunc->getNewID());
+bool ProgramPoint::addVariable(ProgramVariable programVar) {
+    return this->programVariableAliasSets.makeSet(programVar, this->parentFunc->getNewID());
 }
 
-void ProgramPoint::addPVAS(PVAliasSet pvas) {
-    this->programVariableAliasSets.mergeSet(pvas);
+bool ProgramPoint::addPVAS(PVAliasSet pvas) {
+    return this->programVariableAliasSets.mergeSet(pvas);
 }
 
 DisjointPVAliasSets ProgramPoint::getProgramVariableAliasSets() const {
@@ -104,7 +104,6 @@ PVAliasSet *ProgramPoint::getPVASRef(const std::string& cleanedName, bool addNew
 
 PVAliasSet *ProgramPoint::getPVASRef(Value* value,
                                      bool addNewIfNotFound) {
-
     PVAliasSet *pvas = this->programVariableAliasSets.getSetRef(value);
 
     if (pvas) {
@@ -195,7 +194,7 @@ void ProgramPoint::add(ProgramPoint *programPoint) {
     }
 }
 
-void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable pvCallInst, ProgramVariable callInstAlias) {
+bool ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable pvCallInst, ProgramVariable callInstAlias) {
     for (ProgramVariable& pv : pvas->getProgramVariables()) {
         if (pv.equalsCleanedName(cleanedNameOfPVToUnalias)) {
             if (pv.getFieldIndex() != -1) {
@@ -209,18 +208,17 @@ void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVT
                     }
                 }
 
-                addPVAS(grabbedSet);
-                break;
+                return addPVAS(grabbedSet);
             } else {
                 ProgramVariable pvToMove = pvas->moveOut(pv);
                 PVAliasSet newSet;
                 newSet.add(pvToMove);
                 newSet.add(pvCallInst);
-                addPVAS(newSet);
-                break;
+                return addPVAS(newSet);
             }
         }
     }
+    return false;
 }
 
 void ProgramPoint::addSuccessor(ProgramPoint *p) {
@@ -231,7 +229,7 @@ std::list<ProgramPoint *> ProgramPoint::getSuccessors() {
     return successors;
 }
 
-void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar) {
+bool ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar) {
     for (ProgramVariable& pv : pvas->getProgramVariables()) {
         if (pv.equalsCleanedName(cleanedNameOfPVToUnalias)) {
             // TODO: replace all instances of
@@ -246,8 +244,7 @@ void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVT
                     grabbedSet.add(argVarPV);
                 }
 
-                addPVAS(grabbedSet);
-                break;
+                return addPVAS(grabbedSet);
             } else {
                 PVAliasSet newSet;
 
@@ -257,11 +254,11 @@ void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVT
                 ProgramVariable argVarPV = pvas->moveOut(argumentVar);
                 newSet.add(argVarPV);
 
-                addPVAS(newSet);
-                break;
+                return addPVAS(newSet);
             }
         }
     }
+    return false;
 }
 
 

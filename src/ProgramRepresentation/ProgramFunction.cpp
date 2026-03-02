@@ -122,18 +122,6 @@ void ProgramFunction::setProgramBlock(std::string name, ProgramBlock programBloc
     */
 }
 
-/*
-PVAliasSet *ProgramFunction::getPVASRefFromValue(Value* value) {
-    for (ProgramPoint& programPoint : programPoints) {
-        if (PVAliasSet* pvas = programPoint.getPVASRef(value, false)) {
-            return pvas;
-        }
-    }
-
-    return NULL;
-}
-*/
-
 bool ProgramFunction::checkFixed() {
     bool fixed = true;
     for(auto block : this->getProgramBlocks()) {
