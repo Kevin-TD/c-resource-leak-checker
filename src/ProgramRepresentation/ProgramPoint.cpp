@@ -195,10 +195,14 @@ void ProgramPoint::add(ProgramPoint *programPoint) {
 }
 
 bool ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable pvCallInst, ProgramVariable callInstAlias) {
+    if(pvas->getProgramVariables().size() == 1) {
+        return false;
+    }
     for (ProgramVariable& pv : pvas->getProgramVariables()) {
         if (pv.equalsCleanedName(cleanedNameOfPVToUnalias)) {
             if (pv.getFieldIndex() != -1) {
                 PVAliasSet grabbedSet = pvas->moveOut(pv.getSetNumber());
+                grabbedSet.setID(this->parentFunc->getNewID());
                 grabbedSet.add(pvCallInst);
 
                 if (pvas->getProgramVariables().size() > 0) {
@@ -212,6 +216,7 @@ bool ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVT
             } else {
                 ProgramVariable pvToMove = pvas->moveOut(pv);
                 PVAliasSet newSet;
+                newSet.setID(this->parentFunc->getNewID());
                 newSet.add(pvToMove);
                 newSet.add(pvCallInst);
                 return addPVAS(newSet);
@@ -230,6 +235,9 @@ std::list<ProgramPoint *> ProgramPoint::getSuccessors() {
 }
 
 bool ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar) {
+    if(pvas->getProgramVariables().size() == 1) {
+        return false;
+    }
     for (ProgramVariable& pv : pvas->getProgramVariables()) {
         if (pv.equalsCleanedName(cleanedNameOfPVToUnalias)) {
             // TODO: replace all instances of
@@ -237,7 +245,9 @@ bool ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVT
             // `field != -1` to use `ProgramVariable::containsStructFieldVar` instead as
             // checking this is the purpose that method serves
             if (pv.getFieldIndex() != -1) {
-                PVAliasSet grabbedSet = pvas->moveOut(pv.getSetNumber());
+                PVAliasSet grabbedSet;
+                grabbedSet.add(pvas->moveOut(pv));
+                grabbedSet.setID(this->parentFunc->getNewID());
 
                 ProgramVariable argVarPV = pvas->moveOut(argumentVar);
                 if (argVarPV.getCleanedName() != "") {
@@ -247,6 +257,7 @@ bool ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVT
                 return addPVAS(grabbedSet);
             } else {
                 PVAliasSet newSet;
+                newSet.setID(this->parentFunc->getNewID());
 
                 ProgramVariable pvToMove = pvas->moveOut(pv);
                 newSet.add(pvToMove);

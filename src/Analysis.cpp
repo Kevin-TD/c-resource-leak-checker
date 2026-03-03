@@ -251,25 +251,29 @@ bool onCallNotStoreInst(CallInst *call, ProgramPoint *programPoint, std::string 
             int numFields = rlc_dataflow::getStructNumberOfFields(optLoadFileName, fi->getNthParamType(i));
 
             if (numFields != -1) {
-                for (unsigned j = 0; j < numFields; j++) {
-                    std::string targetArg = args[i] + "." + std::to_string(j);
+                /* This code unaliases struct fields that are passed as arguments.
+                 * If a struct field is passed owning, obligations will be cleared so there will not be a concern of aliases
+                 * if it is not passed owning, there is no change to alias information
+                 * therefore nothing should be done here
+                    for (unsigned j = 0; j < numFields; j++) {
+                        std::string targetArg = args[i] + "." + std::to_string(j);
 
-                    logout("target arg1 " << targetArg);
+                        logout("target arg1 " << targetArg);
 
-                    if (i + j >= call->getNumArgOperands()) {
-                        continue;
+                        if (i + j >= call->getNumArgOperands()) {
+                            continue;
+                        }
+
+                        argumentVar = ProgramVariable(call->getArgOperand(i + j));
+                        logout("argument var " << argumentVar.getRawName());
+
+                        PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
+
+                        if (targetArgPvas) {
+                            change = change || programPoint->unalias(targetArgPvas, targetArg, argumentVar);
+                        }
                     }
-
-                    argumentVar = ProgramVariable(call->getArgOperand(i + j));
-                    logout("argument var " << argumentVar.getRawName());
-
-                    PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
-
-                    if (targetArgPvas) {
-                        logout("found target " << targetArg);
-                        change = change || programPoint->unalias(targetArgPvas, targetArg, argumentVar);
-                    }
-                }
+                */
             } else {
                 std::string targetArg = args[i];
 
