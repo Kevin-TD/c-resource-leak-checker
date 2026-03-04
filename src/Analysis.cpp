@@ -736,19 +736,6 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
 
     ProgramFunction *programFunction = new ProgramFunction(fnName);
     std::map<std::string, InstructionHolder> branchInstructionMap;
-
-    CFG *cfg = new CFG();
-    buildCFG(*cfg, realBranchOrder, branchInstructionMap);
-
-    for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
-        std::string branchName = I->getParent()->getName().str();
-        auto succs = rlc_dataflow::getSuccessors(&(*I));
-        branchInstructionMap[branchName].branch.insert(&(*I));
-        for (auto succ : succs) {
-            branchInstructionMap[branchName].successors.insert(succ);
-        }
-
-    }
     ProgramBlock *entry = programFunction->getProgramBlockRef("entry", true);
 
     ProgramPoint *p = entry->getPoint(0, true);
@@ -756,6 +743,13 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
     for(auto& Arg : F.args()) {
         Value *v = &Arg;
         p->addVariable(ProgramVariable(v));
+    }
+    llvm::errs() << "\n\n\n" << "After Alias Analysis: \n\n\n";
+    for(auto b : programFunction->getProgramBlocks()) {
+        for(auto p : b.getPoints()) {
+            ProgramPoint::logoutProgramPoint(p, true);
+            logout("\n-----\n");
+        }
     }
 
     bool fixed = true;
@@ -771,14 +765,17 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
         }
     }
 
-    llvm::errs() << "\n\n\n" << "After Alias Analysis: \n\n\n";
-    for(auto b : programFunction->getProgramBlocks()) {
-        for(auto p : b.getPoints()) {
-            ProgramPoint::logoutProgramPoint(p, true);
-            logout("\n-----\n");
+
+    for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
+        std::string branchName = I->getParent()->getName().str();
+        auto succs = rlc_dataflow::getSuccessors(&(*I));
+        branchInstructionMap[branchName].branch.insert(&(*I));
+        for (auto succ : succs) {
+            branchInstructionMap[branchName].successors.insert(succ);
         }
     }
-
+    CFG *cfg = new CFG();
+    buildCFG(*cfg, realBranchOrder, branchInstructionMap);
 
     calledMethods.setFunctions(SafeFunctions, ReallocFunctions, MemoryFunctions,
                                annotationHandler);
