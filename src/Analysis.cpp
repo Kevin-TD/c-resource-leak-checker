@@ -221,7 +221,7 @@ bool onCallInst(CallInst *call, ProgramVariable receivingVar,  ProgramPoint *pro
         }
     }
     if(callVar.getCleanedName() != receivingVar.getCleanedName()) {
-        ret = ret || programPoint->addAlias(callVar, receivingVar);
+        ret = ret || programPoint->addAlias(receivingVar, callVar);
     } else if(!programPoint->getPVASRef(callVar, false)) {
         ret = ret || programPoint->addVariable(callVar);
     }
@@ -270,7 +270,7 @@ bool onCallNotStoreInst(CallInst *call, ProgramPoint *programPoint, std::string 
                         PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
 
                         if (targetArgPvas) {
-                            change = change || programPoint->unalias(targetArgPvas, targetArg, argumentVar);
+                            change = programPoint->unalias(targetArgPvas, targetArg, argumentVar) || change;
                         }
                     }
                 */
@@ -287,7 +287,7 @@ bool onCallNotStoreInst(CallInst *call, ProgramPoint *programPoint, std::string 
                 PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
 
                 if (targetArgPvas) {
-                    change = change || programPoint->unalias(pvas, targetArg, argumentVar);
+                    change = programPoint->unalias(pvas, targetArg, argumentVar) || change;
                 }
             }
         }
@@ -340,7 +340,7 @@ bool onCallNotStoreInst(CallInst *call, ProgramPoint *programPoint, std::string 
                 PVAliasSet* targetArgPvas = programPoint->getPVASRef(targetArg, false);
 
                 if (targetArgPvas) {
-                    change = change || programPoint->unalias(pvas, targetArg, argumentVar);
+                    change = programPoint->unalias(pvas, targetArg, argumentVar) || change;
                 }
             } else {
                 logout("missed out on " << arg << " for i = " << i);
@@ -552,25 +552,38 @@ bool doAliasReasoning(Instruction *instruction,
 
     std::string branchName = instruction->getParent()->getName().str();
 
-    ProgramBlock *currBlock = programFunction->getProgramBlockRef(branchName, true);
-    ProgramPoint *programPoint = currBlock->getPoint(0, true);
-    programPoint->setParentFunc(programFunction);
-    for(BasicBlock *succ : successors(branch)) {
-        currBlock->addSuccessor(programFunction->getProgramBlockRef(succ->getName().str(), true));
-    }
-    ProgramPoint p = *programPoint;
+    int instNum = 0;
 
-    for(auto block : programFunction->getProgramBlocks()) {
-        auto follows = block.getSuccessors();
-        auto iter = std::find_if(follows.begin(), follows.end(),
-        [branchName](const ProgramBlock *b) {
-            return b->getBlockName() == branchName;
-        });
-        if(iter != follows.end()) {
-            ProgramPoint::logoutProgramPoint(programPoint, true);
-            change = change || lubAlias(programPoint, block.getLast());
+    ProgramPoint *programPoint;
+    ProgramBlock *currBlock = programFunction->getProgramBlockRef(branchName, true);
+    if(instruction == &branch->front()) {
+        programPoint = currBlock->getPoint(0, true);
+        ProgramPoint::logoutProgramPoint(programPoint, true);
+        programPoint->setParentFunc(programFunction);
+        for(BasicBlock *succ : successors(branch)) {
+            currBlock->addSuccessor(programFunction->getProgramBlockRef(succ->getName().str(), true));
+        }
+        ProgramPoint p = *programPoint;
+
+        for(auto block : programFunction->getProgramBlocks()) {
+            auto follows = block.getSuccessors();
+            auto iter = std::find_if(follows.begin(), follows.end(),
+            [branchName](const ProgramBlock *b) {
+                return b->getBlockName() == branchName;
+            });
+            if(iter != follows.end()) {
+                ProgramPoint::logoutProgramPoint(programPoint, true);
+                change = lubAlias(programPoint, block.getLast()) || change;
+            }
+        }
+    } else {
+        auto instIT = branch->begin();
+        while(instruction != &*instIT) {
+            ++instIT;
+            ++instNum;
         }
     }
+    programPoint = currBlock->getPoint(instNum, true);
 
     llvm::errs() << "BRANCH " << branchName << "\n";
     for (auto branch : realBranchOrder) {
@@ -599,7 +612,7 @@ bool doAliasReasoning(Instruction *instruction,
         if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
             ProgramVariable callVar = ProgramVariable(call);
             logout("add alias for analysis storeinst call inst");
-            change = change || onCallInst(call, receivingValue, programPoint);
+            change = onCallInst(call, receivingValue, programPoint) || change;
             return change;
         }
         // check if two structs are being aliased. the structs must refer
@@ -625,7 +638,7 @@ bool doAliasReasoning(Instruction *instruction,
                     ProgramVariable receivingStructVar =
                         ProgramVariable(receivingValue, i);
 
-                    change = change || programPoint->makeAliased(valueStructVar, receivingStructVar);
+                    change = programPoint->makeAliased(valueStructVar, receivingStructVar) || change;
                 }
 
                 logout("post alias");
@@ -636,25 +649,22 @@ bool doAliasReasoning(Instruction *instruction,
         }
 
         logout("add alias for analysis storeinst else case");
-        ProgramPoint::logoutProgramPoint(*programPoint, true);
-        programPoint->addAlias(varToStore, receivingVar);
-        ProgramPoint::logoutProgramPoint(*programPoint, true);
-
+        change = programPoint->addAlias(varToStore, receivingVar) || change;
     } else if (LoadInst *load = dyn_cast<LoadInst>(instruction)) {
-        change = change || onLoadInst(load, programPoint);
+        change = onLoadInst(load, programPoint) || change;
     } else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
         if(!call->getType()->isVoidTy()) {
-            change = change || onCallInst(call, call, programPoint);
+            change = onCallInst(call, call, programPoint) || change;
         } else {
-            change = change || onCallNotStoreInst(call, programPoint, optLoadFileName);
+            change = onCallNotStoreInst(call, programPoint, optLoadFileName) || change;
         }
     } else if (BitCastInst *bitcast = dyn_cast<BitCastInst>(instruction)) {
-        change = change || onBitCastInst(bitcast, programPoint);
+        change = onBitCastInst(bitcast, programPoint) || change;
     } else if (AllocaInst *allocate = dyn_cast<AllocaInst>(instruction)) {
-        change = change || onAllocaInst(allocate, programPoint, optLoadFileName);
+        change = onAllocaInst(allocate, programPoint, optLoadFileName) || change;
     } else if (GetElementPtrInst *gepInst =
                    dyn_cast<GetElementPtrInst>(instruction)) {
-        change = change || onGetElementPtrInst(gepInst, programPoint, programFunction->getProgramBlockRef(branchName, false));
+        change = onGetElementPtrInst(gepInst, programPoint, programFunction->getProgramBlockRef(branchName, false)) || change;
     }
 
     return change;
@@ -744,6 +754,18 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
         Value *v = &Arg;
         p->addVariable(ProgramVariable(v));
     }
+
+    bool fixed = true;
+    while(fixed) {
+        fixed = false;
+        for(inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
+            std::string branchName = I->getParent()->getName().str();
+            ProgramBlock b = *programFunction->getProgramBlockRef(branchName, true);
+            fixed = doAliasReasoning(&(*I), programFunction, optLoadFileName,
+                                     structFieldToIndexMap, functionInfosManager,
+                                     lineNumberToLValueMap) || fixed;
+        }
+    }
     llvm::errs() << "\n\n\n" << "After Alias Analysis: \n\n\n";
     for(auto b : programFunction->getProgramBlocks()) {
         for(auto p : b.getPoints()) {
@@ -751,20 +773,6 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
             logout("\n-----\n");
         }
     }
-
-    bool fixed = true;
-    while(fixed) {
-        fixed = false;
-
-        for(inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
-            std::string branchName = I->getParent()->getName().str();
-            ProgramBlock b = *programFunction->getProgramBlockRef(branchName, true);
-            fixed = fixed || doAliasReasoning(&(*I), programFunction, optLoadFileName,
-                                              structFieldToIndexMap, functionInfosManager,
-                                              lineNumberToLValueMap);
-        }
-    }
-
 
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
         std::string branchName = I->getParent()->getName().str();
