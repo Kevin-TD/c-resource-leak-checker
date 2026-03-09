@@ -41,12 +41,12 @@ class PVAliasSet {
     // adds programVar to this set of program variables. programVar is checked to
     // see if it already exists in this set of program variables and it's not added
     // if it already does.
-    void add(ProgramVariable programVar);
+    bool add(ProgramVariable programVar);
 
     // adds array of program variables to this set of program variables.
     // each variable is checked to see if already exists in this list of program
     // variables.
-    void addProgramVariables(std::list<ProgramVariable> programVariables);
+    bool addProgramVariables(std::list<ProgramVariable> programVariables);
 
     std::list<ProgramVariable> getProgramVariables();
 

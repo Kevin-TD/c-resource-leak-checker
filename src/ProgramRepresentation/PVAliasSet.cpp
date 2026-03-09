@@ -34,12 +34,13 @@ bool PVAliasSet::contains(Value* value) {
     return false;
 }
 
-void PVAliasSet::add(ProgramVariable programVar) {
+bool PVAliasSet::add(ProgramVariable programVar) {
     if (contains(programVar)) {
-        return;
+        return false;
     }
 
     programVariables.push_back(programVar);
+    return true;
 }
 
 bool PVAliasSet::equals(PVAliasSet* a) {
@@ -53,11 +54,13 @@ bool PVAliasSet::equals(PVAliasSet* a) {
     return true;
 }
 
-void PVAliasSet::addProgramVariables(
+bool PVAliasSet::addProgramVariables(
     std::list<ProgramVariable> programVariables) {
+    bool ret = false;
     for (ProgramVariable pv : programVariables) {
-        add(pv);
+        ret = add(pv)  || ret;
     }
+    return ret;
 }
 
 std::list<ProgramVariable> PVAliasSet::getProgramVariables() {

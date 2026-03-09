@@ -158,8 +158,7 @@ bool DisjointPVAliasSets::mergeSet(PVAliasSet pvas) {
         auto foundAliasSet = findIter(pv);
 
         if (foundAliasSet != sets.end()) {
-            foundAliasSet->addProgramVariables(pvas.getProgramVariables());
-            return true;
+            return foundAliasSet->addProgramVariables(pvas.getProgramVariables());
         }
     }
 

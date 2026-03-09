@@ -214,17 +214,16 @@ bool onCallInst(CallInst *call, ProgramVariable receivingVar,  ProgramPoint *pro
                 PVAliasSet* LHSpvas = programPoint->getPVASRef(leftHandSide, false);
 
                 if (LHSpvas) {
-                    ret = ret || programPoint->unalias(pvasRef, leftHandSide, call, receivingVar);
-                    return ret;
+                    ret = programPoint->unalias(pvasRef, leftHandSide, call, receivingVar) || ret;
                 }
             }
         }
-    }
-    if(callVar.getCleanedName() != receivingVar.getCleanedName()) {
+    } else if(callVar.getCleanedName() != receivingVar.getCleanedName()) {
         ret = ret || programPoint->addAlias(receivingVar, callVar);
     } else if(!programPoint->getPVASRef(callVar, false)) {
         ret = ret || programPoint->addVariable(callVar);
     }
+
     return ret;
 }
 
@@ -513,7 +512,7 @@ bool lubAlias(ProgramPoint *current, ProgramPoint *old) {
         }
         // this represents needing to add an alias to current sets
         else if(currit->getID() > oldit->getID()) {
-            ret = ret || current->addPVAS(*oldit);
+            ret = current->addPVAS(*oldit) || ret;
             ++oldit;
         }
         //Otherwise they are referring to the same set, so they must agree on aliases. Members found in currit but not oldit are removed
@@ -530,7 +529,7 @@ bool lubAlias(ProgramPoint *current, ProgramPoint *old) {
     }
 
     while(oldItFin != oldSets.end()) {
-        ret = ret || current->addPVAS(*oldItFin);
+        ret = current->addPVAS(*oldItFin) || ret;
         ++oldItFin;
     }
 
@@ -564,7 +563,6 @@ bool doAliasReasoning(Instruction *instruction,
             currBlock->addSuccessor(programFunction->getProgramBlockRef(succ->getName().str(), true));
         }
         ProgramPoint p = *programPoint;
-
         for(auto block : programFunction->getProgramBlocks()) {
             auto follows = block.getSuccessors();
             auto iter = std::find_if(follows.begin(), follows.end(),
@@ -572,7 +570,6 @@ bool doAliasReasoning(Instruction *instruction,
                 return b->getBlockName() == branchName;
             });
             if(iter != follows.end()) {
-                ProgramPoint::logoutProgramPoint(programPoint, true);
                 change = lubAlias(programPoint, block.getLast()) || change;
             }
         }
@@ -609,12 +606,6 @@ bool doAliasReasoning(Instruction *instruction,
             return change;
         }
         ProgramVariable receivingVar = ProgramVariable(store->getOperand(1));
-        if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
-            ProgramVariable callVar = ProgramVariable(call);
-            logout("add alias for analysis storeinst call inst");
-            change = onCallInst(call, receivingValue, programPoint) || change;
-            return change;
-        }
         // check if two structs are being aliased. the structs must refer
         // to the same type. if they do not, they are not aliased;
         // it is safe to do this because worst case scenario,
@@ -675,6 +666,7 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
 
     std::string testName = rlc_util::getTestName(optLoadFileName);
 
+    std::cout << fnName << "\n";
     programLinesBranchesInfo.add(F);
 
     bool functionIsKnown = false;
@@ -754,16 +746,17 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
         Value *v = &Arg;
         p->addVariable(ProgramVariable(v));
     }
-
     bool fixed = true;
     while(fixed) {
         fixed = false;
         for(inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
             std::string branchName = I->getParent()->getName().str();
+            logout(branchName);
             ProgramBlock b = *programFunction->getProgramBlockRef(branchName, true);
             fixed = doAliasReasoning(&(*I), programFunction, optLoadFileName,
                                      structFieldToIndexMap, functionInfosManager,
                                      lineNumberToLValueMap) || fixed;
+            llvm::errs() << "FIXED IS " << fixed << "\n";
         }
     }
     llvm::errs() << "\n\n\n" << "After Alias Analysis: \n\n\n";
