@@ -606,6 +606,14 @@ bool doAliasReasoning(Instruction *instruction,
             return change;
         }
         ProgramVariable receivingVar = ProgramVariable(store->getOperand(1));
+
+        if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
+            ProgramVariable callVar = ProgramVariable(call);
+            logout("add alias for analysis storeinst call inst");
+            change = onCallInst(call, call, programPoint) || change;
+            return change;
+        }
+
         // check if two structs are being aliased. the structs must refer
         // to the same type. if they do not, they are not aliased;
         // it is safe to do this because worst case scenario,
