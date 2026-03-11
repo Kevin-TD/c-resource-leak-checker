@@ -230,7 +230,8 @@ bool onCallInst(CallInst *call, ProgramVariable receivingVar,  ProgramPoint *pro
 bool onCallNotStoreInst(CallInst *call, ProgramPoint *programPoint, std::string optLoadFileName) {
     std::string fnName = call->getCalledFunction()->getName().str();
     if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
-            rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
+            rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION) ||
+            rlc_util::startsWith(fnName, LLVM_DBG_VALUE)) {
         //llvm var annotations should not be included
         return false;
     }
@@ -495,8 +496,12 @@ bool onAllocaInst(AllocaInst *allocate, ProgramPoint *programPoint, std::string 
 // SSA guarantees that because there is no information of a variable in a previous branch,
 // it could not have been assigned as there is a uniqueness guarantee
 //
-// (* EXPLAIN WORRY, EXPLAIN WHY IT WONT HAPPEN *)
-//
+// This lub works as follows, if the current program point lacks an alias in the old program point, it must
+// be added. This is either done to instantiate the program point or done as a result of a merging of program blocks
+// with sets of alias sets not present in each other
+// In the first case, the copying of alias sets is equivalent to variables surviving after block execution
+// In the second case, because the IR is converted into SSA, any aliases not present in one block implies that
+// the resources associated with it are not allocated in the other program block
 bool lubAlias(ProgramPoint *current, ProgramPoint *old) {
     std::list<PVAliasSet> currSets = current->getProgramVariableAliasSets().getSets();
     std::list<PVAliasSet> oldSets = old->getProgramVariableAliasSets().getSets();
@@ -602,6 +607,10 @@ bool doAliasReasoning(Instruction *instruction,
         Value *receivingValue = store->getOperand(1);
         ProgramVariable varToStore = ProgramVariable(store->getOperand(0));
         if (!varToStore.isIdentifier()) {
+            PVAliasSet *pv = programPoint->getPVASRef(receivingValue, false);
+            if(pv) {
+                pv->moveOut(ProgramVariable(receivingValue));
+            }
             // TODO if it is not an identifier, remove the receiving var from all aliases
             return change;
         }

@@ -3,7 +3,8 @@
 
 #include "ProgramRepresentation/ProgramPoint.h"
 
-// reflects a branch that holds some instructions in the IR. this class manages
+// reflects a branch that holds a continuous set of instructions in the IR
+// that will always be run consecutively. this class manages
 // a block's program variables using a set of alias sets. it is effectively a
 // wrapper for a continuous list of points
 
@@ -35,9 +36,15 @@ class ProgramBlock {
     bool fixed;
     ProgramBlock(std::string blockName);
 
-    // Returns the return value associated with this program block
-    // Likely will need to be remodeled later so all resources that are owned by
-    // other parts in the program are returned
+    // Returns the return value associated with this program block for the Scope Analyzer
+    // to ignore out of scope for returned variables
+    // Likely will need to be refactored later so all resources that are owned by
+    // other parts in the program are returned because their ownership status imply
+    // they will be handled elsewhere
+    //
+    // This is done by block rather than by function because a function may return different aliases
+    // while a block is guaranteed to have one or zero return values. In the case of no return values
+    // a NULL ptr is returned.
     Value *getReturnValue();
 
     // copies the alias from the last programPoint of its predecessor into a new instance

@@ -199,7 +199,8 @@ void DataflowPass::transfer(Instruction *instruction,
             }
 
             if (rlc_util::startsWith(fnName, LLVM_PTR_ANNOTATION) ||
-                    rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION)) {
+                    rlc_util::startsWith(fnName, LLVM_VAR_ANNOTATION) ||
+                    rlc_util::startsWith(fnName, LLVM_DBG_VALUE)) {
                 return;
             }
 

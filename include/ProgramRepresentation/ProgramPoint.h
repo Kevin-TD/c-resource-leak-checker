@@ -11,6 +11,9 @@ class ProgramPoint {
   private:
     DisjointPVAliasSets programVariableAliasSets;
     std::list<ProgramPoint *> successors;
+    // Aliases are uniquely identified by ids across functioons, therefore everytime a new alias is created,
+    // a counter in a function class must be referened. parentFunc is used to reference the parent function
+    // in order to ensure that aliases have unique ids across functions
     ProgramFunction *parentFunc;
 
     // Within a block, points are defined by the number instruction they apply to. For example
