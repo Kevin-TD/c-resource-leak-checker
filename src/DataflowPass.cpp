@@ -383,7 +383,6 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         }
 
         // lub PriorPreCM and CurrentPreCM
-        // NEW CODE HERE
         ProgramBlock *b = preProgramFunction.getProgramBlockRef(currentBranch, true);
         ProgramPoint *lub = b->getPoint(0, true);
         lub->setParentFunc(&preProgramFunction);

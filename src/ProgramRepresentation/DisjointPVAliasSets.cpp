@@ -107,7 +107,7 @@ bool DisjointPVAliasSets::addAlias(ProgramVariable element1,
     PVAliasSet* element1Set = this->getSetRef(element1);
     PVAliasSet* element2Set = this->getSetRef(element2);
 
-    if(element1Set == element2Set)
+    if(element1Set == element2Set && element1Set)
         return false;
 
     // case: both sets exist

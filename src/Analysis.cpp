@@ -173,6 +173,7 @@ std::vector<std::string> getAnnotationStrings(const TempFileManager& astInfoFile
 bool onLoadInst(LoadInst *load, ProgramPoint *programPoint) {
     logout("(load) name is " << variable(load) << " for "
            << variable(load->getPointerOperand()));
+    errs() << "INSTRUCTION IS " << *load << "\n";
     std::string varName = variable(load->getPointerOperand());
 
     ProgramVariable receivingVar = ProgramVariable(load);
@@ -183,11 +184,14 @@ bool onLoadInst(LoadInst *load, ProgramPoint *programPoint) {
 }
 
 // this is called as a part of the store Instruction case, otherwise no aliases are created by calls (unless we add annotations for it later?)
+// This represents moving a call result into an alias set, call results will always be put into registers so they will move everything from the alias they store
+// into into the same alias as the call result
 bool onCallInst(CallInst *call, ProgramVariable receivingVar,  ProgramPoint *programPoint) {
     ProgramVariable callVar = ProgramVariable(call);
     bool ret = false;
     logout("add alias for analysis storeinst call inst");
     logout("variable Name " << callVar.getCleanedName());
+    logout("recv Name " << receivingVar.getCleanedName());
 
     // check for pointer reassignment; if so, the resource becomes un-aliased
     if (auto pvasRef = programPoint->getPVASRef(receivingVar, false)) {
@@ -201,6 +205,8 @@ bool onCallInst(CallInst *call, ProgramVariable receivingVar,  ProgramPoint *pro
 
 
             const DebugLoc &debugLoc = call->getDebugLoc();
+            //
+            //ERROR with ptr_struct_alloc is lefthandside failing
 
             if (lineNumberToLValueMap.lineNumberIsInMap(debugLoc.getLine())) {
                 std::string leftHandSide = lineNumberToLValueMap.get(debugLoc.getLine());
@@ -210,11 +216,14 @@ bool onCallInst(CallInst *call, ProgramVariable receivingVar,  ProgramPoint *pro
                     leftHandSide = potentialStructName;
                 }
 
-                logout("LHS = " << leftHandSide);
-                PVAliasSet* LHSpvas = programPoint->getPVASRef(leftHandSide, false);
+                logout("LHS IS = " << leftHandSide);
+                //PVAliasSet* LHSpvas = programPoint->getPVASRef(leftHandSide, false);
+                PVAliasSet* LHSpvas = programPoint->getPVASRef(callVar, false);
 
                 if (LHSpvas) {
-                    ret = programPoint->unalias(pvasRef, leftHandSide, call, receivingVar) || ret;
+                    llvm::errs() << "AAAA\n";
+                    // HERE ALL aliases in receivingVar must be moved to callVar PVAS
+                    ret = programPoint->makeAliased(call, receivingVar) || ret;
                 }
             }
         }
@@ -405,6 +414,7 @@ bool onGetElementPtrInst(GetElementPtrInst *gepInst, ProgramPoint *programPoint,
     bool ret = false;
     llvm::Type *structType = gepInst->getPointerOperandType();
     llvm::Value *pointerOperand = gepInst->getPointerOperand();
+    llvm::errs() << "INSTRUCTION IS " << *gepInst << "\n";
 
     if (llvm::PointerType *pointerType =
                 llvm::dyn_cast<llvm::PointerType>(pointerOperand->getType())) {
@@ -420,7 +430,8 @@ bool onGetElementPtrInst(GetElementPtrInst *gepInst, ProgramPoint *programPoint,
                     ProgramVariable structVar =
                         ProgramVariable(bitcast->getOperand(0), index);
                     logout("add alias for analysis gepinst");
-                    ret = ret || programPoint->addAlias(sourceVar, structVar);
+                    errs() << sourceVar.getCleanedName() << " IS SOURCE AND " << structVar.getCleanedName() << " IS Struct\n";
+                    ret = programPoint->addAlias(sourceVar, structVar) || ret;
                     return ret;
                 }
 
@@ -447,7 +458,7 @@ bool onGetElementPtrInst(GetElementPtrInst *gepInst, ProgramPoint *programPoint,
                         logout("spec index inst = " << *gepInst);
                         logout("specifying index for " << structVar.getCleanedName());
 
-                        ret = ret || programPoint->addAlias(sourceVar, structVar);
+                        ret = programPoint->addAlias(sourceVar, structVar) || ret;
 
                         return ret;
                     }
@@ -603,6 +614,7 @@ bool doAliasReasoning(Instruction *instruction,
     }
     // a store instruction is how llvm IR handles mutable field reassignment, even in SSA
     if(StoreInst *store = dyn_cast<StoreInst>(instruction)) {
+        llvm::errs() << "INSTRUCTION IS " << *store << "\n";
         Value *valueToStore = store->getOperand(0);
         Value *receivingValue = store->getOperand(1);
         ProgramVariable varToStore = ProgramVariable(store->getOperand(0));
@@ -611,17 +623,9 @@ bool doAliasReasoning(Instruction *instruction,
             if(pv) {
                 pv->moveOut(ProgramVariable(receivingValue));
             }
-            // TODO if it is not an identifier, remove the receiving var from all aliases
             return change;
         }
         ProgramVariable receivingVar = ProgramVariable(store->getOperand(1));
-
-        if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
-            ProgramVariable callVar = ProgramVariable(call);
-            logout("add alias for analysis storeinst call inst");
-            change = onCallInst(call, call, programPoint) || change;
-            return change;
-        }
 
         // check if two structs are being aliased. the structs must refer
         // to the same type. if they do not, they are not aliased;
@@ -654,6 +658,13 @@ bool doAliasReasoning(Instruction *instruction,
 
                 return change;
             }
+        }
+
+        if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
+            ProgramVariable callVar = ProgramVariable(call);
+            logout("add alias for analysis storeinst call inst SPEC");
+            change = onCallInst(call, receivingVar, programPoint) || change;
+            return change;
         }
 
         logout("add alias for analysis storeinst else case");
@@ -765,6 +776,7 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
     }
     bool fixed = true;
     while(fixed) {
+        llvm::errs() << "LOOPING\n";
         fixed = false;
         for(inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
             std::string branchName = I->getParent()->getName().str();
