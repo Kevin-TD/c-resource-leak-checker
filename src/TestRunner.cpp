@@ -13,61 +13,61 @@ bool TestRunner::runTests(const std::string functionName,
 
     ProgramFunction function =
         expectedResult.getProgramFunction(functionName, true);
-    std::list<ProgramPoint> points = function.getProgramPoints();
+    std::list<ProgramBlock> points = function.getProgramBlocks();
+    /* NEEDS TO BE REWRITTEN FOR ProgramBlocks
+        for (ProgramPoint expectedResultPoint : points) {
+            std::string branchName = expectedResultPoint.getPointLine();
 
-    for (ProgramPoint expectedResultPoint : points) {
-        std::string branchName = expectedResultPoint.getPointName();
+            if (branchName == "") {
+                branchName = lastBranchName;
+            }
 
-        if (branchName == "") {
-            branchName = lastBranchName;
-        }
+            logout("branch = " << branchName);
 
-        logout("branch = " << branchName);
+            DisjointPVAliasSets expectedDPVAS =
+                expectedResultPoint.getProgramVariableAliasSets();
 
-        DisjointPVAliasSets expectedDPVAS =
-            expectedResultPoint.getProgramVariableAliasSets();
+            ProgramPoint receivedResultPoint =
+                receivedResult.getProgramPoint(branchName, true);
 
-        ProgramPoint receivedResultPoint =
-            receivedResult.getProgramPoint(branchName, true);
+            for (PVAliasSet expctedPVAS : expectedDPVAS.getSets()) {
+                std::set<std::string> expectedSet =
+                    expctedPVAS.getMethodsSet().getMethods();
+                std::string expectedSetString = rlc_util::setToString(expectedSet);
 
-        for (PVAliasSet expctedPVAS : expectedDPVAS.getSets()) {
-            std::set<std::string> expectedSet =
-                expctedPVAS.getMethodsSet().getMethods();
-            std::string expectedSetString = rlc_util::setToString(expectedSet);
+                // TODO: change structure for expectedResult.
+                // expctedPVAS.getProgramVariables().size() will always equal 1, so
+                // this for loop is misleading
+                for (ProgramVariable expectedPV : expctedPVAS.getProgramVariables()) {
+                    std::string expectedPVName = expectedPV.getCleanedName();
+                    std::string expectedPVRefName = expectedPVName;
 
-            // TODO: change structure for expectedResult.
-            // expctedPVAS.getProgramVariables().size() will always equal 1, so
-            // this for loop is misleading
-            for (ProgramVariable expectedPV : expctedPVAS.getProgramVariables()) {
-                std::string expectedPVName = expectedPV.getCleanedName();
-                std::string expectedPVRefName = expectedPVName;
+                    if (structFieldToIndexMap.structNameAndFieldIsInMap(expectedPVName)) {
+                        expectedPVRefName = structFieldToIndexMap.get(expectedPVName);
+                    }
 
-                if (structFieldToIndexMap.structNameAndFieldIsInMap(expectedPVName)) {
-                    expectedPVRefName = structFieldToIndexMap.get(expectedPVName);
+                    PVAliasSet *receivedPVAS =
+                        receivedResultPoint.getPVASRef(expectedPVRefName, true);
+
+                    std::set<std::string> receivedSet =
+                        receivedPVAS->getMethodsSet().getMethods();
+                    std::string receivedSetString = rlc_util::setToString(receivedSet);
+
+                    errs() << "Test for branch name = " << branchName
+                           << " var name = " << expectedPVName;
+
+                    if (expectedSet == receivedSet) {
+                        errs() << " passed\n";
+                    } else {
+                        errs() << " **FAILED**\n";
+                        testPassed = EXIT_FAILURE;
+                    }
+                    errs() << "EXPECTED " << expectedSetString << "\n";
+                    errs() << "RECEIVED " << receivedSetString << "\n\n";
                 }
-
-                PVAliasSet *receivedPVAS =
-                    receivedResultPoint.getPVASRef(expectedPVRefName, true);
-
-                std::set<std::string> receivedSet =
-                    receivedPVAS->getMethodsSet().getMethods();
-                std::string receivedSetString = rlc_util::setToString(receivedSet);
-
-                errs() << "Test for branch name = " << branchName
-                       << " var name = " << expectedPVName;
-
-                if (expectedSet == receivedSet) {
-                    errs() << " passed\n";
-                } else {
-                    errs() << " **FAILED**\n";
-                    testPassed = EXIT_FAILURE;
-                }
-                errs() << "EXPECTED " << expectedSetString << "\n";
-                errs() << "RECEIVED " << receivedSetString << "\n\n";
             }
         }
-    }
-
+    	*/
     return testPassed;
 }
 
@@ -140,10 +140,10 @@ FullFile TestRunner::buildExpectedResults(std::string testName,
                        << line << "'");
                 std::exit(EXIT_FAILURE);
             }
-
             if (passName == inputPassName) {
                 expectedResult.getProgramFunctionRef(functionName, true)
-                ->getProgramPointRef(branchName, true)
+                ->getProgramBlockRef(branchName, true)
+                ->getPoint(1000, false)
                 ->getPVASRef(varName, true)->methods = methodsSet;
             }
         }

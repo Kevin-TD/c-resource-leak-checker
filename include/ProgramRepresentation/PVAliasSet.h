@@ -10,12 +10,20 @@
 class PVAliasSet {
   private:
     std::list<ProgramVariable> programVariables;
+    // this is the uniquely identifying id of the PV alias set
+    // this is unique with a given function and is primarily how alias sets
+    // are identified
+    int id;
 
     // holds the methods called on the set
     MethodsSet methods;
 
   public:
     PVAliasSet();
+
+    // getters and setters for the unique id
+    int getID();
+    void setID(int newID);
 
     // returns true iff programVar is in the set. this overload is the preferred
     // way to check if this set contains a ProgramVariable
@@ -33,12 +41,12 @@ class PVAliasSet {
     // adds programVar to this set of program variables. programVar is checked to
     // see if it already exists in this set of program variables and it's not added
     // if it already does.
-    void add(ProgramVariable programVar);
+    bool add(ProgramVariable programVar);
 
     // adds array of program variables to this set of program variables.
     // each variable is checked to see if already exists in this list of program
     // variables.
-    void addProgramVariables(std::list<ProgramVariable> programVariables);
+    bool addProgramVariables(std::list<ProgramVariable> programVariables);
 
     std::list<ProgramVariable> getProgramVariables();
 
@@ -104,6 +112,9 @@ class PVAliasSet {
     // removes (from this set of program variables) and returns
     // the program variable that equals pv
     ProgramVariable moveOut(ProgramVariable pv);
+
+    //checks equality between two PVAliasSets
+    bool equals(PVAliasSet* a);
 
     friend class DisjointPVAliasSets;
     friend class TestRunner;

@@ -29,6 +29,7 @@ ProgramVariable::ProgramVariable(Value *value, unsigned fieldIndex) {
     this->fixNameAndIdentifier();
 }
 
+
 void ProgramVariable::fixNameAndIdentifier() {
     this->varIsIdentifier = true;
     if (this->cleanedName[0] == '%' || this->cleanedName[0] == '@') {

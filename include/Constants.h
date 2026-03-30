@@ -10,6 +10,7 @@ const std::string GENERATED_DIR_NAME = "CodeAnalyzerFiles";
 const std::string LLVM_PTR_ANNOTATION = "llvm.ptr.annotation";
 const std::string LLVM_VAR_ANNOTATION = "llvm.var.annotation";
 const std::string LLVM_DBG_DECLARE = "llvm.dbg.declare";
+const std::string LLVM_DBG_VALUE = "llvm.dbg.value";
 
 // relative to build dir
 const std::string PASS_TEST_DIRNAME = "../Testers/Passes";

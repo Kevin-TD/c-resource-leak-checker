@@ -27,10 +27,10 @@ class DataflowPass {
                     ProgramFunction &postProgramFunction,
                     const std::string &priorBranch);
 
-    // analyses the instruction semantics and updates `inputProgramPoint`
+    // analyses the instruction semantics and updates `inputProgramBlock`
     // accordingly, looking for function calls that an
     // implemented dataflow pass should handle
-    void transfer(Instruction *instruction, ProgramPoint &inputProgramPoint);
+    void transfer(Instruction *instruction, ProgramBlock *inputProgramBlock, int insNum, ProgramFunction *parent);
 
     // a helper function that handles functions with Sret attribute.
     // returns true if the function had an Sret attribute and was handled,
@@ -72,7 +72,7 @@ class DataflowPass {
     bool handleSretCallForCallInsts(CallInst *call, int argIndex,
                                     const std::string &fnName,
                                     const std::string &argName,
-                                    ProgramPoint &programPoint);
+                                    ProgramPoint *programPoint);
 
     // a helper function that handles function calls that are implicit,
     // or  identified as a memory, realloc, or safe function (/Functions files).
@@ -80,15 +80,19 @@ class DataflowPass {
     // handled the call, and false otherwise.
     bool handleIfKnownFunctionForCallInsts(CallInst *call, PVAliasSet *pvas);
 
+    // Realloc needs to change both the argument obligations AND the result obligations due to the
+    // mem2reg pass
+    bool handleIfRealloc(CallInst *call, ProgramPoint *p, std::string &fnName);
+
     // a helper function that checks for parameter annotations on call
     // instructions. returns true if an annotation was found, and false if not.
     bool handleIfAnnotationExistsForCallInsts(const std::string &fnName, CallInst* call, PVAliasSet *pvas);
 
     // if the call argument is a struct ty, this function de-structures it into its fields and looks for annotations on those fields
-    void handleIfStructTyAndIfFieldsHaveAnnotations(CallInst *call, unsigned argIndex, const std::string &fnName, const std::string &argName, ProgramPoint &programPoint, PVAliasSet* pvas);
+    void handleIfStructTyAndIfFieldsHaveAnnotations(CallInst *call, unsigned argIndex, const std::string &fnName, const std::string &argName, ProgramPoint *programPoint, PVAliasSet* pvas);
 
   protected:
-    ProgramFunction programFunction;
+    ProgramFunction *programFunction;
     Function *F;
     AnnotationHandler annotations;
     std::string optLoadFileName;
@@ -97,13 +101,18 @@ class DataflowPass {
     FullFile expectedResult;
 
     virtual void leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSet) = 0;
+    virtual void leastUpperBound(PVAliasSet *preSet, MethodsSet &curMethodsSet) = 0;
 
     virtual void onAllocationFunctionCall(PVAliasSet* input,
                                           std::string &fnName) = 0;
     virtual void onDeallocationFunctionCall(PVAliasSet* input,
                                             std::string &fnName) = 0;
     virtual void onUnknownFunctionCall(PVAliasSet* input) = 0;
-    virtual void onReallocFunctionCall(PVAliasSet* input,
+// Because we use the mem2reg pass, there are two cases of a realloc function, the argument
+// that gets realloc'd and what it is stored into. This means that for the argument we can
+// clear the obligations and for the result we store we need to set them
+
+    virtual void onReallocFunctionCall(PVAliasSet* result, PVAliasSet* arg,
                                        std::string &fnName) = 0;
     virtual void onSafeFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
     virtual void onFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
@@ -124,11 +133,13 @@ class DataflowPass {
     ProgramFunction *generatePassResults();
 
     void setCFG(CFG *cfg);
+    bool checkIfChanged(ProgramPoint& old, ProgramPoint *now);
     void setFunc(llvm::Function *F);
     void setExpectedResult(FullFile expectedResult);
-    void setProgramFunction(ProgramFunction programFunction);
+    void setProgramFunction(ProgramFunction *programFunction);
     void setAnnotations(AnnotationHandler annotations);
     void setFunctionInfosManager(FunctionInfosManager functionInfosManager);
+    void leastUpperBoundFunction(ProgramPoint *p, ProgramPoint *q);
     void setOptLoadFileName(const std::string& optLoadFileName);
 
     FullFile getExpectedResult();

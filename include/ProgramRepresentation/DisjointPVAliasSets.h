@@ -44,20 +44,23 @@ class DisjointPVAliasSets {
     // with value val. NULL is return if it's not found.
     PVAliasSet *getSetRef(Value* val);
 
+    PVAliasSet *getSetRefID(int ID);
+
     // unions the sets that contain either elementA or elementB. if elementA == elementB, or
     // elementA or elementB are not actually elements of any set, the union is not performed.
-    void unionSets(ProgramVariable elementA, ProgramVariable elementB);
+    bool unionSets(ProgramVariable elementA, ProgramVariable elementB);
 
     // creates a new disjoint set containing programVar. if programVar is
     // an existing member of any of the sets, no set is created.
-    void makeSet(ProgramVariable programVar);
+    // The setID uniquely identifies the set across a programFunction
+    bool makeSet(ProgramVariable programVar, ProgramFunction *pf);
 
     // aliases element1 and element2 by putting them into the same set. if one of
     // the elements already belongs in an existing set, both elements will be in
     // that set. otherwise, they will be put into a new set.
     // additionally, if both sets (set1 and set2) exist, the set numbers
     // of set2 will be changed by set1's maximum set number plus 1.
-    void addAlias(ProgramVariable element1, ProgramVariable element2);
+    bool addAlias(ProgramVariable element1, ProgramVariable element2, ProgramFunction *pf);
 
     // removes all sets
     void clear();
@@ -71,7 +74,7 @@ class DisjointPVAliasSets {
     // method set is not merged, only the variables. if none of the program
     // variables equals any of our own program variables, the set itself (program
     // variables and method set) is added to our set of sets (pvas is copied).
-    void mergeSet(PVAliasSet pvas);
+    bool mergeSet(PVAliasSet pvas);
 
     friend class ProgramPoint;
 };

@@ -8,6 +8,7 @@
 class MustCall : public DataflowPass {
   protected:
     void leastUpperBound(PVAliasSet &preSet, MethodsSet &curMethodsSet);
+    void leastUpperBound(PVAliasSet *preSet, MethodsSet &curMethodsSet);
 
     // if we have a resource allocated by `f` and de-allocated by `g`,
     // upon any call to `f` we must provide `g` to enforce that
@@ -16,7 +17,7 @@ class MustCall : public DataflowPass {
     void onAllocationFunctionCall(PVAliasSet* input, std::string &nameOfDeallocFunction);
     void onDeallocationFunctionCall(PVAliasSet* input, std::string &fnName);
     void onUnknownFunctionCall(PVAliasSet* input);
-    void onReallocFunctionCall(PVAliasSet* input, std::string &fnName);
+    void onReallocFunctionCall(PVAliasSet* result, PVAliasSet* arg, std::string &fnName);
     void onSafeFunctionCall(PVAliasSet* input, std::string &fnName);
     void onAnnotation(PVAliasSet* input, Annotation* annotation);
     void onFunctionCall(PVAliasSet* input, std::string &fnName);

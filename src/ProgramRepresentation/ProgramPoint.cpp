@@ -1,34 +1,38 @@
 #include "ProgramRepresentation/ProgramPoint.h"
 #include "Debug.h"
 
-ProgramPoint::ProgramPoint(std::string pointName) {
-    this->pointName = pointName;
+ProgramPoint::ProgramPoint(int pointLine) {
+    this->pointLine = pointLine;
 }
 
 ProgramPoint::ProgramPoint() {}
 
-ProgramPoint::ProgramPoint(std::string pointName, ProgramPoint *programPoint) {
-    this->pointName = pointName;
+ProgramPoint::ProgramPoint(int pointLine, ProgramPoint *programPoint) {
+    this->pointLine = pointLine;
     this->programVariableAliasSets = programPoint->getProgramVariableAliasSets();
+    this->parentFunc = programPoint->parentFunc;
 }
 
 void ProgramPoint::logoutProgramPoint(const ProgramPoint &point,
                                       bool logMethods) {
-    logout("\n**point name " << point.getPointName());
+    logout("\n**point name " << point.getPointLine() << "from function " << point.parentFunc->getFunctionName());
     for (auto aliasSet : point.getProgramVariableAliasSets().getSets()) {
-        logout("> alias set = " << aliasSet.toString(false, false));
+        logout("> alias set (id) " << aliasSet.getID() << " = " << aliasSet.toString(false, false));
 
         if (logMethods) {
             logout("--> methods set = " << aliasSet.getMethodsString());
         }
     }
+}
+
+void ProgramPoint::setParentFunc(ProgramFunction *p) {
+    this->parentFunc = p;
 }
 
 void ProgramPoint::logoutProgramPoint(const ProgramPoint *point,
                                       bool logMethods) {
-    logout("\n**point name " << point->getPointName());
     for (auto aliasSet : point->getProgramVariableAliasSets().getSets()) {
-        logout("> alias set = " << aliasSet.toString(false, false));
+        logout("> alias set (id) " << aliasSet.getID() << " = " << aliasSet.toString(false, false));
 
         if (logMethods) {
             logout("--> methods set = " << aliasSet.getMethodsString());
@@ -36,30 +40,34 @@ void ProgramPoint::logoutProgramPoint(const ProgramPoint *point,
     }
 }
 
-void ProgramPoint::addAlias(ProgramVariable element1,
+bool ProgramPoint::addAlias(ProgramVariable element1,
                             ProgramVariable element2) {
-    this->programVariableAliasSets.addAlias(element1, element2);
+    return this->programVariableAliasSets.addAlias(element1, element2, this->parentFunc);
 }
 
-void ProgramPoint::makeAliased(ProgramVariable elementA,
+bool ProgramPoint::makeAliased(ProgramVariable elementA,
                                ProgramVariable elementB) {
-    this->programVariableAliasSets.unionSets(elementA, elementB);
+    return this->programVariableAliasSets.unionSets(elementA, elementB);
 }
 
-void ProgramPoint::addVariable(ProgramVariable programVar) {
-    this->programVariableAliasSets.makeSet(programVar);
+bool ProgramPoint::addVariable(ProgramVariable programVar) {
+    return this->programVariableAliasSets.makeSet(programVar, this->parentFunc);
 }
 
-void ProgramPoint::addPVAS(PVAliasSet pvas) {
-    this->programVariableAliasSets.mergeSet(pvas);
+bool ProgramPoint::addPVAS(PVAliasSet pvas) {
+    return this->programVariableAliasSets.mergeSet(pvas);
 }
 
 DisjointPVAliasSets ProgramPoint::getProgramVariableAliasSets() const {
     return this->programVariableAliasSets;
 }
 
-std::string ProgramPoint::getPointName() const {
-    return this->pointName;
+int ProgramPoint::getPointLine() const {
+    return this->pointLine;
+}
+
+PVAliasSet *ProgramPoint::getSetID(int id) {
+    return this->programVariableAliasSets.getSetRefID(id);
 }
 
 PVAliasSet *ProgramPoint::getPVASRef(ProgramVariable programVar,
@@ -96,7 +104,6 @@ PVAliasSet *ProgramPoint::getPVASRef(const std::string& cleanedName, bool addNew
 
 PVAliasSet *ProgramPoint::getPVASRef(Value* value,
                                      bool addNewIfNotFound) {
-
     PVAliasSet *pvas = this->programVariableAliasSets.getSetRef(value);
 
     if (pvas) {
@@ -165,6 +172,21 @@ void ProgramPoint::setProgramVariableAliasSets(
     this->programVariableAliasSets = programVariableAliasSets;
 }
 
+void ProgramPoint::updatePVAS(PVAliasSet pvas) {
+    if(!this->getSetID(pvas.getID())) {
+        llvm::errs() << "ADDING\n";
+        logout("> alias set (id) " << pvas.getID() << " = " << this->getSetID(pvas.getID())->toString(false, false));
+        this->addPVAS(pvas);
+        exit(1);
+    } else if(this->getSetID(pvas.getID())->getProgramVariables() == pvas.getProgramVariables()) {
+        llvm::errs() << "DUPLICATE ID " << pvas.getID() << "\n";
+        return;
+    } else {
+        exit(1);
+    }
+    return;
+}
+
 void ProgramPoint::add(ProgramPoint *programPoint) {
     for (PVAliasSet pvas :
             programPoint->getProgramVariableAliasSets().getSets()) {
@@ -172,11 +194,15 @@ void ProgramPoint::add(ProgramPoint *programPoint) {
     }
 }
 
-void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable pvCallInst, ProgramVariable callInstAlias) {
+bool ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable pvCallInst, ProgramVariable callInstAlias) {
+    if(pvas->getProgramVariables().size() == 1) {
+        return false;
+    }
     for (ProgramVariable& pv : pvas->getProgramVariables()) {
         if (pv.equalsCleanedName(cleanedNameOfPVToUnalias)) {
             if (pv.getFieldIndex() != -1) {
                 PVAliasSet grabbedSet = pvas->moveOut(pv.getSetNumber());
+                grabbedSet.setID(this->parentFunc->getNewID());
                 grabbedSet.add(pvCallInst);
 
                 if (pvas->getProgramVariables().size() > 0) {
@@ -186,22 +212,21 @@ void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVT
                     }
                 }
 
-                addPVAS(grabbedSet);
-                break;
+                return addPVAS(grabbedSet);
             } else {
                 ProgramVariable pvToMove = pvas->moveOut(pv);
                 PVAliasSet newSet;
+                newSet.setID(this->parentFunc->getNewID());
                 newSet.add(pvToMove);
                 newSet.add(pvCallInst);
-                addPVAS(newSet);
-                break;
+                return addPVAS(newSet);
             }
         }
     }
+    return false;
 }
 
 void ProgramPoint::addSuccessor(ProgramPoint *p) {
-    llvm::errs() << "I AM BEING ADDED AND I AM " << this->pointName << "\n\n";
     successors.push_back(p);
 }
 
@@ -209,11 +234,10 @@ std::list<ProgramPoint *> ProgramPoint::getSuccessors() {
     return successors;
 }
 
-Value *ProgramPoint::getReturnValue() {
-    return returnValue;
-}
-
-void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar) {
+bool ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVToUnalias, ProgramVariable argumentVar) {
+    if(pvas->getProgramVariables().size() == 1) {
+        return false;
+    }
     for (ProgramVariable& pv : pvas->getProgramVariables()) {
         if (pv.equalsCleanedName(cleanedNameOfPVToUnalias)) {
             // TODO: replace all instances of
@@ -221,17 +245,19 @@ void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVT
             // `field != -1` to use `ProgramVariable::containsStructFieldVar` instead as
             // checking this is the purpose that method serves
             if (pv.getFieldIndex() != -1) {
-                PVAliasSet grabbedSet = pvas->moveOut(pv.getSetNumber());
+                PVAliasSet grabbedSet;
+                grabbedSet.add(pvas->moveOut(pv));
+                grabbedSet.setID(this->parentFunc->getNewID());
 
                 ProgramVariable argVarPV = pvas->moveOut(argumentVar);
                 if (argVarPV.getCleanedName() != "") {
                     grabbedSet.add(argVarPV);
                 }
 
-                addPVAS(grabbedSet);
-                break;
+                return addPVAS(grabbedSet);
             } else {
                 PVAliasSet newSet;
+                newSet.setID(this->parentFunc->getNewID());
 
                 ProgramVariable pvToMove = pvas->moveOut(pv);
                 newSet.add(pvToMove);
@@ -239,9 +265,18 @@ void ProgramPoint::unalias(PVAliasSet* pvas, const std::string& cleanedNameOfPVT
                 ProgramVariable argVarPV = pvas->moveOut(argumentVar);
                 newSet.add(argVarPV);
 
-                addPVAS(newSet);
-                break;
+                return addPVAS(newSet);
             }
         }
     }
+    return false;
+}
+
+
+void ProgramPoint::remove(ProgramVariable pv) {
+    PVAliasSet *pvas = this->programVariableAliasSets.getSetRef(pv);
+    if(pvas == NULL) {
+        return;
+    }
+    pvas->moveOut(pv);
 }

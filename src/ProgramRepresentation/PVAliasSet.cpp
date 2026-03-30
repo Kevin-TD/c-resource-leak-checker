@@ -34,19 +34,33 @@ bool PVAliasSet::contains(Value* value) {
     return false;
 }
 
-void PVAliasSet::add(ProgramVariable programVar) {
+bool PVAliasSet::add(ProgramVariable programVar) {
     if (contains(programVar)) {
-        return;
+        return false;
     }
 
     programVariables.push_back(programVar);
+    return true;
 }
 
-void PVAliasSet::addProgramVariables(
-    std::list<ProgramVariable> programVariables) {
-    for (ProgramVariable pv : programVariables) {
-        add(pv);
+bool PVAliasSet::equals(PVAliasSet* a) {
+    if(this->programVariables.size() != a->programVariables.size())
+        return false;
+    for(auto myAlias = this->programVariables.begin(), theirAlias = a->programVariables.begin(); myAlias != this->programVariables.end(); ++myAlias, ++theirAlias) {
+        if(myAlias->getCleanedName() != theirAlias->getCleanedName()) {
+            return false;
+        }
     }
+    return true;
+}
+
+bool PVAliasSet::addProgramVariables(
+    std::list<ProgramVariable> programVariables) {
+    bool ret = false;
+    for (ProgramVariable pv : programVariables) {
+        ret = add(pv)  || ret;
+    }
+    return ret;
 }
 
 std::list<ProgramVariable> PVAliasSet::getProgramVariables() {
@@ -113,6 +127,14 @@ std::string PVAliasSet::toString(bool cleanNames, bool includeSetNumber) const {
 std::string PVAliasSet::getMethodsString() const {
     std::set<std::string> methodsSet = methods.getMethods();
     return rlc_util::setToString(methodsSet);
+}
+
+int PVAliasSet::getID() {
+    return this->id;
+}
+
+void PVAliasSet::setID(int newID) {
+    this->id = newID;
 }
 
 int PVAliasSet::getIndex() {

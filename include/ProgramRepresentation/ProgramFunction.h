@@ -2,40 +2,66 @@
 #define PROGRAM_FUNCTION_H
 
 #include "ProgramRepresentation/ProgramPoint.h"
+#include "ProgramRepresentation/ProgramBlock.h"
+#include "Annotations/AnnotationHandler.h"
 
-// reflects a function from the C code. this class manages a set of points that
-// make up a function
+// reflects a function from the C code. this class manages a set of blocks that
+// make up a function and has a counter taht is used to assign IDs to alias sets within it
+
 class ProgramFunction {
+    friend class DataflowPass;
   private:
-    std::list<ProgramPoint> programPoints;
+    std::list<ProgramBlock> programBlocks;
+
+    // When the must call and called methods passes run, there are two separate functions, these need to have their
+    // currentAliasNums sync'd, so a pointer to a paired function is used to update the other whenever one
+    // generates a new ID
+    ProgramFunction *twin;
+
+    AnnotationHandler a;
+    // Tracks the next unique id for aliases in the function, updated whenever a new alias is created
+    int currentAliasNum = 0;
 
     std::string functionName;
 
   public:
-    // debugging function that lists program points and methods called (methods
-    // logged if logMethods is true) of a program function
+    // debugging function that lists program blocks which are a set of continuous program points
     static void logoutProgramFunction(ProgramFunction &programFunction,
                                       bool logMethods);
 
     ProgramFunction();
     ProgramFunction(std::string functionName);
 
-    void addProgramPoint(ProgramPoint programPoint);
+    bool checkFixed();
 
-    void setProgramPoint(std::string pointName, ProgramPoint programPoint);
+    void pair(ProgramFunction *p);
 
-    std::list<ProgramPoint> getProgramPoints() const;
+    AnnotationHandler *getAnnotationHandler();
+    void setAnnotationHandler(AnnotationHandler a);
+    int currID();
 
-    // returns a program point based off pointName and, if addNewIfNotFound is
+    void addProgramBlock(ProgramBlock programBlock);
+
+    void setProgramBlock(std::string blockName, ProgramBlock programBlock);
+
+    std::list<ProgramBlock> getProgramBlocks() const;
+
+    ProgramFunction *deepCopy();
+
+    int getNewID();
+
+    void resetID();
+
+    // returns a program block based off pointName and, if addNewIfNotFound is
     // true, creates a new one if it was not found. if addNewIfNotFound is false
     // and the point was not found, the program fails & exits
-    ProgramPoint getProgramPoint(const std::string &pointName,
+    ProgramBlock getProgramBlock(const std::string &blockName,
                                  bool addNewIfNotFound);
 
     // returns a program point ref based off name and, if addNewIfNotFound is
     // true, creates a new one if it was not. if addNewIfNotFound is false and the
     // point was not found, the program fails & exits
-    ProgramPoint *getProgramPointRef(const std::string &pointName,
+    ProgramBlock *getProgramBlockRef(const std::string &blockName,
                                      bool addNewIfNotFound);
 
     // searches every program point to find the alias set with that value pointer. this
@@ -67,7 +93,6 @@ class ProgramFunction {
       }
     }
     */
-    PVAliasSet *getPVASRefFromValue(Value* value);
 
     std::string getFunctionName() const;
 };
