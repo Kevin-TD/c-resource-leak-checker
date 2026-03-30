@@ -86,9 +86,9 @@ void ResourceLeakScopeChecker::handleBranch(BasicBlock *B, ProgramBlock *blockMC
                 ProgramPoint *next = blockMC->getPoint(pointMC->getPointLine()+1, false);
                 if(!next) {
                     // if non owned give error, right now assume not owned
-                    llvm::errs() << "End of life, failure for variable " << aliasMC.getProgramVariables().front().getCleanedName() << "\n";
+                    std::cout << "End of life, failure for variable " << aliasMC.getProgramVariables().front().getCleanedName() << "\n";
                 } else if(next == pointMC || !next->getPVASRef(aliasMC.getProgramVariables().front(), false)) {
-                    llvm::errs() << "End of life, failure for variable " << aliasMC.getProgramVariables().front().getCleanedName() << "\n";
+                    std::cout << "End of life, failure for variable " << aliasMC.getProgramVariables().front().getCleanedName() << "\n";
 
                 }
             }

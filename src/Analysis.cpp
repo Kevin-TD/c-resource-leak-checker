@@ -216,14 +216,22 @@ bool onCallInst(CallInst *call, ProgramVariable receivingVar,  ProgramPoint *pro
                     leftHandSide = potentialStructName;
                 }
 
-                logout("LHS IS = " << leftHandSide);
                 //PVAliasSet* LHSpvas = programPoint->getPVASRef(leftHandSide, false);
                 PVAliasSet* LHSpvas = programPoint->getPVASRef(callVar, false);
 
                 if (LHSpvas) {
-                    llvm::errs() << "AAAA\n";
-                    // HERE ALL aliases in receivingVar must be moved to callVar PVAS
-                    ret = programPoint->makeAliased(call, receivingVar) || ret;
+                    // TODO: Problem here with deciding which aliases to move
+
+                    PVAliasSet *q = programPoint->getPVASRef(receivingVar, false);
+                    if(q == LHSpvas) {
+                        return ret;
+                    }
+                    // Here only the storing alias in receivingVar must be moved to callVar PVAS
+                    if(q) {
+                        ret = programPoint->addAlias(call, q->moveOut(receivingVar)) || ret;
+                    } else {
+                        ret = programPoint->addAlias(call, receivingVar) || ret;
+                    }
                 }
             }
         }

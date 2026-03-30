@@ -18,7 +18,8 @@ void CalledMethods::onUnknownFunctionCall(PVAliasSet *input) {
 
 // Because we use the mem2reg pass, there are two cases of a realloc function, the argument
 // that gets realloc'd and what it is stored into. This means that for the argument we can
-// clear the obligations and for the result we store we need to set them
+// clear the obligations and for the result we store we need to set them, but both are cleared from
+// the perspective of methods that have been called on a resource
 
 void CalledMethods::onReallocFunctionCall(PVAliasSet *result, PVAliasSet *arg, std::string &fnName) {
     result->clearMethods();

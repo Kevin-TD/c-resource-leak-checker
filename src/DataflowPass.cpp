@@ -637,9 +637,6 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
 
 
     logout("call fnname = " << fnName);
-    // the code here handling realloc functions has been moved out because the
-    // realloc function has to modify two alias sets with the mem2reg pass
-
     if (this->safeFunctions.count(fnName)) {
         this->onSafeFunctionCall(pvas, fnName);
         return true;
