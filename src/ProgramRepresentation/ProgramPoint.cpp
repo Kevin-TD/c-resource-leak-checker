@@ -172,6 +172,13 @@ void ProgramPoint::setProgramVariableAliasSets(
     this->programVariableAliasSets = programVariableAliasSets;
 }
 
+void ProgramPoint::clear(ProgramVariable pv) {
+    PVAliasSet *p = getPVASRef(pv, false);
+    if(!p)
+        return;
+    p->programVariables.clear();
+}
+
 void ProgramPoint::updatePVAS(PVAliasSet pvas) {
     if(!this->getSetID(pvas.getID())) {
         llvm::errs() << "ADDING\n";

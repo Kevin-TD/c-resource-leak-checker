@@ -78,7 +78,7 @@ class DataflowPass {
     // or  identified as a memory, realloc, or safe function (/Functions files).
     // also handles when llvm debug function is called. returns true if we
     // handled the call, and false otherwise.
-    bool handleIfKnownFunctionForCallInsts(CallInst *call, PVAliasSet *pvas);
+    bool handleIfKnownFunctionForCallInsts(CallInst *call, PVAliasSet *pvas, ProgramPoint *p);
 
     // Realloc needs to change both the argument obligations AND the result obligations due to the
     // mem2reg pass

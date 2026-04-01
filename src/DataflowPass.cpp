@@ -194,7 +194,7 @@ void DataflowPass::transfer(Instruction *instruction,
                 break;
             }
 
-            if (handleIfKnownFunctionForCallInsts(call, pvas)) {
+            if (handleIfKnownFunctionForCallInsts(call, pvas, newPoint)) {
                 continue;
             }
 
@@ -604,7 +604,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
 }
 
 bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
-        PVAliasSet *pvas) {
+        PVAliasSet *pvas, ProgramPoint *point) {
     /*
     handles the case where function being called is "an indirect function
     invocation", meaning its target is determined at runtime. we are not
@@ -662,6 +662,22 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
             return true;
         } else if (fnName == deallocationFunction) {
             this->onDeallocationFunctionCall(pvas, fnName);
+            // For a struct s, deallocation is equivalent to every field in s going out of scope
+            // This means we will simply remove all aliases from sets where a field of s is present
+            // In the worst case this will give a false positive where a pointer to a field is actually
+            // saved, but it will still be sound
+            for(auto pv : point->getProgramVariableAliasSets().getSets()) {
+                for(auto alias : pv.getProgramVariables()) {
+                    if(alias.containsStructFieldVar()) {
+                        for(auto parent : pvas->getProgramVariables()) {
+                            if(parent.getRawName() == alias.getParent()) {
+                                point->clear(alias);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
             return true;
         }
     }

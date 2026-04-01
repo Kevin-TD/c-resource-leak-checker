@@ -52,6 +52,7 @@ class ProgramVariable {
 
     std::string getRawName() const;
     std::string getCleanedName();
+    std::string getParent();
     Value *getValue();
     int getFieldIndex();
 

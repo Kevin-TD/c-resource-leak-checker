@@ -83,6 +83,10 @@ unsigned ProgramVariable::getSetNumber() const {
     return this->setNumber;
 }
 
+std::string ProgramVariable::getParent() {
+    return rlc_dataflow::variable(this->value);
+}
+
 void ProgramVariable::setSetNumber(unsigned setNumber) {
     this->setNumber = setNumber;
 }
