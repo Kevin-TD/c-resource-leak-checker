@@ -58,6 +58,9 @@ class ProgramPoint {
     // of these sets
     bool addPVAS(PVAliasSet pvas);
 
+    // force an alias set to go out of scope for a specific variable
+    void clear(ProgramVariable pv);
+
     // occurs at lubs when PVAS are modified, prevents many spurious PVAS from being created
     void updatePVAS(PVAliasSet pvas);
 

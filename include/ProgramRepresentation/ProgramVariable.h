@@ -9,6 +9,7 @@
 class ProgramVariable {
   private:
     Value *value;
+    Value *real;
 
     // name is llvm IR name without % or @
     std::string cleanedName;
@@ -47,12 +48,16 @@ class ProgramVariable {
     ProgramVariable(Value *value);
     ProgramVariable(std::string cleanedName);
 
+    ProgramVariable copyNewName(std::string name);
+
     // for struct variables
-    ProgramVariable(Value *value, unsigned fieldIndex);
+    ProgramVariable(Value *value, unsigned fieldIndex, Value *real);
 
     std::string getRawName() const;
     std::string getCleanedName();
+    std::string getParent();
     Value *getValue();
+    Value *getRealValue();
     int getFieldIndex();
 
     // returns true iff index does not equal -1, meaning the program var

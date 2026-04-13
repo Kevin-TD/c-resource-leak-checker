@@ -186,7 +186,7 @@ bool onLoadInst(LoadInst *load, ProgramPoint *programPoint) {
 // this is called as a part of the store Instruction case, otherwise no aliases are created by calls (unless we add annotations for it later?)
 // This represents moving a call result into an alias set, call results will always be put into registers so they will move everything from the alias they store
 // into into the same alias as the call result
-bool onCallInst(CallInst *call, ProgramVariable receivingVar,  ProgramPoint *programPoint) {
+bool onCallInst(CallInst *call, ProgramVariable receivingVar,  ProgramPoint *programPoint, AAResults &AA) {
     ProgramVariable callVar = ProgramVariable(call);
     bool ret = false;
     logout("add alias for analysis storeinst call inst");
@@ -228,7 +228,12 @@ bool onCallInst(CallInst *call, ProgramVariable receivingVar,  ProgramPoint *pro
                     }
                     // Here only the storing alias in receivingVar must be moved to callVar PVAS
                     if(q) {
-                        ret = programPoint->addAlias(call, q->moveOut(receivingVar)) || ret;
+                        for(auto alias : programPoint->getPVASRef(receivingVar, false)->getProgramVariables()) {
+                            if(AA.alias(receivingVar.getRealValue(), 8, alias.getRealValue(), 8) == AliasResult::MustAlias) {
+                                std::cout << alias.getRawName() << " eq " << receivingVar.getRawName() << "\n";
+                                ret = programPoint->addAlias(call, q->moveOut(alias)) || ret;
+                            }
+                        }
                     } else {
                         ret = programPoint->addAlias(call, receivingVar) || ret;
                     }
@@ -390,7 +395,8 @@ bool onBitCastInst(BitCastInst *bitcast, ProgramPoint *programPoint) {
 
             int numFields = sourceType->getNumElements();
             for (int i = 0; i < numFields; i++) {
-                ProgramVariable sourceVar = ProgramVariable(bitcast, i);
+                //TODO: Check if this is actually needed
+                ProgramVariable sourceVar = ProgramVariable(bitcast, i, bitcast);
                 ret = ret || programPoint->addVariable(sourceVar);
             }
 
@@ -436,7 +442,7 @@ bool onGetElementPtrInst(GetElementPtrInst *gepInst, ProgramPoint *programPoint,
 
                 if (BitCastInst *bitcast = dyn_cast<BitCastInst>(pointerOperand)) {
                     ProgramVariable structVar =
-                        ProgramVariable(bitcast->getOperand(0), index);
+                        ProgramVariable(bitcast->getOperand(0), index, (Value *)gepInst);
                     logout("add alias for analysis gepinst");
                     errs() << sourceVar.getCleanedName() << " IS SOURCE AND " << structVar.getCleanedName() << " IS Struct\n";
                     ret = programPoint->addAlias(sourceVar, structVar) || ret;
@@ -461,7 +467,7 @@ bool onGetElementPtrInst(GetElementPtrInst *gepInst, ProgramPoint *programPoint,
                         originalStructPVASRef->getProgramVariables()) {
                     if (AllocaInst *structAllocaInst =
                                 dyn_cast<AllocaInst>(pv.getValue())) {
-                        ProgramVariable structVar = ProgramVariable(pv.getValue(), index);
+                        ProgramVariable structVar = ProgramVariable(pv.getValue(), index, (Value *)gepInst);
 
                         logout("spec index inst = " << *gepInst);
                         logout("specifying index for " << structVar.getCleanedName());
@@ -505,7 +511,8 @@ bool onAllocaInst(AllocaInst *allocate, ProgramPoint *programPoint, std::string 
 
     int numFields = structType->getNumElements();
     for (int i = 0; i < numFields; i++) {
-        ProgramVariable sourceVar = ProgramVariable(allocate, i);
+        //TODO: Inspect if this is actually needed
+        ProgramVariable sourceVar = ProgramVariable(allocate, i, allocate);
         ret = ret || programPoint->addVariable(sourceVar);
     }
     return ret;
@@ -565,7 +572,8 @@ bool doAliasReasoning(Instruction *instruction,
                       std::string optLoadFileName,
                       StructFieldToIndexMap structFieldToIndexMap,
                       FunctionInfosManager functionInfosManager,
-                      LineNumberToLValueMap lineNumberToLValueMap) {
+                      LineNumberToLValueMap lineNumberToLValueMap,
+                      AAResults &AA) {
     // NEED LUB OF ALL PREDECESSOR's Last point here
 
     bool includes = false;
@@ -654,10 +662,10 @@ bool doAliasReasoning(Instruction *instruction,
                 ProgramPoint::logoutProgramPoint(*programPoint, true);
 
                 for (int i = 0; i < numFields; i++) {
-                    ProgramVariable valueStructVar = ProgramVariable(valueToStore, i);
+                    ProgramVariable valueStructVar = ProgramVariable(valueToStore, i, valueToStore);
+                    //TODO: Check here for what to actually put into real for these
                     ProgramVariable receivingStructVar =
-                        ProgramVariable(receivingValue, i);
-
+                        ProgramVariable(receivingValue, i, receivingValue);
                     change = programPoint->makeAliased(valueStructVar, receivingStructVar) || change;
                 }
 
@@ -671,7 +679,7 @@ bool doAliasReasoning(Instruction *instruction,
         if (CallInst *call = dyn_cast<CallInst>(valueToStore)) {
             ProgramVariable callVar = ProgramVariable(call);
             logout("add alias for analysis storeinst call inst SPEC");
-            change = onCallInst(call, receivingVar, programPoint) || change;
+            change = onCallInst(call, receivingVar, programPoint, AA) || change;
             return change;
         }
 
@@ -681,7 +689,7 @@ bool doAliasReasoning(Instruction *instruction,
         change = onLoadInst(load, programPoint) || change;
     } else if (CallInst *call = dyn_cast<CallInst>(instruction)) {
         if(!call->getType()->isVoidTy()) {
-            change = onCallInst(call, call, programPoint) || change;
+            change = onCallInst(call, call, programPoint, AA) || change;
         } else {
             change = onCallNotStoreInst(call, programPoint, optLoadFileName) || change;
         }
@@ -697,7 +705,7 @@ bool doAliasReasoning(Instruction *instruction,
     return change;
 }
 
-ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnalysis(Function &F, std::string optLoadFileName) {
+ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnalysis(Function &F, std::string optLoadFileName, AAResults &AA) {
     std::string fnName = F.getName().str();
 
     std::string testName = rlc_util::getTestName(optLoadFileName);
@@ -780,8 +788,20 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
 
     for(auto& Arg : F.args()) {
         Value *v = &Arg;
-        p->addVariable(ProgramVariable(v));
+        llvm::errs() << "I AM " << *v << "\n";
+        ProgramVariable create = ProgramVariable(v);
+        p->addVariable(create);
+        if(v->getType()->isPointerTy()) {
+            std::string n =  create.getCleanedName() + ".addr" ;
+            llvm::errs() << n << "\n";
+            ProgramVariable createNew = create.copyNewName(n);
+            p->addVariable(createNew);
+            ProgramPoint::logoutProgramPoint(p, true);
+            p->makeAliased(create, createNew);
+        }
     }
+
+
     bool fixed = true;
     while(fixed) {
         llvm::errs() << "LOOPING\n";
@@ -792,7 +812,7 @@ ResourceLeakFunctionCallAnalyzerResult ResourceLeakFunctionCallAnalyzer::doAnaly
             ProgramBlock b = *programFunction->getProgramBlockRef(branchName, true);
             fixed = doAliasReasoning(&(*I), programFunction, optLoadFileName,
                                      structFieldToIndexMap, functionInfosManager,
-                                     lineNumberToLValueMap) || fixed;
+                                     lineNumberToLValueMap, AA) || fixed;
             llvm::errs() << "FIXED IS " << fixed << "\n";
         }
     }

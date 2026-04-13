@@ -49,7 +49,7 @@ class AnnotationHandler {
                                        unsigned parameterIndex, unsigned fieldIndex) const;
     // we return all parameter's `p` of function `f` if `p` has
     // a corresponding `ParameterAnnotation` with a field specified.
-    std::vector<Annotation *>
+    std::vector<ParameterAnnotation *>
     getAllParameterAnnotationsWithFields(const std::string &functionName) const;
     std::vector<ParameterAnnotation *>
 

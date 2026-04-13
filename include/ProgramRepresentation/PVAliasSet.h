@@ -117,6 +117,7 @@ class PVAliasSet {
     bool equals(PVAliasSet* a);
 
     friend class DisjointPVAliasSets;
+    friend class ProgramPoint;
     friend class TestRunner;
 };
 

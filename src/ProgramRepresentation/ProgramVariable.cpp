@@ -18,17 +18,28 @@ ProgramVariable::ProgramVariable(Value *value) {
     this->fieldIndex = -1;
     this->setNumber = 0;
     this->fixNameAndIdentifier();
+    this->real = value;
 }
 
-ProgramVariable::ProgramVariable(Value *value, unsigned fieldIndex) {
+ProgramVariable::ProgramVariable(Value *value, unsigned fieldIndex, Value *real) {
     this->value = value;
     this->rawName = rlc_dataflow::variable(value) + "." + std::to_string(fieldIndex);
     this->fieldIndex = fieldIndex;
     this->cleanedName = this->rawName;
     this->setNumber = 0;
     this->fixNameAndIdentifier();
+    this->real = real;
 }
 
+ProgramVariable ProgramVariable::copyNewName(std::string newName) {
+    ProgramVariable ret = ProgramVariable(this->value);
+    ret.rawName = newName;
+    return ret;
+}
+
+Value *ProgramVariable::getRealValue() {
+    return this->real;
+}
 
 void ProgramVariable::fixNameAndIdentifier() {
     this->varIsIdentifier = true;
@@ -81,6 +92,10 @@ bool ProgramVariable::equalsRawName(const std::string &otherRawName) const {
 
 unsigned ProgramVariable::getSetNumber() const {
     return this->setNumber;
+}
+
+std::string ProgramVariable::getParent() {
+    return rlc_dataflow::variable(this->value);
 }
 
 void ProgramVariable::setSetNumber(unsigned setNumber) {

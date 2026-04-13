@@ -194,7 +194,7 @@ void DataflowPass::transfer(Instruction *instruction,
                 break;
             }
 
-            if (handleIfKnownFunctionForCallInsts(call, pvas)) {
+            if (handleIfKnownFunctionForCallInsts(call, pvas, newPoint)) {
                 continue;
             }
 
@@ -325,17 +325,32 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         postProgramBlock->add(p);
 
         for(auto a : this->annotations.getAllParameterAnnotationsWithoutFields(fnName)) {
-            if(a->getAnnotationType() == AnnotationType::MustCallAnnotation) {
+            if(a->getAnnotationType() == AnnotationType::MustCallAnnotation || a->getAnnotationType() == AnnotationType::CallsAnnotation) {
                 int index = a->getParameterIndex();
                 auto f_iterator = this->F->args();
                 auto arg = std::next(f_iterator.begin(), index);
                 ProgramVariable var = ProgramVariable(arg);
+                std::string name = rlc_dataflow::variable(arg) + ".addr";
+                ProgramVariable other = ProgramVariable(name);
+                postProgramBlock->getPoint(0, true)->addAlias(other, var);
                 auto pvas = postProgramBlock->getPoint(0, true)->getPVASRef(var, true);
-                this->onAnnotation(pvas, a);
+                std::cout << "OUT " << pvas->toString(false, false) << " HAS " << name << "\n\n";
+                this->onPAnnotation(pvas, a);
             }
         }
         //TODO: Add parameter annotation WITH fields
 
+        for(auto a : this->annotations.getAllParameterAnnotationsWithFields(fnName)) {
+            if(a->getAnnotationType() == AnnotationType::MustCallAnnotation || a->getAnnotationType() == AnnotationType::CallsAnnotation) {
+                int index = a->getParameterIndex();
+                auto f_iterator = this->F->args();
+                auto arg = std::next(f_iterator.begin(), index);
+                std::string name = rlc_dataflow::variable(arg) + ".addr." + std::to_string(a->getFieldIndex());
+                ProgramVariable var = ProgramVariable(name);
+                auto pvas = postProgramBlock->getPoint(0, true)->getPVASRef(var, true);
+                this->onPAnnotation(pvas, a);
+            }
+        }
 
         int instNum = 1;
         for (Instruction *instruction : instructions) {
@@ -604,7 +619,7 @@ bool DataflowPass::handleSretCallForCallInsts(CallInst *call, int argIndex,
 }
 
 bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
-        PVAliasSet *pvas) {
+        PVAliasSet *pvas, ProgramPoint *point) {
     /*
     handles the case where function being called is "an indirect function
     invocation", meaning its target is determined at runtime. we are not
@@ -662,6 +677,22 @@ bool DataflowPass::handleIfKnownFunctionForCallInsts(CallInst *call,
             return true;
         } else if (fnName == deallocationFunction) {
             this->onDeallocationFunctionCall(pvas, fnName);
+            // For a struct s, deallocation is equivalent to every field in s going out of scope
+            // This means we will simply remove all aliases from sets where a field of s is present
+            // In the worst case this will give a false positive where a pointer to a field is actually
+            // saved, but it will still be sound
+            for(auto pv : point->getProgramVariableAliasSets().getSets()) {
+                for(auto alias : pv.getProgramVariables()) {
+                    if(alias.containsStructFieldVar()) {
+                        for(auto parent : pvas->getProgramVariables()) {
+                            if(parent.getRawName() == alias.getParent()) {
+                                point->clear(alias);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
             return true;
         }
     }
