@@ -3,6 +3,7 @@
 #ifndef RUN_ANALYSIS_H
 #define RUN_ANALYSIS_H
 
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Constants.h"
@@ -67,7 +68,7 @@ struct ResourceLeakFunctionCallAnalyzer : public AnalysisInfoMixin<ResourceLeakF
 
     ResourceLeakFunctionCallAnalyzerResult run(Function &F, FunctionAnalysisManager &FAM);
   protected:
-    ResourceLeakFunctionCallAnalyzerResult doAnalysis(Function &F, std::string optLoadFileName);
+    ResourceLeakFunctionCallAnalyzerResult doAnalysis(Function &F, std::string optLoadFileName, AAResults &AA);
     void onEnd();
 };
 

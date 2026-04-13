@@ -3,11 +3,13 @@
 #include "ProgramRepresentation/ProgramFunction.h"
 #include "ProgramRepresentation/ProgramPoint.h"
 #include "CalledMethods.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 
 AnalysisKey rlc_dataflow::ResourceLeakFunctionCallAnalyzer::Key;
 
 rlc_dataflow::ResourceLeakFunctionCallAnalyzerResult rlc_dataflow::ResourceLeakFunctionCallAnalyzer::run(Function &F, FunctionAnalysisManager &FAM) {
-    auto ret = doAnalysis(F, F.getParent()->getSourceFileName());
+    AAResults &AA = FAM.getResult<AAManager>(F);
+    auto ret = doAnalysis(F, F.getParent()->getSourceFileName(), AA);
     return ret;
 };
 

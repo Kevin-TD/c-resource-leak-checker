@@ -117,6 +117,7 @@ class DataflowPass {
     virtual void onSafeFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
     virtual void onFunctionCall(PVAliasSet* input, std::string &fnName) = 0;
     virtual void onAnnotation(PVAliasSet* input, Annotation* annotation) = 0;
+    virtual void onPAnnotation(PVAliasSet* input, Annotation* annotation) = 0;
 
 
   public:

@@ -72,10 +72,10 @@ AnnotationHandler::getParameterAnnotation(const std::string &functionName,
     return new ErrorAnnotation();
 }
 
-std::vector<Annotation *>
+std::vector<ParameterAnnotation *>
 AnnotationHandler::getAllParameterAnnotationsWithFields(
     const std::string &functionName) const {
-    std::vector<Annotation *> annotationsWithFields;
+    std::vector<ParameterAnnotation *> annotationsWithFields;
     for (Annotation *anno : this->annotations) {
         if (ParameterAnnotation *paramAnno =
                     dynamic_cast<ParameterAnnotation *>(anno)) {

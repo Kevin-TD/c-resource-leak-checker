@@ -325,17 +325,32 @@ void DataflowPass::analyzeCFG(CFG *cfg, ProgramFunction &preProgramFunction,
         postProgramBlock->add(p);
 
         for(auto a : this->annotations.getAllParameterAnnotationsWithoutFields(fnName)) {
-            if(a->getAnnotationType() == AnnotationType::MustCallAnnotation) {
+            if(a->getAnnotationType() == AnnotationType::MustCallAnnotation || a->getAnnotationType() == AnnotationType::CallsAnnotation) {
                 int index = a->getParameterIndex();
                 auto f_iterator = this->F->args();
                 auto arg = std::next(f_iterator.begin(), index);
                 ProgramVariable var = ProgramVariable(arg);
+                std::string name = rlc_dataflow::variable(arg) + ".addr";
+                ProgramVariable other = ProgramVariable(name);
+                postProgramBlock->getPoint(0, true)->addAlias(other, var);
                 auto pvas = postProgramBlock->getPoint(0, true)->getPVASRef(var, true);
-                this->onAnnotation(pvas, a);
+                std::cout << "OUT " << pvas->toString(false, false) << " HAS " << name << "\n\n";
+                this->onPAnnotation(pvas, a);
             }
         }
         //TODO: Add parameter annotation WITH fields
 
+        for(auto a : this->annotations.getAllParameterAnnotationsWithFields(fnName)) {
+            if(a->getAnnotationType() == AnnotationType::MustCallAnnotation || a->getAnnotationType() == AnnotationType::CallsAnnotation) {
+                int index = a->getParameterIndex();
+                auto f_iterator = this->F->args();
+                auto arg = std::next(f_iterator.begin(), index);
+                std::string name = rlc_dataflow::variable(arg) + ".addr." + std::to_string(a->getFieldIndex());
+                ProgramVariable var = ProgramVariable(name);
+                auto pvas = postProgramBlock->getPoint(0, true)->getPVASRef(var, true);
+                this->onPAnnotation(pvas, a);
+            }
+        }
 
         int instNum = 1;
         for (Instruction *instruction : instructions) {

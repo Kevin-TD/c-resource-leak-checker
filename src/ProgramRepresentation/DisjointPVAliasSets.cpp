@@ -142,7 +142,6 @@ bool DisjointPVAliasSets::addAlias(ProgramVariable element1,
     newSet.programVariables = {element1, element2};
     int newID = pf->getNewID();
     newSet.setID(newID);
-
     sets.push_back(newSet);
     return true;
 
